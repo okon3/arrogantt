@@ -104,7 +104,7 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       Regola graduata in `CLAUDE.md`: un censimento si scrive come matrice di
       celle guidate, non in prosa.
 
-- [ ] T49 [impl] — Un Tab salta una cella nell'editor della griglia
+- [>] T49 [impl] — Un Tab salta una cella nell'editor della griglia
       Un Tab avanza **due** celle editabili (`text` → `nominal_days`, salta
       `resource_id`; ordine delle colonne editabili in `gridColumns.ts`).
       `editorKeys` (`GanttChart.tsx:821-836`) chiama `editNextCell(true)` e
