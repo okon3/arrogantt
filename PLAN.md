@@ -138,7 +138,11 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       riga e sul bordo fra due righe**; Enter che salva una volta sola; e il
       caso sintetico a `keyCode: 0` che continua a muoversi di una cella — e'
       la meta' che una guardia scritta male spegne.
-      Depends: T52.
+      Depends: T52 — soddisfatta.
+      **Stato al passaggio di sessione**: brief scritto in
+      `.claude/briefs/T49.md`, **nessuna corsia lanciata** e tree pulito. Il
+      brief e' valido: il codice non e' cambiato da quando e' stato scritto.
+      Si parte spawnando la corsia su quel brief.
 
 - [x] T40 [self] — L'ultimo descendant override di una primitiva di dialog — `1d2cb2e`
 - [x] T36 [self] — Tracciare il piano e il binding in git — `35483e0`
