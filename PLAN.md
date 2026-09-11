@@ -7,8 +7,8 @@ T51): chart 2228 → 1205. Nessuna release — refactoring, e il changelog non
 prende plumbing.
 
 Aperti: **T16**, unico task di Goal C, che lo porterebbe alla sua review;
-**T49** (un Tab salta una cella) e **T50** (cosa puo' provare una battuta di
-tasti da agente), usciti dalla checklist di T48; **O4** in giacenza.
+**T49** (un Tab salta una cella), ora briefabile — T52 ne ha misurato la causa
+e il fix e' una riga; **O4** in giacenza.
 
 **Una decisione aperta, dell'utente**: il piano si contraddice su
 `.claude/specs/T32-report.md` — lo dà per morto col commit di T48 e insieme
@@ -97,39 +97,63 @@ arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 
+- [x] T52 [impl] — Il censimento dei tasti, e le due premesse che ha
+      falsificato — `3d46c71`. Assorbiva T50. Il gate e' il **`keyCode`**, non
+      il trust; `t.onkeydown` di `inlineEditors` e' vivo senza
+      `keyboard_navigation` e **onora** `defaultPrevented`; `editorKeys` no.
+      Regola graduata in `CLAUDE.md`: un censimento si scrive come matrice di
+      celle guidate, non in prosa.
+
 - [ ] T49 [impl] — Un Tab salta una cella nell'editor della griglia
       Un Tab avanza **due** celle editabili (`text` → `nominal_days`, salta
-      `resource_id`). Due handler keydown vivi chiamano entrambi
-      `editNextCell(true)`: `editorKeys` del chart e quello dell'extension
-      inline-editors. Il commento accanto a `editorKeys` assume che solo il
-      primo scatti — vero col vecchio harness sintetico, falso con tasti a
-      livello CDP, che portano un `keyCode` reale.
+      `resource_id`; ordine delle colonne editabili in `gridColumns.ts`).
+      `editorKeys` (`GanttChart.tsx:821-836`) chiama `editNextCell(true)` e
+      non guarda `event.defaultPrevented`; l'handler vendor quella guardia
+      ce l'ha. **Il secondo attore ha un nome**, misurato da T52: e'
+      l'handler keydown di `inlineEditors` stesso (`t.onkeydown`, nel
+      bundle), non `keyboard_navigation` — che risulta assente e resta
+      assente anche con `config.keyboard_navigation = true`. Gira **prima**
+      del nostro in ordine di bubble: `text → resource_id`, poi `editorKeys`
+      fa `resource_id → nominal_days`.
+      **Il fix e' determinato, ed e' una riga**: `editorKeys` deve tirarsi
+      indietro su `event.defaultPrevented`. Con un tasto reale il vendor gira
+      primo e lo alza → un avanzamento; con un sintetico a `keyCode: 0` il
+      vendor tace, il flag resta falso e il nostro agisce → un avanzamento.
+      Entrambi gli harness coperti.
+      **Tre cose che il brief deve portarsi dietro**: il commento a
+      `GanttChart.tsx:813-819` e' l'ultima copia in repo della premessa
+      falsificata («Tab cade sullo scrollbar della griglia») e va corretto
+      nello stesso diff; **Tab e Shift+Tab attraverso le righe non sono mai
+      stati misurati** — entrambi gli handler passano `canChangeRow` true,
+      quindi nessuno dei due e' limitato alla riga, e un fix verificato solo
+      dentro una riga lascia il bordo non osservato; e su Enter **non si sa**
+      se `editorKeys` riceva affatto il keydown (il censimento non ha wrappato
+      `isVisible`: «guardato» e «mai raggiunto» sono indistinguibili), quindi
+      non dare per buona nessuna simmetria Tab/Enter.
       **Preesistente, non introdotto da T48**: misurato instrumentando
       `startEdit` e contando le chiamate per keydown su HEAD e sul tree di
       T48 — identico, chiamata per chiamata, su due run.
-      Accept: un Tab = una cella, Shift+Tab simmetrico, e la misura per
-      conteggio di `startEdit` (non a occhio) prima e dopo il fix.
-
-- [ ] T50 [impl] — Cosa può provare davvero una battuta di tasti da agente
-      `docs/verification.md` §«Synthetic keyboard events» dichiara che gli
-      handler dhtmlx che leggono `keyCode` non vedono mai un tasto premuto da
-      un tool. Con CDP (`Input.dispatchKeyEvent`) lo vedono: Escape, che quel
-      paragrafo dà per solo-tastiera-reale, ha chiuso l'editor in T48. La
-      riga non è falsa, è **specifica dell'harness** — e finché resta come
-      scritta ogni task futuro rinuncia a misure che può fare.
-      Task di **sola misura** (regola del Log): censire quali tasti arrivano
-      a quali handler con lo strumento in uso, poi riscrivere il paragrafo
-      distinguendo harness da harness. Nessun cambio di codice applicativo.
-      Accept: la tabella misurata, e il paragrafo che non sovra-dichiara in
-      nessuna delle due direzioni.
+      Accept: un Tab = una cella **e** un Shift+Tab = una cella, misurati per
+      conteggio di `startEdit` (non a occhio) prima e dopo il fix, **dentro una
+      riga e sul bordo fra due righe**; Enter che salva una volta sola; e il
+      caso sintetico a `keyCode: 0` che continua a muoversi di una cella — e'
+      la meta' che una guardia scritta male spegne.
+      Depends: T52.
 
 - [x] T40 [self] — L'ultimo descendant override di una primitiva di dialog — `1d2cb2e`
 - [x] T36 [self] — Tracciare il piano e il binding in git — `35483e0`
 
 - [x] T31 [impl] — Il pixel di scroll: premessa falsa, nota nei docs corretta — `d9d2356`
 
-**Due proposte emerse da Goal E, offerte all'utente e non comprate** (non sono
-task: nessuno le ha scopate, e vanno riproposte solo se qualcuno le vuole):
+**Tre proposte offerte all'utente e non comprate** (non sono task: nessuno le
+ha scopate, e vanno riproposte solo se qualcuno le vuole):
+- Caricare `keyboard_navigation` in una sonda usa-e-getta per misurare cosa
+  rivendica davvero. La clausola «a mode that would claim arrows and Del,
+  which App owns» vive in `docs/dhtmlx.md` e in `GanttChart.tsx:814` ed e' una
+  premessa `would` mai verificata: il critic di T52 l'ha giudicata salva **per
+  scope** (il soggetto e' un'extension non caricata, non l'handler
+  dell'editor), quindi non e' un difetto — solo l'ultima premessa non misurata
+  rimasta in quella zona. Solo caricarla la chiude.
 - `yagni.setCalendar` accetta un `CalendarSpec` malformato e lo memorizza
   verbatim — finestre passate come `'08:00'` dove il campo vuole minuti da
   mezzanotte. L'esito e' «Scheduler stalled: pending tasks are unreachable»,
@@ -175,8 +199,9 @@ task: nessuno le ha scopate, e vanno riproposte solo se qualcuno le vuole):
 - Cap: 40 righe, una-due per voce, nessun elenco di task chiusi (il commit e' il
   record; il resto della regola sta in `.claude/orchestrate.md`).
 - Dimensionamento misurato: impl oltre ~200k = task da splittare (T35 215k, T18
-  182k+250k); critic 100-160k a passata; una correzione via SendMessage costa
-  meno di un fresh spawn (~40k di solo ingresso).
+  182k+250k); critic 75-95k a passata; una correzione via SendMessage costa
+  meno di un fresh spawn (~40k di solo ingresso) — **ma non a 195k di contesto**
+  (T52): oltre la soglia conviene che l'hub finisca il lavoro, se ha le misure.
 - Un task il cui accept e' una campagna di misura va scopato come task di sola
   misura: T31 chiedeva misura + modifica e ha saturato tre contesti per 21
   righe di diff; T42, scopato come misura, 99k/135k e zero correzioni.
@@ -208,7 +233,3 @@ task: nessuno le ha scopate, e vanno riproposte solo se qualcuno le vuole):
   detach che la §6 contraddice; e una regola che ho scritto su `install*` era
   falsa sull'altra `install*` del repo. Mie tutte e tre. Una regola derivata da
   un modulo si verifica su **tutti** i suoi casi prima di entrare nei docs.
-- **La porta va verificata, non dedotta da una notifica.** Ho scritto a una
-  corsia «nessun'altra e' viva, la porta e' tua» sulla fede del completamento
-  del critic, che stava ancora lavorando: il suo listener e' stato sfrattato.
-  La regola esiste in CLAUDE.md e non e' bastata — serve il controllo sul PID.
