@@ -85,12 +85,82 @@ date field is driven in verifications.)
 
 ## Synthetic keyboard events
 
-Keys pressed by the browser tool carry **no `keyCode`/`which`/`code`** (all
-`0`/empty); `event.key` is right and the event is trusted. Our handlers (reading
-`key`) see the keystroke; dhtmlx's (reading `keyCode`) do not — Escape closing
-an inline editor works under a real keyboard only and took a person to settle.
-Tool key naming ≠ DOM naming: `Return` arrives with an **empty** `key` (does
-nothing); `Enter` arrives as `Enter`. A dead key is two questions, not one.
+Three harnesses drive keys here, and they differ in two independent ways —
+trust and `keyCode`. Which one you used decides which handlers answered.
+
+- **CDP `Input.dispatchKeyEvent`** (chrome-devtools MCP's `press_key`):
+  trusted, real `keyCode` — measured on Tab: `keyCode 9`, `which 9`,
+  `isTrusted: true`.
+- **`agent-browser`'s key press**: trusted, but `keyCode`/`which`/`code` all
+  `0`/empty; `event.key` is right. The instrument behind *Tool key naming*
+  below and the `<dialog>`'s missing native `cancel` in *Dialogs*.
+- **A hand-rolled `el.dispatchEvent(new KeyboardEvent('keydown', {...}))`**:
+  untrusted, and `keyCode` is whatever the init dict says — Chrome honours it,
+  so this harness can carry a real `keyCode` or `0` at will.
+
+**The gate is `keyCode`, not trust.** An untrusted hand-rolled Tab carrying
+`keyCode: 9` makes dhtmlx's own inline-editor keydown handler (`t.onkeydown`,
+bundled, live without the `keyboard_navigation` extension) answer exactly as a
+trusted CDP Tab does — same two calls, same columns. The same handler stays
+silent on `keyCode: 0`. `editorKeys` reads `event.key`: it answered on Tab and
+Shift+Tab under both harnesses driven, and on the hand-rolled Enter. Whether it
+also receives the CDP Enter is undetermined — see below.
+
+**`t.onkeydown` honours `event.defaultPrevented`; `editorKeys` does not.** A
+capture-phase `preventDefault()` on `document` (guard confirmed to run once,
+before any editor method) leaves `t.onkeydown` silent on a real Tab — only
+`editorKeys` answers, one call. Left alone the vendor runs first, with the flag
+still `false`, so its check has nothing to catch; `editorKeys` runs second with
+the flag `true` and acts anyway.
+
+Census on `gantt.ext.inlineEditors` — `startEdit`, `editNextCell`,
+`editPrevCell`, `save`, `hide` wrapped, `new Error().stack` read to name the
+caller — editor open on a leaf task's `text` cell unless a row says otherwise:
+
+| Key | CDP (trusted, real `keyCode`) | hand-rolled, `keyCode: 0` |
+| --- | --- | --- |
+| Tab | `t.onkeydown` then `editorKeys`: **two** `editNextCell`, `text → resource_id → nominal_days` | `editorKeys` only: **one**, `text → resource_id` |
+| Shift+Tab (from `nominal_days`) | **two** `editPrevCell`, `nominal_days → resource_id → text` | **one**, `nominal_days → resource_id` |
+| Enter | `save`+`hide`, traced to `t.onkeydown` | `save`+`hide`, traced to `editorKeys` |
+| Escape | `hide`, traced to `t.onkeydown` | no call; editor stays open |
+| ArrowUp / ArrowDown | `hide`, traced to `t.onkeydown`, **no `save` first** — an open edit is discarded, not committed | no call; editor stays open |
+| Delete | no `inlineEditors` call; the field's native edit applies | no call; no native edit |
+| Space | no `inlineEditors` call; the field's native edit applies | no call; no native edit |
+
+The Tab row **is** the double-advance defect: one keystroke, two editable
+columns. The count, not the look of it, is what an accept criterion can hold
+on to.
+
+**What this census did not drive** — absent cells, not absent behaviour:
+
+- The `agent-browser` profile (trusted, `keyCode: 0`) on any of these keys. It
+  is the third harness and only the other two were driven; do not assume it
+  equals either.
+- Whether `editorKeys` receives the Enter keydown at all. Its `isVisible()`
+  guard (`GanttChart.tsx`) would make it a no-op after the vendor ends the
+  edit, but the wrapper set does not include `isVisible`, so "guarded" and
+  "never reached" are indistinguishable here.
+- Whether Delete reaches `deleteSelected` (`GanttChart.tsx:919`) at runtime.
+  Read only: it is a `document`-level listener that doesn't read `keyCode` and
+  bails via `keystrokeIsCaptured` (`shortcuts.ts:14`) while an editor field
+  holds focus. A hand-rolled dispatch without `bubbles: true` would never
+  reach it, so a check built that way proves nothing about the guard.
+- Tab and Shift+Tab **across rows**. Both handlers pass `canChangeRow` true
+  (`GanttChart.tsx`, and the vendor's `editPrevCell(!0)`), so neither is
+  row-bounded — a fix measured only inside one row leaves the row edge
+  unobserved.
+- Which vendor code claims Space. No wrapped `inlineEditors` method was
+  called under either harness, and no app-level handler binds it (grep over
+  this repo — which says nothing about the library). Loaded vendor code does
+  carry `SPACE` branches this census could not have seen: `inlineEditors`
+  suppresses Space in its own `onShow` the moment an `ext.keyboardNavigation`
+  object exists, and the core lightbox has another. Both are bundle reads — and
+  together a reason not to bind Space as an app shortcut, since any probe that
+  registers the nav extension arms the first one.
+
+Tool key naming ≠ DOM naming, on `agent-browser`: `Return` arrives with an
+**empty** `key` (does nothing); `Enter` arrives as `Enter`. A dead key is two
+questions, not one.
 
 ## Emulated colour scheme
 

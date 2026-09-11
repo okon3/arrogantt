@@ -13,12 +13,25 @@ touching `src/gantt` code that talks to the library.
   `keyboard_navigation`, `quick_info`, `drag_timeline`, `fullscreen`,
   `export_api`. Absent: `click_drag`, `marker`, `undo`, `multiselect`,
   `grouping`, `overlay`, `auto_scheduling`, `critical_path`.
-- **A config for an unregistered extension does nothing, silently.**
-  `config.keyboard_navigation = true` with only `{tooltip}` in `plugins()` left
-  every key unbound (Tab from an editor landed on the grid scrollbar). The app
-  binds `inlineEditors.editNextCell/editPrevCell` itself (they take
-  `canChangeRow` and save the cell they leave) instead of loading a mode that
-  would claim arrows and Del, which App owns.
+- **A config does not register an extension — but it is not inert either.**
+  Measured: `config.keyboard_navigation = true` with only `{tooltip}` in
+  `plugins()` leaves `gantt.ext.keyboardNavigation` absent, flag set or unset.
+  What the flag does *not* do is stay unread: loaded core code branches on
+  `config.keyboard_navigation` regardless of the extension (the smart-rendering
+  range builder force-adds the selected row to the render set) — a bundle read,
+  not a runtime measure, and enough to refuse "the config does nothing". Set it
+  as a probe and a smart-rendering measurement can read one row that should not
+  be there.
+- **`inlineEditors` carries its own keyboard handling**, independent of
+  `keyboard_navigation` and live without it: `t.onkeydown` answers Tab, Enter,
+  Escape and the arrows on a real `keyCode`, and it honours
+  `event.defaultPrevented`. The app's `editorKeys` binds **Tab and Enter only**
+  — Escape and the arrows are left to the vendor — and does **not** read that
+  flag, so a real Tab is caught twice — the matrix and the
+  counts are in verification.md's census. The app binds
+  `inlineEditors.editNextCell/editPrevCell` itself (they take `canChangeRow`
+  and save the cell they leave) instead of loading a mode that would claim
+  arrows and Del, which App owns.
 - **One gantt instance per app** (no `getGanttInstance()` in Community).
 - **Never `gantt.destructor()`** in cleanup — kills the singleton; StrictMode
   remount then re-inits a dead instance (`cannot read tasksStore`). Use

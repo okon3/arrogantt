@@ -174,6 +174,14 @@ one wrong. The pattern, not the anecdotes:
   notify again and resume. With `strictPort` the dev port is a mutex: two
   lanes restarting the server destroy each other's fixtures, silently. Check
   that no other lane is live before touching the origin or the port.
+- **Write a census as a matrix, never as prose.** A finite measurement
+  described in sentences generalises past the cells that were driven, on every
+  rewrite — three rounds on the same paragraph produced 8, 8 and 3 findings of
+  that exact shape, and the author caught in the act was as often the hub as a
+  lane. A table of driven cells plus an explicit *what this did not drive*
+  list has no room for the generalisation: a cell either carries a measured
+  value or says it is absent. `docs/verification.md`'s keyboard census is the
+  worked example.
 
 ## How good is good enough
 
