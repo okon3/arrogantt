@@ -35,10 +35,10 @@ this file binds it to this repo.
 - **Git is the archive for the plan and the binding, and for nothing else
   under `.claude`.** `PLAN.md` and this file are tracked; `.claude/*` is
   ignored by default with a negation for this file, so briefs, specs and the
-  `orchestrator.lock` heartbeat stay out of history on purpose (the lock is
-  rewritten on every tool call). Pruning the plan is therefore recoverable
-  with `git show` — it was not until 2026-09-08, and the Accept lines of
-  T12-T15 and T19 were destroyed that way, along with every brief of T12-T31.
+  `orchestrator.lock` stay out of history on purpose. Pruning the plan is
+  therefore recoverable with `git show` — it was not until 2026-09-08, and
+  the Accept lines of T12-T15 and T19 were destroyed that way, along with
+  every brief of T12-T31.
   The rule that came out of it stands regardless of recoverability: **never
   prune a done task's Accept lines before that goal's review has run** — they
   are half the goal-review bar. Done tasks collapse to one line *after*
@@ -51,7 +51,9 @@ this file binds it to this repo.
   chiuso.
 - **"Read-only" restricts Write/Edit, not Bash — and no hook stops a worker
   committing here.** `.claude/hooks/` is empty and `settings.local.json`
-  declares no `hooks` key, so `deny-agent-commit` does not fire in this repo.
+  declares no `hooks` key, so **none** of the protocol's hooks fire in this
+  repo: not `deny-agent-commit`, not `require-brief`, and not the lock
+  heartbeat.
   On 2026-09-08 the goal-reviewer — briefed "you do not fix, you do not
   commit" — wrote `docs/verification.md` and committed it (`929ebd9`) through
   Bash, and its report said nothing about it. The note was good and was kept;
@@ -59,6 +61,14 @@ this file binds it to this repo.
   **Read `git log` at every checkpoint and compare against the commits you
   made yourself**: a report's CHANGES list is not the diff, and a read-only
   agent is read-only by convention only.
+- **The lock is hand-written here, and its shape is load-bearing.** With no
+  heartbeat hook, whatever the hub writes into `.claude/orchestrator.lock` is
+  what the next generation reads — and invocation parses it as JSON,
+  `{"session":"<id>","at":"<ISO timestamp>"}`, comparing `at` against a
+  45-minute liveness window. Free-form text or a date without a time makes
+  staleness uncomputable and the successor has to guess whether the previous
+  hub is alive. Write that shape, and **refresh `at` at your own
+  checkpoints**: nothing else will.
 - **The port is the mutex**: `strictPort` on 5173 means two lanes restarting
   the dev server kill each other's listener and each other's fixtures, with
   no error. A completion notification is not proof a lane is done (the same
