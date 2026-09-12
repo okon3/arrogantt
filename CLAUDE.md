@@ -131,7 +131,11 @@ file raw). History/draft/`dirty` use input-only text; the file is written
 compact. Dates local wall-clock `YYYY-MM-DDTHH:mm`; calendar days `YYYY-MM-DD`
 strings. Parsing strict, refuses rather than repairs, and the gate holds on
 **every** path in (`validateResources` included — a parseable-but-unschedulable
-file would replace the open project). Details:
+file would replace the open project) **and on the way out**: `serializeForFile`
+(Save, `toText()`) re-parses what it wrote and refuses rather than hand over a
+file this app could not reopen — a refused save writes nothing and stays dirty.
+`serializeProject` stays unguarded, or a parse would run per edit and a throw
+would take undo and the draft with it. Details:
 [docs/file-format.md](docs/file-format.md).
 
 ## Confirmations and verification

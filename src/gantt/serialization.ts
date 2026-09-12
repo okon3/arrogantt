@@ -98,6 +98,29 @@ export function serializeProject(project: Project, solved?: SolvedProject): stri
   );
 }
 
+/**
+ * The text a file gets, refused unless this application can read it back.
+ *
+ * The strict gate has always run on every path **in**; this is its other half,
+ * and it is one invariant rather than a rule about resource ids: what the app
+ * writes, the app can reopen. Implemented by re-parsing the text with the very
+ * parser that will have to read it — a second validator written by hand would
+ * drift from `deserializeProject` as the format grows, and the divergence would
+ * show up as a file nobody can open.
+ *
+ * Refuses rather than repairs, like the load path: no sanitised copy is written
+ * in place of the project that failed.
+ *
+ * Deliberately not folded into `serializeProject`: that one also writes the
+ * history snapshot and the draft on every change, where a parse per edit is
+ * waste and a throw would take undo and the autosave down with it.
+ */
+export function serializeForFile(project: Project, solved?: SolvedProject): string {
+  const text = serializeProject(project, solved);
+  deserializeProject(text);
+  return text;
+}
+
 function asRecord(value: unknown, context: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new ProjectFileError(`${context}: expected an object`);

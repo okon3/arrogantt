@@ -27,7 +27,9 @@ Three differences from clicking the buttons:
 **Your rollback is `toText()` + `loadText()`.** Snapshot before a move, restore
 if it made things worse. The app has an undo of its own — Ctrl+Z, and your writes
 land on the same stack as the user's edits — but it is not on this surface: a
-snapshot you chose beats whichever step happens to be on top of that stack.
+snapshot you chose beats whichever step happens to be on top of that stack. The
+snapshot is checked against the parser as it is taken, like Save: `toText()`
+throws rather than hand you a text `loadText()` would reject.
 
 ```js
 const before = yagni.toText();
@@ -46,7 +48,7 @@ yagni.loadText(before); // changed my mind
 | `getResourceLoad()` | the plan per person: what is booked on them, and what is free |
 | `getResources()` | `Resource[]`, `availability` as a fraction `0..1` |
 | `getCalendar()` | `{ workingDays, windows, holidays? }` |
-| `toText()` | the project as `.gantt`, what Save downloads: the inputs plus a `solved` report per task and per project — same fields as `getPlan()`, ignored on load |
+| `toText()` | the project as `.gantt`, what Save downloads: the inputs plus a `solved` report per task and per project — same fields as `getPlan()`, ignored on load. **Throws** rather than return a text `loadText()` would refuse |
 | `getFilename()`, `isDirty()` | what the toolbar shows |
 
 A `getPlan()` task:

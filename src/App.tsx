@@ -34,7 +34,12 @@ import {
 import { DEFAULT_CALENDAR } from './scheduler';
 import { emptyProject, type ChainState, type MeasuredSlack } from './gantt/project';
 import { RowMenu, type RowMenuAction, type RowMenuTarget } from './gantt/RowMenu';
-import { ProjectFileError, deserializeProject, serializeProject } from './gantt/serialization';
+import {
+  ProjectFileError,
+  deserializeProject,
+  serializeForFile,
+  serializeProject,
+} from './gantt/serialization';
 import {
   historyOf,
   recordedChange,
@@ -315,10 +320,25 @@ export default function App() {
   const handleSave = useCallback(() => {
     const project = chart.current?.getProject();
     if (!project) return;
+    let text: string;
+    try {
+      text = serializeForFile(project, chart.current?.getSolved());
+    } catch (cause) {
+      // Not `reportFailure`: its fallback blames reading a file, and nothing was
+      // read here. Neither the download nor `setSavedText` runs — marking as
+      // saved what was never written is the same lie as the file that cannot be
+      // reopened, only pointing the other way.
+      setError(
+        `Refusing to save a file that cannot be reopened: ${
+          cause instanceof Error ? cause.message : String(cause)
+        }`,
+      );
+      return;
+    }
     // The file carries the solved report for whoever reads it; `savedText` must
     // not — it is compared against the history's input-only snapshots, and a
     // report in the comparison would keep the project dirty forever.
-    downloadText(filename, serializeProject(project, chart.current?.getSolved()));
+    downloadText(filename, text);
     setSavedText(serializeProject(project));
   }, [filename]);
 

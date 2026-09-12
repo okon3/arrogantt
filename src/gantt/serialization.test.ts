@@ -5,6 +5,7 @@ import {
   FILE_VERSION,
   ProjectFileError,
   deserializeProject,
+  serializeForFile,
   serializeProject,
 } from './serialization';
 
@@ -203,6 +204,39 @@ describe('round trip', () => {
     const restored = deserializeProject(serializeProject(project));
     expect(restored.tasks[0].start.getDate()).toBe(29);
     expect(restored.tasks[0].start.getHours()).toBe(8);
+  });
+});
+
+describe('the file the app writes, the app can reopen', () => {
+  const poisoned = (): Project => ({
+    calendar: DEFAULT_CALENDAR,
+    resources: [{ id: 'r1', name: 'Marta' }],
+    tasks: [
+      { id: '1', name: 'A', nominalDays: 2, start: new Date(2026, 0, 5, 8, 0), resourceId: 'r1' },
+      { id: '2', name: 'B', nominalDays: 2, start: new Date(2026, 0, 5, 8, 0), resourceId: 'ghost' },
+    ],
+  });
+
+  it('hands a sound project back unrefused, report included', () => {
+    // What "ignores the report on load" above cannot say, since it never goes
+    // through the guard: that the guard lets a sound project past, and returns
+    // the text it checked rather than a report-less copy of what it parsed.
+    const text = serializeForFile(sampleProject, solve(sampleProject));
+    expect(text).toContain('"solved"');
+    const restored = deserializeProject(text);
+    expect(restored.tasks).toEqual(deserializeProject(serializeProject(sampleProject)).tasks);
+  });
+
+  it('refuses a project naming somebody the file could not name back', () => {
+    expect(() => serializeForFile(poisoned())).toThrow(ProjectFileError);
+    // The parser's own message, unchanged: it says which task and which id.
+    expect(() => serializeForFile(poisoned())).toThrow(/tasks\[1\].*unknown resource "ghost"/);
+  });
+
+  it('leaves serializeProject alone, or undo and the draft would die with it', () => {
+    const text = serializeProject(poisoned());
+    expect(text).toContain('"ghost"');
+    expect(text).not.toContain('"solved"');
   });
 });
 

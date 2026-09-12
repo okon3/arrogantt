@@ -46,6 +46,17 @@ stalled` with the model already replaced — stale grid, edits dying on unknown
 tasks, next save overwriting the user's work. Hence `validateResources` and
 `validateCalendar` run on **every** path in: load, dialog, agent API.
 
+**The gate also holds on the way out: what the app writes, the app can reopen.**
+`serializeForFile` (Save, `toText()`) re-parses the text it just produced with
+`deserializeProject` and propagates that error untouched — a round trip, not a
+second validator, which would drift from the parser as the format grows. Refuses
+rather than repairs here too: no sanitised copy is written in place of the
+project that failed. A refused save downloads nothing and does **not** mark the
+project saved (`dirty` stays on); the error line reads `Refusing to save a file
+that cannot be reopened: <parser message>`. `serializeProject` stays unguarded —
+it also writes the history snapshot and the draft on every change, where a parse
+per edit is waste and a throw would take undo and the autosave with it.
+
 `validateCalendar` (`calendarRules.ts`): `workingDays` non-empty, distinct
 weekday indices `0..6`; `windows` non-empty, `{from, to}` in **whole minutes
 from midnight**, `0 <= from < to <= 1440`, and **never overlapping**

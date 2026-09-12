@@ -14,7 +14,7 @@ import {
   withResourceUpdated,
   type ResourcePatch,
 } from './resources';
-import { serializeProject } from './serialization';
+import { serializeForFile } from './serialization';
 import type { AvailabilityOverride, CalendarSpec, Resource } from '../scheduler';
 
 /**
@@ -202,15 +202,21 @@ export function createAgentApi(host: AgentHost): AgentApi {
   };
 
   /**
-   * The one place an incoming resource id is checked, for every write that
+   * Where this surface checks an incoming resource id, for every write that
    * carries one.
    *
    * An id nobody has would reach `schedule()` as a task assigned to a resource
    * with no capacity, and it throws "Scheduler stalled" from inside the dhtmlx
-   * handler applying the change — the exception escapes, React unmounts, and the
-   * open plan is gone. So it is refused before anything is written, as a cyclic
-   * link is. The dialogs and the grid editor cannot get here: both pick from a
-   * fixed list of the project's own people.
+   * handler applying the change. The exception escapes into dhtmlx, where
+   * nothing catches it and nothing shows: the chart stays on screen while the
+   * model keeps the bad id and silently stops taking edits. So it is refused
+   * before anything is written, as a cyclic link is. The dialogs and the grid
+   * editor still cannot get here: both pick from a fixed list of the project's
+   * own people.
+   *
+   * No longer the only such check: `pullFromView` guards what it reads off a
+   * dhtmlx row (`GanttChart.tsx`). That one is a net under a closed set of
+   * writers and stays silent; this one is a script's answer, and throws.
    */
   const requireKnownResource = (id: string | null | undefined) => {
     if (id) resource(id);
@@ -286,8 +292,9 @@ export function createAgentApi(host: AgentHost): AgentApi {
     toText: () => {
       const handle = chart();
       // The same text the Save button writes, solved report included: what a
-      // script snapshots is what a file of the plan would say.
-      return serializeProject(handle.getProject(), handle.getSolved());
+      // script snapshots is what a file of the plan would say — refusal
+      // included, so a snapshot handed back to `loadText()` is one that loads.
+      return serializeForFile(handle.getProject(), handle.getSolved());
     },
     getFilename: host.filename,
     isDirty: host.dirty,

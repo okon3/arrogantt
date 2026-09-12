@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useImperativeHandle, useRef, type Ref } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type Ref,
+} from 'react';
 import { gantt } from 'dhtmlx-gantt';
 import 'dhtmlx-gantt/codebase/dhtmlxgantt.css';
 import { barFactsOf, renderBarTooltip } from './barTooltip';
@@ -145,7 +152,14 @@ export function GanttChart({
   const changeRef = useRef(onChange);
   const rejectRef = useRef(onReject);
   const projectRef = useRef(project);
-  const solvedRef = useRef<SolvedProject>(solve(project));
+  // Lazily, or `solve` runs on every render and its answer is thrown away on
+  // all but the first. That waste is the smaller half: this is the only solve
+  // on the render path, and a model that cannot be scheduled throws here where
+  // there is no handler to catch it — the tree unmounts instead of showing the
+  // error the re-render was about to paint. Solved once per mount; every solve
+  // after it belongs to `applySolution`, inside an event handler.
+  const [solvedAtMount] = useState(() => solve(project));
+  const solvedRef = useRef<SolvedProject>(solvedAtMount);
   const applyingRef = useRef(false);
   // Also what the marking effect below compares against, so mounting does not
   // re-apply what the first parse already drew.
@@ -737,6 +751,22 @@ export function GanttChart({
     repaintLoadRef.current = paintLoad;
     paintLoad();
 
+    /**
+     * Whether the project has the person a row names.
+     *
+     * Everything that writes `resource_id` today picks from the project's own
+     * people — the grid's select, the details dialog, and `applySolution`
+     * mirroring the model back onto every row — so nothing live can fail this.
+     * It is the net for the day that stops being true: an id from outside
+     * reaches `schedule()` as work for somebody with no capacity, which throws
+     * "Scheduler stalled" from inside the dhtmlx handler applying the edit.
+     * Nothing catches it there, and the damage is silent rather than loud —
+     * the chart stays on screen while the model keeps the bad id and stops
+     * taking edits, which is why the guard is here and not a visible refusal.
+     */
+    const knownResource = (id: string) =>
+      projectRef.current.resources.some((resource) => resource.id === id);
+
     const pullFromView = (id: string | number) => {
       const ganttTask = gantt.getTask(id);
       const task = projectRef.current.tasks.find((candidate) => candidate.id === String(id));
@@ -764,7 +794,12 @@ export function GanttChart({
         new Date(ganttTask.start_date as Date),
         solvedRef.current,
       );
-      task.resourceId = (ganttTask.resource_id as string | undefined) || undefined;
+      const assigned = (ganttTask.resource_id as string | undefined) || undefined;
+      // An id the project does not have leaves the assignment as it was rather
+      // than clearing it: unhooking somebody's work in silence is what
+      // `releasedBy` exists to avoid. The row comes back into line by itself,
+      // since applySolution writes `resource_id` from the model every solve.
+      if (assigned === undefined || knownResource(assigned)) task.resourceId = assigned;
       const nominal = Number(ganttTask.nominal_days);
       if (Number.isFinite(nominal) && nominal >= 0) task.nominalDays = nominal;
     };
@@ -992,13 +1027,16 @@ export function GanttChart({
           // Honour whatever the caller supplied and only fall back to a day of
           // effort, so a row created with data does not silently lose it.
           const supplied = Number(item.nominal_days);
+          const assigned = (item.resource_id as string | undefined) || undefined;
           projectRef.current.tasks.push({
             id: key,
             name: String(item.text || 'New task'),
             nominalDays: Number.isFinite(supplied) && supplied >= 0 ? supplied : 1,
             start,
             parentId: parent,
-            resourceId: (item.resource_id as string | undefined) || undefined,
+            // Same net as `pullFromView`'s, with nothing to fall back on: a row
+            // that did not exist a moment ago has no earlier assignment to keep.
+            resourceId: assigned !== undefined && knownResource(assigned) ? assigned : undefined,
             // Only a top-level task owns a colour; a subtask inherits its
             // parent's, and a copy frozen here would stop following it.
             color: parent ? undefined : (item.bar_color as string | undefined) || undefined,
