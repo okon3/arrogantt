@@ -126,14 +126,27 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       dialogo che non perde i suoi due messaggi; nessuna strada che arriva a
       «Scheduler stalled» per un calendario malformato. `docs/file-format.md`
       aggiornato nello stesso commit — il gate cambia.
-      **Stato al passaggio di sessione**: brief in `.claude/briefs/T53.md`,
-      **corsia deep lanciata** il 2026-09-12 (~09:40 UTC), tree pulito a
-      `30830ce`. Una corsia appartiene alla sessione che l'ha spawnata: un
-      successore **non la eredita**. Primo passo per chi riprende — `git
-      status`. Albero sporco = la corsia ha consegnato prima della fine
-      sessione: verificare col brief, non ri-lanciare. Albero pulito = la
-      corsia e' morta con la sessione: ri-spawnare sullo stesso brief, che
-      resta valido finche' il codice non cambia.
+      **Stato**: corsia deep consegnata, tree sporco e **non committato**,
+      critic lanciato il 2026-09-12 ~09:55 UTC. Check dell'hub verdi (417
+      test, build 0, lint 0), HEAD `38189c9`, nessun commit di corsia.
+      Consegnato: `calendarRules.ts` + test (23 casi), gate su agent API,
+      `deserializeProject` e dialogo, `docs/file-format.md`.
+      Tre modifiche dell'hub sopra la corsia: `agentApi.help.md` scongelato
+      (la sua lista «refuses rather than repairs» contraddiceva
+      `docs/file-format.md`, e la riga di `setCalendar` taceva l'unita' che
+      ha causato il difetto), e il commento sulla regola dei duplicati
+      riscritto — la corsia la giustificava con «quale dei due fosse inteso e'
+      inconoscibile», falso per `[1,1]`.
+      Due cose che la corsia ha misurato e che valgono oltre il task: la causa
+      del tab piantato **non e' il NaN** ma `workingDays` fuori da `0..6` —
+      il walk `while (!isWorkingDay(day)) day++` del costruttore non ha bound,
+      a differenza di `startOfWorkingDay` che porta un `limit`; e
+      `expandRanges` **salta** un endpoint malformato invece di fallire,
+      quindi una chiusura con data sbagliata copriva silenziosamente niente.
+      **Chi riprende**: `git status` prima di tutto. Sporco = il lavoro di
+      T53 e' li', da committare dopo aver chiuso le findings del critic (che
+      non sopravvive alla sessione: se il suo report non e' arrivato, va
+      ri-lanciato sul diff).
 
 - [x] T52 [impl] — Il censimento dei tasti — `3d46c71`. Assorbiva T50. I fatti
       stanno nel censimento di `docs/verification.md`; la regola «un censimento
