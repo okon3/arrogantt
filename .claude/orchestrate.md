@@ -73,6 +73,16 @@ this file binds it to this repo.
   the dev server kill each other's listener and each other's fixtures, with
   no error. A completion notification is not proof a lane is done (the same
   agent can notify again) — check before touching the origin or the port.
+  **Check the port itself, not the lane's status**: a lane `ListAgents` calls
+  `completed` can still own the listener through the dev server it spawned
+  (T49: the implementer was `completed` while its server held 5173; the
+  critic's `dev:fresh` killed it, harmless only because the measuring was
+  over).
+- **Verify a spawn with `ListAgents`, always.** The Agent tool answers
+  "launched successfully" for a lane that never starts — an interrupt landing
+  on the same turn kills it, the transcript stays 0 bytes, and the hub
+  reports progress that does not exist (T49, twice, before the user caught
+  it). One `ListAgents` call after every spawn is the whole fix.
 - **Docs duty**: a commit changing behaviour described in `docs/` updates the
   affected file in the same commit (map in CLAUDE.md); significant features
   add a CHANGELOG bullet under `## Unreleased` in the same commit.
