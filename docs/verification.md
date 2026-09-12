@@ -101,17 +101,21 @@ trust and `keyCode`. Which one you used decides which handlers answered.
 **The gate is `keyCode`, not trust.** An untrusted hand-rolled Tab carrying
 `keyCode: 9` makes dhtmlx's own inline-editor keydown handler (`t.onkeydown`,
 bundled, live without the `keyboard_navigation` extension) answer exactly as a
-trusted CDP Tab does — same two calls, same columns. The same handler stays
-silent on `keyCode: 0`. `editorKeys` reads `event.key`: it answered on Tab and
-Shift+Tab under both harnesses driven, and on the hand-rolled Enter. Whether it
-also receives the CDP Enter is undetermined — see below.
+trusted CDP Tab does — same one call, same columns. The same handler stays
+silent on `keyCode: 0`, and that gate is the whole of what separates the two
+harnesses here.
 
-**`t.onkeydown` honours `event.defaultPrevented`; `editorKeys` does not.** A
-capture-phase `preventDefault()` on `document` (guard confirmed to run once,
-before any editor method) leaves `t.onkeydown` silent on a real Tab — only
-`editorKeys` answers, one call. Left alone the vendor runs first, with the flag
-still `false`, so its check has nothing to catch; `editorKeys` runs second with
-the flag `true` and acts anyway.
+**Both handlers honour `event.defaultPrevented`, and bubble order decides which
+one acts.** `editorKeys` reads `event.key`, not `keyCode`, so the gate above
+does not filter it: it receives every one of these keystrokes — the vendor's
+`t.onkeydown` sits on the placeholder, inside the `.gantt-host` that carries
+`editorKeys` — and the flag decides. On a real Tab or Enter the vendor runs
+first, acts and raises it, so `editorKeys` stands down (document-level probe).
+On `keyCode: 0` the vendor never answers, the flag stays `false`, and
+`editorKeys` is the only handler that moves. It also acts on the real keys the
+vendor *declines*: a trusted Shift+Enter fails the vendor's own `shiftKey &&
+keyCode != TAB` test, arrives with the flag `false`, and `editorKeys` saves and
+closes the editor. One keystroke, one call, on either harness.
 
 Census on `gantt.ext.inlineEditors` — `startEdit`, `editNextCell`,
 `editPrevCell`, `save`, `hide` wrapped, `new Error().stack` read to name the
@@ -119,36 +123,34 @@ caller — editor open on a leaf task's `text` cell unless a row says otherwise:
 
 | Key | CDP (trusted, real `keyCode`) | hand-rolled, `keyCode: 0` |
 | --- | --- | --- |
-| Tab | `t.onkeydown` then `editorKeys`: **two** `editNextCell`, `text → resource_id → nominal_days` | `editorKeys` only: **one**, `text → resource_id` |
-| Shift+Tab (from `nominal_days`) | **two** `editPrevCell`, `nominal_days → resource_id → text` | **one**, `nominal_days → resource_id` |
+| Tab | `t.onkeydown` only, `editorKeys` stands down on `event.defaultPrevented`: **one** `editNextCell`, `text → resource_id` | `editorKeys` only (vendor stays silent on `keyCode: 0`): **one**, `text → resource_id` |
+| Shift+Tab (from `nominal_days`) | **one** `editPrevCell`, `nominal_days → resource_id`, `editorKeys` stands down | **one**, `nominal_days → resource_id` |
+| Tab, row edge (from `start_date`, a row's last editable cell) | **one** `editNextCell`, `1.start_date → 2.text` | **one**, `1.start_date → 2.text` |
+| Shift+Tab, row edge (from `text`, a row's first editable cell) | **one** `editPrevCell`, `2.text → 1.start_date` | **one**, `2.text → 1.start_date` |
 | Enter | `save`+`hide`, traced to `t.onkeydown` | `save`+`hide`, traced to `editorKeys` |
 | Escape | `hide`, traced to `t.onkeydown` | no call; editor stays open |
 | ArrowUp / ArrowDown | `hide`, traced to `t.onkeydown`, **no `save` first** — an open edit is discarded, not committed | no call; editor stays open |
 | Delete | no `inlineEditors` call; the field's native edit applies | no call; no native edit |
 | Space | no `inlineEditors` call; the field's native edit applies | no call; no native edit |
 
-The Tab row **is** the double-advance defect: one keystroke, two editable
-columns. The count, not the look of it, is what an accept criterion can hold
-on to.
+The Tab row is where the two handlers overlap — both answer it, and only the
+`defaultPrevented` guard holds the count at one. The count, not the look of it,
+is what an accept criterion can hold on to.
+
+Neither handler is row-bounded — both pass `canChangeRow` true — so the row
+edge is its own pair of cells above, driven rather than inferred from the
+in-row ones.
 
 **What this census did not drive** — absent cells, not absent behaviour:
 
 - The `agent-browser` profile (trusted, `keyCode: 0`) on any of these keys. It
   is the third harness and only the other two were driven; do not assume it
   equals either.
-- Whether `editorKeys` receives the Enter keydown at all. Its `isVisible()`
-  guard (`GanttChart.tsx`) would make it a no-op after the vendor ends the
-  edit, but the wrapper set does not include `isVisible`, so "guarded" and
-  "never reached" are indistinguishable here.
 - Whether Delete reaches `deleteSelected` (`GanttChart.tsx:919`) at runtime.
   Read only: it is a `document`-level listener that doesn't read `keyCode` and
   bails via `keystrokeIsCaptured` (`shortcuts.ts:14`) while an editor field
   holds focus. A hand-rolled dispatch without `bubbles: true` would never
   reach it, so a check built that way proves nothing about the guard.
-- Tab and Shift+Tab **across rows**. Both handlers pass `canChangeRow` true
-  (`GanttChart.tsx`, and the vendor's `editPrevCell(!0)`), so neither is
-  row-bounded — a fix measured only inside one row leaves the row edge
-  unobserved.
 - Which vendor code claims Space. No wrapped `inlineEditors` method was
   called under either harness, and no app-level handler binds it (grep over
   this repo — which says nothing about the library). Loaded vendor code does

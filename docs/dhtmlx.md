@@ -26,9 +26,13 @@ touching `src/gantt` code that talks to the library.
   `keyboard_navigation` and live without it: `t.onkeydown` answers Tab, Enter,
   Escape and the arrows on a real `keyCode`, and it honours
   `event.defaultPrevented`. The app's `editorKeys` binds **Tab and Enter only**
-  — Escape and the arrows are left to the vendor — and does **not** read that
-  flag, so a real Tab is caught twice — the matrix and the
-  counts are in verification.md's census. The app binds
+  — Escape and the arrows are left to the vendor — and also reads that flag, so
+  it acts on exactly the keystrokes the vendor left alone: the synthetic
+  `keyCode: 0` keys it cannot see, and the real keys it declines (a trusted
+  Shift+Enter fails its `shiftKey && keyCode != TAB` test, so `editorKeys`
+  saves it). Without that guard a real Tab is caught twice, one keystroke
+  moving two cells — the matrix and the counts are in verification.md's
+  census. The app binds
   `inlineEditors.editNextCell/editPrevCell` itself (they take `canChangeRow`
   and save the cell they leave) instead of loading a mode that would claim
   arrows and Del, which App owns.

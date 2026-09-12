@@ -810,17 +810,19 @@ export function GanttChart({
           DERIVED_ON_SUMMARY.has(state.columnName)),
     );
 
-    // The keys that move between cells come from dhtmlx's keyboard navigation
-    // extension, which this chart deliberately does not load: it would also
-    // claim the arrows and Del, which App already owns. Left alone, Tab falls
-    // through to the browser and lands on the grid's scrollbar with the editor
-    // still open behind it, and Enter does nothing at all: the only way to
-    // commit a typed value is to click somewhere else. The two moves that are
-    // wanted are on `inlineEditors`, which is loaded, and each saves the cell
-    // it leaves.
+    // dhtmlx's own inline-editor keydown handler (bundled, live without the
+    // keyboard_navigation extension this chart deliberately does not load, to
+    // keep the arrows and Del for App) already answers Tab and Enter on a real
+    // keyCode, and calls preventDefault(). This handler exists for the
+    // keystroke that one cannot see: a hand-rolled keydown carrying
+    // `keyCode: 0`, which is how an agent drives this grid and which the
+    // vendor's own key check never recognises. Standing down on
+    // `event.defaultPrevented` leaves a real key to the vendor's single move
+    // and a synthetic one to this handler alone — without the guard, both run
+    // on a real key and one Tab moves two cells.
     const editorKeys = (event: KeyboardEvent) => {
       const editors = gantt.ext.inlineEditors;
-      if (!editors.isVisible()) return;
+      if (!editors.isVisible() || event.defaultPrevented) return;
       if (event.key === 'Tab') {
         event.preventDefault();
         // Past the last editable cell of a row and on to the first of the next,
