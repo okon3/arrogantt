@@ -7,10 +7,9 @@ T51): chart 2228 → 1205. Nessuna release — refactoring, e il changelog non
 prende plumbing.
 
 Aperti: **T16**, unico task di Goal C, che lo porterebbe alla sua review;
-**O4** in giacenza. Una proposta offerta e non comprata, da T55: l'app non ha
-error boundary — un throw di `solve()` dentro il render smonta il chart e
-porta via il piano aperto. Sanificare gli id o reggere il throw sono due
-meccanismi nuovi, e nessuno dei due e' stato scopato.
+**O4** in giacenza; **T56**, aperto e non ancora scopato fino in fondo — va
+discusso con l'utente prima di briefare, perche' la prima domanda e' di
+prodotto, non tecnica.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
@@ -94,6 +93,29 @@ Task che non servono una milestone: difetti puntuali e salute del codice,
 arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
+
+- [ ] T56 [deep] — Un throw di `solve()` nel render porta via il piano aperto
+      Scoperto da T55 e **non comprato li'**: `solve()` solleva su un modello
+      che porta un `resourceId` fuori da `project.resources`, l'eccezione
+      scappa da un render React e smonta l'albero (`#root` da 1 figlio a 0).
+      T55 ha chiuso l'unica strada con cui l'app genera quell'id; non sanifica,
+      quindi lo stallo resta latente.
+      **Misurare per prima cosa, perche' decide la gravita' e quindi il task**:
+      il draft autosalvato (`draft.ts`, `DRAFT_DELAY = 1000`, solo se dirty)
+      sopravvive al crash? Se al reload il piano torna, il difetto vale un
+      reload e un secondo di lavoro. Ma il draft porta `history.present.text`,
+      che in quello stato contiene l'id pendente: al reload passa dal gate di
+      parsing stretto, che lo **rifiuta**. Se e' cosi', il recupero fallisce e
+      il lavoro se ne va lo stesso. Nessuno l'ha misurato.
+      **Domanda di prodotto, dell'utente, da sciogliere prima del brief**: due
+      meccanismi distinti e non equivalenti — (a) sanificare gli id, che chiude
+      questa classe sola; (b) un error boundary, che regge **ogni** throw futuro
+      del motore ma e' una superficie UI nuova (cosa vede l'utente, puo'
+      salvare, puo' recuperare?). Non sono alternative ovvie e la seconda e' un
+      meccanismo nuovo in un'app interna: la regola dell'80% non copre la
+      perdita di lavoro, ma copre quanto elaborata debba essere la scialuppa.
+      Premessa aperta ereditata da T55: corsia e critic non concordano su
+      quando lo stallo scatti (`simulate.ts:238-242`). Rimisurare, non citare.
 
 - [x] T55 [deep] — Una risorsa rimossa tornava dal morto attraverso la riga —
       `1881fd4`. `applySolution` scrive `resource_id` (una riga): la riga
