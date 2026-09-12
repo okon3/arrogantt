@@ -7,13 +7,8 @@ T51): chart 2228 → 1205. Nessuna release — refactoring, e il changelog non
 prende plumbing.
 
 Aperti: **T16**, unico task di Goal C, che lo porterebbe alla sua review;
-**O4** in giacenza.
-
-**Una decisione aperta, dell'utente**: il piano si contraddice su
-`.claude/specs/T32-report.md` — lo dà per morto col commit di T48 e insieme
-per unico materiale di S5b. Non cancellato: `.claude` non è tracciato, quindi
-la cancellazione è definitiva (i brief di T12-T31 sono andati così). Decide
-l'utente.
+**T55** in manutenzione (difetto misurato in codice, non nell'app); **O4** in
+giacenza.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
@@ -56,8 +51,10 @@ chiedeva e' esposta come export normali (`widestLabelWidth`, `appliedScrollX`,
 
 Cio' che il goal ha deciso e che non va riproposto: **S5b, S6 e S7 restano
 fuori** (S5b unifica la mappa riga — l'unica fetta che cambia forma, in
-giacenza finche' un goal non aggiunge campi di riga; S6/S7 su `App.tsx` e i
-gesti, raccomandati contro dalla spec). Il corpo del handle (268 righe) e gli
+giacenza finche' un goal non aggiunge campi di riga — lane deep, e la verifica
+e' parita' dei campi via `gantt.getTask(id)` dopo apertura/edit/undo su un piano
+con summary, milestone, condivisa, disabled e critico stale, **senza pixel**;
+S6/S7 su `App.tsx` e i gesti, raccomandati contro dalla spec). Il corpo del handle (268 righe) e gli
 handler del modello restano nel chart per scelta: sono le operazioni e il
 codice che muta il modello, e il file di destinazione sarebbe grande quanto
 quello che lascia. Nessuna release: cinque fette di refactoring, e il
@@ -95,6 +92,32 @@ Task che non servono una milestone: difetti puntuali e salute del codice,
 arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
+
+- [ ] T55 [deep] — Una risorsa rimossa torna dal morto attraverso la riga
+      Misurato in codice da T54, **mai nell'app**: `setResources`
+      (`GanttChart.tsx:412-421`) azzera `task.resourceId` nel modello per i task
+      rilasciati e chiama `applySolution`, che — solo fra i 13 campi derivati —
+      `resource_id` **non lo scrive** (arriva sulla riga unicamente da
+      `handle.updateTask:409`). La riga conserva l'id della persona rimossa, e
+      `pullFromView:761` lo rilegge nel modello: il primo edit inline su quella
+      riga riscriverebbe un `resourceId` pendente, verso una risorsa fuori da
+      `project.resources`.
+      Accept: **prima misurare nell'app** (rimuovi una risorsa assegnata, poi
+      leggi `gantt.getTask(id).resource_id` e il modello; poi un edit inline
+      sulla riga e rileggi il modello) — se la catena non si chiude, il task
+      finisce qui con la misura scritta e nessuna modifica. Se si chiude: la
+      correzione, piu' cosa ne segue per il gate `validateResources` del formato
+      file (un `.gantt` salvato in quello stato è ricaricabile?) e il bullet dei
+      cinque punti in `docs/view.md`, che oggi enuncia la regola che questo
+      campo viola.
+
+- [x] T54 [self] — Graduare lo schema della riga, poi seppellire T32-report —
+      `c6bac0c`. Il ragionamento di §2.3 (stringa vs `Date`, identita' e stato
+      di vista scritti dal solo parse e perche', la regola dei soli campi
+      derivati, la premessa non verificata su `gantt.parse`) sta in
+      `docs/view.md` § Grid con riferimenti riaperti sul codice post-refactoring;
+      `.claude/specs/T32-report.md` cancellato. La ricognizione ha trovato cio'
+      che il report non diceva: un'asimmetria viva fra i due percorsi — T55.
 
 - [x] T53 [deep] — Il calendario entra senza gate, su tutte e due le strade —
       `532a4e4`. `validateCalendar` (`calendarRules.ts`) su agent API, file e
@@ -152,10 +175,6 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   rimasti si ripaga sul goal dopo, non su questo. Da riproporre solo con un
   goal nuovo. **Prima di scopare la leva 1**: provare che la browser mode di
   vitest parta su questa macchina Windows, mai fatto.
-- `.claude/specs/T32-report.md` — **e' la spec di T44-T48**, non un'analisi in
-  attesa: sta elencato qui perche' T32 e' `[x]` e lo sweep degli orfani lo
-  cancellerebbe. Muore col commit di T48. Contiene anche S5b, S6 e S7, che
-  restano fuori goal: se S5b si comprera' un giorno, il materiale e' qui.
 - `.claude/specs/T26-report.md` — UX dei link, tutto misurato nell'app. O1, O2
   e il banner sono chiusi con Goal D, ma **non cancellarlo**: e' il materiale
   di O4 (editor delle dipendenze), l'unica delle sue opzioni ancora in
@@ -184,7 +203,9 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   arrivato al critic) ne' un nome di tipo (T48: la spec citava
   `GanttConfig['columns']`, che non esiste). Mitigazione che ha pagato quattro
   volte (T44, T46, T48): i fatti che il brief non ha letto, **ordinare alla
-  corsia di verificarli**; quelli che ha letto, risolverli nel brief.
+  corsia di verificarli**; quelli che ha letto, risolverli nel brief. E
+  ri-localizzare invece di copiare **trova**: T54 (ricognizione 48k, zero giri)
+  cercava i `file:line` scaduti di un'analisi e ne ha scoperto il difetto vivo.
 - Il critic trova cio' che l'accept non chiedeva (T41, T42, T45). Su uno
   spostamento **l'hash, non la lettura** — e il diff complementare di cio' che
   resta (T47, T48: e' l'unica prova contro un ripristino sporco). E sempre **la
