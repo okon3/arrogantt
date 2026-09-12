@@ -106,6 +106,24 @@ for exact figures.
 - The float *figure* is measured per row when its details open, inside the limit
   only (a summary costs a search per leaf).
 
+## When the simulation stalls
+
+`schedule()` throws `Scheduler stalled: no active task received capacity` when
+`!Number.isFinite(step)` — every active task's rate is zero and no future
+arrival or capacity edge can move the clock. Measured, not derived:
+
+- A leaf with `effort > 0` whose `resourceId` is not in `resources` reaches it
+  **always**. `capacityOf` returns 0 for an id it does not know, so the task
+  never leaves `pending`; other tasks only postpone the throw. The view keeps
+  that id out at both ends (`docs/file-format.md`, *The gate holds both ways*).
+- **Zero effort does not**: a milestone drains in the reachability loop before
+  rates are consulted.
+- **An absence does not**: an override at zero always ends, so the clock can
+  step past it — 2026 to 2999 schedules in 3000 rather than throwing. Hence
+  `validateResources` refuses zero as a *default* availability: that is the
+  only way to express "never works", and a person who never works is a person
+  to remove.
+
 ## Time off and availability
 
 - **Company shutdowns** (`calendar.holidays`) leave the axis like weekends: tasks

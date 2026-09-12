@@ -519,6 +519,28 @@ that isn't there.
   body's bottom padding to `--space-2` so the message-to-buttons gap is 24px
   (8 + the footer's 16) instead of the primitive's 40.
 
+## The chart's model is the caller's object until a file replaces it
+
+`<GanttChart project={initialProject}>` hands over a **module-level constant**
+(`App.tsx`), and the chart keeps it by reference: `projectRef = useRef(project)`.
+Until `loadProject` reassigns `projectRef.current` — opening a file, *New*, or
+resuming a draft, which all go through it — the live model **is** that constant,
+so the prop and the model are the same object. After any of those, they are two.
+
+That asymmetry decides what an exception from `solve()` costs, and it cost three
+measurements to find:
+
+- On a **virgin** session a throw in the render body took the whole tree down —
+  blank page, open plan gone. That is why `solve` at mount is now lazy: it was
+  the only solve on the render path.
+- After a load, the render body solves the untouched empty constant, so the same
+  bad model throws only from inside a dhtmlx handler, where **nothing catches it
+  and nothing shows**: the chart stays on screen while the model keeps the bad
+  value and silently stops taking edits.
+
+Measure a model-level failure on **both** kinds of session. A fixture built after
+`loadText` is not the state a user starts in.
+
 ## Undo and the draft
 
 - Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y + toolbar arrows, greyed when empty, each

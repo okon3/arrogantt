@@ -165,6 +165,13 @@ one wrong. The pattern, not the anecdotes:
   comment inherits its premise — abbreviating is not verifying. An
   out-of-scope finding still needs checking before it is archived. A premise
   that passes three hands becomes an institutional trap.
+  **And a premise is verified on the path that uses it, never on the line that
+  states it.** T56 read the definition of `initialProject`, saw a module
+  constant, and concluded the render could only ever solve an empty project —
+  true of that line, false of the program, because `useRef(project)` one file
+  away made it the live model too. The reading was correct and the conclusion
+  was wrong; it took the hub, a lane and a critic three rounds to notice,
+  because each of them re-read the same line. Ask who else holds the reference.
 - **A probe must not measure its own prompts.** Grepping a string across a
   corpus that contains the briefs quoting that string counts itself. Filter to
   the field that records real invocations before drawing a number.

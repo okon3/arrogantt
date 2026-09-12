@@ -6,10 +6,8 @@
 T51): chart 2228 → 1205. Nessuna release — refactoring, e il changelog non
 prende plumbing.
 
-Aperti: **T16**, unico task di Goal C, che lo porterebbe alla sua review;
-**O4** in giacenza; **T56**, aperto e non ancora scopato fino in fondo — va
-discusso con l'utente prima di briefare, perche' la prima domanda e' di
-prodotto, non tecnica.
+Aperti: **T16**, unico task di Goal C, che lo porterebbe alla sua review; **O4**
+in giacenza. T56 e' chiuso: la manutenzione non ha altro in coda.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
@@ -94,28 +92,31 @@ arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 
-- [ ] T56 [deep] — Un throw di `solve()` nel render porta via il piano aperto
-      Scoperto da T55 e **non comprato li'**: `solve()` solleva su un modello
-      che porta un `resourceId` fuori da `project.resources`, l'eccezione
-      scappa da un render React e smonta l'albero (`#root` da 1 figlio a 0).
-      T55 ha chiuso l'unica strada con cui l'app genera quell'id; non sanifica,
-      quindi lo stallo resta latente.
-      **Misurare per prima cosa, perche' decide la gravita' e quindi il task**:
-      il draft autosalvato (`draft.ts`, `DRAFT_DELAY = 1000`, solo se dirty)
-      sopravvive al crash? Se al reload il piano torna, il difetto vale un
-      reload e un secondo di lavoro. Ma il draft porta `history.present.text`,
-      che in quello stato contiene l'id pendente: al reload passa dal gate di
-      parsing stretto, che lo **rifiuta**. Se e' cosi', il recupero fallisce e
-      il lavoro se ne va lo stesso. Nessuno l'ha misurato.
-      **Domanda di prodotto, dell'utente, da sciogliere prima del brief**: due
-      meccanismi distinti e non equivalenti — (a) sanificare gli id, che chiude
-      questa classe sola; (b) un error boundary, che regge **ogni** throw futuro
-      del motore ma e' una superficie UI nuova (cosa vede l'utente, puo'
-      salvare, puo' recuperare?). Non sono alternative ovvie e la seconda e' un
-      meccanismo nuovo in un'app interna: la regola dell'80% non copre la
-      perdita di lavoro, ma copre quanto elaborata debba essere la scialuppa.
-      Premessa aperta ereditata da T55: corsia e critic non concordano su
-      quando lo stallo scatti (`simulate.ts:238-242`). Rimisurare, non citare.
+- [x] T56 [deep] — Un id che il progetto non conosce, tenuto fuori dal modello
+      e fuori dal file — `8fd9a1c`. Due guardie comprate dall'utente dopo tre
+      misure: `pullFromView` e `onAfterTaskAdd` non copiano nel modello un
+      `resource_id` che il progetto non riconosce; `serializeForFile` rifa il
+      giro dal parser su cio' che Save e `toText()` stanno per consegnare, cosi'
+      l'app non scrive piu' un file che il proprio gate rifiuta di riaprire.
+      L'error boundary, terza opzione sul tavolo, **e' stato scartato su
+      misura**: il throw non raggiungeva un render se non su una sessione
+      vergine, e li' l'ha chiuso una riga — `solve` al mount reso pigro, che era
+      l'unico solve sul percorso di render.
+      Il difetto vero non era quello con cui il task era stato aperto: non la
+      pagina bianca (che il draft sopravviveva comunque, misurato: zero edit
+      persi), ma il salvataggio che **riusciva** scrivendo un file irrecuperabile
+      mentre l'utente non vedeva nulla e gli edit avevano smesso di entrare.
+      Due giri di critic, quattro findings in tutto, tutti chiusi; gli ultimi due
+      erano lo stesso commento sbagliato in due file — la premessa dello
+      smontaggio, sopravvissuta alla propria correzione a un file di distanza.
+      Graduato fuori dal piano: la semantica dello stallo in
+      `docs/scheduling.md`, la trappola d'identita' fra prop e modello vivo in
+      `docs/view.md`, il gate in uscita in `docs/file-format.md` e `CLAUDE.md`,
+      `toText()` che solleva in `agentApi.help.md`, e la lezione di metodo
+      («una premessa si verifica sul percorso che la usa») in `CLAUDE.md`.
+      Non guidati e dichiarati tali: un file che atterra davvero su disco (lo
+      strumento annulla il download di un blob, misurato a `createObjectURL`),
+      e il conteggio delle invocazioni di `solve` per render.
 
 - [x] T55 [deep] — Una risorsa rimossa tornava dal morto attraverso la riga —
       `1881fd4`. `applySolution` scrive `resource_id` (una riga): la riga
@@ -127,15 +128,15 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       allargata al punto da autorizzare `open`/`parent` dentro `applySolution`,
       il commento e il bullet che raccontavano il difetto al passato, e un
       riferimento scaduto in `docs/verification.md`.
-      **Fatto misurato che vale oltre il task**: un modello che porta un
-      `resourceId` fuori da `project.resources` fa sollevare a `solve()`
-      `Scheduler stalled` (`simulate.ts`), l'eccezione **scappa da un render
-      React** e smonta `<GanttChart>` — il piano aperto sparisce, senza dialogo
-      e senza undo. La correzione toglie l'unica strada con cui l'app genera
-      quell'id; **non** sanifica gli id, quindi lo stallo resta latente. Sulla
-      condizione esatta corsia e critic **non concordano** («solo se ogni task
-      schedulabile e' affamato» contro «quando l'affamato e' l'ultimo pendente»,
-      `simulate.ts:238-242`): premessa non chiusa, da rimisurare prima di usarla.
+      **Cio' che T55 ha misurato qui regge, ma solo su meta' dei percorsi**, e
+      T56 ha impiegato tre misure a capire quale meta': `#root` va davvero da 1
+      a 0 su una sessione **vergine**, dove il modello vivo e' ancora la
+      costante di modulo che il render risolve; dopo un `loadText` o un
+      `newProject()` non si smonta niente e il throw resta nell'handler.
+      Dettagli in T56.
+      Sulla condizione esatta corsia e critic **non concordavano**: chiusa dalla
+      misura 1 di T56 — sbagliavano entrambi, un `resourceId` sconosciuto su un
+      task con effort solleva **sempre**.
 
 - [x] T54 [self] — Graduare lo schema della riga, poi seppellire T32-report —
       `c6bac0c`. Il ragionamento di §2.3 (stringa vs `Date`, identita' e stato
@@ -210,20 +211,20 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   summary, milestone, undo della creazione) e reggono.
 
 ## Log
-- Dimensionamento misurato: impl oltre ~200k = task da splittare (T35 215k, T18
-  182k+250k); critic 75-95k a passata; una correzione via SendMessage costa meno
-  di un fresh spawn (~40k) — **ma non oltre ~190k di contesto**: li' chiude
-  l'hub, se ha le misure (T52; T55 impl 188k/critic 129k, quattro findings).
+- Dimensionamento: impl oltre ~200k = task da splittare (T35 215k, T18 182k+250k);
+  critic 75-95k, ma 148-168k se va guidato nel browser (T56); una correzione via
+  SendMessage riusa il contesto e costa meno di un fresh spawn (~40k) — **ma non
+  oltre ~190k**: li' chiude l'hub, se ha le misure (T52; T55 188k/129k). T56:
+  misura 136k, impl 131k + 166k, due critic, quattro findings.
+- **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta hanno chiuso
+  la condizione dello stallo e il round-trip del salvataggio (T56) per pochi k,
+  dove una corsia paga 40k di solo ingresso. Delegare conviene dal browser in su.
 - Un task il cui accept e' una campagna di misura va scopato come task di sola
   misura: T31 chiedeva misura + modifica e ha saturato tre contesti per 21
   righe di diff; T42, scopato come misura, 99k/135k e zero correzioni. Variante
   che ha funzionato su T55: **misura prima, correggi solo se la catena si
   chiude**, con «nessun diff» dichiarato esito valido — toglie alla corsia
   l'incentivo a correggere un difetto che potrebbe non esistere.
-- **Spezzare la checklist in due metà disgiunte tiene dentro il contesto un
-  task fuori misura**: T48, 172k e 171k a corsia e critic su liste e fixture
-  diverse, zero giri, dove T46 da solo aveva fatto 205k. La partizione va
-  scritta nel brief: «questa metà non e' tua» evita che la corsia la paghi.
 - Ricognizione a monte del brief: paga, **ma una citazione copiata non e'
   verificata** — ne' un `file:line` (T43) ne' un nome di tipo (T48: la spec
   citava `GanttConfig['columns']`, inesistente). Quel che il brief non ha
@@ -245,7 +246,7 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   che dice di provare.** T45 chiedeva ctrl+wheel (non misurabile in sintetico),
   T46 «le bande spariscono a Months» (vero su un piano corto, falso su uno
   lungo), T48 «Tab muove fra le celle» (ne muove due). Cinque fette su cinque.
-- **I documenti vanno confrontati fra loro e col codice**: la §3 di T45
-  illustrava una firma che la §4 vietava, e una regola che ho scritto su
-  `install*` era falsa sull'altra `install*` del repo. Mie entrambe. Una regola
-  derivata da un modulo si verifica su **tutti** i suoi casi prima dei docs.
+- **I documenti e i commenti vanno confrontati fra loro e col codice**: la §3 di
+  T45 illustrava una firma che la §4 vietava; in T56 la stessa premessa
+  sbagliata viveva in due commenti, e correggerne uno ha lasciato l'altro in
+  piedi. Una regola derivata da un modulo si verifica su **tutti** i suoi casi.
