@@ -96,57 +96,15 @@ arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 
-- [>] T53 [deep] — Il calendario entra senza gate, su tutte e due le strade
-      **La premessa del piano era sbagliata e l'ho misurata**: non e' che «il
-      formato file rifiuta e l'agent API no» — il calendario non ha nessun
-      validatore, su **nessuna** strada. `serialization.ts:276` e' un cast
-      cieco (`root.calendar as CalendarSpec`) e solo `holidays` passa da un
-      parser. Sonda usa-e-getta su `deserializeProject`, due file accettati:
-      `windows: [{from:'08:00',to:'17:00'}]` e `workingDays: 'weekdays'`.
-      `agentApi.ts:403` (`setCalendar`) non valida; il precedente sta 180
-      righe sopra, `commitResources` (`:219`) fa `validateResources` → throw.
-      `CalendarDialog.tsx:36-44` tiene due regole inline (≥1 giorno
-      lavorativo; ogni chiusura vuole from/to) e edita solo `workingDays` e
-      `holidays` — `windows` passa per spread, quindi il dialogo non puo'
-      introdurle rotte, ma **le regole vivono in due posti**, che
-      `CLAUDE.md` vieta.
-      **Perche' stalla**: `WorkingCalendar` (`scheduler/calendar.ts:79-90`) si
-      difende da solo su due casi — `workingDays` vuoto e `windows` vuoto,
-      entrambi `throw`. Il NaN no: `minutesPerDay = Σ(to - from)` con
-      `'08:00'` diventa NaN, la simulazione non avanza piu' e l'esito e'
-      «Scheduler stalled: pending tasks are unreachable».
-      **Perche' [deep]**: la regola sulle finestre sovrapposte protegge
-      `minutesPerDay`, cioe' la conservazione dell'effort — invariante di
-      `CLAUDE.md`, non rifinitura.
-      Fix: un `validateCalendar(spec): string | null` in `src/gantt/`, che
-      rispecchia `validateResources` (`resources.ts:78`), cablato su tutte e
-      tre le strade e con le regole del dialogo assorbite.
-      Accept: i due file della sonda **rifiutati** con un messaggio che nomina
-      il campo; `yagni.setCalendar` che lancia invece di memorizzare; il
-      dialogo che non perde i suoi due messaggi; nessuna strada che arriva a
-      «Scheduler stalled» per un calendario malformato. `docs/file-format.md`
-      aggiornato nello stesso commit — il gate cambia.
-      **Stato**: corsia deep consegnata, tree sporco e **non committato**,
-      critic lanciato il 2026-09-12 ~09:55 UTC. Check dell'hub verdi (417
-      test, build 0, lint 0), HEAD `38189c9`, nessun commit di corsia.
-      Consegnato: `calendarRules.ts` + test (23 casi), gate su agent API,
-      `deserializeProject` e dialogo, `docs/file-format.md`.
-      Tre modifiche dell'hub sopra la corsia: `agentApi.help.md` scongelato
-      (la sua lista «refuses rather than repairs» contraddiceva
-      `docs/file-format.md`, e la riga di `setCalendar` taceva l'unita' che
-      ha causato il difetto), e il commento sulla regola dei duplicati
-      riscritto — la corsia la giustificava con «quale dei due fosse inteso e'
-      inconoscibile», falso per `[1,1]`.
-      Due cose che la corsia ha misurato e che valgono oltre il task: la causa
-      del tab piantato **non e' il NaN** ma `workingDays` fuori da `0..6` —
-      il walk `while (!isWorkingDay(day)) day++` del costruttore non ha bound,
-      a differenza di `startOfWorkingDay` che porta un `limit`; e
+- [x] T53 [deep] — Il calendario entra senza gate, su tutte e due le strade —
+      `532a4e4`. `validateCalendar` (`calendarRules.ts`) su agent API, file e
+      dialogo; regole e gate in `docs/file-format.md`, unita' e rifiuti in
+      `agentApi.help.md`. Due fatti sul motore, misurati, che valgono oltre il
+      task: il tab piantato **non e' il NaN** ma `workingDays` fuori da `0..6`
+      — il walk `while (!isWorkingDay(day)) day++` del costruttore non ha
+      bound, a differenza di `startOfWorkingDay` che porta un `limit`; e
       `expandRanges` **salta** un endpoint malformato invece di fallire,
-      quindi una chiusura con data sbagliata copriva silenziosamente niente.
-      **Chi riprende**: `git status` prima di tutto. Sporco = il lavoro di
-      T53 e' li', da committare dopo aver chiuso le findings del critic (che
-      non sopravvive alla sessione: se il suo report non e' arrivato, va
-      ri-lanciato sul diff).
+      quindi una chiusura con data sbagliata copriva niente in silenzio.
 
 - [x] T52 [impl] — Il censimento dei tasti — `3d46c71`. Assorbiva T50. I fatti
       stanno nel censimento di `docs/verification.md`; la regola «un censimento
