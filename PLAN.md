@@ -7,8 +7,7 @@ T51): chart 2228 → 1205. Nessuna release — refactoring, e il changelog non
 prende plumbing.
 
 Aperti: **T16**, unico task di Goal C, che lo porterebbe alla sua review;
-**T49** (un Tab salta una cella), ora briefabile — T52 ne ha misurato la causa
-e il fix e' una riga; **O4** in giacenza.
+**O4** in giacenza.
 
 **Una decisione aperta, dell'utente**: il piano si contraddice su
 `.claude/specs/T32-report.md` — lo dà per morto col commit di T48 e insieme
@@ -97,52 +96,14 @@ arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 
-- [x] T52 [impl] — Il censimento dei tasti, e le due premesse che ha
-      falsificato — `3d46c71`. Assorbiva T50. Il gate e' il **`keyCode`**, non
-      il trust; `t.onkeydown` di `inlineEditors` e' vivo senza
-      `keyboard_navigation` e **onora** `defaultPrevented`; `editorKeys` no.
-      Regola graduata in `CLAUDE.md`: un censimento si scrive come matrice di
-      celle guidate, non in prosa.
+- [x] T52 [impl] — Il censimento dei tasti — `3d46c71`. Assorbiva T50. I fatti
+      stanno nel censimento di `docs/verification.md`; la regola «un censimento
+      si scrive come matrice di celle guidate, non in prosa» in `CLAUDE.md`.
 
-- [>] T49 [impl] — Un Tab salta una cella nell'editor della griglia
-      Un Tab avanza **due** celle editabili (`text` → `nominal_days`, salta
-      `resource_id`; ordine delle colonne editabili in `gridColumns.ts`).
-      `editorKeys` (`GanttChart.tsx:821-836`) chiama `editNextCell(true)` e
-      non guarda `event.defaultPrevented`; l'handler vendor quella guardia
-      ce l'ha. **Il secondo attore ha un nome**, misurato da T52: e'
-      l'handler keydown di `inlineEditors` stesso (`t.onkeydown`, nel
-      bundle), non `keyboard_navigation` — che risulta assente e resta
-      assente anche con `config.keyboard_navigation = true`. Gira **prima**
-      del nostro in ordine di bubble: `text → resource_id`, poi `editorKeys`
-      fa `resource_id → nominal_days`.
-      **Il fix e' determinato, ed e' una riga**: `editorKeys` deve tirarsi
-      indietro su `event.defaultPrevented`. Con un tasto reale il vendor gira
-      primo e lo alza → un avanzamento; con un sintetico a `keyCode: 0` il
-      vendor tace, il flag resta falso e il nostro agisce → un avanzamento.
-      Entrambi gli harness coperti.
-      **Tre cose che il brief deve portarsi dietro**: il commento a
-      `GanttChart.tsx:813-819` e' l'ultima copia in repo della premessa
-      falsificata («Tab cade sullo scrollbar della griglia») e va corretto
-      nello stesso diff; **Tab e Shift+Tab attraverso le righe non sono mai
-      stati misurati** — entrambi gli handler passano `canChangeRow` true,
-      quindi nessuno dei due e' limitato alla riga, e un fix verificato solo
-      dentro una riga lascia il bordo non osservato; e su Enter **non si sa**
-      se `editorKeys` riceva affatto il keydown (il censimento non ha wrappato
-      `isVisible`: «guardato» e «mai raggiunto» sono indistinguibili), quindi
-      non dare per buona nessuna simmetria Tab/Enter.
-      **Preesistente, non introdotto da T48**: misurato instrumentando
-      `startEdit` e contando le chiamate per keydown su HEAD e sul tree di
-      T48 — identico, chiamata per chiamata, su due run.
-      Accept: un Tab = una cella **e** un Shift+Tab = una cella, misurati per
-      conteggio di `startEdit` (non a occhio) prima e dopo il fix, **dentro una
-      riga e sul bordo fra due righe**; Enter che salva una volta sola; e il
-      caso sintetico a `keyCode: 0` che continua a muoversi di una cella — e'
-      la meta' che una guardia scritta male spegne.
-      Depends: T52 — soddisfatta.
-      **Stato al passaggio di sessione**: brief scritto in
-      `.claude/briefs/T49.md`, **nessuna corsia lanciata** e tree pulito. Il
-      brief e' valido: il codice non e' cambiato da quando e' stato scritto.
-      Si parte spawnando la corsia su quel brief.
+- [x] T49 [impl] — Un Tab salta una cella nell'editor della griglia — `bdcb120`.
+      `editorKeys` si tira indietro su `event.defaultPrevented`. Il critic ha
+      trovato quattro premesse stantie nel censimento, tutte chiuse; matrice e
+      conteggi (bordi riga e `keyCode: 0` inclusi) in `docs/verification.md`.
 
 - [x] T40 [self] — L'ultimo descendant override di una primitiva di dialog — `1d2cb2e`
 - [x] T36 [self] — Tracciare il piano e il binding in git — `35483e0`
@@ -153,7 +114,7 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 ha scopate, e vanno riproposte solo se qualcuno le vuole):
 - Caricare `keyboard_navigation` in una sonda usa-e-getta per misurare cosa
   rivendica davvero. La clausola «a mode that would claim arrows and Del,
-  which App owns» vive in `docs/dhtmlx.md` e in `GanttChart.tsx:814` ed e' una
+  which App owns» vive in `docs/dhtmlx.md` e in `GanttChart.tsx:815` ed e' una
   premessa `would` mai verificata: il critic di T52 l'ha giudicata salva **per
   scope** (il soggetto e' un'extension non caricata, non l'handler
   dell'editor), quindi non e' un difetto — solo l'ultima premessa non misurata
