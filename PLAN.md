@@ -7,8 +7,10 @@ T51): chart 2228 → 1205. Nessuna release — refactoring, e il changelog non
 prende plumbing.
 
 Aperti: **T16**, unico task di Goal C, che lo porterebbe alla sua review;
-**T55** in manutenzione (difetto misurato in codice, non nell'app); **O4** in
-giacenza.
+**O4** in giacenza. Una proposta offerta e non comprata, da T55: l'app non ha
+error boundary — un throw di `solve()` dentro il render smonta il chart e
+porta via il piano aperto. Sanificare gli id o reggere il throw sono due
+meccanismi nuovi, e nessuno dei due e' stato scopato.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
@@ -93,23 +95,25 @@ arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 
-- [ ] T55 [deep] — Una risorsa rimossa torna dal morto attraverso la riga
-      Misurato in codice da T54, **mai nell'app**: `setResources`
-      (`GanttChart.tsx:412-421`) azzera `task.resourceId` nel modello per i task
-      rilasciati e chiama `applySolution`, che — solo fra i 13 campi derivati —
-      `resource_id` **non lo scrive** (arriva sulla riga unicamente da
-      `handle.updateTask:409`). La riga conserva l'id della persona rimossa, e
-      `pullFromView:761` lo rilegge nel modello: il primo edit inline su quella
-      riga riscriverebbe un `resourceId` pendente, verso una risorsa fuori da
-      `project.resources`.
-      Accept: **prima misurare nell'app** (rimuovi una risorsa assegnata, poi
-      leggi `gantt.getTask(id).resource_id` e il modello; poi un edit inline
-      sulla riga e rileggi il modello) — se la catena non si chiude, il task
-      finisce qui con la misura scritta e nessuna modifica. Se si chiude: la
-      correzione, piu' cosa ne segue per il gate `validateResources` del formato
-      file (un `.gantt` salvato in quello stato è ricaricabile?) e il bullet dei
-      cinque punti in `docs/view.md`, che oggi enuncia la regola che questo
-      campo viola.
+- [x] T55 [deep] — Una risorsa rimossa tornava dal morto attraverso la riga —
+      `1881fd4`. `applySolution` scrive `resource_id` (una riga): la riga
+      rispecchia anche gli **input** del modello, non solo la risposta del
+      solver — `nominal_days` stava li' da sempre, `resource_id` no. Sito scelto
+      contro `setResources` perche' chiude la classe per ogni strada che finisce
+      nel funnel dell'undo, non solo per quella di oggi. Il critic ha trovato
+      quattro difetti testuali, tutti chiusi dall'hub: una regola nei docs
+      allargata al punto da autorizzare `open`/`parent` dentro `applySolution`,
+      il commento e il bullet che raccontavano il difetto al passato, e un
+      riferimento scaduto in `docs/verification.md`.
+      **Fatto misurato che vale oltre il task**: un modello che porta un
+      `resourceId` fuori da `project.resources` fa sollevare a `solve()`
+      `Scheduler stalled` (`simulate.ts`), l'eccezione **scappa da un render
+      React** e smonta `<GanttChart>` — il piano aperto sparisce, senza dialogo
+      e senza undo. La correzione toglie l'unica strada con cui l'app genera
+      quell'id; **non** sanifica gli id, quindi lo stallo resta latente. Sulla
+      condizione esatta corsia e critic **non concordano** («solo se ogni task
+      schedulabile e' affamato» contro «quando l'affamato e' l'ultimo pendente»,
+      `simulate.ts:238-242`): premessa non chiusa, da rimisurare prima di usarla.
 
 - [x] T54 [self] — Graduare lo schema della riga, poi seppellire T32-report —
       `c6bac0c`. Il ragionamento di §2.3 (stringa vs `Date`, identita' e stato
@@ -184,28 +188,29 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   summary, milestone, undo della creazione) e reggono.
 
 ## Log
-- Cap: 40 righe, una-due per voce, nessun elenco di task chiusi (il commit e' il
-  record; il resto della regola sta in `.claude/orchestrate.md`).
 - Dimensionamento misurato: impl oltre ~200k = task da splittare (T35 215k, T18
-  182k+250k); critic 75-95k a passata; una correzione via SendMessage costa
-  meno di un fresh spawn (~40k di solo ingresso) — **ma non a 195k di contesto**
-  (T52): oltre la soglia conviene che l'hub finisca il lavoro, se ha le misure.
+  182k+250k); critic 75-95k a passata; una correzione via SendMessage costa meno
+  di un fresh spawn (~40k) — **ma non oltre ~190k di contesto**: li' chiude
+  l'hub, se ha le misure (T52; T55 impl 188k/critic 129k, quattro findings).
 - Un task il cui accept e' una campagna di misura va scopato come task di sola
   misura: T31 chiedeva misura + modifica e ha saturato tre contesti per 21
-  righe di diff; T42, scopato come misura, 99k/135k e zero correzioni.
+  righe di diff; T42, scopato come misura, 99k/135k e zero correzioni. Variante
+  che ha funzionato su T55: **misura prima, correggi solo se la catena si
+  chiude**, con «nessun diff» dichiarato esito valido — toglie alla corsia
+  l'incentivo a correggere un difetto che potrebbe non esistere.
 - **Spezzare la checklist in due metà disgiunte tiene dentro il contesto un
-  task fuori misura**: T48 (331 righe, la checklist piu' lunga del goal) —
-  corsia e critic su liste e fixture diverse, 172k e 171k, zero giri, dove
-  T46 da solo aveva fatto 205k. La partizione va scritta nel brief: dire
-  «questa metà non e' tua» evita che la corsia la paghi comunque.
+  task fuori misura**: T48, 172k e 171k a corsia e critic su liste e fixture
+  diverse, zero giri, dove T46 da solo aveva fatto 205k. La partizione va
+  scritta nel brief: «questa metà non e' tua» evita che la corsia la paghi.
 - Ricognizione a monte del brief: paga, **ma una citazione copiata non e'
-  verificata** — ne' un `file:line` (T43: si contraddiceva, il difetto e'
-  arrivato al critic) ne' un nome di tipo (T48: la spec citava
-  `GanttConfig['columns']`, che non esiste). Mitigazione che ha pagato quattro
-  volte (T44, T46, T48): i fatti che il brief non ha letto, **ordinare alla
-  corsia di verificarli**; quelli che ha letto, risolverli nel brief. E
-  ri-localizzare invece di copiare **trova**: T54 (ricognizione 48k, zero giri)
-  cercava i `file:line` scaduti di un'analisi e ne ha scoperto il difetto vivo.
+  verificata** — ne' un `file:line` (T43) ne' un nome di tipo (T48: la spec
+  citava `GanttConfig['columns']`, inesistente). Quel che il brief non ha
+  letto, **ordinare alla corsia di verificarlo**; quel che ha letto, risolverlo
+  nel brief (ha pagato su T44, T46, T48). Due corollari misurati:
+  ri-localizzare invece di copiare **trova** (T54 cercava riferimenti scaduti e
+  ha scoperto un difetto vivo), e un `file:line` si rilegge **dopo** l'ultima
+  modifica, mai calcolato (T55: accorciare il commento da `+7` a `+6` ha
+  riscaduto quattro riferimenti gia' riallineati).
 - Il critic trova cio' che l'accept non chiedeva (T41, T42, T45). Su uno
   spostamento **l'hash, non la lettura** — e il diff complementare di cio' che
   resta (T47, T48: e' l'unica prova contro un ripristino sporco). E sempre **la
@@ -219,7 +224,6 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   T46 «le bande spariscono a Months» (vero su un piano corto, falso su uno
   lungo), T48 «Tab muove fra le celle» (ne muove due). Cinque fette su cinque.
 - **I documenti vanno confrontati fra loro e col codice**: la §3 di T45
-  illustrava una firma che la §4 vietava; la §5 della spec di Goal E propone un
-  detach che la §6 contraddice; e una regola che ho scritto su `install*` era
-  falsa sull'altra `install*` del repo. Mie tutte e tre. Una regola derivata da
-  un modulo si verifica su **tutti** i suoi casi prima di entrare nei docs.
+  illustrava una firma che la §4 vietava, e una regola che ho scritto su
+  `install*` era falsa sull'altra `install*` del repo. Mie entrambe. Una regola
+  derivata da un modulo si verifica su **tutti** i suoi casi prima dei docs.
