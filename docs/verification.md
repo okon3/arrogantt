@@ -146,7 +146,7 @@ in-row ones.
 - The `agent-browser` profile (trusted, `keyCode: 0`) on any of these keys. It
   is the third harness and only the other two were driven; do not assume it
   equals either.
-- Whether Delete reaches `deleteSelected` (`GanttChart.tsx:919`) at runtime.
+- Whether Delete reaches `deleteSelected` (`GanttChart.tsx:927`) at runtime.
   Read only: it is a `document`-level listener that doesn't read `keyCode` and
   bails via `keystrokeIsCaptured` (`shortcuts.ts:14`) while an editor field
   holds focus. A hand-rolled dispatch without `bubbles: true` would never

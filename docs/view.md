@@ -152,13 +152,17 @@ that isn't there.
 - **The dhtmlx row schema is written in five places**: `toGanttData`
   (`ganttRows.ts:37`) and `applySolution` (`GanttChart.tsx:217`, plus
   `writeChainOntoRows` `ganttRows.ts:116` for the chain flags) map model → row;
-  `handle.addTask` (`GanttChart.tsx:443`) builds a new row; `onAfterTaskAdd`
-  (`GanttChart.tsx:976`) and `pullFromView` (`GanttChart.tsx:734`) read row →
-  model. A new derived field goes in **both** model → row paths; added to one
-  only it is right on open and stale after every edit — it doesn't throw, it
-  lies.
+  `handle.addTask` (`GanttChart.tsx:449`) builds a new row; `onAfterTaskAdd`
+  (`GanttChart.tsx:982`) and `pullFromView` (`GanttChart.tsx:740`) read row →
+  model. A new field goes in **both** model → row paths wherever the row
+  mirrors the model — derived figures and carried inputs (`nominal_days`,
+  `resource_id`) alike; identity and view state are the exception the next
+  bullet draws. Added to one path only, a field is right on open and stale
+  after every edit — it doesn't throw, it lies. `progress` sits on the
+  exception side and is not an oversight: the parse and `updateTask` write it,
+  and no path clears it on the model without writing the row.
 - **The two model → row paths are not interchangeable**, so a single
-  `rowFieldsOf` could only return the derived fields. `toGanttData` formats
+  `rowFieldsOf` could not be the whole of either. `toGanttData` formats
   `start_date`/`end_date` as **strings** — `gantt.parse` wants them
   (`ganttRows.ts:51`) — while `applySolution` assigns **`Date`**
   (`GanttChart.tsx:235`); whether `gantt.parse` accepts a `Date` there is

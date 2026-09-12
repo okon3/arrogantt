@@ -237,6 +237,12 @@ export function GanttChart({
         ganttTask.end_shown = scheduled.end;
         ganttTask.elapsed_days = solved.calendar.minutesToDays(scheduled.elapsedWorkingMinutes);
         ganttTask.nominal_days = task.nominalDays;
+        // An input, like `nominal_days` above: the row mirrors the model, not
+        // just the solver's answer. Without it a path that clears `resourceId`
+        // without writing the row leaves a dead id for `pullFromView` to read
+        // back, and the saved file names a person `deserializeProject` refuses
+        // to reopen.
+        ganttTask.resource_id = task.resourceId ?? '';
         ganttTask.rolled_effort_days = solved.calendar.minutesToDays(scheduled.effortMinutes);
         const summary = solved.summaryIds.has(task.id);
         const inherited = effectiveColorOf(projectRef.current.tasks, solved.hierarchy, task.id);
