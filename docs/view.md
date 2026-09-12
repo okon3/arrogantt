@@ -149,12 +149,24 @@ that isn't there.
   nothing here depends on an internal side effect it doesn't own. Not
   persisted — it does not survive a reload, and it is view state only: no
   undo entry, no dirty flag.
-- **The dhtmlx row schema is written in five places** (`toGanttData` in
-  `ganttRows.ts`, the other four in `GanttChart.tsx`):
-  `toGanttData` and `applySolution` map model → row, `handle.addTask` and
-  `onAfterTaskAdd` build a new row, `pullFromView` reads row → model. A new row
-  field goes in all of them; a field added to one only is the shape of the bug
-  "correct on open, stale after an edit".
+- **The dhtmlx row schema is written in five places**: `toGanttData`
+  (`ganttRows.ts:37`) and `applySolution` (`GanttChart.tsx:217`, plus
+  `writeChainOntoRows` `ganttRows.ts:116` for the chain flags) map model → row;
+  `handle.addTask` (`GanttChart.tsx:443`) builds a new row; `onAfterTaskAdd`
+  (`GanttChart.tsx:976`) and `pullFromView` (`GanttChart.tsx:734`) read row →
+  model. A new derived field goes in **both** model → row paths; added to one
+  only it is right on open and stale after every edit — it doesn't throw, it
+  lies.
+- **The two model → row paths are not interchangeable**, so a single
+  `rowFieldsOf` could only return the derived fields. `toGanttData` formats
+  `start_date`/`end_date` as **strings** — `gantt.parse` wants them
+  (`ganttRows.ts:51`) — while `applySolution` assigns **`Date`**
+  (`GanttChart.tsx:235`); whether `gantt.parse` accepts a `Date` there is
+  **unverified**. And identity and view state (`text`, `parent`, `open`,
+  `progress`) are written by the parse alone (`ganttRows.ts:46-61`): it has to
+  stay that way, since rewriting `parent` during a move or reopening collapsed
+  branches on every solve would be a bug. The three row → model paths do not
+  unify — reading a row back is different semantics, not the same map reversed.
 
 ## Right-click add
 
