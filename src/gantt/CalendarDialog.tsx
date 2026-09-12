@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { CalendarSpec, DayRange } from '../scheduler';
+import { validateCalendar } from './calendarRules';
 import { Dialog } from './Dialog';
 import { DayRangeList } from './DayRangeList';
 
@@ -34,15 +35,13 @@ export function CalendarDialog({
   };
 
   const save = () => {
-    if (workingDays.length === 0) {
-      setError('At least one working day a week is required');
+    const next = { ...calendar, workingDays, holidays };
+    const problem = validateCalendar(next);
+    if (problem) {
+      setError(problem);
       return;
     }
-    if (holidays.some((range) => !range.from || !range.to)) {
-      setError('Every shutdown needs a start date and an end date');
-      return;
-    }
-    onSave({ ...calendar, workingDays, holidays });
+    onSave(next);
   };
 
   return (

@@ -1,4 +1,5 @@
 import helpMarkdown from './agentApi.help.md?raw';
+import { validateCalendar } from './calendarRules';
 import { parseWallClock, serializeDate } from './dates';
 import type { GanttHandle, TaskDetails } from './ganttHandle';
 import { buildPlan, type Plan } from './plan';
@@ -400,7 +401,12 @@ export function createAgentApi(host: AgentHost): AgentApi {
       commitResources(withAvailability(chart().getResources(), id, overrides));
     },
 
-    setCalendar: (spec) => chart().setCalendar(copy(spec)),
+    setCalendar: (spec) => {
+      const next = copy(spec);
+      const problem = validateCalendar(next);
+      if (problem) throw new Error(problem);
+      chart().setCalendar(next);
+    },
     newProject: host.newProject,
     loadText: (text, filename) => host.adopt(text, filename ?? host.filename()),
     setFilename: host.setFilename,

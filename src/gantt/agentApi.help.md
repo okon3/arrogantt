@@ -250,16 +250,16 @@ absence; there is no separate concept.
 
 | Call | Notes |
 | --- | --- |
-| `setCalendar(spec)` | The whole `CalendarSpec`. Holidays are company-wide shutdowns, removed from the axis like weekends. |
+| `setCalendar(spec)` | The whole `CalendarSpec`. `windows` are whole **minutes from midnight** (`{ from: 480, to: 720 }` is 08:00-12:00), must not overlap, and `workingDays` are weekday indices `0..6`, 0 = Sunday. Holidays are company-wide shutdowns, removed from the axis like weekends. |
 | `newProject()` | No discard question. Clears the undo history, as the button does. |
 | `loadText(text, filename?)` | Parses first: a malformed file leaves the open project untouched and throws `ProjectFileError`. Replaces the document, so the undo history goes with it. |
 | `setFilename(name)` | |
 
 Parsing refuses rather than repairs — unknown resources, duplicate ids, dangling
-predecessors, circular hierarchy, availability outside `0..1`, a future format
-version. The `solved` report blocks are ignored on load: the inputs alone decide
-the schedule, so editing the text and reloading it never needs the report kept
-in step.
+predecessors, circular hierarchy, availability outside `0..1`, a malformed
+calendar, a future format version. The `solved` report blocks are ignored on
+load: the inputs alone decide the schedule, so editing the text and reloading it
+never needs the report kept in step.
 
 ## Navigation
 

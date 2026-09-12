@@ -32,8 +32,8 @@
 
 Refuses rather than repairs: unknown resources, duplicate ids, dangling
 predecessors, circular hierarchy, availability outside 0..1, colour not
-`#rrggbb`, `disabled` not a boolean, future versions. Parse before load — a bad
-file leaves the open project untouched.
+`#rrggbb`, `disabled` not a boolean, a calendar the engine cannot serve, future
+versions. Parse before load — a bad file leaves the open project untouched.
 
 A written `disabled: false` is accepted and **normalized to absent**: two
 spellings of the default would make one project serialize two ways, and `dirty`
@@ -43,8 +43,19 @@ compares text.
 `loadProject` writes onto `projectRef` and *then* solves: a file that parses but
 can't be scheduled (last case: a person left at zero capacity) throws `Scheduler
 stalled` with the model already replaced — stale grid, edits dying on unknown
-tasks, next save overwriting the user's work. Hence `validateResources` runs on
-**every** path in: load, dialog, agent API.
+tasks, next save overwriting the user's work. Hence `validateResources` and
+`validateCalendar` run on **every** path in: load, dialog, agent API.
+
+`validateCalendar` (`calendarRules.ts`): `workingDays` non-empty, distinct
+weekday indices `0..6`; `windows` non-empty, `{from, to}` in **whole minutes
+from midnight**, `0 <= from < to <= 1440`, and **never overlapping**
+(`minutesPerDay` is a plain sum — an overlap inflates every day's capacity and
+the schedule stops conserving effort); holidays `YYYY-MM-DD` at both ends.
+Declaration order is free (the calendar sorts). A missing `calendar` is the
+default, a `null` one is refused. `WorkingCalendar` itself guards only the empty
+week and the empty day: clock strings (`"08:00"`) reach `minutesPerDay` as `NaN`
+and stall the simulation, and a weekday index outside `0..6` leaves the walk to
+the first working day running forever — a hung tab, not an exception.
 
 ## CSV export
 

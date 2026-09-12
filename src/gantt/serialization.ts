@@ -6,6 +6,7 @@ import {
   type DayRange,
   type Resource,
 } from '../scheduler';
+import { validateCalendar } from './calendarRules';
 import { parseWallClock, serializeDate } from './dates';
 import { buildPlan } from './plan';
 import type { Project, ProjectTask, SolvedProject } from './project';
@@ -273,7 +274,14 @@ export function deserializeProject(text: string): Project {
     }
   }
 
-  const calendar = (root.calendar as CalendarSpec | undefined) ?? DEFAULT_CALENDAR;
+  // The calendar has one set of rules too, and past `WorkingCalendar`'s own two
+  // guards a bad one is a stalled scheduler or a walk to the first working day
+  // that never returns — with the open project already replaced. A declared
+  // `null` is refused rather than read as "the default".
+  const calendar =
+    root.calendar === undefined ? DEFAULT_CALENDAR : (root.calendar as CalendarSpec);
+  const brokenCalendar = validateCalendar(calendar);
+  if (brokenCalendar) throw new ProjectFileError(brokenCalendar);
   if (calendar.holidays !== undefined) {
     calendar.holidays = parseDayRanges(calendar.holidays, 'calendar.holidays');
   }
