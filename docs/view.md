@@ -140,6 +140,24 @@ that isn't there.
 - Editor keys: Tab/Shift+Tab walk editable cells across rows saving each on
   leave; Enter saves+closes; Esc closes without saving. Focused field carries
   the app's violet focus ring.
+- **A top-level task starts a new group** (`gantt-row--group-start`,
+  `installRowTemplates`), marked on the grid row and the timeline row both: the
+  tree's indentation stops at the grid, so the timeline has nothing else saying
+  where one block ends. A 2px inset top shadow in `--line-strong`.
+  Not a background: hover, `gantt_selected`, `gantt-found` and
+  `gantt-found-below` already contend for the row's background, which is why
+  `gantt.css:113-118` keeps zebra striping off.
+  Not a `border-top`: rows compute `border-box` at an inline `height`, so a
+  border costs no row height — but it offsets the grid pane against the
+  timeline by its own width **once the grid scrolls** (measured: 2px, constant
+  on every row, no accumulation; the inset shadow measures 0 at every scroll
+  position).
+  2px, not 1px: `--line-strong` (`#dfe2e8` light, `#3d434e` dark) is one step
+  from the `--line` (`#edeef1`, `#2b2f37`) of the ordinary row hairline, so at
+  1px the two read alike in both schemes.
+  **`box-shadow` does not merge across rules**: a further row rule drawing a
+  shadow on a group-start row needs a compound declaration carrying both, as
+  `.gantt-found.gantt-row--group-start` does for the grid's left-edge accent.
 - **Collapse to zero width, toolbar toggle** (`toggleGridCollapsed`), so the
   chart alone can fill the window. Remembers the width to restore by measuring
   `$grid.offsetWidth` at the moment of collapsing, not `config.grid_width` —

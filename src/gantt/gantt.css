@@ -522,6 +522,30 @@
   background: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
+/* Where a top-level task's group begins, in the grid and the timeline both —
+   the tree's indentation stops at the grid. A shadow rather than a background
+   or a border-top, and 2px rather than 1px, for reasons that were measured:
+   docs/view.md § Grid carries them. */
+.gantt-host .gantt_grid_data .gantt_row.gantt-row--group-start,
+.gantt-host .gantt_task_row.gantt-row--group-start {
+  box-shadow: inset 0 2px 0 var(--line-strong);
+}
+
+/* `box-shadow` does not merge across rules: the grid's found/found-below marks
+   (above) are themselves a left-edge shadow, so a row that is both a match and
+   a group start needs one rule carrying both declarations — otherwise one wins
+   at equal specificity and the other is simply gone. The timeline needs no
+   pairing: its found marks are background only. */
+.gantt-host .gantt_grid_data .gantt_row.gantt-found.gantt-row--group-start {
+  box-shadow: inset 2px 0 0 var(--accent), inset 0 2px 0 var(--line-strong);
+}
+
+.gantt-host .gantt_grid_data .gantt_row.gantt-found-below.gantt-row--group-start {
+  box-shadow:
+    inset 2px 0 0 color-mix(in srgb, var(--accent) 60%, transparent),
+    inset 0 2px 0 var(--line-strong);
+}
+
 /* Derived cells: shown for information, not editable. */
 .gantt-derived {
   color: var(--ink-faint);

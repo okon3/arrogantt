@@ -307,12 +307,18 @@ export function installRowTemplates(ctx: RowContext): void {
     return below ? 'gantt-found-below' : '';
   };
 
+  // A top-level task starts a new group whether or not it has children —
+  // the mark says "a block begins here", not "this is a summary".
+  const groupStart = (task: { parent?: unknown }) =>
+    task.parent === gantt.config.root_id ? 'gantt-row--group-start' : '';
+
   // Every row, bar and link says whose work it is, so that highlighting a
   // person is a stylesheet rule and not a redraw.
   gantt.templates.grid_row_class = (_start, _end, task) =>
     [
       String(task.resource_classes ?? ''),
       found(task),
+      groupStart(task),
       task.disabled ? 'gantt-row--disabled' : '',
     ]
       .filter(Boolean)
@@ -320,7 +326,8 @@ export function installRowTemplates(ctx: RowContext): void {
   // A band across the chart rather than a mark on the bar: the outline is the
   // critical chain's and the fill is the user's colour, so a match has to
   // read on the row it is on without touching either.
-  gantt.templates.task_row_class = (_start, _end, task) => found(task);
+  gantt.templates.task_row_class = (_start, _end, task) =>
+    [found(task), groupStart(task)].filter(Boolean).join(' ');
   gantt.templates.task_class = (_start, _end, task) => {
     const classes = [String(task.resource_classes ?? '')];
     if (task.is_summary) classes.push('gantt-bar--summary');

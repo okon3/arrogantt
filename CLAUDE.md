@@ -164,7 +164,12 @@ one wrong. The pattern, not the anecdotes:
 - **An inherited premise is not a verified one.** Shortening another agent's
   comment inherits its premise — abbreviating is not verifying. An
   out-of-scope finding still needs checking before it is archived. A premise
-  that passes three hands becomes an institutional trap.
+  that passes three hands becomes an institutional trap. **And a conditional
+  premise loses its condition on the way**: T58's brief said a border would
+  desync the panes *if* rows were not `border-box`; the code comment and the
+  doc both recorded the consequent as fact, in near-identical prose, and rows
+  are `border-box` — the decision was right, the recorded reason false, and
+  wrong twice because it had been written twice. One fact, one home.
   **And a premise is verified on the path that uses it, never on the line that
   states it.** T56 read the definition of `initialProject`, saw a module
   constant, and concluded the render could only ever solve an empty project —

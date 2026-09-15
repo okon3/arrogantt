@@ -7,9 +7,10 @@ T51): chart 2228 → 1205. Nessuna release — refactoring, e il changelog non
 prende plumbing.
 
 Aperti: **Goal F** (costi) e **Goal G** (export cliente), appena aperti, il
-primo passo di entrambi e' analisi; **T58** in manutenzione; **T16**, unico
-task di Goal C, che lo porterebbe alla sua review. **O4** in giacenza. T57
-chiuso dall'hub senza aprire una corsia.
+primo passo di entrambi e' analisi; **T16**, unico task di Goal C, che lo
+porterebbe alla sua review. **O4** in giacenza. La manutenzione e' vuota: T57 e
+T58 chiusi. Su T60 leggere prima il fatto accertato in testa a Goal G: l'export
+non fotografa il DOM.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
@@ -59,6 +60,16 @@ Da decidere nell'analisi, non adesso — e la risposta e' semantica, non estetic
   nulla e' peggio di uno senza frecce. Ricordare che le dipendenze sono
   spinte sulle foglie su entrambi i capi (invariante), quindi a livello di
   summary il link *non esiste* nel modello: va sintetizzato o taciuto.
+**Fatto accertato dal critic di T58, e riguarda la decisione WYSIWYG:** print
+e PNG **non fotografano il DOM del chart**. Passano dall'SVG costruito a mano
+da `planFigure` (`printPlan.ts`, `files.ts:53`), quindi il separatore di gruppo
+di T58 e' solo-schermo, e piu' in generale «esporta quello che vedi» non e'
+gratis come sembrava: non c'e' una fotografia da ritagliare, c'e' un secondo
+disegnatore a cui va insegnato lo stato dell'albero. La decisione resta (niente
+campi nel file, il collapse e' il controllo), ma **T60 deve misurare cosa
+`planFigure` sa gia' della gerarchia** prima che si scopino le fette — e la
+trappola delle barre fuori schermo vale per il DOM, non per lui.
+
 - **Cosa significa «solo quello che sto vedendo».** Due letture diverse: lo
   stato dell'albero (rami chiusi = figli fuori dall'export) oppure il viewport
   (l'intervallo di date a schermo, con fuori ciò che sta a destra). La risposta
@@ -242,33 +253,41 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       distribuire il solo `index.html` perde la favicon. Da scopare come task
       se l'utente lo vuole.
 
-- [ ] T58 [impl] — Dove finiscono i sottotask e dove comincia il task dopo
-      Difetto: su un piano con molti task e sottotask, a rami espansi,
-      nella **timeline** non si vede a colpo d'occhio dove finisce il gruppo di
-      un task e dove comincia il successivo. La griglia a sinistra ha l'albero;
-      la timeline e' piatta.
-      Materiale dalla ricognizione, da verificare sul codice prima di usarlo:
-      `task_row_class` (`gridColumns.ts:323`) e' l'unico hook che raggiunge
-      oggi la riga di timeline e non porta nessuna informazione di gerarchia;
-      la profondita' e' raggiungibile dai template via
-      `RowContext.solved().hierarchy.ancestorsOf(id)` (`project.ts:96-138`), e
-      «ultimo fratello» non e' calcolato da nessuna parte nel repo; il
-      separatore di riga oggi e' una hairline uniforme
-      (`gantt.css:108-111`); lo zebra striping e' **disattivato per scelta
-      motivata** (`gantt.css:113-118`: due background in competizione rendono
-      invisibile l'hover) e la scelta non va ribaltata di soppiatto.
-      Vincoli: mai scrivere `background` su `.gantt_task_line` - il colore
-      della barra e' dell'utente e dhtmlx lo mette inline via
-      `--dhx-gantt-task-background`; le regole nuove devono rispettare
-      l'ordine di cascata fra hover, `gantt_selected` e `gantt-found`
-      (`gantt.css:40-46`, `491-523`).
-      Regola dell'80%: **una** strategia, misurata, non tre prototipi.
-      Accept: su un piano con almeno due task padre espansi e un sottotask
-      condiviso, il confine fra l'ultimo sottotask di un gruppo e la riga
-      successiva si vede senza contare le righe - misurato nel browser con
-      `getComputedStyle`, nei due schemi di colore e a due livelli di zoom; lo
-      stato di ricerca, la selezione e l'hover restano visibili sopra la nuova
-      resa; nessuna regola nuova scrive `background` su una barra.
+- [x] T58 [impl] — Dove finiscono i sottotask e dove comincia il task dopo.
+      `gantt-row--group-start` su ogni task di **primo livello** (figli o no),
+      griglia e timeline: marcare l'inizio di un blocco costa un confronto su
+      un campo che la riga porta gia', marcarne la fine vorrebbe camminare i
+      fratelli a ogni render. Segnale: `box-shadow: inset 0 2px 0`
+      in `--line-strong`. Zero correzioni alla corsia; cinque findings del
+      critic, tutti testuali, tutti chiusi dall'hub.
+      **Due premesse dell'hub cadute nello stesso task.** La prima l'ha
+      ribaltata la corsia: «ombra e background sono ortogonali per
+      costruzione» e' falso — `gantt-found` disegna a sua volta un
+      `box-shadow` sulla riga, e due `box-shadow` alla stessa specificita' non
+      si fondono, uno vince in silenzio e il bordo accento della ricerca
+      spariva. Chiusa con due regole composte, non indebolendo le esistenti.
+      La seconda l'ha ribaltata il critic: «un `border-top` fa crescere la box
+      della riga» e' falso — le righe sono `border-box` con `height` inline.
+      Il border sfasa davvero i due pannelli, ma di un offset costante che
+      compare **solo a griglia scrollata** (2px, uguale su ogni riga, nessun
+      accumulo; l'ombra inset misura 0 a ogni posizione di scroll). Il brief
+      la diceva condizionata, il codice e il doc hanno scritto il consequente
+      come fatto, in due copie. Graduato in `CLAUDE.md`: una premessa
+      condizionata perde la condizione per strada, e un fatto scritto due
+      volte si corregge una volta sola.
+      Misurato dal critic e non dalla corsia (celle che la fixture non aveva
+      composto): milestone di primo livello e di sottolivello, riga
+      `gantt-row--disabled`, catena critica, highlight di risorsa, load panel
+      aperto, rami chiusi, `gantt-found + gantt_selected`, due schemi, Days e
+      Months. Nessuno stato perde un'ombra. `task.parent === root_id`
+      confermato su `toGanttData`, `addTask` e `setParent(id, null)` guidati
+      dal vivo; **non guidati e dichiarati tali**: il drag-and-drop della
+      griglia e la colonna `+` (letti: copiano il parent da una riga che tiene
+      gia' 0).
+      **Fuori dal bar, non toccato**: la prima riga di dati e' sempre un
+      inizio di gruppo, quindi il suo segno raddoppia il bordo inferiore della
+      testata e non separa da nulla — un `:first-child` e' un selettore, ma e'
+      una scelta visiva e la decide l'utente.
 
 - [x] T56 [deep] — Un id che il progetto non conosce, tenuto fuori dal modello
       e fuori dal file — `8fd9a1c`. Due guardie comprate dall'utente dopo tre
@@ -390,10 +409,11 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 
 ## Log
 - Dimensionamento: impl oltre ~200k = task da splittare (T35 215k, T18 182k+250k);
-  critic 75-95k, ma 148-168k se va guidato nel browser (T56); una correzione via
-  SendMessage riusa il contesto e costa meno di un fresh spawn (~40k) — **ma non
-  oltre ~190k**: li' chiude l'hub, se ha le misure (T52; T55 188k/129k). T56:
-  misura 136k, impl 131k + 166k, due critic, quattro findings.
+  una correzione via SendMessage riusa il contesto e costa meno di un fresh
+  spawn (~40k) — **ma non oltre ~190k**: li' chiude l'hub, se ha le misure
+  (T52; T55 188k/129k; T56 impl 131k+166k). **Un critic guidato nel browser e'
+  la voce piu' cara del task**: 75-95k a tavolino, 148-168k nel browser (T56),
+  211k su T58 — e su T58 e' l'unico che ha ribaltato una premessa. Si paga.
 - **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta hanno chiuso
   la condizione dello stallo e il round-trip del salvataggio (T56) per pochi k,
   dove una corsia paga 40k di solo ingresso. T57 e' il caso limite: due
