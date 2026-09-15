@@ -6,13 +6,136 @@
 T51): chart 2228 → 1205. Nessuna release — refactoring, e il changelog non
 prende plumbing.
 
-Aperti: **T16**, unico task di Goal C, che lo porterebbe alla sua review; **O4**
-in giacenza. T56 e' chiuso: la manutenzione non ha altro in coda.
+Aperti: **Goal F** (costi) e **Goal G** (export cliente), appena aperti, il
+primo passo di entrambi e' analisi; **T57** e **T58** in manutenzione; **T16**,
+unico task di Goal C, che lo porterebbe alla sua review. **O4** in giacenza.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
 chiusura la goal review scatterebbe su un diff che non esiste — il buco in cui
 e' caduta la review di B.
+
+## Goal G — un gantt da mostrare al cliente                        [aperto]
+Esportare il piano come immagine per un committente esterno: solo il livello di
+dettaglio che gli si vuole dare, e senza gli interni dell'organizzazione. Oggi
+l'export PNG/print fotografa il piano come lo vede chi lo costruisce; questo
+goal gli aggiunge un pubblico diverso.
+
+Deciso con l'utente in apertura, e vincolante (non riaprire):
+- **WYSIWYG: l'export fotografa l'albero nello stato in cui e'.** Un ramo
+  chiuso esporta il suo summary (date ed effort rollati dalle foglie —
+  l'invariante gioca a favore) e non i figli. Nessun campo nuovo nel `.gantt`,
+  nessun gate di parsing da estendere, nessun undo da coprire. «Solo il primo
+  livello» e' quindi un bottone «chiudi tutto», non un filtro.
+  Scartate: un flag per task persistito nel file (costo: campo nuovo, gate in
+  entrata e in uscita, semantica del summary coi figli tutti esclusi, undo) e
+  una selezione a checkbox usa-e-getta nel dialogo di export (stanca chi
+  esporta ogni settimana).
+- **Le chiusure aziendali e le assenze si possono nascondere**, come
+  **opzione** dell'export, non come default imposto: il cliente non deve
+  leggere chi e' in ferie. Riguarda le bande disegnate da
+  `timelineOverlays.ts` (non-lavorativi, chiusure, assenze per risorsa).
+- **Un dialogo di configurazione dell'export**, dove si scelgono: l'ambito
+  (tutto il piano, oppure solo quello che si sta vedendo), le colonne da
+  esportare, e le opzioni di riservatezza qui sopra. Non un export con
+  parametri impliciti.
+- **Niente nomi di persone, se lo si chiede.** Non basta togliere la colonna
+  risorsa: il nome trasuda anche dagli avatar/iniziali di riga e dal profilo
+  di allocazione disegnato sulle barre condivise (`task_text` ->
+  `renderSegments`). L'opzione deve coprire tutte le strade, non la sola
+  colonna.
+
+**Vincolo incrociato con Goal F, da onorare da qualunque dei due parta primo:**
+la scelta delle colonne da esportare e la scelta delle colonne visibili in
+griglia (questione aperta di Goal F) sono **lo stesso meccanismo con due
+clienti**. Costruirlo due volte lascia due liste di colonne da tenere
+allineate. Chi arriva primo decide per entrambi, e lo scrive nell'altro goal.
+
+Da decidere nell'analisi, non adesso — e la risposta e' semantica, non estetica:
+- **Un link che parte da un figlio nascosto.** Se un sottotask collassato ha
+  una dipendenza verso l'esterno del suo ramo, l'export la ridisegna sul
+  summary, la omette, o rifiuta? Un gantt cliente con frecce che nascono dal
+  nulla e' peggio di uno senza frecce. Ricordare che le dipendenze sono
+  spinte sulle foglie su entrambi i capi (invariante), quindi a livello di
+  summary il link *non esiste* nel modello: va sintetizzato o taciuto.
+- **Cosa significa «solo quello che sto vedendo».** Due letture diverse: lo
+  stato dell'albero (rami chiusi = figli fuori dall'export) oppure il viewport
+  (l'intervallo di date a schermo, con fuori ciò che sta a destra). La risposta
+  dipende da come l'export rasterizza oggi, e c'e' una trappola nota:
+  «le barre fuori schermo non hanno nodo DOM» (CLAUDE.md). Possono anche
+  essere due opzioni distinte, se costano poco.
+
+- [ ] T60 [self] — Ricognizione dell'export attuale e scomposizione del goal
+      Scope: capire come l'export immagine/print funziona oggi prima di
+      scoporre qualunque fetta — chi rasterizza, se fotografa il DOM visibile
+      o ridisegna, cosa fa dell'area fuori viewport (CLAUDE.md: «le barre fuori
+      schermo non hanno nodo DOM», che su un export a piano intero e' il fatto
+      centrale), e dove sta il dialogo/percorso di export. Poi decidere le due
+      questioni aperte qui sopra e scrivere i task implementativi con la loro
+      lane e il loro accept, dialogo di configurazione incluso.
+      Accept: le questioni aperte sono chiuse con una risposta motivata (o
+      portate all'utente con i numeri, se la scelta e' sua), il vincolo
+      incrociato sulle colonne e' deciso e scritto anche in Goal F, e il goal
+      ha i suoi task scopati. Nessuna implementazione.
+
+## Goal F — quanto costa il piano, non solo quanto dura            [aperto]
+Associare a ogni persona una tariffa giornaliera che varia nel tempo come la
+sua disponibilita', e leggere sull'albero il costo di ogni riga e il totale di
+progetto. Il piano oggi risponde a *quando*; questo goal gli fa rispondere
+*quanto*.
+
+Deciso con l'utente in apertura, e vincolante per la spec (non riaprire):
+- **Base del costo: l'effort allocato, per segmento.** Ogni segmento della
+  simulazione (rate x durata) si converte in giorni-uomo e si moltiplica per
+  la tariffa vigente *in quel segmento*. Un task a cavallo di un aumento si
+  spezza sui due prezzi. E' la sola lettura coerente con l'invariante
+  dell'effort conservato, e la sola in cui una tariffa variabile nel tempo
+  significhi qualcosa. Scartate: tariffa congelata allo start (la variabilita'
+  diventa decorativa) e durata di calendario x tariffa (ignora il rate: una
+  persona al 50% costerebbe il doppio, e la contesa fra task farebbe salire il
+  prezzo).
+- **Costo assente non e' zero.** Task senza risorsa o persona senza tariffa:
+  cella vuota, non 0. Il roll-up di un summary somma i figli calcolabili e
+  resta marcato parziale; il totale di progetto dichiara accanto quanto effort
+  e' rimasto fuori dal calcolo. Scartata la tariffa di default di progetto:
+  nasconde chi sta girando su una stima.
+- **Nessuna vista nuova: lo stesso albero, con colonne in piu'** (tariffa della
+  risorsa scelta e costo della riga), con roll-up sui summary e totale. La
+  tabella costi a se' stante, con breakdown per persona e per periodo, resta
+  **in giacenza**: si compra dopo aver lavorato con le colonne, non adesso.
+- **Adiacente, da valutare nella spec, non ancora comprato**: rendere
+  scegliibili dall'utente le colonne visibili nella griglia. L'utente l'ha
+  proposto insieme al resto; e' un meccanismo generale che sopravvive al goal,
+  quindi la spec deve dire cosa costa e se conviene farlo *ora* (le colonne
+  costo sarebbero il suo primo cliente) oppure aggiungere due colonne fisse e
+  rimandare. La decisione torna all'utente con quei numeri.
+  **Non e' una questione solo di questo goal**: il dialogo di export di Goal G
+  deve far scegliere le colonne da esportare, cioe' vuole lo stesso
+  meccanismo. Chi dei due arriva primo decide per entrambi — due liste di
+  colonne separate sono un disallineamento che aspetta.
+
+- [ ] T59 [architect] — Spec del goal costi
+      Scope: analisi e spec, **nessuna implementazione**. Deve coprire: dove
+      vivono le tariffe nel modello e nel formato file (per analogia con gli
+      override di disponibilita': un default piu' una lista di override con
+      intervalli, «l'override sostituisce, mai moltiplica», «l'ultimo
+      dichiarato vince»); la compatibilita' dei file v2 esistenti senza
+      tariffe, sotto un gate di parsing che rifiuta invece di riparare, in
+      entrata e in uscita; dove si calcola il costo per segmento e perche' li'
+      (il motore non deve imparare il denaro: `simulate.ts` lavora in minuti
+      lavorativi e `allocation.ts` non vede calendari - il costo e' una
+      lettura del report di soluzione, non un termine della simulazione);
+      la conversione minuti lavorativi -> giorni-uomo e chi la possiede
+      (`WorkingCalendar`); il roll-up sui summary e la marcatura di
+      parzialita'; dove si dichiarano le tariffe nell'UI (il dialogo risorse
+      esistente e' il candidato ovvio: dirlo o smentirlo); il costo nel
+      pannello info di riga; la questione delle colonne personalizzabili qui
+      sopra; e la rottura del formato file (bump major) se e solo se serve.
+      Output: `.claude/specs/T59-*.md` con decisioni stabilite, fatti accertati
+      (`file:line`), e la scomposizione in sottotask con la lane di ognuno.
+      Accept: ogni sottotask proposto ha un accept osservabile e indipendente
+      dalla scala; le tre decisioni vincolanti qui sopra sono riportate e non
+      rinegoziate; la spec dichiara cosa **non** ha misurato.
 
 ## Goal C — valutazione mobile-friendly                              [aperto]
 Agevolare la visualizzazione da smartphone/tablet nascondendo le azioni
@@ -91,6 +214,58 @@ Task che non servono una milestone: difetti puntuali e salute del codice,
 arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
+
+- [ ] T57 [impl] — Il changelog che perde i bullet nella build single-file
+      Sintomo riferito dall'utente e da riprodurre: in `npm run build:single`
+      il badge di versione compare e il dialogo si apre con le **intestazioni
+      di release e le date**, ma **senza i bullet dentro**. Quindi il testo
+      arriva nel bundle (le date vengono da li') e si perde dopo: parse dei
+      bullet, rendering, o CSS.
+      Premessa ribaltata dalla ricognizione, da non riproporre: *non* e' un
+      asset che la build perde. `CHANGELOG.md` entra con
+      `import ... '../../CHANGELOG.md?raw'` (`changelogEntries.ts:1`), quindi
+      Vite lo cuoce nel chunk JS in ogni modalita', e `viteSingleFile()`
+      (`vite.config.ts:44`) gira in `generateBundle`, quando la stringa e' gia'
+      dentro il codice. `parseChangelog` non solleva mai: input malformato
+      rende `[]` e il badge semplicemente non appare (`changelog.ts:11-13`,
+      `App.tsx:802`) - e il badge invece **appare**, il che esclude l'array
+      vuoto.
+      Scope: **misura prima**, correzione solo se il difetto esiste. Costruire
+      entrambe le build, servirle via http, e confrontare il DOM del dialogo
+      fra `build` e `build:single`.
+      Accept: dichiarato dove si perdono i bullet, con la misura che lo prova
+      (presenza/assenza nel DOM e nel testo del bundle, non una lettura del
+      codice); se il difetto esiste, il dialogo mostra i bullet nella build
+      single-file, misurato nel browser. **«Nessun diff, il sintomo non si
+      riproduce» e' un esito valido** e chiude il task.
+
+- [ ] T58 [impl] — Dove finiscono i sottotask e dove comincia il task dopo
+      Difetto: su un piano con molti task e sottotask, a rami espansi,
+      nella **timeline** non si vede a colpo d'occhio dove finisce il gruppo di
+      un task e dove comincia il successivo. La griglia a sinistra ha l'albero;
+      la timeline e' piatta.
+      Materiale dalla ricognizione, da verificare sul codice prima di usarlo:
+      `task_row_class` (`gridColumns.ts:323`) e' l'unico hook che raggiunge
+      oggi la riga di timeline e non porta nessuna informazione di gerarchia;
+      la profondita' e' raggiungibile dai template via
+      `RowContext.solved().hierarchy.ancestorsOf(id)` (`project.ts:96-138`), e
+      «ultimo fratello» non e' calcolato da nessuna parte nel repo; il
+      separatore di riga oggi e' una hairline uniforme
+      (`gantt.css:108-111`); lo zebra striping e' **disattivato per scelta
+      motivata** (`gantt.css:113-118`: due background in competizione rendono
+      invisibile l'hover) e la scelta non va ribaltata di soppiatto.
+      Vincoli: mai scrivere `background` su `.gantt_task_line` - il colore
+      della barra e' dell'utente e dhtmlx lo mette inline via
+      `--dhx-gantt-task-background`; le regole nuove devono rispettare
+      l'ordine di cascata fra hover, `gantt_selected` e `gantt-found`
+      (`gantt.css:40-46`, `491-523`).
+      Regola dell'80%: **una** strategia, misurata, non tre prototipi.
+      Accept: su un piano con almeno due task padre espansi e un sottotask
+      condiviso, il confine fra l'ultimo sottotask di un gruppo e la riga
+      successiva si vede senza contare le righe - misurato nel browser con
+      `getComputedStyle`, nei due schemi di colore e a due livelli di zoom; lo
+      stato di ricerca, la selezione e l'hover restano visibili sopra la nuova
+      resa; nessuna regola nuova scrive `background` su una barra.
 
 - [x] T56 [deep] — Un id che il progetto non conosce, tenuto fuori dal modello
       e fuori dal file — `8fd9a1c`. Due guardie comprate dall'utente dopo tre
