@@ -6,9 +6,11 @@
 T51): chart 2228 → 1205. Nessuna release — refactoring, e il changelog non
 prende plumbing.
 
-Aperti: **Goal F** (costi) e **Goal G** (export cliente), appena aperti, il
-primo passo di entrambi e' analisi; **T16**, unico task di Goal C, che lo
-porterebbe alla sua review. **O4** in giacenza. La manutenzione e' vuota. Su T60 leggere prima il fatto accertato in testa a Goal G: l'export
+Aperti: **Goal F** (costi), la cui spec e' consegnata (T59) e che aspetta
+quattro risposte dell'utente prima di scrivere i sottotask; **Goal G** (export
+cliente), il cui primo passo e' ancora analisi (T60) e che **erediteva** da F
+la decisione sul meccanismo delle colonne; **T16**, unico task di Goal C, che
+lo porterebbe alla sua review. **O4** in giacenza. La manutenzione e' vuota. Su T60 leggere prima il fatto accertato in testa a Goal G: l'export
 non fotografa il DOM.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
@@ -125,28 +127,50 @@ Deciso con l'utente in apertura, e vincolante per la spec (non riaprire):
   meccanismo. Chi dei due arriva primo decide per entrambi — due liste di
   colonne separate sono un disallineamento che aspetta.
 
-- [ ] T59 [architect] — Spec del goal costi
-      Scope: analisi e spec, **nessuna implementazione**. Deve coprire: dove
-      vivono le tariffe nel modello e nel formato file (per analogia con gli
-      override di disponibilita': un default piu' una lista di override con
-      intervalli, «l'override sostituisce, mai moltiplica», «l'ultimo
-      dichiarato vince»); la compatibilita' dei file v2 esistenti senza
-      tariffe, sotto un gate di parsing che rifiuta invece di riparare, in
-      entrata e in uscita; dove si calcola il costo per segmento e perche' li'
-      (il motore non deve imparare il denaro: `simulate.ts` lavora in minuti
-      lavorativi e `allocation.ts` non vede calendari - il costo e' una
-      lettura del report di soluzione, non un termine della simulazione);
-      la conversione minuti lavorativi -> giorni-uomo e chi la possiede
-      (`WorkingCalendar`); il roll-up sui summary e la marcatura di
-      parzialita'; dove si dichiarano le tariffe nell'UI (il dialogo risorse
-      esistente e' il candidato ovvio: dirlo o smentirlo); il costo nel
-      pannello info di riga; la questione delle colonne personalizzabili qui
-      sopra; e la rottura del formato file (bump major) se e solo se serve.
-      Output: `.claude/specs/T59-*.md` con decisioni stabilite, fatti accertati
-      (`file:line`), e la scomposizione in sottotask con la lane di ognuno.
-      Accept: ogni sottotask proposto ha un accept osservabile e indipendente
-      dalla scala; le tre decisioni vincolanti qui sopra sono riportate e non
-      rinegoziate; la spec dichiara cosa **non** ha misurato.
+- [x] T59 [architect] — Spec del goal costi — `.claude/specs/T59-costs.md`
+      (fable-5-1 confermato in header; nessun codice toccato). Le tre decisioni
+      vincolanti sono riportate e non rinegoziate. Deciso dalla spec: le
+      tariffe vivono **lato vista** (`Person extends Resource` in un
+      `src/gantt/cost.ts` nuovo, `dailyRate?` + `rateOverrides[]`), quindi
+      **nessun sottotask tocca `src/scheduler/`** e il motore non impara il
+      denaro; il costo e' una lettura del report di soluzione, attaccata come
+      `SolvedProject.costs` da `solve()`; lo split del segmento sul cambio
+      tariffa vive **solo sull'asse dei minuti lavorativi** (copia di
+      `capacityIntervals`, mai una `Date`), quindi il confine di giornata non
+      si riapre; **v2 resta v2** (campi additivi opzionali, precedente
+      `disabled`), il gate tiene su entrambi i versi perche' le regole stanno
+      in `validateResources` che `serializeForFile` riattraversa; marca del
+      parziale = prefisso `≥` (le tariffe sono non negative, quindi e' un
+      limite inferiore vero e non serve legenda); il dialogo People e'
+      confermato come sede; nessuna op nuova nell'agent API.
+      Verificato dall'hub: 14 `file:line` su 14 combaciano (segmenti con
+      `rate`/`soloRate`, `capacityIntervals`, `dayStartInWorkingMinutes`, il
+      return di `solve`, la regola dei figli disabilitati di `rollUp`,
+      `ResourceDialog`, `agentApi`, `planFigure`).
+      Trovato di passaggio e **non un difetto di questo goal**: `toResources`
+      scrive sempre `availability` (`ResourceDialog.tsx:40`), quindi salvare il
+      dialogo People intatto sporca un file che non aveva quella chiave. Da
+      scopare a se' se l'utente lo vuole; F5 non deve copiare il vizio.
+
+**Quattro questioni aperte, in attesa della risposta dell'utente** (§7 e §9
+della spec). I sottotask F1-F6 entrano nel piano appena risposte, perche' la
+prima le cambia:
+1. **Meccanismo delle colonne** — A due colonne fisse / **B** due colonne
+   visibili solo se esistono tariffe / C selettore utente adesso.
+   Raccomandazione della spec: **B**, col registro delle colonne e le colonne
+   di `planFigure` che nascono nel primo task implementativo di Goal G.
+   Questa risposta **vincola anche Goal G**.
+2. **Valuta e formato numero** — numeri senza unita' / etichetta `currency` nel
+   file / `€` fisso. Raccomandazione: senza unita' adesso, additivo poi.
+3. **Colonna Rate su un task a cavallo di un aumento** — intervallo `600–650`
+   (deciso in spec) oppure la media effettiva. Raccomandazione: l'intervallo.
+4. **Dove vive il totale** — status bar accanto a `N tasks` (deciso in spec)
+   oppure una riga footer in griglia, che dhtmlx Community non offre e la spec
+   non ha sondato. Raccomandazione: status bar.
+
+**Non cancellare `.claude/specs/T59-costs.md` allo sweep degli orfani finche'
+la goal review di F non e' girata**: gli accept dei sottotask stanno nella sua
+§8 e sono meta' del bar della review.
 
 ## Goal C — valutazione mobile-friendly                              [aperto]
 Agevolare la visualizzazione da smartphone/tablet nascondendo le azioni
@@ -414,7 +438,7 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 - Dimensionamento: impl oltre ~200k = task da splittare (T35 215k, T18 182k+250k);
   una correzione via SendMessage riusa il contesto e costa meno di un fresh
   spawn (~40k) — **ma non oltre ~190k**: li' chiude l'hub, se ha le misure
-  (T52; T55 188k/129k; T56 impl 131k+166k). **Un critic guidato nel browser e'
+  (T52; T55 188k/129k; T56 impl 131k+166k). Un architect di goal: 248k (T59). **Un critic guidato nel browser e'
   la voce piu' cara del task**: 75-95k a tavolino, 148-168k nel browser (T56),
   211k su T58 — e su T58 e' l'unico che ha ribaltato una premessa. Si paga.
 - **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta hanno chiuso
