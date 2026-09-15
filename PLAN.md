@@ -176,6 +176,12 @@ numeri davanti, non riaprire:
 3. **La colonna Rate di un task a cavallo di un aumento mostra l'intervallo**
    `600-650`, non la media: sono cifre che qualcuno ha dichiarato, quindi
    verificabili contro il dialogo People.
+5. **Rate e Cost nascoste per default**, spuntabili dal picker, e la spunta
+   persiste fra i progetti: ogni piano esistente tiene la griglia di oggi e i
+   suoi 706px, senza nessun meccanismo che debba indovinare se ci sono
+   tariffe, e chi inserisce la prima tariffa e' la persona che sa del picker —
+   il dialogo People glielo nomina (accept di F5). Risposta del 2026-09-15; la
+   §8 della spec era gia' scritta su questa ipotesi.
 4. **Il totale vive nella status bar**, accanto a `N tasks`, con l'effort non
    calcolato dichiarato di fianco. Nessuna riga footer in griglia: dhtmlx
    Community non ne offre una che la spec abbia verificato, e col selettore di
