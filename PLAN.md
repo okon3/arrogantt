@@ -8,8 +8,8 @@ prende plumbing.
 
 Aperti: **Goal F** (costi) e **Goal G** (export cliente), appena aperti, il
 primo passo di entrambi e' analisi; **T16**, unico task di Goal C, che lo
-porterebbe alla sua review. **O4** in giacenza. La manutenzione e' vuota: T57 e
-T58 chiusi. Su T60 leggere prima il fatto accertato in testa a Goal G: l'export
+porterebbe alla sua review. **O4** in giacenza. In manutenzione resta **T61**,
+piccolo e con una misura sola da fare prima di scegliere il meccanismo. Su T60 leggere prima il fatto accertato in testa a Goal G: l'export
 non fotografa il DOM.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
@@ -253,6 +253,32 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       distribuire il solo `index.html` perde la favicon. Da scopare come task
       se l'utente lo vuole.
 
+- [ ] T61 [impl] — Il primo gruppo non ha nulla sopra di se'
+      La prima riga di dati e' sempre un inizio di gruppo, quindi il suo segno
+      da 2px raddoppia il bordo inferiore della testata e separa da niente.
+      Va soppresso sulla sola prima riga, in griglia e timeline.
+      **Misurato dall'hub prima di scoporlo** (e non di piu'): su un piano da
+      26 task, ordine DOM e ordine visivo delle righe **coincidono** (top
+      73/109/145/181/217/253 sull'indice DOM 0..5), quindi `:first-child`
+      punterebbe alla riga giusta. **Non guidato, ed e' la domanda che decide
+      il meccanismo**: lo stesso confronto **a griglia scrollata**. Il tentativo
+      di scroll dell'hub non ha mosso la vista (`gantt.scrollTo(null, 300)`,
+      `getScrollState().y` fermo a 62) e il caso e' rimasto non misurato; nel
+      repo non c'e' traccia di `smart_rendering`, quindi se dhtmlx ricicla i
+      nodi riga, `:first-child` seguirebbe il DOM e non i dati, e il segno
+      salterebbe di gruppo appena scrolli.
+      **Prima misurare quello, poi scegliere**: se l'ordine DOM regge sotto
+      scroll, basta `:first-child`; se non regge, la soppressione va decisa nel
+      template sui dati (la prima riga visualizzata), non in CSS.
+      Trappola della fixture, pagata dall'hub: `y.addTask(patch)` restituisce
+      **l'id**, non un oggetto (`agentApi.help.md:171`) — un
+      `addTask({...}).id` mette ogni task a primo livello in silenzio, e allora
+      *ogni* riga porta la classe, correttamente, e sembra un difetto.
+      Accept: il segno assente sulla prima riga e presente su tutti gli altri
+      inizi di gruppo, misurato in griglia e timeline **a vista in cima e a
+      griglia scrollata**, nei due schemi; nessuna regola nuova scrive
+      `background` su una riga o su una barra.
+
 - [x] T58 [impl] — Dove finiscono i sottotask e dove comincia il task dopo —
       `ef49d16`.
       `gantt-row--group-start` su ogni task di **primo livello** (figli o no),
@@ -285,10 +311,7 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       dal vivo; **non guidati e dichiarati tali**: il drag-and-drop della
       griglia e la colonna `+` (letti: copiano il parent da una riga che tiene
       gia' 0).
-      **Fuori dal bar, non toccato**: la prima riga di dati e' sempre un
-      inizio di gruppo, quindi il suo segno raddoppia il bordo inferiore della
-      testata e non separa da nulla — un `:first-child` e' un selettore, ma e'
-      una scelta visiva e la decide l'utente.
+      Dal critic, fuori dal bar, comprato dall'utente e scopato come T61.
 
 - [x] T56 [deep] — Un id che il progetto non conosce, tenuto fuori dal modello
       e fuori dal file — `8fd9a1c`. Due guardie comprate dall'utente dopo tre
