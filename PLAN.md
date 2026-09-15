@@ -186,6 +186,54 @@ scaduta in due punti** (F1 non conosce `currency`, F4 condiziona le colonne su
 `hasRates` invece di leggerle da un registro) e servono i due sottotask di C.
 Il resto della spec — §2 a §6 — regge intatto. Il delta e' il prossimo passo.
 
+- [x] T62 [architect] — Delta della spec sulle quattro risposte —
+      `.claude/specs/T59-costs.md` §5.7, §5.8, §7 chiusa, §8 riscritta
+      (fable-5-1 confermato in header; nessun codice toccato, un solo file).
+      Le due decisioni tecniche che mancavano, prese sul codice: **registro
+      `src/gantt/columns.ts` di soli metadati**, coi nomi dhtmlx di oggi
+      perche' `DERIVED_ON_SUMMARY`, `refreshResourceOptions` e la guardia del
+      summary li usano gia'; i renderer restano dove sono come `Record`
+      esaustivi, cosi' il compilatore garantisce «una lista, due renderer»;
+      **nascosto = non costruito**, mai `hide: true` (PRO nei typings, non
+      sondato); selezione persistita in `localStorage['yagni.columns.v1']`
+      attraverso il seam `DraftStorage`, letta in un initializer come il draft;
+      view state, quindi **niente undo, niente dirty, nessuna op agent**. E
+      **`currency` si dichiara nel dialogo People** — e' l'unita' dei numeri
+      digitati li', e l'unico altro dialogo di progetto e' il calendario.
+      Vincolo scoperto e non ovvio: `recordedChange` deduplica solo su testo
+      identico, quindi tariffe e `currency` devono passare da **una** chiamata
+      all'handle o costano due passi di undo.
+      Verificato dall'hub: 11 `file:line` nuovi su 11 combaciano.
+
+**La scomposizione: F7 → F1 → F2 → F3 → F4 → F5 → F6 → F8**, seriale (un
+browser, una porta). Gli accept per esteso stanno nella §8 della spec, con la
+**Fixture C** condivisa e la sua tabella dei valori attesi per cella; qui sta
+lo stato. Solo F2 e' `deep` (effort conservato); **nessun sottotask tocca
+`src/scheduler/`**, ed e' la decisione che tiene il motore fuori dal denaro.
+
+- [ ] F7 [impl] — Registro delle colonne, selezione, persistenza, picker
+      Accept: §8. **Il task piu' grosso del goal, e non e' splittato**: la
+      spec sostiene che un registro senza il suo picker non e' verificabile
+      nel browser, e la ragione regge perche' `setColumns` vive
+      sull'handle e **non** e' esposto su `window.yagni` (view state, non
+      un'op). L'hub ha valutato lo split in registro + UI e l'ha scartato per
+      questo. Se la corsia supera ~150k, l'hub interviene invece di lasciarla
+      correre; al primo fallimento si routa **deep**, non si splitta.
+- [ ] F1 [impl] — Tariffe e `currency` nel modello, nel file e nelle regole
+- [ ] F2 [deep] — La lettura del costo (`costs` su `SolvedProject`)
+- [ ] F3 [impl] — Superfici di report, scrittura di `currency`, help dell'agente
+- [ ] F4 [impl] — Colonne Rate e Cost **nate sul registro**, marca del
+      parziale, totale in status bar
+- [ ] F5 [impl] — Tariffe e campo Currency nel dialogo People
+- [ ] F6 [impl] — Il costo nel pannello dettagli
+- [ ] F8 [impl] — Colonne e banda di testata in `planFigure`
+      **Non ha effetto visibile nell'app dentro questo goal**, e non e' una
+      dimenticanza: `App.tsx` non passa `columns`, il default legacy resta
+      byte-identico (appuntato da un pin). L'utente l'ha comprato come API
+      scegliendo C, e il suo cliente e' il dialogo di export di Goal G.
+      Dichiarato qui perche' la goal review non lo legga come codice
+      infilato di straforo.
+
 **Non cancellare `.claude/specs/T59-costs.md` allo sweep degli orfani finche'
 la goal review di F non e' girata**: gli accept dei sottotask stanno nella sua
 §8 e sono meta' del bar della review.
@@ -456,7 +504,7 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 - Dimensionamento: impl oltre ~200k = task da splittare (T35 215k, T18 182k+250k);
   una correzione via SendMessage riusa il contesto e costa meno di un fresh
   spawn (~40k) — **ma non oltre ~190k**: li' chiude l'hub, se ha le misure
-  (T52; T55 188k/129k; T56 impl 131k+166k). Un architect di goal: 248k (T59). **Un critic guidato nel browser e'
+  (T52; T55 188k/129k; T56 impl 131k+166k). Un architect di goal: 248k (T59), il suo delta 203k (T62). **Un critic guidato nel browser e'
   la voce piu' cara del task**: 75-95k a tavolino, 148-168k nel browser (T56),
   211k su T58 — e su T58 e' l'unico che ha ribaltato una premessa. Si paga.
 - **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta hanno chiuso
