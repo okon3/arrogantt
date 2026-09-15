@@ -48,11 +48,18 @@ Deciso con l'utente in apertura, e vincolante (non riaprire):
   `renderSegments`). L'opzione deve coprire tutte le strade, non la sola
   colonna.
 
-**Vincolo incrociato con Goal F, da onorare da qualunque dei due parta primo:**
-la scelta delle colonne da esportare e la scelta delle colonne visibili in
-griglia (questione aperta di Goal F) sono **lo stesso meccanismo con due
-clienti**. Costruirlo due volte lascia due liste di colonne da tenere
-allineate. Chi arriva primo decide per entrambi, e lo scrive nell'altro goal.
+**Vincolo incrociato con Goal F: F e' arrivato primo e ha deciso, questo goal
+erede.** La scelta delle colonne da esportare e la scelta delle colonne
+visibili in griglia sono **lo stesso meccanismo con due clienti**, e l'utente
+ha comprato il meccanismo generale dentro Goal F (opzione C della spec T59):
+il registro delle colonne, il filtro con la sua persistenza, il picker e le
+colonne insegnate a `planFigure` **esistono gia' quando questo goal parte**.
+Quindi il dialogo di export **non costruisce una seconda lista di colonne**: ne
+consuma il registro. Da F si eredita anche: la scelta delle colonne e' un
+argomento di `planFigure`, non stato della griglia (i due clienti scelgono
+diverso nello stesso momento); e `rate`/`cost` sono marcate non sicure per un
+cliente, quindi **fuori da un export cliente per default**. Anche l'etichetta
+`currency` arriva da F, nel file.
 
 Da decidere nell'analisi, non adesso — e la risposta e' semantica, non estetica:
 - **Un link che parte da un figlio nascosto.** Se un sottotask collassato ha
@@ -152,21 +159,32 @@ Deciso con l'utente in apertura, e vincolante per la spec (non riaprire):
       dialogo People intatto sporca un file che non aveva quella chiave. Da
       scopare a se' se l'utente lo vuole; F5 non deve copiare il vizio.
 
-**Quattro questioni aperte, in attesa della risposta dell'utente** (§7 e §9
-della spec). I sottotask F1-F6 entrano nel piano appena risposte, perche' la
-prima le cambia:
-1. **Meccanismo delle colonne** — A due colonne fisse / **B** due colonne
-   visibili solo se esistono tariffe / C selettore utente adesso.
-   Raccomandazione della spec: **B**, col registro delle colonne e le colonne
-   di `planFigure` che nascono nel primo task implementativo di Goal G.
-   Questa risposta **vincola anche Goal G**.
-2. **Valuta e formato numero** — numeri senza unita' / etichetta `currency` nel
-   file / `€` fisso. Raccomandazione: senza unita' adesso, additivo poi.
-3. **Colonna Rate su un task a cavallo di un aumento** — intervallo `600–650`
-   (deciso in spec) oppure la media effettiva. Raccomandazione: l'intervallo.
-4. **Dove vive il totale** — status bar accanto a `N tasks` (deciso in spec)
-   oppure una riga footer in griglia, che dhtmlx Community non offre e la spec
-   non ha sondato. Raccomandazione: status bar.
+**Le quattro questioni sono chiuse dall'utente il 2026-09-15** (§7 e §9 della
+spec), e **due delle quattro vanno contro la raccomandazione** — decise coi
+numeri davanti, non riaprire:
+1. **Colonne selezionabili dall'utente adesso: opzione C**, contro la
+   raccomandazione B. Il registro delle colonne, il filtro con la sua
+   persistenza, il picker e le colonne insegnate a `planFigure` si comprano in
+   questo goal, non nel primo task di Goal G. Costo accettato: due sottotask in
+   piu' prima che la prima cifra di costo sia a schermo, e una matrice di
+   verifica per ogni colonna nascondibile (Tab, guardia del summary, griglia
+   collassata).
+2. **Etichetta `currency` nel file**, contro la raccomandazione dei numeri
+   senza unita'. Campo di progetto opzionale e additivo — allarga il gate di
+   parsing in entrata e in uscita, e vuole un posto dove dichiararla (deciso
+   in ricognizione, non qui).
+3. **La colonna Rate di un task a cavallo di un aumento mostra l'intervallo**
+   `600-650`, non la media: sono cifre che qualcuno ha dichiarato, quindi
+   verificabili contro il dialogo People.
+4. **Il totale vive nella status bar**, accanto a `N tasks`, con l'effort non
+   calcolato dichiarato di fianco. Nessuna riga footer in griglia: dhtmlx
+   Community non ne offre una che la spec abbia verificato, e col selettore di
+   colonne appena comprato la larghezza della griglia cambia a runtime.
+
+**La §8 della spec e' scritta sull'ipotesi B, quindi la sua scomposizione e'
+scaduta in due punti** (F1 non conosce `currency`, F4 condiziona le colonne su
+`hasRates` invece di leggerle da un registro) e servono i due sottotask di C.
+Il resto della spec — §2 a §6 — regge intatto. Il delta e' il prossimo passo.
 
 **Non cancellare `.claude/specs/T59-costs.md` allo sweep degli orfani finche'
 la goal review di F non e' girata**: gli accept dei sottotask stanno nella sua
