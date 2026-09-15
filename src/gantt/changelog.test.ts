@@ -54,6 +54,18 @@ describe('parseChangelog', () => {
     ]);
   });
 
+  // A CRLF working copy (`core.autocrlf` leaves the checkout alone, an editor
+  // rewrites the file) used to parse headings and drop every bullet: the dialog
+  // showed release dates with nothing under them.
+  it('reads a CRLF document', () => {
+    const text = ['# Changelog', '', '## v1.0 — 2026-09-04', '', '- Nota A.', '- Nota B.', ''].join(
+      '\r\n',
+    );
+    expect(parseChangelog(text)).toEqual([
+      { version: 'v1.0', date: '2026-09-04', notes: ['Nota A.', 'Nota B.'] },
+    ]);
+  });
+
   it('returns an empty array for empty or garbage text', () => {
     expect(parseChangelog('')).toEqual([]);
     expect(parseChangelog('just some\nrandom text\nwith no headings')).toEqual([]);

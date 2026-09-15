@@ -16,7 +16,11 @@ export function parseChangelog(text: string): ChangelogEntry[] {
   const entries: ChangelogEntry[] = [];
   let current: ChangelogEntry | null = null;
 
-  for (const line of text.split('\n')) {
+  // CRLF too: the document arrives through a `?raw` import of the working copy,
+  // whose line endings follow the checkout rather than the repo. A trailing `\r`
+  // survives HEADING but kills BULLET — `.` never crosses a line terminator, so
+  // `$` has nothing left to match.
+  for (const line of text.split(/\r?\n/)) {
     const heading = HEADING.exec(line);
     if (heading) {
       current = { version: heading[1], date: heading[2], notes: [] };
