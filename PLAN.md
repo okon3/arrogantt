@@ -7,8 +7,9 @@ T51): chart 2228 → 1205. Nessuna release — refactoring, e il changelog non
 prende plumbing.
 
 Aperti: **Goal F** (costi) e **Goal G** (export cliente), appena aperti, il
-primo passo di entrambi e' analisi; **T57** e **T58** in manutenzione; **T16**,
-unico task di Goal C, che lo porterebbe alla sua review. **O4** in giacenza.
+primo passo di entrambi e' analisi; **T58** in manutenzione; **T16**, unico
+task di Goal C, che lo porterebbe alla sua review. **O4** in giacenza. T57
+chiuso dall'hub senza aprire una corsia.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
@@ -215,29 +216,31 @@ arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 
-- [ ] T57 [impl] — Il changelog che perde i bullet nella build single-file
-      Sintomo riferito dall'utente e da riprodurre: in `npm run build:single`
-      il badge di versione compare e il dialogo si apre con le **intestazioni
-      di release e le date**, ma **senza i bullet dentro**. Quindi il testo
-      arriva nel bundle (le date vengono da li') e si perde dopo: parse dei
-      bullet, rendering, o CSS.
-      Premessa ribaltata dalla ricognizione, da non riproporre: *non* e' un
-      asset che la build perde. `CHANGELOG.md` entra con
-      `import ... '../../CHANGELOG.md?raw'` (`changelogEntries.ts:1`), quindi
-      Vite lo cuoce nel chunk JS in ogni modalita', e `viteSingleFile()`
-      (`vite.config.ts:44`) gira in `generateBundle`, quando la stringa e' gia'
-      dentro il codice. `parseChangelog` non solleva mai: input malformato
-      rende `[]` e il badge semplicemente non appare (`changelog.ts:11-13`,
-      `App.tsx:802`) - e il badge invece **appare**, il che esclude l'array
-      vuoto.
-      Scope: **misura prima**, correzione solo se il difetto esiste. Costruire
-      entrambe le build, servirle via http, e confrontare il DOM del dialogo
-      fra `build` e `build:single`.
-      Accept: dichiarato dove si perdono i bullet, con la misura che lo prova
-      (presenza/assenza nel DOM e nel testo del bundle, non una lettura del
-      codice); se il difetto esiste, il dialogo mostra i bullet nella build
-      single-file, misurato nel browser. **«Nessun diff, il sintomo non si
-      riproduce» e' un esito valido** e chiude il task.
+- [x] T57 [impl, chiuso dall'hub] — Il changelog leggeva un CRLF e buttava i
+      bullet — `4a804ba`. La premessa del task era sbagliata e la misura l'ha
+      ribaltata subito: **la build single-file non c'entrava**. Una stringa
+      importata con `?raw` e' cotta nel chunk JS molto prima che
+      `vite-plugin-singlefile` giri, e il testo dei bullet e'
+      verificabilmente dentro `dist/index.html` (misurato). Quella build era
+      solo l'unico posto dove quel dialogo veniva aperto.
+      Il difetto vero: `CHANGELOG.md` arriva al parser dalla **copia di
+      lavoro**, quindi coi terminatori del checkout e non del repo — blob LF,
+      copia locale CRLF, e `git status` pulito perche' `core.autocrlf=input`
+      normalizza in commit. Con un `\r` in coda a ogni riga `HEADING`
+      sopravvive (il gruppo della data non e' ancorato alla fine) e `BULLET`
+      no: `.` non attraversa un terminatore di riga, quindi `$` non ha piu'
+      nulla da combaciare. Misurato sul file vero: 0 note su tre entry, 6/3/2
+      dopo normalizzazione.
+      Verificato nella build single-file servita via http: badge `v1.2`, tre
+      sezioni con 6, 3 e 2 bullet, zero errori in console. Il test nuovo
+      fallisce senza il fix (provato con stash), che e' cio' che lo rende un
+      pin e non una speranza.
+      Scartato: un `.gitattributes` che forzi LF — mascherava il sintomo e
+      lasciava la fragilita' nel codice.
+      **Trovato di passaggio e non toccato** (fuori dal bar di T57): la build
+      «single« emette anche `favicon-*.svg` e `llms.txt` **non inlinati**, quindi
+      distribuire il solo `index.html` perde la favicon. Da scopare come task
+      se l'utente lo vuole.
 
 - [ ] T58 [impl] — Dove finiscono i sottotask e dove comincia il task dopo
       Difetto: su un piano con molti task e sottotask, a rami espansi,
@@ -393,7 +396,10 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   misura 136k, impl 131k + 166k, due critic, quattro findings.
 - **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta hanno chiuso
   la condizione dello stallo e il round-trip del salvataggio (T56) per pochi k,
-  dove una corsia paga 40k di solo ingresso. Delegare conviene dal browser in su.
+  dove una corsia paga 40k di solo ingresso. T57 e' il caso limite: due
+  Explore (71k + 56k, non residenti) e una misura di dieci secondi hanno
+  ribaltato la premessa e chiuso il task in una riga, senza aprire corsia.
+  **Prima di briefare, misurare la premessa**: se cade, il brief non serve.
 - Un task il cui accept e' una campagna di misura va scopato come task di sola
   misura: T31 chiedeva misura + modifica e ha saturato tre contesti per 21
   righe di diff; T42, scopato come misura, 99k/135k e zero correzioni. Variante
@@ -421,7 +427,3 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   che dice di provare.** T45 chiedeva ctrl+wheel (non misurabile in sintetico),
   T46 «le bande spariscono a Months» (vero su un piano corto, falso su uno
   lungo), T48 «Tab muove fra le celle» (ne muove due). Cinque fette su cinque.
-- **I documenti e i commenti vanno confrontati fra loro e col codice**: la §3 di
-  T45 illustrava una firma che la §4 vietava; in T56 la stessa premessa
-  sbagliata viveva in due commenti, e correggerne uno ha lasciato l'altro in
-  piedi. Una regola derivata da un modulo si verifica su **tutti** i suoi casi.
