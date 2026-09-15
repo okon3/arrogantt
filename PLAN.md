@@ -253,7 +253,8 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       distribuire il solo `index.html` perde la favicon. Da scopare come task
       se l'utente lo vuole.
 
-- [x] T58 [impl] — Dove finiscono i sottotask e dove comincia il task dopo.
+- [x] T58 [impl] — Dove finiscono i sottotask e dove comincia il task dopo —
+      `ef49d16`.
       `gantt-row--group-start` su ogni task di **primo livello** (figli o no),
       griglia e timeline: marcare l'inizio di un blocco costa un confronto su
       un campo che la riga porta gia', marcarne la fine vorrebbe camminare i
