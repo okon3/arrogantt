@@ -291,33 +291,42 @@ lo stato. Solo F2a e' `deep` (effort conservato); **nessun sottotask tocca
       `requireString` col suo messaggio prima di `validateCurrency`) e' stato
       giudicato non difetto: i rifiuti di `requireString` sono un
       sottoinsieme, il gate non si indebolisce.
-- [>] F2a [deep] — Il calcolo del costo: `rateIntervals` e `taskCosts` in
-      `cost.ts`
-      **F2 splittato dall'hub gen 3 in F2a (calcolo) + F2b (cablaggio)**: due
-      corsie di fila oltre 220k (F7 257k, F1 222k) e questo e' l'unico
-      sottotask `deep` del goal, cioe' quello dove l'attenzione degradata
-      costa piu' caro — l'effort conservato e' semantica, non rifinitura. La
-      cucitura non costa niente: `taskCosts` e' puro e i suoi pin girano su
-      `solve()` senza che nessuno in produzione lo chiami ancora.
-      **Ricognizione gia' fatta e riletta sul codice dopo F1** (non ripagarla;
-      la spec e' pre-F7, questi sono i numeri di `62e73db`): `solve()` ritorna
-      a `project.ts:413-421` — `costs` si attacca li'; `SolvedProject` e'
-      `:61-80`; la regola dei figli vivi di `rollUp` e' `:714-715`
-      (`live.length > 0 ? live : rows`), le sue summary sono ordinate
-      deepest-first a `:703-706`; il leaf disabled entra unassigned a `:400`
-      (quindi il costo va letto dal `resourceId` del **modello**);
-      `capacityIntervals` da specchiare e' `availability.ts:44-61`;
-      `AllocationSegment` (`rate`, `startWorkingMinutes`, `endWorkingMinutes`)
-      e' `types.ts:55-72`, `effortMinutes` `:88`; `hierarchy.childrenOf` e'
-      `project.ts:93` e i top-level sono `childrenOf(undefined)`;
-      `dayStartInWorkingMinutes` `calendar.ts:249`, `minutesToDays` `:280`.
-      **Due cose da sapere prima di briefare**: (1) la §8 mette `formatMoney`
-      nello scope di `cost.ts` ma la §5.4 dice `format.ts`, accanto a
-      `formatDays` — vince la §5.4, e' la piu' specifica e quel file esiste
-      per questo; (2) l'accept (4) chiede di aggiungere `costs` a ogni
-      `SolvedProject` costruito a mano nei test: **non ce n'e' nessuno**
-      (cercati per `summaryIds:`/`disabledIds:` su tutti i `*.test.ts`), i
-      test passano da `solve()`. Se la corsia ne trova uno, e' un file nuovo.
+- [x] F2a [deep] — Il calcolo del costo: `rateIntervals` e `taskCosts` in
+      `cost.ts` — `5402bb5`. `TaskCost`, `RateInterval`, `SolvedInputs`,
+      `rateIntervals`, `taskCosts` piu' i privati `rateAt`/`piecesOf`/
+      `leafCost`; sezione nuova in `docs/scheduling.md`. 489 test (+16).
+      Nessun file sotto `src/scheduler/`: verificato sul diff, non sul report.
+      **Lo split ha pagato**: corsia 141k, critic 130k, contro i 257k di F7 e
+      i 222k di F1. Da qui in poi tagliare cosi'.
+      **La corsia ha rifiutato un docblock che le dettavo, e aveva ragione**:
+      dicevo che `RateInterval.dailyRate` e' `undefined` quando i bound di un
+      periodo sono malformati, e quel caso non esiste — `expandRanges` e
+      `rateOnDay` condividono la guardia `isDayString`, quindi un bound
+      malformato non produce **nessun** intervallo per quel giorno. Misurato da
+      lei, riconfermato dal critic. Il tipo `number | undefined` resta (specchia
+      `rateOnDay` ed evita un'asserzione non-null), documentato per il vero.
+      **Unico finding del critic, e ancora nel brief dell'hub**: la formula nei
+      docs perdeva `minutesToDays`, cioe' dichiarava man-minuti dove il codice
+      calcola giorni-uomo — 480× sul calendario di default, e F3/F5 l'avrebbero
+      letta per costruire le loro cifre. Chiuso dall'hub.
+      **Due pin aggiunti dall'hub sui fuori-bar del critic**: (1) un tasso
+      **decrescente** — ogni cambio di tariffa della suite era un aumento,
+      quindi `[...applied]` senza `.sort` passava 14 test su 14 mentre la §5.4
+      rende la coppia `600–650`; (2) il ramo senza persona e' **raggiungibile**,
+      non difensivo: la corsia lo dava per irraggiungibile e sbagliava — una
+      foglia disabled con `resourceId` pendente non stalla il motore, perche'
+      `project.ts:400` le azzera l'id. Il comportamento era gia' giusto.
+      **Fixture C: nove righe su nove ri-derivate in autonomia dal critic** e
+      combacianti con la §8 (T3 spinto al quinto giorno lavorativo, override
+      dal 2026-09-15, T6 disabled interamente sotto la soglia 2880 dell'asse).
+      F4 puo' fidarsi di quella tabella.
+      **Fuori bar e deliberatamente non scopato**: `expandRanges` espande
+      giorno per giorno, quindi un `to` al 2099 costa ~27k indici per persona
+      per `solve()` — identica esposizione della gemella dell'availability, il
+      fix vivrebbe in `src/scheduler/dayRange.ts`, fuori da Goal F, e non e'
+      un difetto che un utente vede. **Non guidato e dichiarato tale**: nessun
+      calendario non-default in nessuna fixture (un periodo di tariffa che
+      incontra una chiusura aziendale o una settimana non lun-ven).
 - [ ] F2b [self] — `costs` e `currency` su `SolvedProject`, i campi costo di
       `buildPlan`, `formatMoney`
       Cablaggio puro, ~110 righe su quattro file che l'hub ha gia' in
@@ -715,7 +724,8 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   tarati grossi, tagliare piu' fine da F4**); una correzione via SendMessage
   riusa il contesto e costa meno di un fresh spawn (~40k) — **ma non oltre
   ~190k**: li' chiude l'hub, se ha le misure (T52; T55 188k/129k; T56
-  131k+166k; F7 critic 184k; F1 critic 125k). Un architect di goal: 248k, il
+  131k+166k; F7 critic 184k; F1 critic 125k). **Splittare funziona e si
+  misura**: F2 tagliato in calcolo + cablaggio ha reso F2a 141k/130k. Un architect di goal: 248k, il
   delta 203k. **Un critic guidato nel browser e' la voce piu' cara del task**:
   75-95k a tavolino, 148-168k nel browser (T56), 211k su T58 — e su T58 e'
   l'unico che ha ribaltato una premessa. Si paga.
