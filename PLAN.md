@@ -995,18 +995,33 @@ decisione sua, non un'azione della review.
       `2,400–2,600` misura 68.20px, +3.80.
       Accept: la larghezza scelta dall'utente con la somma nuova accanto, o il
       taglio dichiarato in `docs/view.md` con la misura.
-- [ ] F10 [self] — `currencyLabel` e il testo dell'effort non costato tornino a
-      una casa sola
-      `planCsv.ts` ri-scrive `Cost (${currency})` a mano invece di chiamare
-      `currencyLabel`, e `docs/view.md` (F6b) afferma che quella forma «vive in
-      un posto solo»: **quinta ragione falsa del goal, stessa forma delle altre
-      quattro.** `"<n> d of effort not costed"` resta duplicato in
-      `StatusBar.tsx` accanto a `costCells.ts` — nota di gen 7, ora che il file
-      si riapre per altro va instradato. E `columns.ts` dice ancora «a
-      figure-side record later»: F8 l'ha atterrato, la riga e' stantia dallo
-      stesso commit.
-      Accept: `planCsv.test.ts` passa invariato, un solo `Cost (` in `src/`,
-      e le due affermazioni nei commenti/doc sono vere.
+- [x] F10 [self] — `currencyLabel` e il testo dell'effort non costato tornino a
+      una casa sola — `4d27480`. Tre mosse e **nessuna stringa che un utente
+      legge cambiata**: `planCsv.ts` chiama `currencyLabel` invece di
+      ri-scrivere `Cost (${currency})`; `uncostedNote(days)` nasce in
+      `costCells.ts` e la cella di costo parziale e la status bar la chiamano
+      entrambe; il commento di testata di `columns.ts` nomina `FIGURE_CELLS`
+      (`planFigure.ts`), che F8 aveva atterrato lasciando la riga «a figure-side
+      record later» stantia dal suo stesso commit.
+      **La ragione nel doc e' stata riparata rendendola una regola, non un
+      elenco** — e' la lezione del secondo giro di critic su F14: la frase di
+      `docs/view.md` diceva «letta dalla testata di griglia e da questo `dt`»,
+      cioe' un censimento di due voci che il CSV gia' smentiva; ora dice che
+      *ogni* superficie che etichetta una cifra chiama quella funzione e nessuna
+      ri-scrive le parentesi. Stessa mossa nel doc comment di `currencyLabel`,
+      che l'enumerazione l'ha persa.
+      Verificato dal critic (sonnet, 102k, pass al primo giro) **sul percorso,
+      non sulla riga**: cinque siti di etichetta e tutti passano per
+      `currencyLabel` — il registro di `columns.ts` serve testata di griglia,
+      CSV, testata della figura (`entry.label`) e **il picker delle colonne**,
+      superficie che ne' l'accept ne' la vecchia frase nominavano, piu' i due
+      `dt` di `TaskDialog.tsx`; l'unico `Cost (` letterale rimasto in `src/`
+      fuori da un'attesa di test e' dentro `currencyLabel` stessa.
+      `planCsv.test.ts` **ricostruito da `git show HEAD:` e trovato identico**,
+      non creduto. Nel browser, fixture parzialmente costata (`uncostedDays: 5`,
+      `EUR`): status bar e cella di costo rendono lo stesso
+      `title="5 d of effort not costed"`, letto dal DOM vivo — l'unico percorso
+      visibile che questo refactoring tocca e che nessun unit test copre.
 - [ ] F11 [self] — README e `agentApi.help.md` dicano che il piano costa
       Unico MISSING della review: il README non nomina tariffe, colonne costo,
       `currency` ne' il picker, e `CLAUDE.md` dice che il README cambia quando
@@ -1422,15 +1437,14 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 
 ## Log
 - **Dimensionamento**: impl oltre ~200k = task da splittare (T35, F7 257k, F1
-  222k, F4b 228k); splittato rende 120-170k a meta' (F2a, F3a, F3b, F6a, F9
-  113k). **Si taglia la campagna di verifica, non il codice**: F5a e F5c,
-  ri-splittate sul codice, sono risalite a 215k e 242k; se la campagna non si
-  taglia si detta il codice (F6b 181k), e **toglierla del tutto non rende
-  economico il task** (F8, accept tutto unit, 157k/146k). Una correzione via
-  SendMessage costa meno di un fresh spawn (~40k), ma non oltre ~190k. **Il
-  critic e' la voce piu' cara e la piu' redditizia**: 75-95k a tavolino,
-  122-242k nel browser, 191k la goal review; su T58 ha ribaltato una premessa,
-  su F8 rifatto il pin da `git show`, su F9 e F14 un overclaim dell'hub.
+  222k, F4b 228k); splittato rende 120-170k a meta'. **Si taglia la campagna di
+  verifica, non il codice**: F5a e F5c, ri-splittate sul codice, sono risalite a
+  215k e 242k; se la campagna non si taglia si detta il codice (F6b 181k), e
+  **toglierla del tutto non rende economico il task** (F8, 157k/146k). Una
+  correzione via SendMessage costa meno di un fresh spawn (~40k), ma non oltre
+  ~190k. **Il critic e' la voce piu' cara e la piu' redditizia**: 75-95k a
+  tavolino, 102-242k nel browser, 191k la goal review; su T58 ha ribaltato una
+  premessa, su F8 il pin da `git show`, su F9 e F14 un overclaim dell'hub.
 - **Un elenco enumerato da una sezione di spec e' completo o non e' un elenco.**
   F2b: la consegna dava due regole del null su tre e taceva il filtro
   `disabledIds` della §5.3, e l'hub ha poi giustificato la scelta da se' senza
@@ -1459,4 +1473,5 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   verifica sul percorso che la usa, non sulla riga che la enuncia, **e
   riscriverla non la ripara** (F9). Chi enumera superfici dica quale rende il
   campo; **chi dice «la stringa piu' larga» dica contro cosa e' limitata** —
-  la testata di F14 ha un massimo legale, la sua cella nessuno.
+  la testata di F14 ha un massimo legale, la sua cella nessuno. **E un elenco di
+  superfici e' un censimento che scade: F10 l'ha riscritto come regola.**
