@@ -244,12 +244,18 @@ disabled group reads `disabled: false` from `getTask()` while `getPlan()`
 reports it `true` for the same row, since the plan is asking what the engine
 actually sees.
 
+**`getTask()`'s `cost`, `uncostedDays` and `dailyRates` are the same figures as
+`getPlan().tasks[i]`'s** — one rule prices a row, and both calls read it the
+same way, unlike `disabled` above. `currency` is the project's own label,
+repeated on every row for convenience, so a script reading one task never has
+to cross-reference `getPlan()` just to know what its `cost` is in.
+
 ## Writing — people
 
 | Call | Notes |
 | --- | --- |
-| `addResource(patch) → id` | `{ name, availability?, availabilityOverrides? }` |
-| `updateResource(id, patch)` | |
+| `addResource(patch) → id` | `{ name, availability?, availabilityOverrides?, dailyRate?, rateOverrides? }` |
+| `updateResource(id, patch)` | Same shape. An omitted field is left alone; `dailyRate: null` clears it. |
 | `removeResource(id, { releaseTasks })` | `releaseTasks: true` is **required** while tasks are still assigned; their assignment is dropped. |
 | `setAvailability(id, overrides)` | Replaces the whole ordered list. |
 
@@ -263,11 +269,25 @@ narrow exception goes after the broad period it carves out of — which is why t
 list is handed over whole rather than a period at a time. `availability: 0` is an
 absence; there is no separate concept.
 
+`dailyRate` is money per working day of **effort**, so somebody at 50% costs
+their rate for the days they actually work, not for the calendar the task
+spans. Any finite figure from `0` up is accepted, fractions included. A rate
+period is `{ from, to, dailyRate, label? }` over `YYYY-MM-DD` days and follows
+the same two rules as an availability one — it **replaces** the default rather
+than multiplying it, and **where two overlap the last declared wins**.
+
+**No rate is not a rate of `0`.** A person with no `dailyRate` and no period
+covering the days leaves the work *unpriced*: the row's `cost` comes back
+`null` and its effort lands in `uncostedDays`. A declared `0` is a price — the
+row costs `0` and those days count as costed. That is the whole difference
+between "we do not know" and "it is free".
+
 ## Writing — project and calendar
 
 | Call | Notes |
 | --- | --- |
 | `setCalendar(spec)` | The whole `CalendarSpec`. `windows` are whole **minutes from midnight** (`{ from: 480, to: 720 }` is 08:00-12:00), must not overlap, and `workingDays` are weekday indices `0..6`, 0 = Sunday. Holidays are company-wide shutdowns, removed from the axis like weekends. |
+| `setCurrency(label \| null)` | A free label, at most 8 characters (`EUR`, `k€`, ...). `null` clears it. Blank, padded (`" EUR "`) and over-8-character labels are refused, and nothing is written when they are. Nothing converts and nothing formats by locale — it is printed exactly as given. |
 | `newProject()` | No discard question. Clears the undo history, as the button does. |
 | `loadText(text, filename?)` | Parses first: a malformed file leaves the open project untouched and throws `ProjectFileError`. Replaces the document, so the undo history goes with it. |
 | `setFilename(name)` | |

@@ -9,6 +9,7 @@ import {
 import { gantt } from 'dhtmlx-gantt';
 import 'dhtmlx-gantt/codebase/dhtmlxgantt.css';
 import { barFactsOf, renderBarTooltip } from './barTooltip';
+import { reportedCost } from './cost';
 import { isShared } from './segmentBar';
 import {
   registerQuarterUnit,
@@ -378,6 +379,7 @@ export function GanttChart({
         if (!task || !scheduled) return null;
         const solved = solvedRef.current;
         const summary = solved.summaryIds.has(id);
+        const cost = solved.costs.get(id)!;
         return {
           id,
           name: task.name,
@@ -400,6 +402,10 @@ export function GanttChart({
           shared: isShared(scheduled),
           contended: isContended(scheduled),
           disabled: task.disabled === true,
+          cost: reportedCost(cost),
+          uncostedDays: cost.uncostedDays,
+          dailyRates: [...cost.dailyRates],
+          currency: solved.currency,
         };
       },
       getTaskSlack: (id) => {
@@ -486,6 +492,13 @@ export function GanttChart({
         // scales have to be redrawn, not just the task data.
         applySolution();
         gantt.render();
+      },
+      setCurrency: (label) => {
+        // Absent, not empty: `JSON.stringify` drops an `undefined` property, so
+        // this is what makes "cleared" and "never set" the same file on disk.
+        if (label === null) delete projectRef.current.currency;
+        else projectRef.current.currency = label;
+        applySolution();
       },
       countTasksByResource: () => {
         const counts = new Map<string, number>();

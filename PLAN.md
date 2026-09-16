@@ -417,81 +417,42 @@ a `:300-324` col suo unico call site a `:638`, `loadProject` a `:326-367`.
       **Nessun bullet in `CHANGELOG.md`, deciso al brief**: la §5.6 assegna a
       F4 il bullet dei costi, dove le cifre diventano visibili nell'app; qui
       lo raddoppierebbe.
-- [ ] F3b [impl] — Parita' di `getTask()`, scrittura di `currency`, help
-      `TaskDetails` + `getTaskDetails`, `GanttHandle.setCurrency`,
-      `setResources(…, currency?)`, `AgentApi.setCurrency`, le chiamate a
-      `rebuildColumns()`. Verifica nell'app.
-      **Discrepanza di spec da sciogliere, e la decisione e' presa**: la §5.4
-      dice «`TaskDetails` gains `cost: TaskCost`» mentre la §5.6 ha fissato
-      `PlanTask.cost: number | null` — due forme per lo stesso nome sulla
-      stessa superficie agente (`getTask().cost` oggetto contro
-      `getPlan().tasks[i].cost` numero). `TaskDetails` prende gli **stessi
-      tre campi di `PlanTask`** piu' `currency`, e **la regola del null si
-      estrae in una sola funzione esportata da `cost.ts`**: il builder di
-      `TaskDetails` e' un secondo builder indipendente
-      (`GanttChart.tsx:375-404`, non passa da `buildPlan`), quindi scriverla
-      due volte e' esattamente il «una regola mai in due posti» di CLAUDE.md
-      — e questo goal ci e' gia' cascato una volta sul totale.
-      **Il debito di F7 non e' di F3b: passa a F4** (verificato dall'hub sul
-      codice il 2026-09-16, non ereditato). La riga diceva che F3b fa leggere
-      `currency` a una `label()`: falso — le cinque entry di `columns.ts` sono
-      tutte `label: () => 'Resource'` e simili, e il suo stesso docblock dice
-      «A later goal makes the currency label ride here». Le entry `rate`/`cost`
-      con la label dal `currency` sono di **F4** (§8). Rimettere la chiamata
-      qui sarebbe di nuovo una chiamata che non compra niente al commit che la
-      aggiunge, cioe' la forma esatta del difetto di F7.
-      **Anche il terzo argomento di `setResources` passa a F5**, stessa regola
-      e stessa verifica (hub, 2026-09-16): l'handle **non e' raggiungibile da
-      `window.yagni`** — `AgentApi` non ha nessuna op che scriva persone e
-      `currency` insieme, quindi in F3b quel parametro non e' misurabile da
-      nessun percorso. E' il dialogo People di F5 a passarlo, ed e' F5 che puo'
-      provarne il contratto. **La regola, una per entrambi gli spostamenti:
-      una superficie che al commit che la aggiunge non si puo' misurare non
-      appartiene a quel commit** — e' la forma del difetto di F7.
-      Vincolo della §5.8, **riletto e confermato sul codice**: `recordedChange`
-      (`history.ts:48-60`) scarta solo un testo **identico** byte a byte, non
-      fonde mai due scritture diverse — quindi una chiamata all'handle = un
-      passo di undo, due chiamate = due. `describeChange` ha gia' il caso
-      `changed currency` (`history.ts:138`, da F1).
-
-      **Ricognizione del 2026-09-16, gia' pagata — non rifarla** (tutti i
-      `file:line` riletti a `408cc88`; F3a non ha toccato nessuno di questi
-      file):
-      - `getTaskDetails` (`GanttChart.tsx:375-404`) **non passa da
-        `buildPlan`**: legge `projectRef.current` e `solvedRef.current`, e
-        quest'ultimo porta gia' `costs` e `currency` (`project.ts:81,89`).
-        Nessun cablaggio nuovo: bastano `solved.costs.get(id)` e
-        `solved.currency`. `TaskDetails` e' a `ganttHandle.ts:104-128`,
-        `GanttHandle` a `:38-101`, `setResources` a `:64`.
-      - La regola del null sta **solo** a `plan.ts:112`. Attenzione:
-        `plan.ts:132` (il totale) e' un predicato **diverso**
-        (`costedDays === 0` e basta) e non va fuso con l'altro.
-      - Modello per `setCurrency`: `AgentApi.setCalendar`
-        (`agentApi.ts:412-417`) copia → valida → `throw` → chiama l'handle;
-        l'handle (`GanttChart.tsx:482-489`) scrive su `projectRef.current` e
-        chiama `applySolution()`. Il `gantt.render()` che ha in piu' e' per
-        l'asse dei tempi che si sposta: `setCurrency` non ne ha bisogno
-        (nessuna `label()` legge ancora il progetto — e' di F4).
-      - `validateCurrency` (`cost.ts:64-74`) ha **un solo** call site non di
-        test oggi, `serialization.ts:337`: nessun percorso di scrittura vivo
-        valida il `currency`. `setCurrency` e' il primo.
-      - `agentApi.help.md`: tabella *Writing — project and calendar* righe
-        `:270-273` (dove va `setCurrency`); la semantica di `getTask()` e'
-        sparsa a `:204-245`; i bullet di `cost`/`uncostedDays` di `getPlan()`
-        sono a `:77-81` e `currency` a `:88` — **puntarci, non riscriverli**.
-      **Un accept della §8 e' sbagliato e va corretto nel brief**: l'accept (5)
-      di F3 chiede `getPlan().tasks[i].cost === costs.get(id).amount` per ogni
-      riga, ma i due divergono proprio dove la regola del null morde — su T4 e
-      T5 della Fixture C `cost` e' `null` e `amount` e' `0`. La parita' da
-      guidare e' `getTask(id)` contro `getPlan().tasks[i]`, piu' la tabella
-      della §8.
-      **Nidificazione della Fixture C** (le graffe della §8 sono sciatte; i
-      totali la fissano): `S1 { T1, T2, S2 { T3, T4, T5, T6 } }` e **`M1`
-      fratello di `S1` al primo livello** — nove righe, `S1 7800 + M1 0`.
-      **La Fixture C la scrive F3b**, non F4: la §8 ne assegna lo script a F4
-      perche' la supponeva prima, ma F3b arriva per primo e la usa. Lo script
-      esatto va nel suo STATUS, e F4/F5/F6/F8 lo riusano.
-      Porta 5173 **libera** al momento della consegna.
+- [x] F3b [impl] — Parita' di `getTask()`, scrittura di `currency`, help —
+      `SHA_PLACEHOLDER`. `TaskDetails` prende i tre campi di `PlanTask` piu'
+      `currency` (letti da `solvedRef.current`, nessun cablaggio nuovo);
+      `GanttHandle.setCurrency` e `AgentApi.setCurrency` sul modello di
+      `setCalendar`, senza `gantt.render()`; la regola del null estratta in
+      `reportedCost` (`cost.ts`), chiamata dai due builder e da nessun altro —
+      `plan.ts:133`, predicato diverso, intatto. 516 test (+8). Nessun file
+      sotto `src/scheduler/`, nessun `rebuildColumns()`, nessun terzo argomento
+      a `setResources`: verificato sul diff.
+      **Lo script della Fixture C sta nella §8 della spec**, in una sola copia,
+      con le tre correzioni dell'hub che la sovrascrivono (graffe, accept (5)
+      sbagliato, chi lo scrive). F4/F5/F6/F8 leggono di li'.
+      **Critic: pass, zero finding** — corsia 133k, critic 168k (browser). Ha
+      guidato nove righe di parita', il conteggio dei passi di undo col tasto
+      vero e il verso del redo, il gate stretto su emoji/controlli/8 caratteri,
+      e ha misurato che `yagni.help()` e `/llms.txt` restano byte-identici.
+      **Quattro chiusure dell'hub sui suoi fuori-bar**, la prima delle quali e'
+      un buco dei brief e non del critic: la §5.6 assegna a **F3** anche la
+      tabella *Writing — people* (`dailyRate`, `rateOverrides`,
+      replace-not-multiply, last-wins, assente ≠ `0`) e nessuno dei due brief
+      l'ha chiesta — mentre la Fixture C dipende da entrambi i campi. Scritta
+      ora, coi limiti che `resources.ts:118-137` sostiene davvero (qualunque
+      cifra finita da `0` in su, frazioni incluse). Piu': la clausola del label
+      paddato nella riga di `setCurrency`; una guardia di tipo in
+      `validateCurrency` col suo pin, perche' `setCurrency(5)` da uno script
+      tirava un `TypeError` invece della regola (la gemella
+      `calendarRules.ts:60-62` si guarda gia' da sola); e la trappola
+      **misurata** dal critic in `docs/verification.md` — `isDirty()` e i
+      title dei tasti undo/redo leggono l'ultimo stato **renderizzato**
+      (`App.tsx:737-741`), quindi in un solo eval rispondono il valore
+      pre-scrittura, mentre `getPlan()`/`getTask()`/`toText()` sono vivi.
+      Quattro task riusano quella fixture: la trappola valeva il doc.
+      **Non guidato e dichiarato tale** (dal critic): Save e il file su disco,
+      il draft dopo un reload con `currency`, Ctrl+Z come tasto, la profondita'
+      dello stack oltre la cima, `setCurrency` prima del mount e dopo
+      `newProject()`.
 - [ ] F4 [impl] — Colonne Rate e Cost **nate sul registro**, marca del
       parziale, totale in status bar
       **Da tagliare prima di briefarlo** (Log, dimensionamento): il totale in
@@ -892,18 +853,19 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 ## Log
 - **Dimensionamento**: impl oltre ~200k = task da splittare (T35 215k, T18
   182k+250k, F7 257k, F1 222k). **Splittare si misura**: F2 tagliato in calcolo
-  + cablaggio ha reso F2a 141k/130k e F3a 122k/122k, e F2b, dall'hub, zero corsia.
+  + cablaggio ha reso F2a 141k/130k, F3a 122k/122k e F3b 133k/168k (il critic
+  nel browser, non la corsia), e F2b, dall'hub, zero corsia.
   **F4 e F5 vanno tagliati prima di briefarli.** Una correzione via SendMessage
   costa meno di un fresh spawn (~40k), ma non oltre ~190k: li' chiude l'hub se
   ha le misure. **Un critic guidato nel browser e' la voce piu' cara**: 75-95k
   a tavolino, 148-168k nel browser, 211k su T58 — e su T58 e' l'unico che ha
   ribaltato una premessa. Si paga.
-- **Un elenco di decisioni consegnate e' completo o non e' una decisione.** F2b:
-  la riga di consegna enunciava due regole del null su tre e taceva il filtro
-  `disabledIds` della §5.3, derivato da gen 3 e mai scritto; l'hub ha poi
-  giustificato la scelta con un ragionamento proprio senza rileggere la §5.3.
-  Doppia causa, una lezione: **chi implementa rilegge tutte le sezioni di spec
-  che il task cita, prima di giustificare una scelta da se'.**
+- **Un elenco enumerato da una sezione di spec e' completo o non e' un elenco.**
+  F2b: la consegna dava due regole del null su tre e taceva il filtro
+  `disabledIds` della §5.3, e l'hub ha poi giustificato la scelta da se' senza
+  rileggerla. F3b: il brief ha enumerato le superfici della §5.6 saltando la
+  tabella *Writing — people*, da cui dipende la fixture del goal. Vale per chi
+  consegna, per chi implementa e per l'hub che briefa: si rilegge la sezione.
 - **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta hanno chiuso
   lo stallo e il round-trip del salvataggio (T56) per pochi k, dove una corsia
   paga 40k di solo ingresso. T57: due Explore non residenti e dieci secondi di

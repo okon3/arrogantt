@@ -64,6 +64,8 @@ export interface GanttHandle {
   setResources(resources: Person[], releasedResourceIds: string[]): void;
   getCalendar(): CalendarSpec;
   setCalendar(calendar: CalendarSpec): void;
+  /** Null clears the label. Undoable: one snapshot, like any model write. */
+  setCurrency(label: string | null): void;
   countTasksByResource(): Map<string, number>;
   /** The id of the created row, which the caller needs to say anything else about it. */
   addTask(task?: NewTask): string;
@@ -125,6 +127,14 @@ export interface TaskDetails {
   contended: boolean;
   /** The task's own flag — not the effective (inherited) state a group shows. */
   disabled: boolean;
+  /** Money over the priced part of the effort; null when no rate priced any of it. */
+  cost: number | null;
+  /** Person-days no rate priced. */
+  uncostedDays: number;
+  /** Distinct rates applied, ascending. */
+  dailyRates: number[];
+  /** The project's free currency label, or null. */
+  currency: string | null;
 }
 
 export interface TaskPatch {

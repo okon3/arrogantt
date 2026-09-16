@@ -11,10 +11,12 @@ import { sampleProject, solve, type Project } from './project';
 import {
   rateIntervals,
   rateOnDay,
+  reportedCost,
   taskCosts,
   validateCurrency,
   type Person,
   type RateOverride,
+  type TaskCost,
 } from './cost';
 
 const at = (dayOffset: number) => new Date(2026, 8, 7 + dayOffset, 8, 0);
@@ -117,6 +119,40 @@ describe('validateCurrency', () => {
 
   it('refuses a label over 8 characters', () => {
     expect(validateCurrency('123456789')).toBe('Currency: a short label of up to 8 characters');
+  });
+
+  // A script reaching the agent API is not bound by the signature: answering is
+  // the rule's job, throwing a TypeError is not.
+  it('refuses what is not a string at all', () => {
+    expect(validateCurrency(5 as unknown as string)).toBe(
+      'Currency: a short label of up to 8 characters',
+    );
+    expect(validateCurrency(undefined as unknown as string)).toBe(
+      'Currency: a short label of up to 8 characters',
+    );
+  });
+});
+
+describe('reportedCost', () => {
+  const cost = (overrides: Partial<TaskCost> = {}): TaskCost => ({
+    amount: 0,
+    costedDays: 0,
+    uncostedDays: 0,
+    dailyRates: [],
+    ...overrides,
+  });
+
+  it('answers null when nothing was costed', () => {
+    expect(reportedCost(cost({ costedDays: 0, uncostedDays: 3 }))).toBeNull();
+  });
+
+  it('answers the amount, even zero, once anything was costed', () => {
+    expect(reportedCost(cost({ amount: 1600, costedDays: 4 }))).toBe(1600);
+    expect(reportedCost(cost({ amount: 0, costedDays: 1 }))).toBe(0);
+  });
+
+  it('answers the amount on a milestone: no effort at all to leave uncosted', () => {
+    expect(reportedCost(cost({ amount: 0, costedDays: 0, uncostedDays: 0 }))).toBe(0);
   });
 });
 

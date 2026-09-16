@@ -83,6 +83,24 @@ Inject a `<script>` element with the same code — it runs in the page context,
 the setter works, the `input` event reaches React. (How the details dialog's
 date field is driven in verifications.)
 
+## Which `yagni` reads lag a write
+
+A write through `window.yagni` and a read of its effect in the **same
+evaluation** do not see the same instant, and which side of the line a getter
+falls on decides whether a measurement means anything:
+
+| Read | Sees |
+| --- | --- |
+| `getPlan()`, `getTask()`, `getSolved()`, `toText()`, `getResources()`, `getCalendar()` | the model, live — the refs are written before the call returns |
+| `isDirty()`, `getFilename()` | the last **rendered** state: `agentState.current` is refreshed in an effect (`App.tsx:737-741`), so it still answers the pre-write value |
+| Undo / Redo button `title` | React state, same lag |
+
+So `yagni.setCurrency('EUR'); yagni.isDirty()` in one eval answers `false` on a
+clean project, and the change is real. Read the lagging ones in a **separate**
+evaluation — a turn later, or after two `requestAnimationFrame`s — and never
+conclude "the write did not land" from them. Measured on F3b, where the undo
+step count was read off the button title and only settled after the frame.
+
 ## Synthetic keyboard events
 
 Three harnesses drive keys here, and they differ in two independent ways —

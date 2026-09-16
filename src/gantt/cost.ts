@@ -65,6 +65,11 @@ const CURRENCY_MESSAGE = 'Currency: a short label of up to 8 characters';
 
 /** The first thing wrong with the label, or null. User-facing English. */
 export function validateCurrency(label: string): string | null {
+  // The agent API hands over whatever a script passed, so the type is a wish:
+  // without this the rule throws a TypeError instead of answering, and its twin
+  // `validateCalendar` (`calendarRules.ts:60-62`) guards its own input for the
+  // same reason.
+  if (typeof label !== 'string') return CURRENCY_MESSAGE;
   // Refuses rather than repairs: the parser and the API never trim on the
   // caller's behalf, so " EUR " is an error, not a currency named "EUR".
   if (label !== label.trim()) return CURRENCY_MESSAGE;
@@ -185,6 +190,17 @@ function leafCost(
     }
   }
   return { amount, costedDays, uncostedDays, dailyRates: [...applied].sort((a, b) => a - b) };
+}
+
+/**
+ * The money to report for a row, or null when there was nothing to cost.
+ *
+ * One home for the rule: `plan.ts` and `GanttChart.tsx` both build a cost
+ * figure from a `TaskCost` and must agree on when `amount` (which is `0` on a
+ * fully-uncosted row) turns into "nothing to show".
+ */
+export function reportedCost(cost: TaskCost): number | null {
+  return cost.costedDays === 0 && cost.uncostedDays > 0 ? null : cost.amount;
 }
 
 /**

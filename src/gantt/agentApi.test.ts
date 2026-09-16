@@ -22,6 +22,10 @@ const details = (overrides: Partial<TaskDetails> = {}): TaskDetails => ({
   shared: false,
   contended: false,
   disabled: false,
+  cost: 1200,
+  uncostedDays: 0,
+  dailyRates: [600],
+  currency: null,
   ...overrides,
 });
 
@@ -35,6 +39,7 @@ function harness(task: TaskDetails = details()) {
     getTaskDetails: (id: string) => (id === task.id ? task : null),
     addTask: vi.fn(() => 'tNew'),
     updateTask: vi.fn(),
+    setCurrency: vi.fn(),
   };
   const api: AgentApi = createAgentApi({
     handle: () => handle as unknown as GanttHandle,
@@ -98,5 +103,31 @@ describe('agent API disabled flag', () => {
     const { api, handle } = harness();
     api.addTask({ name: 'T', disabled: true });
     expect(handle.addTask).toHaveBeenCalledWith(expect.objectContaining({ disabled: true }));
+  });
+});
+
+describe('agent API setCurrency', () => {
+  it('forwards a valid label to the handle', () => {
+    const { api, handle } = harness();
+    api.setCurrency('EUR');
+    expect(handle.setCurrency).toHaveBeenCalledWith('EUR');
+  });
+
+  it('forwards null to the handle, skipping validation', () => {
+    const { api, handle } = harness();
+    api.setCurrency(null);
+    expect(handle.setCurrency).toHaveBeenCalledWith(null);
+  });
+
+  it('throws on an empty label without calling the handle', () => {
+    const { api, handle } = harness();
+    expect(() => api.setCurrency('')).toThrow();
+    expect(handle.setCurrency).not.toHaveBeenCalled();
+  });
+
+  it('throws on a 9-character label without calling the handle', () => {
+    const { api, handle } = harness();
+    expect(() => api.setCurrency('123456789')).toThrow();
+    expect(handle.setCurrency).not.toHaveBeenCalled();
   });
 });

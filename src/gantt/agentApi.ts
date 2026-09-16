@@ -1,6 +1,6 @@
 import helpMarkdown from './agentApi.help.md?raw';
 import { validateCalendar } from './calendarRules';
-import type { Person } from './cost';
+import { validateCurrency, type Person } from './cost';
 import { parseWallClock, serializeDate } from './dates';
 import type { GanttHandle, TaskDetails } from './ganttHandle';
 import { buildPlan, type Plan } from './plan';
@@ -134,6 +134,7 @@ export interface AgentApi {
   setAvailability(id: string, overrides: AvailabilityOverride[]): void;
 
   setCalendar(spec: CalendarSpec): void;
+  setCurrency(label: string | null): void;
   newProject(): void;
   loadText(text: string, filename?: string): void;
   setFilename(name: string): void;
@@ -414,6 +415,15 @@ export function createAgentApi(host: AgentHost): AgentApi {
       const problem = validateCalendar(next);
       if (problem) throw new Error(problem);
       chart().setCalendar(next);
+    },
+    setCurrency: (label) => {
+      if (label === null) {
+        chart().setCurrency(null);
+        return;
+      }
+      const problem = validateCurrency(label);
+      if (problem) throw new Error(problem);
+      chart().setCurrency(label);
     },
     newProject: host.newProject,
     loadText: (text, filename) => host.adopt(text, filename ?? host.filename()),

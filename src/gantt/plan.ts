@@ -1,3 +1,4 @@
+import { reportedCost } from './cost';
 import { serializeDate } from './dates';
 import { isContended } from '../scheduler';
 import type { SolvedProject } from './project';
@@ -109,7 +110,7 @@ export function buildPlan(solved: SolvedProject): Plan {
         disabled: disabledIds.has(task.id),
         resourceId: summaryIds.has(task.id) ? null : task.resourceId ?? null,
         predecessors: [...(task.predecessors ?? [])],
-        cost: cost.costedDays === 0 && cost.uncostedDays > 0 ? null : cost.amount,
+        cost: reportedCost(cost),
         uncostedDays: cost.uncostedDays,
         dailyRates: [...cost.dailyRates],
       });
