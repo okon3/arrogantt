@@ -225,10 +225,11 @@ indietro), per un task che si blocca in fondo alla scala di escalation, e al
 verdetto della goal review. **La rinomina dell'heading `Unreleased` resta da
 confermare**: la deroga non e' stata comprata.
 
-**La scomposizione: F7 → F1 → F2 → F3 → F4 → F5 → F6 → F8**, seriale (un
+**La scomposizione: F7 → F1 → F2a → F2b → F3 → F4 → F5 → F6 →
+F8**, seriale (un
 browser, una porta). Gli accept per esteso stanno nella §8 della spec, con la
 **Fixture C** condivisa e la sua tabella dei valori attesi per cella; qui sta
-lo stato. Solo F2 e' `deep` (effort conservato); **nessun sottotask tocca
+lo stato. Solo F2a e' `deep` (effort conservato); **nessun sottotask tocca
 `src/scheduler/`**, ed e' la decisione che tiene il motore fuori dal denaro.
 
 - [x] F7 [impl] — Registro delle colonne, selezione, persistenza, picker —
@@ -290,7 +291,14 @@ lo stato. Solo F2 e' `deep` (effort conservato); **nessun sottotask tocca
       `requireString` col suo messaggio prima di `validateCurrency`) e' stato
       giudicato non difetto: i rifiuti di `requireString` sono un
       sottoinsieme, il gate non si indebolisce.
-- [ ] F2 [deep] — La lettura del costo (`costs` su `SolvedProject`)
+- [>] F2a [deep] — Il calcolo del costo: `rateIntervals` e `taskCosts` in
+      `cost.ts`
+      **F2 splittato dall'hub gen 3 in F2a (calcolo) + F2b (cablaggio)**: due
+      corsie di fila oltre 220k (F7 257k, F1 222k) e questo e' l'unico
+      sottotask `deep` del goal, cioe' quello dove l'attenzione degradata
+      costa piu' caro — l'effort conservato e' semantica, non rifinitura. La
+      cucitura non costa niente: `taskCosts` e' puro e i suoi pin girano su
+      `solve()` senza che nessuno in produzione lo chiami ancora.
       **Ricognizione gia' fatta e riletta sul codice dopo F1** (non ripagarla;
       la spec e' pre-F7, questi sono i numeri di `62e73db`): `solve()` ritorna
       a `project.ts:413-421` — `costs` si attacca li'; `SolvedProject` e'
@@ -310,6 +318,19 @@ lo stato. Solo F2 e' `deep` (effort conservato); **nessun sottotask tocca
       `SolvedProject` costruito a mano nei test: **non ce n'e' nessuno**
       (cercati per `summaryIds:`/`disabledIds:` su tutti i `*.test.ts`), i
       test passano da `solve()`. Se la corsia ne trova uno, e' un file nuovo.
+- [ ] F2b [self] — `costs` e `currency` su `SolvedProject`, i campi costo di
+      `buildPlan`, `formatMoney`
+      Cablaggio puro, ~110 righe su quattro file che l'hub ha gia' in
+      contesto: lo fa l'hub, non una corsia che ne ripagherebbe 40k di solo
+      ingresso. Tre decisioni prese al brief di F2a e vincolanti anche qui:
+      `SolvedProject` prende **anche** `currency: string | null` (da
+      `project.currency ?? null`), perche' `buildPlan(solved)` non vede il
+      progetto e la §5.6 gli chiede `Plan.currency`; `formatMoney` sta in
+      `format.ts`; e le due regole del null sono **diverse di proposito** —
+      `PlanTask.cost` null ⇔ `costedDays === 0 && uncostedDays > 0` (una
+      milestone vale quindi `0`, come chiede la §5.6), `Plan.totalCost` null ⇔
+      `costedDays` totale zero (un progetto vuoto non ha una cifra da
+      mostrare, una milestone si').
 - [ ] F3 [impl] — Superfici di report, scrittura di `currency`, help dell'agente
 - [ ] F4 [impl] — Colonne Rate e Cost **nate sul registro**, marca del
       parziale, totale in status bar
