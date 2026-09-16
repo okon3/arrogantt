@@ -879,39 +879,32 @@ L'utente ha scelto il 2026-09-16 di farle **tutte e quattro**, F12 compresa.
 **Ordine: F9 → F10 → F11 → F12**, seriale: F9 e F10 toccano entrambe
 `costCells.ts` e F9 ne cambia la firma, quindi F10 la segue e non la precede.
 
-- [ ] F9 [impl] — La ragione del costo su un summary non deve nominare una
-      persona che sulla riga non c'e'
-      Il template `cost` di `GRID_CELLS` prende `resourceName` dal
-      `resource_id` grezzo della riga, e su un summary quel campo e' **la
-      risorsa che la riga aveva da foglia**: `ganttRows.ts` scrive
-      `task.resourceId ?? ''` e solo `serialization.ts` lo azzera, in salvataggio.
-      Scenario: foglia assegnata a Marta (tariffata), le si aggiunge un figlio
-      senza risorsa → il summary mostra `—` col `title` *No rate for Marta on
-      these days*, mentre dialogo e figura dicono *No resource*.
-      **Gen 11 l'aveva misurato e archiviato come «§5.4 alla lettera, non un
-      difetto»; la review dissente e ha ragione**: e' la lettera applicata a
-      un campo sbagliato, e F6 era stato splittato proprio perche' griglia e
-      dialogo non potessero divergere.
-      Da fare: **dare a `costCellText` un `isSummary`** e ignorare lì
-      `resourceName` — cosi' la regola resta in una casa sola ed e' pinnabile
-      in `costCells.test.ts`, che e' il motivo di preferirlo al filtro nel
-      template. Allineare il bullet *Measured divergence* di `docs/view.md`
-      § *Details dialog*, che oggi registra la divergenza come non-difetto.
-      Accept: unit in `costCells.test.ts` (summary + `cost: null` →
-      `title` *No resource* qualunque sia `resourceName`), e nell'app la
-      griglia, il dialogo e la figura dicono la stessa cosa su quella riga.
-      **Ricognizione fatta dall'hub il 2026-09-16, valida su `5456587`, da non
-      ripagare**: `costCellText` ha **tre** chiamanti — `gridColumns.ts` (cella
-      `cost` di `GRID_CELLS`), `planFigure.ts` (`FIGURE_CELLS`) e
-      `TaskDialog.tsx` — e ognuno dei tre ha gia' il flag sotto mano
-      (`task.is_summary` nella griglia, `task.isSummary` negli altri due),
-      quindi aggiungere `isSummary` al descrittore non costa un campo nuovo a
-      nessuno. **Solo la griglia cambia comportamento**: `plan.ts` azzera
-      `resourceId` sui summary (`summaryIds.has(task.id) ? null : …`), quindi
-      la figura dice gia' *No resource*, e il dialogo lo dice perche'
-      `getTaskDetails` scrive `resourceId: ''`. Il bullet da correggere in
-      `docs/view.md` e' *Measured divergence*, sotto § *Details dialog*: oggi
-      chiude con «not a bug this task fixes».
+- [x] F9 [impl] — La ragione del costo su un summary non deve nominare una
+      persona che sulla riga non c'e' — `PENDING`. `costCellText` prende un
+      `isSummary` **obbligatorio** e sul ramo senza cifra ignora `resourceName`;
+      i tre chiamanti (`gridColumns.ts`, `planFigure.ts`, `TaskDialog.tsx`) lo
+      passano, ed e' l'obbligatorieta' — non il flag — il meccanismo contro la
+      deriva: un renderer nuovo non compila senza rispondere. 540 test (+1).
+      Accept coperto: unit che passa `resourceName: 'Marta'` **con**
+      `isSummary: true` e pretende `No resource` (un caso con `null` non
+      proverebbe niente), e nell'app griglia e dialogo misurati concordi sulla
+      riga (`—` / `No resource`), con la premessa di gen 11 rovesciata:
+      «§5.4 alla lettera» era la lettera letta su un campo sbagliato.
+      **La ragione nel doc e' stata scritta male due volte nello stesso task**,
+      ed e' la sesta del goal: la corsia ha chiuso il bullet di `docs/view.md`
+      affermando che *tre* superfici ora concordano, mentre la sua stessa misura
+      diceva che `FIGURE_CELLS.cost` rende solo `.text` e butta `.title` (e che
+      `App.tsx:771` non passa `columns`, quindi in stampa non c'e' nessuna cella
+      di costo — gia' registrato in `docs/file-format.md`). L'hub ha riscritto
+      **avendo in mano quella misura** e l'overclaim e' sopravvissuto in forma
+      piu' sottile; l'ha chiuso il critic. Ora il bullet dice quali due
+      superfici rendono il `title`, e che la terza non rende ragioni.
+      Misurato dal critic e non dalla corsia (celle che la fixture non componeva
+      e nessuna rotta): foglia davvero senza tariffa → `No rate for Paolo on
+      these days` (il ramo non-summary non e' stato collassato), summary
+      parziale → `≥ 1,200` / `3 d of effort not costed`, summary interamente
+      costato → cifra nuda, milestone e summary a effort zero → cella vuota,
+      riga disabled e ramo chiuso invariati, console pulita.
 - [ ] F10 [self] — `currencyLabel` e il testo dell'effort non costato tornino a
       una casa sola
       `planCsv.ts` ri-scrive `Cost (${currency})` a mano invece di chiamare
@@ -1309,19 +1302,16 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 
 ## Log
 - **Dimensionamento**: impl oltre ~200k = task da splittare (T35, F7 257k, F1
-  222k, F4b 228k/213k). **Splittare si misura**: F2 in calcolo + cablaggio ha
-  reso F2a 141k/130k, F3a 122k/122k, F3b 133k/168k, F6a 129k/132k.
-  **Ri-splittare paga solo la meta' su cui cade il taglio**: F5a, tagliata
-  sulla campagna, 186k/215k; F5c, che ne ha ereditato la parte grossa su ~100
-  righe di diff, 218k/242k. Si taglia la campagna, non il codice, e si conta
-  **prima** quanti scenari di browser un accept impone. Se la campagna non si
-  puo' tagliare si detta il codice (F6b 181k/181k); **e toglierla del tutto
-  non rende economico il task**: F8, accept interamente unit, 157k/146k — il
-  costo si sposta sulle celle, non sparisce. Una correzione via SendMessage
-  costa meno di un fresh spawn (~40k), ma non oltre ~190k. **Il critic e' la
-  voce piu' cara e la piu' redditizia**: 75-95k a tavolino, 132-242k nel
-  browser, e 191k la goal review di F; su T58 ha ribaltato una premessa, su F8
-  ha rifatto il pin da `git show`, e la review di F un archivio dell'hub.
+  222k, F4b 228k); splittato rende 120-170k a meta' (F2a, F3a, F3b, F6a).
+  **Si taglia la campagna di verifica, non il codice**: F5a e F5c, ri-splittate
+  sul codice, sono risalite a 215k e 242k; se la campagna non si taglia si
+  detta il codice (F6b 181k), e **toglierla del tutto non rende economico il
+  task** (F8, accept tutto unit, 157k/146k). F9, un flag e tre chiamanti,
+  113k/123k. Una correzione via SendMessage costa meno di un fresh spawn
+  (~40k), ma non oltre ~190k. **Il critic e' la voce piu' cara e la piu'
+  redditizia**: 75-95k a tavolino, 122-242k nel browser, 191k la goal review;
+  su T58 ha ribaltato una premessa, su F8 rifatto il pin da `git show`, su F9
+  chiuso un overclaim dell'hub.
 - **Un elenco enumerato da una sezione di spec e' completo o non e' un elenco.**
   F2b: la consegna dava due regole del null su tre e taceva il filtro
   `disabledIds` della §5.3, e l'hub ha poi giustificato la scelta da se' senza
@@ -1342,8 +1332,11 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   — si briefa chiedendogli **la domanda che fa paura**, e su uno spostamento
   **l'hash, non la lettura**. Misurata, e' cio' che rende il pass non speranza.
 - **Cio' che una corsia dichiara impossibile o preesistente va confrontato con
-  l'evidenza**: T43 dava il drag reale per non guidabile, T41 e poi F4b
-  l'hanno fatto. Fatto bene su T48: misurato su HEAD **e** sul tree.
-- **Una ragione registrata male in un doc e' peggio di nessun doc**: quattro
-  volte in questo goal (F7, F5c, F5b, F6a), sempre per mano dell'hub. Si
-  verifica sul percorso che la usa, non sulla riga che la enuncia.
+  l'evidenza**: T43 dava il drag reale per non guidabile, T41 e F4b l'hanno
+  fatto. Su T48 fatto bene: misurato su HEAD **e** sul tree.
+- **Una ragione registrata male in un doc e' peggio di nessun doc**: sei volte
+  in questo goal (F7, F5c, F5b, F6a, il `currencyLabel` di F6b, F9), quasi
+  sempre per mano dell'hub. Si verifica sul percorso che la usa, non sulla riga
+  che la enuncia — **e riscriverla non la ripara**: su F9 l'hub ha riscritto
+  l'overclaim della corsia avendo in mano la misura contraria, e in forma piu'
+  sottile e' sopravvissuto. Chi enumera superfici dica quale rende il campo.

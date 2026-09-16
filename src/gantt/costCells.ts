@@ -50,6 +50,7 @@ export function costCellText(row: {
   uncostedDays: number;
   /** The row's assigned person, or null — only ever used in the reason. */
   resourceName: string | null;
+  isSummary: boolean;
 }): CellText {
   // effortDays is this row's effort on both branches — a summary's rolled-up
   // total and a leaf's own days — so a milestone and an all-zero summary
@@ -58,7 +59,11 @@ export function costCellText(row: {
   // The null rule lives in reportedCost (cost.ts) — `cost` is its output,
   // never re-derived from the day counts here.
   if (row.cost === null) {
-    const reason = row.resourceName ? `No rate for ${row.resourceName} on these days` : 'No resource';
+    // A summary's resourceName is the assignment its row carried while it was
+    // still a leaf (the grid's raw resource_id is never rolled up) — naming
+    // that person here would report someone nobody on this row is working.
+    const name = row.isSummary ? null : row.resourceName;
+    const reason = name ? `No rate for ${name} on these days` : 'No resource';
     return { text: '—', title: reason, derived: true };
   }
   if (row.uncostedDays > 0) {

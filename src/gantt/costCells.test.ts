@@ -44,6 +44,7 @@ describe('costCellText', () => {
       cost: null,
       uncostedDays: 0,
       resourceName: null,
+      isSummary: false,
     });
     expect(cell).toEqual({ text: '', title: null, derived: false });
   });
@@ -54,6 +55,7 @@ describe('costCellText', () => {
       cost: null,
       uncostedDays: 2,
       resourceName: null,
+      isSummary: false,
     });
     expect(cell).toEqual({ text: '—', title: 'No resource', derived: true });
   });
@@ -64,6 +66,7 @@ describe('costCellText', () => {
       cost: null,
       uncostedDays: 3,
       resourceName: 'Marta',
+      isSummary: false,
     });
     expect(cell).toEqual({
       text: '—',
@@ -72,12 +75,24 @@ describe('costCellText', () => {
     });
   });
 
+  it('ignores resourceName on a summary — the stale name is not this row\'s assignment', () => {
+    const cell = costCellText({
+      effortDays: 6,
+      cost: null,
+      uncostedDays: 6,
+      resourceName: 'Marta',
+      isSummary: true,
+    });
+    expect(cell).toEqual({ text: '—', title: 'No resource', derived: true });
+  });
+
   it('shows a lower bound titled with the uncosted days when partially costed', () => {
     const cell = costCellText({
       effortDays: 12,
       cost: 12500,
       uncostedDays: 7,
       resourceName: null,
+      isSummary: false,
     });
     expect(cell).toEqual({
       text: '≥ 12,500',
@@ -92,6 +107,7 @@ describe('costCellText', () => {
       cost: 12500,
       uncostedDays: 0,
       resourceName: null,
+      isSummary: false,
     });
     expect(cell).toEqual({ text: '12,500', title: null, derived: false });
   });
@@ -102,6 +118,7 @@ describe('costCellText', () => {
       cost: 162.5,
       uncostedDays: 0,
       resourceName: null,
+      isSummary: false,
     });
     expect(cell).toEqual({ text: '162.5', title: null, derived: false });
   });

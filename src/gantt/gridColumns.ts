@@ -234,6 +234,7 @@ const GRID_CELLS: Record<
           cost: task.cost_amount as number | null,
           uncostedDays: Number(task.cost_uncosted_days ?? 0),
           resourceName: resource ? resource.name : null,
+          isSummary: Boolean(task.is_summary),
         }),
       );
     },

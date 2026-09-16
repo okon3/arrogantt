@@ -116,6 +116,7 @@ export function TaskDialog({
     cost: task.cost,
     uncostedDays: task.uncostedDays,
     resourceName: resources.find((resource) => resource.id === task.resourceId)?.name ?? null,
+    isSummary: task.isSummary,
   });
 
   return (

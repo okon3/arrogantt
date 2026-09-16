@@ -194,6 +194,7 @@ const FIGURE_CELLS: Record<PlanColumnName, FigureCell> = {
       cost: task.cost,
       uncostedDays: task.uncostedDays,
       resourceName: task.resourceId ? ctx.names.get(task.resourceId) ?? task.resourceId : null,
+      isSummary: task.isSummary,
     }).text,
 };
 

@@ -335,13 +335,16 @@ that isn't there.
       The `(CUR)` parenthesis form lives in one place, `currencyLabel`
       (`costCells.ts`), read by both the grid header (`columns.ts`) and this
       entry's `dt`.
-    - **Measured divergence**: `getTaskDetails` deliberately returns
-      `resourceId: ''` for a summary, while the grid's raw `resource_id`
-      field is `task.resourceId ?? ''` with no roll-up — so a task that was a
-      rated leaf, then gained a child assigned to an unrated person (turning
-      it into an uncosted summary), shows the grid's Cost reason as `No rate
-      for <the stale name> on these days` and the dialog's as `No resource`.
-      Documented behaviour of `getTaskDetails`, not a bug this task fixes.
+    - **A summary's Cost reason ignores `resourceName`**: `costCellText` takes
+      a required `isSummary`, and on the no-figure branch a summary reads `No
+      resource` whatever name it is handed. The two surfaces that render the
+      descriptor's `title` — the grid cell and this dialog — therefore say the
+      same thing about a task that was a rated leaf and then gained a child;
+      the third caller, `planFigure.ts`, renders `text` only and shows no
+      reason on any row. The flag is required rather than optional so no
+      renderer can be added without answering it. The grid's raw `resource_id`
+      still holds the assignment from when the row was a leaf; it is no longer
+      readable as one.
   - **Notes (`.taskinfo__notes`) are a region with a reserved minimum, not a
     fixed band.** `min-height` is one real two-line `.taskinfo__note`,
     measured at this width (12px font: 16px × 2 = 32px) — not derived from
