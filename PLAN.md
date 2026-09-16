@@ -367,13 +367,59 @@ lo stato. Solo F2a e' `deep` (effort conservato); **nessun sottotask tocca
       **Non ancora fatto e di F3**: la riga `toText()` dell'help dice «same
       fields as `getPlan()`» mentre il report del file ne porta 5 su 16 — era
       gia' un sottoinsieme prima, ora e' piu' largo.
-- [ ] F3 [impl] — Superfici di report, scrittura di `currency`, help dell'agente
-      **Debito di F7**: F3 e' il task che fa leggere `currency` a una `label()`,
-      quindi **la chiamata a `rebuildColumns()` da `loadProject` va rimessa** —
-      F7 l'aveva tolta perche' non comprava niente e distruggeva le larghezze
-      trascinate, e oggi non le distrugge piu' (il rebuild le riporta per nome).
-      **Debito di F2b**: la riga `toText()` dell'help dice «same fields as
-      `getPlan()`» mentre il report del file ne porta 5 su 16.
+**F3 e' splittato in F3a + F3b** (ricognizione del 2026-09-16, sulla lezione
+del Log): erano tre grappoli in un task — le superfici che **hanno gia'** il
+dato e si pinnano a tavolino, la parita' di `getTask()`, e il percorso di
+scrittura di `currency` che vuole il browser. Tagliato in due: F3a tutto cio'
+che si prova con `npm test`, F3b tutto cio' che si prova nell'app.
+Due `file:line` della §8 sono **scaduti** e il brief porta quelli riletti:
+`setResources` e' a `GanttChart.tsx:473-481` (non `:434-442`), `rebuildColumns`
+a `:300-324` col suo unico call site a `:638`, `loadProject` a `:326-367`.
+
+- [ ] F3a [impl] — Report del file, colonne CSV, `docs/file-format.md`
+      `serialization.ts` `reportFor` (`:60-70`) e il blocco `solved` di
+      progetto (`:75-81`), due colonne CSV appese dopo `Disabled`, i pin e il
+      doc. Nessun browser: il dato c'e' gia' tutto su `Plan`/`PlanTask`.
+      Tre decisioni prese qui, non dalla spec:
+      **(1)** il blocco `solved` di progetto prende `totalCost` e
+      `uncostedDays` e **non** `currency` — la chiave di root esiste gia' come
+      input (F1, `docs/file-format.md:38-40`) e riscriverla dentro il report
+      sarebbe una seconda casa per lo stesso fatto;
+      **(2)** la cella CSV del costo usa `decimal()` (`planCsv.ts:49-51`:
+      `formatDays` + virgola), **non** `formatMoney` — la §5.4 chiede «plain
+      number with a decimal comma and no grouping» e `formatMoney` raggruppa;
+      **(3)** `Uncosted (d)` scrive sempre la cifra, anche `0`, come
+      `Effort (d)`, mentre `Cost` resta **vuota** quando il costo e' null: una
+      colonna numerica bianca su quasi tutte le righe si legge peggio in un
+      foglio, ma un costo assente non e' `0` — e' la decisione del goal.
+      Da correggere nel doc: `docs/file-format.md:95-96` dice che `Disabled`
+      e' «appended last», e non lo e' piu'.
+      **Debito di F2b**: la riga `toText()` dell'help (`agentApi.help.md:51`)
+      dice «same fields as `getPlan()`» mentre il report ne porta 5 su 16.
+- [ ] F3b [impl] — Parita' di `getTask()`, scrittura di `currency`, help
+      `TaskDetails` + `getTaskDetails`, `GanttHandle.setCurrency`,
+      `setResources(…, currency?)`, `AgentApi.setCurrency`, le chiamate a
+      `rebuildColumns()`. Verifica nell'app.
+      **Discrepanza di spec da sciogliere, e la decisione e' presa**: la §5.4
+      dice «`TaskDetails` gains `cost: TaskCost`» mentre la §5.6 ha fissato
+      `PlanTask.cost: number | null` — due forme per lo stesso nome sulla
+      stessa superficie agente (`getTask().cost` oggetto contro
+      `getPlan().tasks[i].cost` numero). `TaskDetails` prende gli **stessi
+      tre campi di `PlanTask`** piu' `currency`, e **la regola del null si
+      estrae in una sola funzione esportata da `cost.ts`**: il builder di
+      `TaskDetails` e' un secondo builder indipendente
+      (`GanttChart.tsx:375-404`, non passa da `buildPlan`), quindi scriverla
+      due volte e' esattamente il «una regola mai in due posti» di CLAUDE.md
+      — e questo goal ci e' gia' cascato una volta sul totale.
+      **Debito di F7**: F3b e' il task che fa leggere `currency` a una
+      `label()`, quindi **la chiamata a `rebuildColumns()` da `loadProject`
+      va rimessa** — F7 l'aveva tolta perche' non comprava niente e
+      distruggeva le larghezze trascinate, e oggi non le distrugge piu' (il
+      rebuild le riporta per nome). Da rimisurare, non da dare per buono.
+      Vincolo della §5.8: tariffe e `currency` devono passare da **una**
+      chiamata all'handle o costano due passi di undo (`recordedChange`
+      deduplica solo su testo identico, `history.ts:49-50`). `describeChange`
+      ha gia' il caso `changed currency` (`history.ts:138`, da F1).
 - [ ] F4 [impl] — Colonne Rate e Cost **nate sul registro**, marca del
       parziale, totale in status bar
 - [ ] F5 [impl] — Tariffe e campo Currency nel dialogo People
