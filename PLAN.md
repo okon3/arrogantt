@@ -606,23 +606,58 @@ metodo `scrollWidth <= clientWidth` stanno entrambi nei bullet di *Dialogs*
       (`100.57`, `maximumFractionDigits: 2`), e `6e2`/`0x10` passano come 600 e
       16 senza segnalazione — coerenti col «una sola regola, in
       `validateResources`», non difetti.
-- [ ] F5c [impl] — La lista dei periodi di tariffa, generalizzata
-      §5.5: `AvailabilityList` **generalizzata** in un solo componente di
-      riga-periodo con una render prop per la cella valore (due wrapper
-      sottili: *Availability periods* e *Rate periods*, stessa grammatica
-      `.ranges__row--pct`), il pannello espanso (`:217-231`) che ospita le due
-      liste sotto due `.dialog__subhead`, `DraftResource` che prende
-      `ratePeriods: RateOverride[]` **al posto** del pass-through di F5a, e il
-      bottone di riepilogo (`:193-203`) che appende `, n rate periods`.
-      **`DayRangeList` non si tocca**: e' la variante senza cella valore e la
-      §5.5 non la include — generalizzarla anche lei e' allargare lo scopo.
-      **Due enumerazioni nei docs diventano incomplete e sono la forma T58**:
-      il bullet *Period-row lists* di `view.md` elenca «Calendar shutdowns,
-      People absences» (ne arriva una terza) e quello di `.dialog__subhead`
-      elenca «Calendar's Working days/Shutdowns and Task info's Computed» (ne
-      arrivano due). Stessa cosa nel commento di `.ranges__row` in `App.css`.
-      Accept §8 di F5: (3), la meta' allineamento di (4). Docs: `view.md`
-      *Dialogs*.
+- [x] F5c [impl] — La lista dei periodi di tariffa, generalizzata —
+      `00d7a19`. `PeriodRowList` nuovo (generico su `T extends DayRange`, render
+      prop `valueCell`), `AvailabilityList` ridotta a wrapper a firma invariata,
+      `RatePeriodList` nuovo, `DraftResource.ratePeriods` **al posto** del
+      pass-through di F5a, due `.dialog__subhead` nel pannello espanso, il
+      riepilogo che appende i periodi tariffa, `.ranges__rate` e i tre bullet
+      *Dialogs* di `view.md`. 517 test invariati. Nessun file sotto
+      `src/scheduler/`, `DayRangeList` e `CalendarDialog` intatti,
+      `.dialog__hint` intatto per F5b: verificato sul diff.
+      **Ri-splittare non ha fatto scendere la misura**: corsia 218k, critic
+      242k — sopra soglia entrambi, dove F5a (stesso dialogo, taglio sulla
+      campagna) aveva reso 186k/215k. Il diff era ~100 righe di estrazione; la
+      campagna no. Se F5b/F6/F8 hanno questa forma, tagliare la campagna, non
+      il codice.
+      **Critic `sonnet`: pass, zero finding.** Ha ri-derivato la Fixture C da
+      §8 (nove righe, raise il `2026-09-24`) e ri-guidato tutti gli accept
+      assegnati, piu' cinque celle sue: il Save intatto (Gino e Luca senza
+      **nessuna** chiave `rateOverrides`, non un array vuoto, e zero passi di
+      undo), un periodo su Luca che **non ha default** (prezza T4 a `1,500`,
+      rimosso torna a `cost null, uncostedDays 3`), l'A/B dell'overlap
+      (dichiarato secondo: `[600,650,800]` e `4100`; ordine opposto via
+      `updateResource`: `[600,650]` e `3800`), le sette tracce **identiche al
+      pixel** con `gridTemplateColumns` byte-identico, e il gate su un `-5`
+      digitato (messaggio di `validateResources`, modello intatto).
+      **La trappola vera stava nel ramo che nessun test vede**: prima di questa
+      modifica il suffisso ` away` del conteggio si applicava **solo** al ramo
+      non-zero, quindi un periodo allo 0% su soli giorni non lavorativi poteva
+      diventare `no working days away`. Non e' successo — misurato sabato-
+      domenica nell'app, legge `no working days` — ma non esiste un test React
+      in `src/` che lo sorvegli: e' una riscrittura-in-wrapper e il ramo va
+      riletto a ogni ritocco di `PeriodRowList`.
+      **Tre decisioni prese al brief, non nella spec**: la cella periodo e'
+      `type="number"` e **non** il `type="text"` di F5a — la' il draft *era*
+      testo, qui `RateOverride.dailyRate` e' un numero, quindi il filtro del
+      browser e' imposto dal tipo e non una seconda regola muta; nessun clamp
+      in `onChange` (la regola resta sola in `validateResources`); e una riga
+      nuova e' **seminata con la tariffa di default della persona**, perche'
+      `0` qui e' un giorno *prezzato* e una riga non compilata prezzerebbe a
+      zero in silenzio. **Con default assente il seme e' `0` e la trappola
+      resta**: dichiarata, non mascherata.
+      **Unico finding, ed era mio, nel doc che la corsia ha scritto su mia
+      richiesta**: la frase nuova di *Period-row lists* registrava
+      l'allineamento come «entro 0.5px» — una tolleranza che il layout non
+      deve a nessuno (le due righe hanno la stessa classe, quindi lo stesso
+      template per costruzione) e una misura guidata su **una riga per lista**
+      data per generale. La forma del censimento-in-prosa del binding, scritta
+      dall'hub. Riscritta: la ragione copre le celle non guidate, la misura e'
+      dichiarata per quello che e'.
+      **Non guidato e dichiarato tale** (dal critic): l'allineamento con piu'
+      di una riga per lista o con le liste invertite, Tab fra le righe nuove,
+      uno screenshot in schema chiaro (solo albero di accessibilita'), e un
+      `0` dichiarato come tariffa di periodo attraverso il dialogo.
 - [ ] F5b [impl] — Il campo `Currency` nel dialogo People
       §5.8: il campo dichiarato nel dialogo People (e' l'unita' dei numeri
       digitati li'), il terzo argomento `currency?` a `GanttHandle.setResources`
@@ -1027,10 +1062,12 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   sopra soglia: due colonne, quattro campi di riga e un debito di rebuild sono
   tre cose). **Splittare si misura**: F2 tagliato in calcolo
   + cablaggio ha reso F2a 141k/130k, F3a 122k/122k e F3b 133k/168k (il critic
-  nel browser, non la corsia), e F2b, dall'hub, zero corsia. **Ri-splittare un
-  task gia' splittato paga anche lui**: F5a tagliato sulla campagna di misura,
-  non sul codice, ha reso 186k/215k dove F5a-intera era di classe F4b.
-  **F4 e F5 vanno tagliati prima di briefarli.** Una correzione via SendMessage
+  nel browser, non la corsia), e F2b, dall'hub, zero corsia. **Ri-splittare
+  paga solo la meta' su cui cade il taglio**: F5a, tagliata sulla campagna di
+  misura, ha reso 186k/215k; F5c, che di quella campagna ha ereditato la
+  parte grossa (un allineamento fra due liste) su ~100 righe di diff, e' uscita
+  a 218k/242k. Si taglia la campagna, non il codice, e si conta **prima** quanti
+  scenari di browser un accept impone. Una correzione via SendMessage
   costa meno di un fresh spawn (~40k), ma non oltre ~190k: li' chiude l'hub se
   ha le misure. **Un critic guidato nel browser e' la voce piu' cara**: 75-95k
   a tavolino, 148-168k nel browser, 211k su T58 — e su T58 e' l'unico che ha
@@ -1045,8 +1082,6 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   Explore non residenti (T57) hanno chiuso un task a testa per pochi k, dove
   una corsia paga 40k di solo ingresso. **Prima di briefare, misurare la
   premessa**: se cade, il brief non serve.
-- Un accept che e' una campagna di misura e' un task di sola misura (T31, T42);
-  variante che regge (T55): **misura prima, correggi se la catena si chiude**.
 - **Una citazione copiata non e' verificata**: ne' un `file:line` (T43) ne' un
   nome di tipo (T48). Si ri-localizza dopo l'ultima modifica (T54, T55) — su
   F5a otto su otto della spec erano scadute, e si cita per simbolo.
@@ -1054,9 +1089,8 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   — si briefa chiedendogli **la domanda che fa paura**, e su uno spostamento
   **l'hash, non la lettura**. Misurata, e' cio' che rende il pass non speranza.
 - **Cio' che una corsia dichiara impossibile o preesistente va confrontato con
-  l'evidenza.** T43 dava il drag reale per non guidabile, T41 l'aveva fatto;
-  T46 dava per difetto dello scheduler la propria `setCalendar`. Fatto bene su
-  T48: il Tab misurato su HEAD **e** sul tree prima di dirlo preesistente.
+  l'evidenza**: T43 dava il drag reale per non guidabile, T41 e poi F4b
+  l'hanno fatto. Fatto bene su T48: misurato su HEAD **e** sul tree.
 - **Un accept deve essere osservabile, indipendente dalla scala, e provare cio'
   che dice di provare.** T45 chiedeva ctrl+wheel (non misurabile in sintetico),
   T46 «le bande spariscono a Months» (vero su un piano corto, falso su uno
