@@ -1,4 +1,5 @@
-import { isDayString, type AvailabilityOverride, type Resource } from '../scheduler';
+import { isDayString, type AvailabilityOverride } from '../scheduler';
+import type { Person, RateOverride } from './cost';
 
 /**
  * The rules and transformations of the people list, with no form and no chart
@@ -16,10 +17,13 @@ export interface ResourcePatch {
   /** Share of a full working day, `0..1`. */
   availability?: number;
   availabilityOverrides?: AvailabilityOverride[];
+  /** `null` clears the default rate; absent leaves it. */
+  dailyRate?: number | null;
+  rateOverrides?: RateOverride[];
 }
 
 /** `r{n+1}`, ignoring any id that does not follow the pattern. */
-export function nextResourceId(resources: Resource[]): string {
+export function nextResourceId(resources: Person[]): string {
   const highest = resources.reduce((max, resource) => {
     const match = /^r(\d+)$/.exec(resource.id);
     const numeric = match ? Number(match[1]) : 0;
@@ -30,42 +34,48 @@ export function nextResourceId(resources: Resource[]): string {
 
 /**
  * An empty override list is omitted rather than stored, to keep the saved file
- * free of fields that say nothing.
+ * free of fields that say nothing. Same grammar for `dailyRate`: `null` clears
+ * it, `undefined` carries the previous value across (absent stays absent,
+ * `0` stays `0`), a number sets it.
  */
-function applied(resource: Resource, patch: ResourcePatch): Resource {
+function applied(resource: Person, patch: ResourcePatch): Person {
   const overrides = patch.availabilityOverrides ?? resource.availabilityOverrides ?? [];
-  const next: Resource = {
+  const rateOverrides = patch.rateOverrides ?? resource.rateOverrides ?? [];
+  const dailyRate = patch.dailyRate === null ? undefined : patch.dailyRate ?? resource.dailyRate;
+  const next: Person = {
     id: resource.id,
     name: (patch.name ?? resource.name).trim(),
     availability: patch.availability ?? resource.availability ?? 1,
   };
   if (overrides.length > 0) next.availabilityOverrides = overrides;
+  if (dailyRate !== undefined) next.dailyRate = dailyRate;
+  if (rateOverrides.length > 0) next.rateOverrides = rateOverrides;
   return next;
 }
 
-export function withResourceAdded(resources: Resource[], patch: ResourcePatch): Resource[] {
-  const blank: Resource = { id: nextResourceId(resources), name: '', availability: 1 };
+export function withResourceAdded(resources: Person[], patch: ResourcePatch): Person[] {
+  const blank: Person = { id: nextResourceId(resources), name: '', availability: 1 };
   return [...resources, applied(blank, patch)];
 }
 
 export function withResourceUpdated(
-  resources: Resource[],
+  resources: Person[],
   id: string,
   patch: ResourcePatch,
-): Resource[] {
+): Person[] {
   return resources.map((resource) => (resource.id === id ? applied(resource, patch) : resource));
 }
 
-export function withResourceRemoved(resources: Resource[], id: string): Resource[] {
+export function withResourceRemoved(resources: Person[], id: string): Person[] {
   return resources.filter((resource) => resource.id !== id);
 }
 
 /** Replaces the whole ordered list: where two overrides overlap, the last wins. */
 export function withAvailability(
-  resources: Resource[],
+  resources: Person[],
   id: string,
   overrides: AvailabilityOverride[],
-): Resource[] {
+): Person[] {
   return withResourceUpdated(resources, id, { availabilityOverrides: overrides });
 }
 
@@ -75,7 +85,7 @@ export function withAvailability(
  * The message is user-facing English: it reaches the dialog's error line and
  * the `Error` an agent gets back.
  */
-export function validateResources(resources: Resource[]): string | null {
+export function validateResources(resources: Person[]): string | null {
   const seenNames = new Set<string>();
   const seenIds = new Set<string>();
   for (const resource of resources) {
@@ -106,6 +116,31 @@ export function validateResources(resources: Resource[]): string | null {
         return `A period of "${name}" has a share outside 0..1`;
       }
     }
+    if (resource.dailyRate !== undefined) {
+      if (!Number.isFinite(resource.dailyRate) || resource.dailyRate < 0) {
+        return `Invalid daily rate for "${name}": expected a number of 0 or more`;
+      }
+    }
+    // Unlike availability, zero is accepted as a default rate: nothing in the
+    // simulation stalls on a person who costs nothing, so a declared free
+    // person is just a fact, not a person to remove.
+    for (const period of resource.rateOverrides ?? []) {
+      if (!period.from || !period.to) return `A rate period of "${name}" has no start or end`;
+      if (!isDayString(period.from) || !isDayString(period.to)) {
+        return `A rate period of "${name}" has a malformed date: expected YYYY-MM-DD`;
+      }
+      // Finite, not merely not-NaN: an `Infinity` computed by a caller passes a
+      // NaN test, and `JSON.stringify` writes it as `null` — a project whose own
+      // input text this parser then refuses, taking Save, undo and the draft
+      // with it. The availability twin above can settle for NaN because its
+      // `> 1` line catches the infinities.
+      if (!Number.isFinite(period.dailyRate)) {
+        return `A rate period of "${name}" needs a numeric "dailyRate"`;
+      }
+      if (period.dailyRate < 0) {
+        return `A rate period of "${name}" has a negative rate`;
+      }
+    }
   }
   return null;
 }
@@ -116,7 +151,7 @@ export function validateResources(resources: Resource[]): string | null {
  * Their tasks are released to "no resource"; getting this list wrong unassigns
  * somebody's work without saying so, which is why the caller never builds it.
  */
-export function releasedBy(previous: Resource[], next: Resource[]): string[] {
+export function releasedBy(previous: Person[], next: Person[]): string[] {
   const surviving = new Set(next.map((resource) => resource.id));
   return previous.map((resource) => resource.id).filter((id) => !surviving.has(id));
 }

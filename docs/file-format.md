@@ -27,13 +27,27 @@
   only where it is set: the flag is inherited by the subtree, so a child under a
   disabled group carries nothing of its own.
 - Version 1 still loads: `daysOff` → availability overrides at zero.
+- `resources[].dailyRate?: number` and `resources[].rateOverrides?:
+  [{ from, to, dailyRate, label? }]`: a person's default daily rate and the
+  periods that replace it (last declared wins on overlap, the mirror of
+  `availabilityOverrides`). Optional and additive — v2 stays v2. Written only
+  when present: an absent `dailyRate` means the rate is unknown, never `0`; an
+  empty override list is omitted rather than stored. `0` is a valid rate and is
+  written. An override with no default rate is allowed — the rate is unknown
+  outside it, known inside.
+- Root `currency?: string`: a free label shown beside money (`EUR`, `€`,
+  `k€`); the app never interprets it — nothing converts, nothing formats by
+  locale. Optional and additive — v2 stays v2. Written only when present.
 
 ## Strict parsing
 
 Refuses rather than repairs: unknown resources, duplicate ids, dangling
 predecessors, circular hierarchy, availability outside 0..1, colour not
 `#rrggbb`, `disabled` not a boolean, a calendar the engine cannot serve, future
-versions. Parse before load — a bad file leaves the open project untouched.
+versions, a negative or non-numeric daily rate, a rate period with no numeric
+`dailyRate`, a rate period with a malformed `YYYY-MM-DD` day, a `currency` that
+is blank, padded, not a string, or over 8 characters. Parse before load — a bad
+file leaves the open project untouched.
 
 A written `disabled: false` is accepted and **normalized to absent**: two
 spellings of the default would make one project serialize two ways, and `dirty`

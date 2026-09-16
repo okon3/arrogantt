@@ -182,6 +182,12 @@ describe('naming a change', () => {
     expect(describeChange(before, shutdown)).toBe('changed calendar');
   });
 
+  it('names a currency-only change', () => {
+    const withCurrency = projectOf(before.tasks, { currency: 'EUR' });
+    expect(describeChange(before, withCurrency)).toBe('changed currency');
+    expect(describeChange(withCurrency, before)).toBe('changed currency');
+  });
+
   it('does not mistake a reordered availability list for the same one', () => {
     const periods = [
       { from: '2026-09-07', to: '2026-09-11', availability: 0.5 },

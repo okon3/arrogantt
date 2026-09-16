@@ -1,5 +1,6 @@
-import type { CalendarSpec, Resource } from '../scheduler';
+import type { CalendarSpec } from '../scheduler';
 import type { PlanColumnName } from './columns';
+import type { Person } from './cost';
 import type { MeasuredSlack, Project, SolvedProject } from './project';
 
 /**
@@ -58,9 +59,9 @@ export interface GanttHandle {
   updateTask(id: string, patch: TaskPatch): void;
   /** Takes the task's subtree with it, and clears dependencies on any of them. */
   deleteTask(id: string): void;
-  getResources(): Resource[];
+  getResources(): Person[];
   /** Tasks assigned to a removed resource are released to "no resource". */
-  setResources(resources: Resource[], releasedResourceIds: string[]): void;
+  setResources(resources: Person[], releasedResourceIds: string[]): void;
   getCalendar(): CalendarSpec;
   setCalendar(calendar: CalendarSpec): void;
   countTasksByResource(): Map<string, number>;

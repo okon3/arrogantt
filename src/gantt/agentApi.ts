@@ -1,5 +1,6 @@
 import helpMarkdown from './agentApi.help.md?raw';
 import { validateCalendar } from './calendarRules';
+import type { Person } from './cost';
 import { parseWallClock, serializeDate } from './dates';
 import type { GanttHandle, TaskDetails } from './ganttHandle';
 import { buildPlan, type Plan } from './plan';
@@ -15,7 +16,7 @@ import {
   type ResourcePatch,
 } from './resources';
 import { serializeForFile } from './serialization';
-import type { AvailabilityOverride, CalendarSpec, Resource } from '../scheduler';
+import type { AvailabilityOverride, CalendarSpec } from '../scheduler';
 
 /**
  * An adapter over `GanttHandle`, for a script driving the page.
@@ -114,7 +115,7 @@ export interface AgentApi {
   getTask(id: string): TaskInfo;
   getCriticalChain(): ChainTask[];
   getResourceLoad(): ResourceLoadInfo[];
-  getResources(): Resource[];
+  getResources(): Person[];
   getCalendar(): CalendarSpec;
   toText(): string;
   getFilename(): string;
@@ -193,7 +194,7 @@ export function createAgentApi(host: AgentHost): AgentApi {
     return found;
   };
 
-  const resource = (id: string): Resource => {
+  const resource = (id: string): Person => {
     const found = chart()
       .getResources()
       .find((entry) => entry.id === id);
@@ -223,7 +224,7 @@ export function createAgentApi(host: AgentHost): AgentApi {
   };
 
   /** Every resource write ends here, so the released list is never the caller's to build. */
-  const commitResources = (next: Resource[]) => {
+  const commitResources = (next: Person[]) => {
     const problem = validateResources(next);
     if (problem) throw new Error(problem);
     const handle = chart();

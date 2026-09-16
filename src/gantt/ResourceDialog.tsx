@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { countWorkingDaysInRange, type AvailabilityOverride, type Resource } from '../scheduler';
+import { countWorkingDaysInRange, type AvailabilityOverride } from '../scheduler';
 import { AvailabilityList } from './AvailabilityList';
+import type { Person } from './cost';
 import { Dialog } from './Dialog';
 import { nextResourceId, releasedBy, validateResources } from './resources';
 
@@ -18,7 +19,7 @@ interface DraftResource {
   periods: AvailabilityOverride[];
 }
 
-function toDraft(resources: Resource[]): DraftResource[] {
+function toDraft(resources: Person[]): DraftResource[] {
   return resources.map((resource) => ({
     id: resource.id,
     name: resource.name,
@@ -32,14 +33,24 @@ function toDraft(resources: Resource[]): DraftResource[] {
  *
  * The percentage is the form's own unit; everything downstream — the rules, the
  * engine, the file — works in fractions of a working day.
+ *
+ * The drafts hold only what this form edits, so a rate reaches `previous` and
+ * nothing else: it is passed through by id rather than rebuilt, or saving this
+ * dialog would silently erase every rate in the project.
  */
-function toResources(drafts: DraftResource[]): Resource[] {
-  return drafts.map((draft) => ({
-    id: draft.id,
-    name: draft.name.trim(),
-    availability: Number(draft.availability) / 100,
-    ...(draft.periods.length > 0 ? { availabilityOverrides: draft.periods } : {}),
-  }));
+function toResources(drafts: DraftResource[], previous: Person[]): Person[] {
+  const byId = new Map(previous.map((person) => [person.id, person]));
+  return drafts.map((draft) => {
+    const before = byId.get(draft.id);
+    return {
+      id: draft.id,
+      name: draft.name.trim(),
+      availability: Number(draft.availability) / 100,
+      ...(draft.periods.length > 0 ? { availabilityOverrides: draft.periods } : {}),
+      ...(before?.dailyRate !== undefined ? { dailyRate: before.dailyRate } : {}),
+      ...(before?.rateOverrides?.length ? { rateOverrides: before.rateOverrides } : {}),
+    };
+  });
 }
 
 /** Mounted only while open, so the drafts initialise from props without an effect. */
@@ -51,13 +62,13 @@ export function ResourceDialog({
   onCancel,
   onSave,
 }: {
-  resources: Resource[];
+  resources: Person[];
   usage: ResourceUsage;
   workingWeekdays: number[];
   /** Native dialogs are suppressed in embedded browsers; App owns the real one. */
   confirm(message: string, confirmLabel: string): Promise<boolean>;
   onCancel(): void;
-  onSave(resources: Resource[], releasedTaskIds: string[]): void;
+  onSave(resources: Person[], releasedTaskIds: string[]): void;
 }) {
   const [drafts, setDrafts] = useState<DraftResource[]>(() => toDraft(resources));
   const [error, setError] = useState<string | null>(null);
@@ -103,12 +114,17 @@ export function ResourceDialog({
   const add = () => {
     setDrafts((current) => [
       ...current,
-      { id: nextResourceId(toResources(current)), name: '', availability: '100', periods: [] },
+      {
+        id: nextResourceId(toResources(current, resources)),
+        name: '',
+        availability: '100',
+        periods: [],
+      },
     ]);
   };
 
   const save = () => {
-    const next = toResources(drafts);
+    const next = toResources(drafts, resources);
     const problem = validateResources(next);
     if (problem) {
       setError(problem);

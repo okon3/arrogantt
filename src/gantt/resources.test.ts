@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { AvailabilityOverride, Resource } from '../scheduler';
+import type { AvailabilityOverride } from '../scheduler';
+import type { Person, RateOverride } from './cost';
 import {
   nextResourceId,
   releasedBy,
@@ -10,7 +11,7 @@ import {
   withResourceUpdated,
 } from './resources';
 
-const person = (id: string, name: string, availability = 1): Resource => ({
+const person = (id: string, name: string, availability = 1): Person => ({
   id,
   name,
   availability,
@@ -41,7 +42,7 @@ describe('validateResources', () => {
   });
 
   it('refuses a period missing one of its ends', () => {
-    const resource: Resource = {
+    const resource: Person = {
       ...person('r1', 'Marta'),
       availabilityOverrides: [{ from: '2026-09-07', to: '', availability: 0 }],
     };
@@ -49,7 +50,7 @@ describe('validateResources', () => {
   });
 
   it('accepts a period at zero, which is how an absence is written', () => {
-    const resource: Resource = {
+    const resource: Person = {
       ...person('r1', 'Marta'),
       availabilityOverrides: [{ from: '2026-09-07', to: '2026-09-11', availability: 0 }],
     };
@@ -59,7 +60,7 @@ describe('validateResources', () => {
   it('refuses a period whose availability field is missing', () => {
     // The agent-API repro: `{from, to, ratio: 0}` — the field misspelt, so the
     // share is undefined and would reach the scheduler as NaN capacity.
-    const resource: Resource = {
+    const resource: Person = {
       ...person('r1', 'Marta'),
       availabilityOverrides: [
         { from: '2026-09-07', to: '2026-09-11', ratio: 0 } as unknown as AvailabilityOverride,
@@ -69,7 +70,7 @@ describe('validateResources', () => {
   });
 
   it('refuses a period whose date is not a day string', () => {
-    const resource: Resource = {
+    const resource: Person = {
       ...person('r1', 'Marta'),
       availabilityOverrides: [{ from: '07/09/2026', to: '2026-09-11', availability: 0 }],
     };
@@ -77,11 +78,97 @@ describe('validateResources', () => {
   });
 
   it('refuses a period share above one', () => {
-    const resource: Resource = {
+    const resource: Person = {
       ...person('r1', 'Marta'),
       availabilityOverrides: [{ from: '2026-09-07', to: '2026-09-11', availability: 2 }],
     };
     expect(validateResources([resource])).toBe('A period of "Marta" has a share outside 0..1');
+  });
+
+  it('accepts a default rate of zero, unlike availability', () => {
+    const resource: Person = { ...person('r1', 'Marta'), dailyRate: 0 };
+    expect(validateResources([resource])).toBeNull();
+  });
+
+  it('refuses a negative default rate', () => {
+    const resource: Person = { ...person('r1', 'Marta'), dailyRate: -1 };
+    expect(validateResources([resource])).toBe(
+      'Invalid daily rate for "Marta": expected a number of 0 or more',
+    );
+  });
+
+  it('refuses a non-finite default rate', () => {
+    const resource: Person = { ...person('r1', 'Marta'), dailyRate: Number.NaN };
+    expect(validateResources([resource])).toBe(
+      'Invalid daily rate for "Marta": expected a number of 0 or more',
+    );
+  });
+
+  it('accepts a rate override without a default: unknown outside it, known inside', () => {
+    const resource: Person = {
+      ...person('r1', 'Marta'),
+      rateOverrides: [{ from: '2026-09-07', to: '2026-09-11', dailyRate: 500 }],
+    };
+    expect(validateResources([resource])).toBeNull();
+  });
+
+  it('refuses a rate period missing one of its ends', () => {
+    const resource: Person = {
+      ...person('r1', 'Marta'),
+      rateOverrides: [{ from: '2026-09-07', to: '', dailyRate: 500 } as RateOverride],
+    };
+    expect(validateResources([resource])).toBe('A rate period of "Marta" has no start or end');
+  });
+
+  it('refuses a rate period whose date is not a day string', () => {
+    const resource: Person = {
+      ...person('r1', 'Marta'),
+      rateOverrides: [{ from: '07/09/2026', to: '2026-09-11', dailyRate: 500 }],
+    };
+    expect(validateResources([resource])).toBe(
+      'A rate period of "Marta" has a malformed date: expected YYYY-MM-DD',
+    );
+  });
+
+  it('refuses a rate period with no numeric dailyRate', () => {
+    const resource: Person = {
+      ...person('r1', 'Marta'),
+      rateOverrides: [
+        { from: '2026-09-07', to: '2026-09-11' } as unknown as RateOverride,
+      ],
+    };
+    expect(validateResources([resource])).toBe(
+      'A rate period of "Marta" needs a numeric "dailyRate"',
+    );
+  });
+
+  // `Infinity` reaches the text as `null`, which this application's own parser
+  // refuses: the gate has to stop it before the model holds it.
+  it('refuses a rate period whose rate is not finite', () => {
+    const resource: Person = {
+      ...person('r1', 'Marta'),
+      rateOverrides: [{ from: '2026-09-07', to: '2026-09-11', dailyRate: Number.POSITIVE_INFINITY }],
+    };
+    expect(validateResources([resource])).toBe(
+      'A rate period of "Marta" needs a numeric "dailyRate"',
+    );
+  });
+
+  it('refuses a rate period with a negative rate', () => {
+    const resource: Person = {
+      ...person('r1', 'Marta'),
+      rateOverrides: [{ from: '2026-09-07', to: '2026-09-11', dailyRate: -50 }],
+    };
+    expect(validateResources([resource])).toBe('A rate period of "Marta" has a negative rate');
+  });
+
+  it('accepts a rate period at zero, a declared free stretch', () => {
+    const resource: Person = {
+      ...person('r1', 'Marta'),
+      dailyRate: 600,
+      rateOverrides: [{ from: '2026-09-07', to: '2026-09-11', dailyRate: 0 }],
+    };
+    expect(validateResources([resource])).toBeNull();
   });
 });
 
@@ -160,5 +247,35 @@ describe('the transformations', () => {
   it('removes only the named person', () => {
     const previous = [person('r1', 'Marta'), person('r2', 'Bruno')];
     expect(withResourceRemoved(previous, 'r1')).toEqual([previous[1]]);
+  });
+
+  it('leaves the rate alone when the patch does not mention it', () => {
+    const previous = [{ ...person('r1', 'Marta'), dailyRate: 600 }];
+    const next = withResourceUpdated(previous, 'r1', { name: 'Marta Rossi' });
+    expect(next[0].dailyRate).toBe(600);
+  });
+
+  it('sets a rate of zero without dropping it as falsy', () => {
+    const next = withResourceUpdated([person('r1', 'Marta')], 'r1', { dailyRate: 0 });
+    expect(next[0].dailyRate).toBe(0);
+  });
+
+  it('clears the default rate with null, leaves it with undefined', () => {
+    const previous = [{ ...person('r1', 'Marta'), dailyRate: 600 }];
+    const cleared = withResourceUpdated(previous, 'r1', { dailyRate: null });
+    expect('dailyRate' in cleared[0]).toBe(false);
+    const left = withResourceUpdated(previous, 'r1', {});
+    expect(left[0].dailyRate).toBe(600);
+  });
+
+  it('omits an empty rate override list rather than storing it', () => {
+    const previous = [
+      {
+        ...person('r1', 'Marta'),
+        rateOverrides: [{ from: '2026-09-07', to: '2026-09-11', dailyRate: 0 }],
+      },
+    ];
+    const next = withResourceUpdated(previous, 'r1', { rateOverrides: [] });
+    expect('rateOverrides' in next[0]).toBe(false);
   });
 });

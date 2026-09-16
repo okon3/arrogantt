@@ -4,9 +4,9 @@ import {
   type AvailabilityOverride,
   type CalendarSpec,
   type DayRange,
-  type Resource,
 } from '../scheduler';
 import { validateCalendar } from './calendarRules';
+import { validateCurrency, type Person, type RateOverride } from './cost';
 import { parseWallClock, serializeDate } from './dates';
 import { buildPlan } from './plan';
 import type { Project, ProjectTask, SolvedProject } from './project';
@@ -80,6 +80,7 @@ export function serializeProject(project: Project, solved?: SolvedProject): stri
           }
         : undefined,
       calendar: project.calendar,
+      currency: project.currency,
       resources: project.resources,
       tasks: project.tasks.map((task) => ({
         ...task,
@@ -177,7 +178,7 @@ export function deserializeProject(text: string): Project {
 
   const resources = asArray(root.resources ?? [], 'resources').map((entry, index) => {
     const record = asRecord(entry, `resources[${index}]`);
-    const resource: Resource = {
+    const resource: Person = {
       id: requireString(record.id, `resources[${index}].id`),
       name: requireString(record.name, `resources[${index}].name`),
     };
@@ -204,6 +205,22 @@ export function deserializeProject(text: string): Project {
       });
     }
     if (overrides.length > 0) resource.availabilityOverrides = overrides;
+    if (record.dailyRate !== undefined) {
+      resource.dailyRate = requireNumber(record.dailyRate, `resources[${index}].dailyRate`);
+    }
+    if (record.rateOverrides !== undefined) {
+      const context = `resources[${index}].rateOverrides`;
+      const rates: RateOverride[] = [];
+      asArray(record.rateOverrides, context).forEach((entry, position) => {
+        const [range] = parseDayRanges([entry], `${context}[${position}]`);
+        const dailyRate = requireNumber(
+          asRecord(entry, `${context}[${position}]`).dailyRate,
+          `${context}[${position}].dailyRate`,
+        );
+        rates.push({ ...range, dailyRate });
+      });
+      if (rates.length > 0) resource.rateOverrides = rates;
+    }
     return resource;
   });
 
@@ -309,5 +326,12 @@ export function deserializeProject(text: string): Project {
     calendar.holidays = parseDayRanges(calendar.holidays, 'calendar.holidays');
   }
 
-  return { calendar, resources, tasks };
+  let currency: string | undefined;
+  if (root.currency !== undefined) {
+    currency = requireString(root.currency, 'currency');
+    const brokenCurrency = validateCurrency(currency);
+    if (brokenCurrency) throw new ProjectFileError(brokenCurrency);
+  }
+
+  return { calendar, resources, tasks, ...(currency !== undefined ? { currency } : {}) };
 }

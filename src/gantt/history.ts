@@ -135,6 +135,7 @@ export function describeChange(before: Project, after: Project): string {
     return 'changed people';
   }
   if (!equalValues(before.calendar, after.calendar)) return 'changed calendar';
+  if (before.currency !== after.currency) return 'changed currency';
 
   const dependencies = countDependencies(after) - countDependencies(before);
   if (dependencies > 0) return 'added a dependency';

@@ -15,6 +15,7 @@ import {
   type Task,
   type TaskCriticality,
 } from '../scheduler';
+import type { Person } from './cost';
 
 /**
  * A task as the user edits it.
@@ -48,8 +49,13 @@ export interface ProjectTask {
 
 export interface Project {
   tasks: ProjectTask[];
-  resources: Resource[];
+  resources: Person[];
   calendar: CalendarSpec;
+  /**
+   * Free label shown beside the money (`EUR`, `€`, `k€`); absent = none.
+   * Nothing converts, nothing formats by locale.
+   */
+  currency?: string;
 }
 
 export interface SolvedProject {

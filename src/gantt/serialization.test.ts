@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CALENDAR } from '../scheduler';
-import { sampleProject, solve, type Project } from './project';
+import { validateCurrency, type RateOverride } from './cost';
+import { emptyProject, sampleProject, solve, type Project } from './project';
+import { validateResources } from './resources';
 import {
   FILE_VERSION,
   ProjectFileError,
@@ -420,5 +422,192 @@ describe('rejects broken files', () => {
     );
     expect(project.tasks).toEqual([]);
     expect(project.calendar).toEqual(DEFAULT_CALENDAR);
+  });
+});
+
+describe('rates and currency (F1)', () => {
+  // Pinned from the build at 1bb6cbe, before rates/currency existed: printed
+  // by a scratch test against `serializeProject(emptyProject())`, copied here,
+  // then deleted. A project that never enters either field must keep writing
+  // exactly this text.
+  const EMPTY_PROJECT_TEXT =
+    '{"format":"gantt-effort-split","version":2,"calendar":{"workingDays":[1,2,3,4,5],' +
+    '"windows":[{"from":480,"to":720},{"from":780,"to":1020}]},"resources":[],"tasks":[]}';
+
+  it('serializes an empty project byte-identically to the pre-F1 build', () => {
+    expect(serializeProject(emptyProject())).toBe(EMPTY_PROJECT_TEXT);
+  });
+
+  it('parses a v2 text with neither rate nor currency fields as the pre-F1 build did, and re-serializes it identically', () => {
+    // Pinned the same way: the fixture below, run through the build at
+    // 1bb6cbe, produced this exact re-serialization.
+    const text = JSON.stringify({
+      format: 'gantt-effort-split',
+      version: 2,
+      calendar: DEFAULT_CALENDAR,
+      resources: [
+        { id: 'r1', name: 'Marta', availability: 0.5 },
+        { id: 'r2', name: 'Gino' },
+      ],
+      tasks: [{ id: '1', name: 'A', nominalDays: 2, start: '2026-01-05T08:00', resourceId: 'r1' }],
+    });
+    const project = deserializeProject(text);
+    expect(project).toEqual({
+      calendar: DEFAULT_CALENDAR,
+      resources: [
+        { id: 'r1', name: 'Marta', availability: 0.5 },
+        { id: 'r2', name: 'Gino' },
+      ],
+      tasks: [
+        {
+          id: '1',
+          name: 'A',
+          nominalDays: 2,
+          start: new Date(2026, 0, 5, 8, 0),
+          resourceId: 'r1',
+        },
+      ],
+    });
+    expect('currency' in project).toBe(false);
+    expect(serializeProject(project)).toBe(
+      '{"format":"gantt-effort-split","version":2,"calendar":{"workingDays":[1,2,3,4,5],' +
+        '"windows":[{"from":480,"to":720},{"from":780,"to":1020}]},"resources":[{"id":"r1",' +
+        '"name":"Marta","availability":0.5},{"id":"r2","name":"Gino"}],"tasks":[{"id":"1",' +
+        '"name":"A","nominalDays":2,"start":"2026-01-05T08:00","resourceId":"r1"}]}',
+    );
+  });
+
+  it('round-trips rates, a person with only overrides, a zero rate and a currency through the file gate', () => {
+    const project: Project = {
+      calendar: DEFAULT_CALENDAR,
+      currency: 'EUR',
+      resources: [
+        {
+          id: 'r1',
+          name: 'Marta',
+          availability: 1,
+          dailyRate: 600,
+          rateOverrides: [{ from: '2026-09-08', to: '2026-09-09', dailyRate: 650, label: 'Senior' }],
+        },
+        { id: 'r2', name: 'Gino Gratis', dailyRate: 0 },
+        {
+          id: 'r3',
+          name: 'Solo periodi',
+          rateOverrides: [{ from: '2026-09-08', to: '2026-09-09', dailyRate: 400 }],
+        },
+      ],
+      tasks: [{ id: '1', name: 'A', nominalDays: 2, start: new Date(2026, 0, 5, 8, 0), resourceId: 'r1' }],
+    };
+    const text = serializeForFile(project);
+    const restored = deserializeProject(text);
+    expect(restored).toEqual(project);
+    expect(text).not.toContain('"dailyRate":null');
+    expect(text).not.toContain('"rateOverrides":[]');
+    expect(text).not.toContain('"currency":null');
+  });
+
+  it('omits the currency key entirely when the project never held one', () => {
+    const project: Project = { calendar: DEFAULT_CALENDAR, resources: [], tasks: [] };
+    expect(serializeProject(project)).not.toContain('currency');
+  });
+
+  describe('the refusal table', () => {
+    const withResource = (resource: Record<string, unknown>) =>
+      JSON.stringify({
+        format: 'gantt-effort-split',
+        version: 2,
+        resources: [{ id: 'r1', name: 'X', ...resource }],
+        tasks: [],
+      });
+    const withCurrency = (currency: unknown) =>
+      JSON.stringify({ format: 'gantt-effort-split', version: 2, currency, tasks: [] });
+
+    it('refuses a negative dailyRate', () => {
+      expect(() => deserializeProject(withResource({ dailyRate: -1 }))).toThrow(ProjectFileError);
+    });
+
+    it('refuses a string dailyRate', () => {
+      expect(() => deserializeProject(withResource({ dailyRate: '600' }))).toThrow(
+        ProjectFileError,
+      );
+    });
+
+    it('refuses a rate override without a dailyRate', () => {
+      expect(() =>
+        deserializeProject(
+          withResource({ rateOverrides: [{ from: '2026-09-08', to: '2026-09-09' }] }),
+        ),
+      ).toThrow(ProjectFileError);
+    });
+
+    it('refuses a rate override with a malformed day', () => {
+      expect(() =>
+        deserializeProject(
+          withResource({
+            rateOverrides: [{ from: '08/09/2026', to: '2026-09-09', dailyRate: 600 }],
+          }),
+        ),
+      ).toThrow(ProjectFileError);
+    });
+
+    it('refuses an empty currency', () => {
+      expect(() => deserializeProject(withCurrency(''))).toThrow(ProjectFileError);
+    });
+
+    it('refuses a padded currency', () => {
+      expect(() => deserializeProject(withCurrency('  '))).toThrow(ProjectFileError);
+    });
+
+    it('refuses a non-string currency', () => {
+      expect(() => deserializeProject(withCurrency(5))).toThrow(ProjectFileError);
+    });
+
+    it('refuses a 9-character currency', () => {
+      expect(() => deserializeProject(withCurrency('123456789'))).toThrow(ProjectFileError);
+    });
+
+    it('shares one message between the parser, the dialog and the agent API for the rate cases', () => {
+      const negative = [{ id: 'r1', name: 'X', dailyRate: -1 }];
+      expect(validateResources(negative)).toBe(
+        'Invalid daily rate for "X": expected a number of 0 or more',
+      );
+      expect(() => deserializeProject(withResource({ dailyRate: -1 }))).toThrow(
+        /Invalid daily rate for "X": expected a number of 0 or more/,
+      );
+
+      const badOverride = [
+        {
+          id: 'r1',
+          name: 'X',
+          rateOverrides: [
+            { from: '2026-09-08', to: '2026-09-09' } as unknown as RateOverride,
+          ],
+        },
+      ];
+      expect(validateResources(badOverride)).toBe(
+        'A rate period of "X" needs a numeric "dailyRate"',
+      );
+    });
+
+    it('shares one message between the parser and the agent API for the currency cases', () => {
+      // A blank string is refused by `requireString` before `validateCurrency`
+      // ever runs — the same structural check every other string field in the
+      // file shares (id, name, ...) — so the message-sharing guarantee holds
+      // for `validateCurrency`'s own rules: padding and length.
+      expect(validateCurrency('  ')).toBe('Currency: a short label of up to 8 characters');
+      expect(validateCurrency('123456789')).toBe('Currency: a short label of up to 8 characters');
+      try {
+        deserializeProject(withCurrency('  '));
+        expect.unreachable();
+      } catch (error) {
+        expect((error as Error).message).toBe('Currency: a short label of up to 8 characters');
+      }
+      try {
+        deserializeProject(withCurrency('123456789'));
+        expect.unreachable();
+      } catch (error) {
+        expect((error as Error).message).toBe('Currency: a short label of up to 8 characters');
+      }
+    });
   });
 });
