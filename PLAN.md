@@ -226,8 +226,8 @@ verdetto della goal review. **La rinomina dell'heading `Unreleased` resta da
 confermare**: la deroga non e' stata comprata.
 
 **La scomposizione: F7 → F1 → F2a → F2b → F3a → F3b → F4a → F4b → F5a →
-F5c → F5b → F6 → F8**, seriale (un browser, una porta). Tre dei nove pezzi
-originali si sono splittati strada facendo — F3, F4 e F5 — e ogni split ha
+F5c → F5b → F6a → F6b → F8**, seriale (un browser, una porta). Quattro dei nove pezzi
+originali si sono splittati strada facendo — F3, F4, F5 e F6 — e ogni split ha
 pagato: la nota di ciascuno sta sopra la sua coppia. Gli accept per esteso stanno nella §8 della spec, con la
 **Fixture C** condivisa e la sua tabella dei valori attesi per cella; qui sta
 lo stato. Solo F2a e' `deep` (effort conservato); **nessun sottotask tocca
@@ -727,7 +727,33 @@ metodo `scrollWidth <= clientWidth` stanno entrambi nei bullet di *Dialogs*
       dialogo e' intera (tariffa di default, periodi, valuta), e un bullet
       emendato tre volte e' peggio di uno alla fine. Sotto `## Unreleased`,
       che **non** si rinomina (la deroga non e' comprata).
-- [ ] F6 [impl] — Il costo nel pannello dettagli
+**F6 spezzato in due il 2026-09-16, sulla regola e non sulla campagna.** La
+sua accept (1) chiede che il dialogo dica **lo stesso testo** della cella di
+griglia su quattro righe: re-implementare i quattro rami nel dialogo lo
+renderebbe vero solo su quelle quattro (la trappola del censimento), e sarebbe
+il **terzo** domicilio della regola del `≥` e il secondo di `No rate for X on
+these days`. Il debito a due case di F4b diceva «se si riapre, si unifica»: F6
+e' quella riapertura. Quindi F6a estrae la regola e ci riporta la griglia
+(nessun cambiamento visibile, e i **primi test** che quella regola abbia mai
+avuto), F6b rende le due voci e il layout a tre tracce. Il taglio cade sulla
+campagna: F6b se la prende quasi tutta, F6a paga una sola ri-guida delle nove
+righe.
+
+- [>] F6a [impl] — La regola della cella costo/tariffa, in un posto solo
+      `src/gantt/costCells.ts` nuovo: `rateCellText` e `costCellText`, puri,
+      che restituiscono un descrittore neutro rispetto al medium
+      (`{ text, title, derived }`) — la griglia lo avvolge in HTML, il dialogo
+      in JSX, e la classe del registro *derived* la scegle ognuno per se'
+      (`gantt-derived` vs `taskinfo__derived`). `gridColumns.ts` ricablato sui
+      due, **niente altro cambia**: `escapeHtml` resta al confine HTML (il
+      `title` porta il nome di una persona, cioe' input dell'utente), la
+      regola del null resta in `reportedCost` (`cost.ts`, intatto).
+      `costCells.test.ts` nuovo. Accept: le nove righe della Fixture C
+      identiche alla tabella della §8 dopo il refactor, misurate nell'app.
+- [ ] F6b [impl] — Il costo nel pannello dettagli
+      Le due voci *Computed* etichettate con la valuta, la griglia a
+      `repeat(3, 1fr)` in due righe da tre, sui descrittori di F6a. Docs:
+      `view.md` *Details dialog*. Accept: la §8 di T59, tutti e tre i punti.
 - [ ] F8 [impl] — Colonne e banda di testata in `planFigure`
       **Non ha effetto visibile nell'app dentro questo goal**, e non e' una
       dimenticanza: `App.tsx` non passa `columns`, il default legacy resta
