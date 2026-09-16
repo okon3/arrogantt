@@ -825,62 +825,40 @@ righe.
       andare), un toggle *live* di `prefers-color-scheme` (non emette `change`,
       solo da caricamento), viewport sotto i 480px, e le vie di export col
       blocco Computed (fuori scope).
-- [ ] F8 [impl] — Colonne e banda di testata in `planFigure`
-      **Non ha effetto visibile nell'app dentro questo goal**, e non e' una
-      dimenticanza: `App.tsx` non passa `columns`, il default legacy resta
-      byte-identico (appuntato da un pin). L'utente l'ha comprato come API
-      scegliendo C, e il suo cliente e' il dialogo di export di Goal G.
-      Dichiarato qui perche' la goal review non lo legga come codice
+- [x] F8 [impl] — Colonne e banda di testata in `planFigure` — `fa4fd44`.
+      `FigureOptions.columns`, `FIGURE_CELLS` (`Record<PlanColumnName,…>`
+      esaustivo), `geometryOf` che riceve la larghezza delle colonne invece di
+      `PERSON_WIDTH`, banda di testata di `HEADER_BAND` 18px. Chiuso al primo
+      giro, zero findings.
+      **Non ha effetto visibile nell'app e non e' una dimenticanza**: `App.tsx`
+      non passa `columns`, il default legacy resta byte-identico. L'utente l'ha
+      comprato come API scegliendo C; il suo cliente e' il dialogo di export di
+      Goal G. Dichiarato qui perche' la goal review non lo legga come codice
       infilato di straforo.
-      **È il primo sottotask di questo goal senza campagna nel browser**:
-      l'accept della §8 e' interamente unit (`planFigure.test.ts`), quindi si
-      brieffa come un task di codice e non di misura — nessun `dev:fresh`,
-      nessuna Fixture C guidata, la fixture la costruisce il test. Aspettarsi
-      una corsia molto sotto le 181k di F6b.
-      **Ricognizione fatta da gen 11 e da non ripagare** (letta su `planFigure.ts`,
-      `plan.ts`, `gridColumns.ts` dopo F6b, quindi valida su `1362652`):
-      - `geometryOf(from, to, width)` calcola `left = PADDING + NAME_WIDTH +
-        PERSON_WIDTH` (16+250+110): e' **li'** che entra la somma dei
-        `figureWidth` del registro, e `geometryOf` va quindi a prendere la
-        lista. Il pin `:68` dell'accept (1) e' esattamente quel `16+250+110`.
-      - La banda: `chartTop = PADDING + (title ? TITLE_HEIGHT : 0)` e
-        `rowsTop = chartTop + MONTH_BAND + TICK_BAND`. **Decisione dell'hub, da
-        mettere nel brief**: `HEADER_BAND` e' la banda *piu' alta* del chart
-        (`chartTop` si sposta di `HEADER_BAND` quando `columns` c'e'), cosi'
-        l'altezza cresce di esattamente `HEADER_BAND` come chiede l'accept (2)
-        e l'aritmetica cambia in un punto solo. Non e' una scelta visibile
-        all'utente in questo goal — e' API, la decide l'hub.
-      - **Nessuna etichetta per la colonna Name**: l'accept (2) elenca tre
-        `<text>` per tre `columns`, e l'accept (3) vuole `columns: []` con una
-        banda **senza etichette**. Settlato dalla spec, non da inventare.
-      - `PlanTask` **non porta** `nominalDays` ne' un `isMilestone`, quindi la
-        cella `rate` deve passare a `rateCellText` un `isMilestone:
-        !task.isSummary && task.effortDays === 0` — che e' `project.ts`
-        letto sull'unico campo disponibile (su una foglia `effortDays` *e'*
-        l'effort dichiarato) **ed e' lo stesso discriminante che
-        `costCellText` usa gia' nella cella accanto**. Non toccare `plan.ts`
-        per aggiungere un campo: e' un file che implementa un invariante e
-        manderebbe il critic su opus.
-      - `cost` e `rate` passano da `costCells.ts` (F6a/F6b), mai
-        re-implementate: e' cio' che rende vera la tabella della §8
-        nell'accept (2). L'etichetta `Cost (EUR)` viene da `currencyLabel`
-        (F6b) oppure da `PLAN_COLUMNS[].label(project)` — **decidere quale
-        nel brief**: `label()` prende un `Project` e `planFigure` ce l'ha.
-      - Le altre cinque celle rispecchiano i template di `GRID_CELLS` senza
-        l'HTML: `nominal_days` → `formatDays(effortDays)`+`d`, `start_date` /
-        `end_shown` → il `formatDay` locale (`DD/MM/YYYY`), `elapsed_days` →
-        `formatDays(elapsedDays)`+`d`, `resource_id` → il nome dalla mappa
-        `names` che `planFigure` costruisce gia'.
-      - Ogni testo di cella passa da `truncate(text, figureWidth - 6)`, come
-        fa oggi la colonna Person; allineamento a sinistra sul bordo della
-        colonna, come la Person — non inventare il center della griglia.
-      - `planFigurePages` **inoltra `columns` gratis** (fa `...options` e
-        `columns` sta in `Omit<FigureOptions,'slice'>`): l'accept (5) e' solo
-        un test, non una modifica.
-      - Il pin byte-identico dell'accept (1) va **catturato prima di editare
-        `planFigure.ts`** (una probe vitest usa-e-getta che stampa l'`svg` di
-        una fixture a 3 righe), non dopo: e' la stessa trappola d'ordine che
-        F6b ha risolto col round-trip da `git show`, ma qui costa una probe.
+      Primo sottotask del goal **senza campagna nel browser**, e non e' venuto
+      economico: 157k/146k. Il pin byte-identico e' stato catturato prima
+      dell'edit — e **il critic l'ha ricostruito da `git show HEAD:` invece di
+      credere alla dichiarazione**, trovandolo identico: e' cio' che distingue
+      il pin da una tautologia. Ha anche sondato che l'esaustivita' del
+      `Record` e' una garanzia vera (un nome finto in `PlanColumnName` →
+      TS2741 su `planFigure.ts` e `gridColumns.ts`), e guidato 23 celle contro
+      le 6 dell'accept.
+      **Due misure fuori accept, da leggere in Goal G, non difetti qui.**
+      (a) La testata `Rate`/`Cost` della figura **si tronca appena `currency`
+      supera i 3 caratteri** (`Rate (EURO)` → `Rate (EUR…`): `figureWidth` 70
+      e 84 danno 10 e 12 caratteri a `truncate`, e `validateCurrency` accetta
+      fino a 8 — `Cost (XXXXXXXX)` sono 15 caratteri, 102px. **Qui l'accept
+      l'ha restretto il brief dell'hub**: la §8 dice «measures the widest
+      string of each», il brief ha circoscritto la misura alle stringhe della
+      Fixture C, e la stringa piu' larga legale e' la testata, non una cella.
+      Non allargata di proposito: il budget di larghezza della figura esiste
+      solo quando Goal G la cabla a un dialogo di export, e allargarla adesso
+      sarebbe indovinare contro una valuta che nessuno ha digitato. **Chi
+      cabla `columns` in Goal G ridecide i due `figureWidth` con un layout
+      davanti.**
+      (b) A `width` molto piccole `geometryOf` produce un `pxPerDay` negativo —
+      **preesistente**, identico sul percorso legacy alla stessa `width`
+      (confrontato direttamente dal critic), quindi non una regressione.
 
 **Non cancellare `.claude/specs/T59-costs.md` allo sweep degli orfani finche'
 la goal review di F non e' girata**: gli accept dei sottotask stanno nella sua
@@ -1248,26 +1226,27 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   summary, milestone, undo della creazione) e reggono.
 
 ## Log
-- **Dimensionamento**: impl oltre ~200k = task da splittare (T35 215k, T18
-  182k+250k, F7 257k, F1 222k, F4b 228k/213k). **Splittare si misura**: F2
-  tagliato in calcolo + cablaggio ha reso F2a 141k/130k, F3a 122k/122k, F3b
-  133k/168k, F6a 129k/132k. **Ri-splittare paga solo la meta' su cui cade il
-  taglio**: F5a, tagliata sulla campagna, 186k/215k; F5c, che di quella
-  campagna ha ereditato la parte grossa su ~100 righe di diff, 218k/242k. Si
-  taglia la campagna, non il codice, e si conta **prima** quanti scenari di
-  browser un accept impone. **E quando la campagna non si puo' tagliare, si
-  detta il codice**: F6b aveva la campagna di F5c e un brief che scriveva ogni
-  riga di JSX e CSS — 181k/181k, perche' la corsia ha speso il contesto nel
-  browser invece che a decidere. Una correzione via SendMessage costa meno di
-  un fresh spawn (~40k), ma non oltre ~190k: li' chiude l'hub se ha le misure.
-  **Un critic guidato nel browser e' la voce piu' cara**: 75-95k a tavolino,
-  132-181k nel browser, 242k su F5c — e su T58 e' l'unico che ha ribaltato una
-  premessa. Si paga.
+- **Dimensionamento**: impl oltre ~200k = task da splittare (T35, F7 257k, F1
+  222k, F4b 228k/213k). **Splittare si misura**: F2 in calcolo + cablaggio ha
+  reso F2a 141k/130k, F3a 122k/122k, F3b 133k/168k, F6a 129k/132k.
+  **Ri-splittare paga solo la meta' su cui cade il taglio**: F5a, tagliata
+  sulla campagna, 186k/215k; F5c, che ne ha ereditato la parte grossa su ~100
+  righe di diff, 218k/242k. Si taglia la campagna, non il codice, e si conta
+  **prima** quanti scenari di browser un accept impone. Se la campagna non si
+  puo' tagliare si detta il codice (F6b 181k/181k); **e toglierla del tutto
+  non rende economico il task**: F8, accept interamente unit, 157k/146k — il
+  costo si sposta sulle celle, non sparisce. Una correzione via SendMessage
+  costa meno di un fresh spawn (~40k), ma non oltre ~190k. **Il critic e' la
+  voce piu' cara e la piu' redditizia**: 75-95k a tavolino, 132-242k nel
+  browser; su T58 ha ribaltato una premessa, su F8 ha rifatto il pin da
+  `git show` invece di crederlo.
 - **Un elenco enumerato da una sezione di spec e' completo o non e' un elenco.**
   F2b: la consegna dava due regole del null su tre e taceva il filtro
   `disabledIds` della §5.3, e l'hub ha poi giustificato la scelta da se' senza
   rileggerla. F3b: il brief ha enumerato le superfici della §5.6 saltando la
-  tabella *Writing — people*, da cui dipende la fixture del goal. Vale per chi
+  tabella *Writing — people*, da cui dipende la fixture del goal. F8: il brief
+  ha ristretto «the widest string of each» alle stringhe della fixture, e la
+  piu' larga legale era una testata — l'ha trovata il critic. Vale per chi
   consegna, per chi implementa e per l'hub che briefa: si rilegge la sezione.
 - **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta (T56) e due
   Explore non residenti (T57) hanno chiuso un task a testa per pochi k, dove
@@ -1283,7 +1262,6 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 - **Cio' che una corsia dichiara impossibile o preesistente va confrontato con
   l'evidenza**: T43 dava il drag reale per non guidabile, T41 e poi F4b
   l'hanno fatto. Fatto bene su T48: misurato su HEAD **e** sul tree.
-- **Una ragione registrata male in un doc e' peggio di nessun doc**, e in
-  questo goal e' successo quattro volte (F7, F5c, F5b, F6a), sempre per mano
-  dell'hub. Si verifica la ragione sul percorso che la usa, non sulla riga che
-  la enuncia.
+- **Una ragione registrata male in un doc e' peggio di nessun doc**: quattro
+  volte in questo goal (F7, F5c, F5b, F6a), sempre per mano dell'hub. Si
+  verifica sul percorso che la usa, non sulla riga che la enuncia.
