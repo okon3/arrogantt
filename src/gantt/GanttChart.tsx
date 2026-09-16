@@ -55,6 +55,7 @@ import {
   refreshResourceOptions,
   type RowContext,
 } from './gridColumns';
+import type { PlanColumnName } from './columns';
 import { matchesSearch, searchKey } from './search';
 import { keystrokeIsCaptured } from './shortcuts';
 import type { GanttHandle, LoadOptions } from './ganttHandle';
@@ -92,6 +93,7 @@ function setEveryBranchOpen(open: boolean): void {
 
 export function GanttChart({
   project,
+  columns,
   highlighted,
   markCritical = true,
   showLoad = false,
@@ -107,6 +109,8 @@ export function GanttChart({
   ref,
 }: {
   project: Project;
+  /** Which registry columns are on screen — view state, owned by the caller. */
+  columns: ReadonlySet<PlanColumnName>;
   /** Whose work stays at full opacity while the rest of the plan fades. */
   highlighted?: string | null;
   /** Outlines the tasks the plan's end depends on. Costs a measurement per edit. */
@@ -152,6 +156,10 @@ export function GanttChart({
   const changeRef = useRef(onChange);
   const rejectRef = useRef(onReject);
   const projectRef = useRef(project);
+  // Mutated only through `setColumns` (and read once, at init, for the first
+  // paint) — the same uncontrolled-after-mount shape as `projectRef`, never a
+  // prop the init effect watches.
+  const shownRef = useRef(columns);
   // Lazily, or `solve` runs on every render and its answer is thrown away on
   // all but the first. That waste is the smaller half: this is the only solve
   // on the render path, and a model that cannot be scheduled throws here where
@@ -283,6 +291,37 @@ export function GanttChart({
     // doing so. `reportChainState` has no dependencies of its own either.
     [reportChainState],
   );
+
+  /**
+   * The one place the column set is rebuilt: a picker change, or a load whose
+   * project may change a header label later. Never from `applySolution` —
+   * nothing there changes which columns exist.
+   */
+  const rebuildColumns = useCallback(() => {
+    const rowContext: RowContext = {
+      project: () => projectRef.current,
+      solved: () => solvedRef.current,
+      searchKey: () => searchKeyRef.current,
+    };
+    // The registry owns which columns exist, never how wide the user dragged
+    // them: a rebuild that forgot the widths would re-truncate every name.
+    const dragged = new Map((gantt.config.columns ?? []).map((column) => [column.name, column.width]));
+    const rebuilt = buildColumns(rowContext, shownRef.current);
+    for (const column of rebuilt) {
+      const width = dragged.get(column.name);
+      if (width !== undefined) column.width = width;
+    }
+    gantt.config.columns = rebuilt;
+    if (savedGridWidthRef.current !== null) {
+      // Collapsed: `grid_width` stays 0, and the new budget becomes what a
+      // restore hands back — a divider drag from before the rebuild is
+      // forgotten, which is fine for view state.
+      savedGridWidthRef.current = columnsWidth(gantt.config.columns);
+    } else {
+      gantt.config.grid_width = columnsWidth(gantt.config.columns);
+    }
+    gantt.render();
+  }, []);
 
   const loadProject = useCallback(
     (next: Project, options?: LoadOptions) => {
@@ -592,8 +631,14 @@ export function GanttChart({
         // `setEveryBranchOpen` and the `showLoad` effect).
         gantt.render();
       },
+      // View state, like `toggleGridCollapsed`: no undo step, no dirty flag —
+      // unlike it, the caller persists the choice across a reload.
+      setColumns: (shown) => {
+        shownRef.current = shown;
+        rebuildColumns();
+      },
     }),
-    [applySolution, loadProject, reportChainState],
+    [applySolution, loadProject, rebuildColumns, reportChainState],
   );
 
   useEffect(() => {
@@ -632,7 +677,7 @@ export function GanttChart({
     gantt.config.order_branch_free = true;
     gantt.config.row_height = 36;
     gantt.config.bar_height = 24;
-    gantt.config.columns = buildColumns(rowContext);
+    gantt.config.columns = buildColumns(rowContext, shownRef.current);
     gantt.config.grid_width = columnsWidth(gantt.config.columns);
 
     installRowTemplates(rowContext);

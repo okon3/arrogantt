@@ -335,6 +335,20 @@ touching `src/gantt` code that talks to the library.
 - **Refreshing the resource dropdown finds its column by `name ===
   'resource_id'`** — renaming that column silently stops the options ever
   updating, with no error anywhere.
+- **`gantt.render()` alone re-reads `config.columns`** — `resetLayout()` is not
+  needed after a rebuild (F7). Measured: `rebuildColumns()` assigns
+  `config.columns` and `config.grid_width` then calls `render()` only; the grid
+  header, cell templates/editors, `grid_width` and `$grid.offsetWidth` all
+  followed the new set on every one of the five single-column-hidden cases and
+  on a collapsed→hide→restore cycle, and `refreshResourceOptions` still found
+  its `resource_id` column after the rebuild. It is the same call
+  `toggleGridCollapsed` already uses to reapply `grid_width`, so this was one
+  function doing both jobs, not a new one. Whether `refreshData` would also
+  re-read the set was **not measured** — nothing here needs it to.
+- **A rebuild of `config.columns` drops the widths the user dragged**, unless
+  they are carried over by name: the new array is the registry's, and dhtmlx
+  keeps a dragged width nowhere else (measured: `text` dragged 230 → 300 came
+  back 230 on the next rebuild, before `rebuildColumns` learned to copy it).
 - **`moveTask(id, -1, parent)` appends** (dhtmlx's own indent convention;
   typings just say `tindex: number`).
 - **A parent that was a leaf renders collapsed** — set `$open` before

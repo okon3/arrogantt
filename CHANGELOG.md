@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Grid columns are now optional: a toolbar button picks which of Resource,
+  Effort, Start, End and Duration show, remembered across a reload.
+
 ## v1.2 — 2026-09-08
 
 - The name of the last task on the plan is no longer cut off after an edit: the

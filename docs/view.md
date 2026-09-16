@@ -127,6 +127,48 @@ that isn't there.
 
 ## Grid
 
+- **Columns are a registry (`src/gantt/columns.ts`), the grid a filter over
+  it.** `PLAN_COLUMNS` holds `resource_id`, `nominal_days`, `start_date`,
+  `end_shown`, `elapsed_days` — metadata only (label, grid width, figure
+  width, default visibility, client-safety); `gridColumns.ts`'s `GRID_CELLS`
+  is the one place a column's cell (`template`/`editor`/`align`) is decided,
+  keyed exhaustively so a registry entry with no renderer is a compile error.
+  `text`, `info`, `toggle`, `add` are structural and never hideable.
+- **Hidden means not built, never `hide: true`.** `GridColumn.hide` is `(PRO)`
+  in the typings and unprobed in this Community build; a column absent from
+  `config.columns` cannot be tabbed into, edited or measured, which is what
+  keeps the picker's per-column checks simple.
+- **The picker**: a toolbar icon (`Columns3`) opens a non-modal `<dialog>`
+  popover, one checkbox per registry entry in registry order, `text` never
+  offered. Closes on Escape and on a capture-phase outside click
+  (`ColumnPicker.tsx`, same shape as `RowMenu`), and that click opens no
+  inline editor under the pointer.
+- **Persisted, but as a preference, not plan data**: `localStorage` key
+  `yagni.columns.v1`, a JSON array of the *shown* names in registry order —
+  written only by a picker change, read once at first render
+  (`readColumnSelection`). Absent key, a value that is not a JSON array of
+  strings, or a JSON parse failure all fall back to the defaults; a name the
+  registry does not recognise is dropped silently; a registry name absent
+  from the array is hidden. Not the `.gantt` file: a client's copy must not
+  carry the author's grid layout, and the file gate never sees this key.
+- **View state like the grid collapse, except this one survives a reload**: no
+  undo entry, no dirty flag, nothing reaches `toText()`, no `window.yagni` op
+  (`agentApi.ts` is an adapter over the same handle ops the buttons use, and
+  there is no op for this one either).
+- **One rebuild path, `rebuildColumns()` in `GanttChart`**, called from
+  `setColumns` only — not from `loadProject`, and nowhere in `applySolution`
+  (nothing on either path changes which columns exist; a label that read the
+  project would change that, and none does). **It carries over the width of
+  every column the user dragged**, by name: the registry decides which columns
+  exist, never how wide someone made them — a rebuild that forgot them
+  re-truncated every task name on the next tick. Grid open: sets
+  `config.grid_width` from the new columns. Grid collapsed
+  (`savedGridWidthRef.current !== null`): leaves `grid_width` at 0 and writes
+  the new budget into `savedGridWidthRef`, so a restore comes back at the size
+  the *current* selection needs — the splitter's own position from before the
+  rebuild is forgotten, which is fine for view state. `gantt.render()` is enough to make
+  the rebuild stick (`docs/dhtmlx.md`); the init effect builds from the user's
+  selection before `gantt.init()`, so the first paint carries no flash.
 - Columns: inputs (name, resource, effort, start) + derived **end and duration**
   — faint italic, **no editor declared** (nothing to open; the model has no end
   field anyway). A summary's effort/resource/start are refused the same way.

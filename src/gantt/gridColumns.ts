@@ -8,6 +8,7 @@ import { DEFAULT_BAR_COLOR, avatarColorOf, initialsOf, shade } from './colors';
 import { peopleUnder, type Project, type SolvedProject } from './project';
 import { MILESTONE_TYPE } from './ganttRows';
 import { matchesSearch } from './search';
+import { PLAN_COLUMNS, type PlanColumnName } from './columns';
 import type { Resource } from '../scheduler';
 
 const dayMonth = new Intl.DateTimeFormat('en-GB', {
@@ -89,72 +90,125 @@ export interface RowContext {
   searchKey(): string;
 }
 
-export function buildColumns(ctx: RowContext): GridColumn[] {
-  const resourceOptions = () => resourceSelectOptions(ctx.project().resources);
-  // An avatar rather than a name: the column shrinks to a third of its width
-  // and the full name moves into the tooltip. Partial staffing keeps its
-  // number on the face of the grid, because it changes every duration there.
-  const resourceAvatar = (id: string | undefined) => {
-    const resource = ctx.project().resources.find((entry) => entry.id === id);
-    if (!resource) {
-      return '<span class="gantt-avatar gantt-avatar--empty" title="No resource">&ndash;</span>';
-    }
-    const availability = resource.availability ?? 1;
-    const percentage = Math.round(availability * 100);
-    const title = personLabel(resource);
-    return (
-      `<span class="gantt-avatar" style="background:${avatarColorOf(resource.name)}"` +
-      // Whoever the pointer is on drives the highlight, and App reads it off
-      // this attribute — the same one the toolbar's avatars carry.
-      ` data-resource-id="${escapeHtml(resource.id)}"` +
-      ` title="${escapeHtml(title)}">${escapeHtml(initialsOf(resource.name))}</span>` +
-      (availability < 1 ? `<span class="gantt-avatar__pct">${percentage}%</span>` : '')
-    );
-  };
+// An avatar rather than a name: the column shrinks to a third of its width
+// and the full name moves into the tooltip. Partial staffing keeps its
+// number on the face of the grid, because it changes every duration there.
+function resourceAvatar(resources: Resource[], id: string | undefined): string {
+  const resource = resources.find((entry) => entry.id === id);
+  if (!resource) {
+    return '<span class="gantt-avatar gantt-avatar--empty" title="No resource">&ndash;</span>';
+  }
+  const availability = resource.availability ?? 1;
+  const percentage = Math.round(availability * 100);
+  const title = personLabel(resource);
+  return (
+    `<span class="gantt-avatar" style="background:${avatarColorOf(resource.name)}"` +
+    // Whoever the pointer is on drives the highlight, and App reads it off
+    // this attribute — the same one the toolbar's avatars carry.
+    ` data-resource-id="${escapeHtml(resource.id)}"` +
+    ` title="${escapeHtml(title)}">${escapeHtml(initialsOf(resource.name))}</span>` +
+    (availability < 1 ? `<span class="gantt-avatar__pct">${percentage}%</span>` : '')
+  );
+}
 
-  /**
-   * Everyone working under a summary, as overlapping faces.
-   *
-   * The row used to say "—", which is true of the summary's own field and
-   * useless about the branch: who a group of work belongs to is most of what
-   * a collapsed tree is read for.
-   *
-   * None of these carries `data-resource-id`, so none of them highlights.
-   * That is the price of the overlap: a face covered down to a sliver is not
-   * something a pointer can claim to have chosen, and the people past the
-   * limit have no face at all. A branch staffed by one person still renders
-   * as the ordinary avatar and still highlights — there the pointer is
-   * unambiguous.
-   *
-   * Who they all are is a native `title`, as it is on every other avatar in
-   * the grid: the app's own tooltip is deliberately detached from the rows and
-   * left on the bars, and bringing it back here for one cell would be a second
-   * tooltip in the same column as the leaves' titles. It carries the whole
-   * list, the people the "+n" stands for included.
-   */
-  const resourceStack = (taskId: string) => {
-    const people = peopleUnder(ctx.solved(), ctx.project().resources, taskId);
-    if (people.length === 0) return '<span class="gantt-derived">—</span>';
-    if (people.length === 1) return resourceAvatar(people[0].id);
-    const title = people.map(personLabel).join('\n');
-    // A face and the "+n" that replaces the rest cost the same width, so the
-    // stack is n faces or n-1 faces and a count — never both a count and a
-    // gap where one more face would have fitted.
-    const shown =
-      people.length > AVATAR_STACK_LIMIT ? people.slice(0, AVATAR_STACK_LIMIT - 1) : people;
-    const hidden = people.length - shown.length;
-    const faces = shown.map(
-      (person) =>
-        `<span class="gantt-avatar" style="background:${avatarColorOf(person.name)}">` +
-        `${escapeHtml(initialsOf(person.name))}</span>`,
-    );
-    if (hidden > 0) {
-      faces.push(`<span class="gantt-avatar gantt-avatar--more">+${hidden}</span>`);
-    }
-    return (
-      `<span class="gantt-avatar-stack" title="${escapeHtml(title)}">${faces.join('')}</span>`
-    );
-  };
+/**
+ * Everyone working under a summary, as overlapping faces.
+ *
+ * The row used to say "—", which is true of the summary's own field and
+ * useless about the branch: who a group of work belongs to is most of what
+ * a collapsed tree is read for.
+ *
+ * None of these carries `data-resource-id`, so none of them highlights.
+ * That is the price of the overlap: a face covered down to a sliver is not
+ * something a pointer can claim to have chosen, and the people past the
+ * limit have no face at all. A branch staffed by one person still renders
+ * as the ordinary avatar and still highlights — there the pointer is
+ * unambiguous.
+ *
+ * Who they all are is a native `title`, as it is on every other avatar in
+ * the grid: the app's own tooltip is deliberately detached from the rows and
+ * left on the bars, and bringing it back here for one cell would be a second
+ * tooltip in the same column as the leaves' titles. It carries the whole
+ * list, the people the "+n" stands for included.
+ */
+function resourceStack(solved: SolvedProject, resources: Resource[], taskId: string): string {
+  const people = peopleUnder(solved, resources, taskId);
+  if (people.length === 0) return '<span class="gantt-derived">—</span>';
+  if (people.length === 1) return resourceAvatar(resources, people[0].id);
+  const title = people.map(personLabel).join('\n');
+  // A face and the "+n" that replaces the rest cost the same width, so the
+  // stack is n faces or n-1 faces and a count — never both a count and a
+  // gap where one more face would have fitted.
+  const shown =
+    people.length > AVATAR_STACK_LIMIT ? people.slice(0, AVATAR_STACK_LIMIT - 1) : people;
+  const hidden = people.length - shown.length;
+  const faces = shown.map(
+    (person) =>
+      `<span class="gantt-avatar" style="background:${avatarColorOf(person.name)}">` +
+      `${escapeHtml(initialsOf(person.name))}</span>`,
+  );
+  if (hidden > 0) {
+    faces.push(`<span class="gantt-avatar gantt-avatar--more">+${hidden}</span>`);
+  }
+  return `<span class="gantt-avatar-stack" title="${escapeHtml(title)}">${faces.join('')}</span>`;
+}
+
+/**
+ * One renderer per registry entry, keyed exhaustively: a `PlanColumnName`
+ * added to the registry without an entry here is a compile error, which is
+ * what keeps this the only place a column's cell content is decided.
+ */
+const GRID_CELLS: Record<
+  PlanColumnName,
+  (ctx: RowContext) => Pick<GridColumn, 'template' | 'editor' | 'align'>
+> = {
+  resource_id: (ctx) => ({
+    align: 'center',
+    // A summary has no resource of its own, so it shows the branch's.
+    template: (task) =>
+      task.is_summary
+        ? resourceStack(ctx.solved(), ctx.project().resources, String(task.id))
+        : resourceAvatar(ctx.project().resources, task.resource_id as string | undefined),
+    editor: {
+      type: 'select',
+      map_to: 'resource_id',
+      options: resourceSelectOptions(ctx.project().resources),
+    },
+  }),
+  nominal_days: () => ({
+    align: 'center',
+    // One format for both branches, or a summary's 9g reads as a different
+    // kind of figure from the 5g of the leaf under it.
+    template: (task) =>
+      task.is_summary
+        ? `<span class="gantt-derived">${formatDays(Number(task.rolled_effort_days))}d</span>`
+        : `${formatDays(Number(task.nominal_days))}d`,
+    editor: { type: 'number', map_to: 'nominal_days', min: 0, max: 999 },
+  }),
+  start_date: () => ({
+    align: 'center',
+    template: (task) =>
+      task.is_summary
+        ? `<span class="gantt-derived">${shortDate(task.start_date as Date)}</span>`
+        : shortDate(task.start_date as Date),
+    editor: { type: 'date', map_to: 'start_date' },
+  }),
+  // The two derived columns. Every cell wears the register a summary's
+  // rolled-up figures already wear, and neither carries an editor — a cell
+  // without one has nothing for a click to open. The end date is never an
+  // input.
+  end_shown: () => ({
+    align: 'center',
+    template: (task) => `<span class="gantt-derived">${shortDate(task.end_shown as Date)}</span>`,
+  }),
+  elapsed_days: () => ({
+    align: 'center',
+    template: (task) =>
+      `<span class="gantt-derived">${formatDays(Number(task.elapsed_days ?? 0))}d</span>`,
+  }),
+};
+
+export function buildColumns(ctx: RowContext, shown: ReadonlySet<PlanColumnName>): GridColumn[] {
   return [
     {
       name: 'text',
@@ -173,67 +227,13 @@ export function buildColumns(ctx: RowContext): GridColumn[] {
         `<span class="${task.is_summary ? 'gantt-name gantt-name--summary' : 'gantt-name'}">${escapeHtml(String(task.text ?? ''))}</span>`,
       editor: { type: 'text', map_to: 'text' },
     },
-    {
-      name: 'resource_id',
-      label: 'Resource',
-      width: 76,
-      align: 'center',
+    ...PLAN_COLUMNS.filter((entry) => shown.has(entry.name)).map((entry) => ({
+      name: entry.name,
+      label: entry.label(ctx.project()),
+      width: entry.gridWidth,
       resize: true,
-      // A summary has no resource of its own, so it shows the branch's.
-      template: (task) =>
-        task.is_summary
-          ? resourceStack(String(task.id))
-          : resourceAvatar(task.resource_id as string | undefined),
-      editor: { type: 'select', map_to: 'resource_id', options: resourceOptions() },
-    },
-    {
-      name: 'nominal_days',
-      label: 'Effort',
-      width: 62,
-      align: 'center',
-      resize: true,
-      // One format for both branches, or a summary's 9g reads as a different
-      // kind of figure from the 5g of the leaf under it.
-      template: (task) =>
-        task.is_summary
-          ? `<span class="gantt-derived">${formatDays(Number(task.rolled_effort_days))}d</span>`
-          : `${formatDays(Number(task.nominal_days))}d`,
-      editor: { type: 'number', map_to: 'nominal_days', min: 0, max: 999 },
-    },
-    {
-      name: 'start_date',
-      label: 'Start',
-      width: 84,
-      align: 'center',
-      resize: true,
-      template: (task) =>
-        task.is_summary
-          ? `<span class="gantt-derived">${shortDate(task.start_date as Date)}</span>`
-          : shortDate(task.start_date as Date),
-      editor: { type: 'date', map_to: 'start_date' },
-    },
-    // The two derived columns. Every cell wears the register a summary's
-    // rolled-up figures already wear, and neither column carries an editor —
-    // a cell without one has nothing for a click to open. The end date is
-    // never an input.
-    {
-      name: 'end_shown',
-      label: 'End',
-      width: 84,
-      align: 'center',
-      resize: true,
-      template: (task) =>
-        `<span class="gantt-derived">${shortDate(task.end_shown as Date)}</span>`,
-    },
-    {
-      name: 'elapsed_days',
-      label: 'Duration',
-      width: 62,
-      align: 'center',
-      resize: true,
-      template: (task) =>
-        `<span class="gantt-derived">${formatDays(Number(task.elapsed_days ?? 0))}d</span>`,
-    },
+      ...GRID_CELLS[entry.name](ctx),
+    })),
     {
       name: 'info',
       label: '',

@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { CircleHelp } from 'lucide-react';
 // ?inline: as a data URI the mark survives even a lone single-file index.html,
 // where a URL beside the page would have nothing to point at.
@@ -32,8 +39,10 @@ import {
   pickTextFile,
 } from './gantt/files';
 import { DEFAULT_CALENDAR } from './scheduler';
-import { emptyProject, type ChainState, type MeasuredSlack } from './gantt/project';
+import { emptyProject, type ChainState, type MeasuredSlack, type Project } from './gantt/project';
 import { RowMenu, type RowMenuAction, type RowMenuTarget } from './gantt/RowMenu';
+import { ColumnPicker, type ColumnPickerAnchor } from './gantt/ColumnPicker';
+import { readColumnSelection, writeColumnSelection, type PlanColumnName } from './gantt/columns';
 import {
   ProjectFileError,
   deserializeProject,
@@ -109,6 +118,17 @@ export default function App() {
   // can only change together — this button is the one place that calls
   // `toggleGridCollapsed`.
   const [gridCollapsed, setGridCollapsed] = useState(false);
+  // Read once, at first render, the way the draft and the seen version are:
+  // a preference that outlives the project, never state the chart derives.
+  const [columns, setColumns] = useState<ReadonlySet<PlanColumnName>>(() =>
+    readColumnSelection(draftStore),
+  );
+  // Snapshotted on open, like the other dialogs: the chart owns the live
+  // project, and reading it during render would fight the imperative handle.
+  const [columnPicker, setColumnPicker] = useState<{
+    anchor: ColumnPickerAnchor;
+    project: Project;
+  } | null>(null);
   // Searching marks and walks; it never filters. The query is App's because the
   // matches are: the chart answers which rows match, App decides which one the
   // eye is on.
@@ -514,6 +534,26 @@ export default function App() {
     setGridCollapsed((collapsed) => !collapsed);
   }, []);
 
+  const openColumnPicker = useCallback((event: ReactMouseEvent<HTMLButtonElement>) => {
+    // A click on this same button while the popover is open is, from the
+    // popover's own listener, an outside click: it closes first, in capture,
+    // and stops the event there — this handler never runs on that click. So
+    // it only ever has to open.
+    const project = chart.current?.getProject();
+    if (!project) return;
+    setColumnPicker({ anchor: event.currentTarget.getBoundingClientRect(), project });
+  }, []);
+
+  /**
+   * View state, like `toggleGridCollapsed` — no undo step, no dirty flag —
+   * except this one is written to `localStorage` so it survives a reload.
+   */
+  const changeColumns = useCallback((next: ReadonlySet<PlanColumnName>) => {
+    setColumns(next);
+    writeColumnSelection(draftStore, next);
+    chart.current?.setColumns(next);
+  }, []);
+
   const saveCalendar = useCallback((calendar: CalendarSpec) => {
     chart.current?.setCalendar(calendar);
     setCalendarOpen(false);
@@ -818,6 +858,7 @@ export default function App() {
           undoing={undoLabel(history)}
           redoing={redoLabel(history)}
           gridCollapsed={gridCollapsed}
+          columnPickerOpen={columnPicker !== null}
           onNew={() => void handleNew()}
           onOpen={() => void handleOpen()}
           onSave={handleSave}
@@ -831,6 +872,7 @@ export default function App() {
           onEditCalendar={openCalendar}
           onHighlight={setPinnedResource}
           onToggleGridCollapsed={toggleGridCollapsed}
+          onOpenColumnPicker={openColumnPicker}
         />
         {/* Outside the toolbar so it keeps its place when the avatars wrap. */}
         <button
@@ -853,6 +895,7 @@ export default function App() {
         <GanttChart
           ref={chart}
           project={initialProject}
+          columns={columns}
           highlighted={hoveredResource ?? pinnedResource}
           markCritical={markCritical}
           showLoad={showLoad}
@@ -921,6 +964,16 @@ export default function App() {
             if (action === 'toggle-disabled') toggleDisabled(rowMenu.taskId, rowMenu.disabled);
             else createFromMenu(rowMenu, action);
           }}
+        />
+      )}
+
+      {columnPicker && (
+        <ColumnPicker
+          shown={columns}
+          project={columnPicker.project}
+          anchor={columnPicker.anchor}
+          onChange={changeColumns}
+          onClose={() => setColumnPicker(null)}
         />
       )}
 

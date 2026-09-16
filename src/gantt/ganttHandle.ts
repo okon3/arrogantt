@@ -1,4 +1,5 @@
 import type { CalendarSpec, Resource } from '../scheduler';
+import type { PlanColumnName } from './columns';
 import type { MeasuredSlack, Project, SolvedProject } from './project';
 
 /**
@@ -94,6 +95,8 @@ export interface GanttHandle {
    * state only, and not persisted: it does not survive a reload.
    */
   toggleGridCollapsed(): void;
+  /** View state, like the grid collapse: no undo step, no dirty flag. */
+  setColumns(shown: ReadonlySet<PlanColumnName>): void;
 }
 
 /** Everything the dialog shows, resolved by the chart: inputs and derived alike. */

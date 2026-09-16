@@ -1125,6 +1125,42 @@
   outline: none;
 }
 
+/* Same chrome and stacking as .rowmenu: a non-modal popover over the chart,
+   opened from the toolbar rather than a row. */
+.columnpicker {
+  position: fixed;
+  z-index: 60;
+  margin: 0;
+  padding: 4px;
+  min-width: 160px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-dialog);
+  color: var(--ink);
+}
+
+.columnpicker__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.columnpicker__items label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.columnpicker__items label:hover,
+.columnpicker__items label:has(:focus-visible) {
+  background: var(--accent-soft);
+}
+
 .confirm__body {
   padding-bottom: var(--space-2);
 }
