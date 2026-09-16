@@ -83,6 +83,12 @@ this file binds it to this repo.
   on the same turn kills it, the transcript stays 0 bytes, and the hub
   reports progress that does not exist (T49, twice, before the user caught
   it). One `ListAgents` call after every spawn is the whole fix.
+  **E cattura anche la corsia che ri-delega**: su F7 (2026-09-16) l'agente
+  invocato come `implementer` non ha implementato — ha spawnato un
+  `implementer-deep` con un brief di seconda mano, da un padre che si era
+  gia' chiuso, quindi senza canale di notifica verso l'hub. Il `ListAgents`
+  l'ha mostrato subito. Fermato con tree pulito, rispawnato col **divieto
+  esplicito di delegare scritto nel prompt** — mettilo in ogni spawn.
 - **Docs duty**: a commit changing behaviour described in `docs/` updates the
   affected file in the same commit (map in CLAUDE.md); significant features
   add a CHANGELOG bullet under `## Unreleased` in the same commit.

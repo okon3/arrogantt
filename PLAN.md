@@ -225,14 +225,40 @@ browser, una porta). Gli accept per esteso stanno nella §8 della spec, con la
 lo stato. Solo F2 e' `deep` (effort conservato); **nessun sottotask tocca
 `src/scheduler/`**, ed e' la decisione che tiene il motore fuori dal denaro.
 
-- [>] F7 [impl] — Registro delle colonne, selezione, persistenza, picker
-      Accept: §8. **Il task piu' grosso del goal, e non e' splittato**: la
-      spec sostiene che un registro senza il suo picker non e' verificabile
-      nel browser, e la ragione regge perche' `setColumns` vive
-      sull'handle e **non** e' esposto su `window.yagni` (view state, non
-      un'op). L'hub ha valutato lo split in registro + UI e l'ha scartato per
-      questo. Se la corsia supera ~150k, l'hub interviene invece di lasciarla
-      correre; al primo fallimento si routa **deep**, non si splitta.
+- [x] F7 [impl] — Registro delle colonne, selezione, persistenza, picker —
+      `b70d327`. `src/gantt/columns.ts` (metadati), `GRID_CELLS` esaustivo in
+      `gridColumns.ts`, `ColumnPicker` popover, `setColumns` sull'handle,
+      selezione in `localStorage['yagni.columns.v1']`. Non splittato, come
+      previsto: la corsia ha speso **257k**, oltre la soglia di split, e va
+      ricordato se un task di questa forma si ripresenta.
+      **Il difetto vero era nel brief dell'hub, non nella corsia.** Il brief
+      (e la §5.7) prescrivevano di chiamare `rebuildColumns()` da
+      `loadProject` «perche' il `currency` del file puo' cambiare una label» —
+      ma nessuna `label()` legge il progetto, quindi la chiamata non comprava
+      niente e **distruggeva le larghezze delle colonne trascinate a ogni
+      undo e a ogni apertura file** (misurato dal critic: `text` 230 → 300,
+      un Ctrl+Z la riportava a 230 insieme all'undo dell'effort). Chiuso
+      dall'hub, non dalla corsia, che era troppo carica per una correzione:
+      il rebuild ora **riporta per nome la larghezza di ogni colonna
+      trascinata**, e `loadProject` non ricostruisce piu' le colonne.
+      **Quando F3 fara' leggere `currency` a una label, la chiamata da
+      `loadProject` va rimessa** — e con essa il difetto sparisce solo perche'
+      le larghezze sono ora preservate.
+      Rimisurato nell'app dopo il fix: la larghezza sopravvive a edit+undo, a
+      un untick/re-tick nel picker e a un `loadText(toText())`; zero errori in
+      console. **Non guidato e dichiarato tale**: un drag vero del bordo
+      colonna (lo strumento non ha primitive mouse a coordinate e la maniglia
+      di resize non ha un nodo indirizzabile) — al suo posto e' stato guidato
+      il percorso di resize della libreria con eventi sintetici.
+      Altri due findings del critic, entrambi nei docs e chiusi: un claim su
+      `refreshData` che nessuna misura sosteneva, e una citazione `:589-593`
+      gia' scaduta — ora il doc cita `toggleGridCollapsed` per simbolo.
+      Misurato dal critic e non dalla corsia (celle che la fixture non aveva
+      composto): **tutte e cinque le colonne nascoste insieme** (`grid_width`
+      338, griglia che rende, `text` ancora editabile, guardia del summary
+      intatta), due nascoste insieme, Shift+Tab, milestone, riga disabled,
+      ramo chiuso, highlight di ricerca, e un fresh tab con una chiave stantia
+      che nomina colonne inesistenti. Nessuno stato si rompe.
 - [ ] F1 [impl] — Tariffe e `currency` nel modello, nel file e nelle regole
 - [ ] F2 [deep] — La lettura del costo (`costs` su `SolvedProject`)
 - [ ] F3 [impl] — Superfici di report, scrittura di `currency`, help dell'agente
@@ -329,6 +355,18 @@ Task che non servono una milestone: difetti puntuali e salute del codice,
 arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
+
+- [ ] T63 [impl] — Il popover delle colonne non prende il fuoco
+      Trovato fuori dal bar dal critic di F7 e **misurato**: aprendo il
+      picker il fuoco resta sul bottone della toolbar, e dal bottone alla
+      prima checkbox ci sono **14 fermate di Tab** (bottone help, quattro
+      bottoni dello stato vuoto, la ricerca e tutta la status bar in mezzo).
+      `RowMenu` invece mette il fuoco sulla prima voce quando si apre: il
+      precedente esiste, il picker non lo segue.
+      Accept: aprendo il picker da tastiera il fuoco e' sulla prima checkbox
+      (misurato come `document.activeElement`), Escape lo chiude e **riporta
+      il fuoco sul bottone** che l'ha aperto, e Tab dentro il popover cicla
+      solo fra le sue checkbox. Nessuna modifica a `RowMenu`.
 
 - [x] T57 [impl, chiuso dall'hub] — Il changelog leggeva un CRLF e buttava i
       bullet — `4a804ba`. La premessa del task era sbagliata e la misura l'ha
@@ -515,10 +553,11 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   summary, milestone, undo della creazione) e reggono.
 
 ## Log
-- Dimensionamento: impl oltre ~200k = task da splittare (T35 215k, T18 182k+250k);
-  una correzione via SendMessage riusa il contesto e costa meno di un fresh
-  spawn (~40k) — **ma non oltre ~190k**: li' chiude l'hub, se ha le misure
-  (T52; T55 188k/129k; T56 impl 131k+166k). Un architect di goal: 248k (T59), il suo delta 203k (T62). **Un critic guidato nel browser e'
+- Dimensionamento: impl oltre ~200k = task da splittare (T35 215k, T18
+  182k+250k, F7 257k); una correzione via SendMessage riusa il contesto e
+  costa meno di un fresh spawn (~40k) — **ma non oltre ~190k**: li' chiude
+  l'hub, se ha le misure (T52; T55 188k/129k; T56 131k+166k; F7 critic 184k,
+  tre findings chiusi dall'hub). Un architect di goal: 248k, il delta 203k. **Un critic guidato nel browser e'
   la voce piu' cara del task**: 75-95k a tavolino, 148-168k nel browser (T56),
   211k su T58 — e su T58 e' l'unico che ha ribaltato una premessa. Si paga.
 - **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta hanno chiuso
@@ -527,12 +566,11 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   Explore (71k + 56k, non residenti) e una misura di dieci secondi hanno
   ribaltato la premessa e chiuso il task in una riga, senza aprire corsia.
   **Prima di briefare, misurare la premessa**: se cade, il brief non serve.
-- Un task il cui accept e' una campagna di misura va scopato come task di sola
-  misura: T31 chiedeva misura + modifica e ha saturato tre contesti per 21
-  righe di diff; T42, scopato come misura, 99k/135k e zero correzioni. Variante
-  che ha funzionato su T55: **misura prima, correggi solo se la catena si
-  chiude**, con «nessun diff» dichiarato esito valido — toglie alla corsia
-  l'incentivo a correggere un difetto che potrebbe non esistere.
+- Un accept che e' una campagna di misura va scopato come task di sola misura
+  (T31: misura + modifica, tre contesti saturati per 21 righe; T42, solo
+  misura, 99k/135k e zero correzioni). Variante che regge (T55): **misura
+  prima, correggi solo se la catena si chiude**, con «nessun diff» esito
+  valido.
 - Ricognizione a monte del brief: paga, **ma una citazione copiata non e'
   verificata** — ne' un `file:line` (T43) ne' un nome di tipo (T48: la spec
   citava `GanttConfig['columns']`, inesistente). Quel che il brief non ha
