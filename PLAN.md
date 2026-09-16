@@ -498,20 +498,40 @@ sono di F4a, tutto il resto di F4b.
       draft al primo render (il seme `null` verificato sul codice a
       `App.tsx:104` e sul progetto vuoto, non sul percorso di ripresa), schema
       scuro, print/PNG/CSV, larghezze sotto 1024 e sopra 1920.
-- [ ] F4b [impl] — Colonne Rate e Cost **nate sul registro**, marca del
-      parziale
-      Due entry `PLAN_COLUMNS` (`rate` 62, `cost` 84, `defaultShown: false`,
-      `clientSafe: false`, label dal `currency`) coi loro `GRID_CELLS` sui
-      template della §5.4; campi di riga `cost_amount`, `cost_costed_days`,
-      `cost_uncosted_days`, `daily_rates` in `toGanttData`, `applySolution` e
-      nel literal di `addTask`. Docs: `view.md` *Grid*; bullet `CHANGELOG.md`.
-      **Debito di F7, arrivato qui da F3b**: sono queste le prime `label()` che
-      leggono il progetto, quindi e' questo il task che deve rimettere la
-      chiamata a `rebuildColumns()` — su `setCurrency` **e** su `loadProject`,
-      o aprire un file con un `currency` diverso lascia le testate stantie
-      (l'accept (4) della §8 copre solo il primo dei due). F7 l'aveva tolta
-      perche' distruggeva le larghezze trascinate; oggi il rebuild le riporta
-      per nome, ma **va rimisurato, non dato per buono**.
+- [x] F4b [impl] — Colonne Rate e Cost **nate sul registro**, marca del
+      parziale — `56d0ba7`. Due entry `PLAN_COLUMNS` (`rate` 62/70, `cost`
+      84/84, `defaultShown: false`, `clientSafe: false`, label dal `currency`),
+      i due `GRID_CELLS` senza `editor`, i quattro campi di riga in
+      `toGanttData`, nel loop di `applySolution` e nel literal di `addTask`,
+      `view.md` *Grid*, l'addendum a `dhtmlx.md` e **il bullet costi di
+      `CHANGELOG.md`** — la feature e' intera qui. 517 test (+1).
+      **Il debito di F7 e' chiuso e rimisurato, non ereditato**: `rebuildColumns`
+      torna su `loadProject` (dopo `gantt.parse`) e arriva su `setCurrency`, tre
+      call site in tutto, **mai** `applySolution`. Il critic ha guidato un drag
+      **reale** del bordo colonna via CDP (`text` 230 → 279) — cosa che la
+      corsia di F7 non era riuscita a fare, e che li' era dichiarata non
+      guidabile — e la larghezza ha tenuto su tutti e tre i percorsi
+      (`setCurrency`, `loadText(toText())`, Ctrl+Z).
+      **Critic `sonnet`: pass, zero finding.** Ha ri-guidato tutti e nove gli
+      accept sulla Fixture C ricostruita da zero, piu' una cella sua: un task
+      aggiunto dal **bottone** della toolbar rende `—`/*No resource*, cioe' i
+      placeholder del literal di `addTask` sono sovrascritti da `applySolution`
+      e non arrivano mai a schermo.
+      **Chiuso dall'hub sul fuori-bar del critic**: il docblock di
+      `PlanColumn.label` diceva «a later goal makes the currency label ride
+      here» — reso falso da questo stesso commit, che quelle due label le
+      scrive. Un fatto che sopravvive alla sua verita' e' la forma T58: corretto
+      nel commit.
+      **Due case per una stringa, deciso e non subito**: `"<n> d of effort not
+      costed"` vive ora in `StatusBar.tsx` (F4a) e nel template della cella.
+      Unificarla richiederebbe toccare un file che il brief metteva fuori
+      scopo; il critic conferma che la scelta e' forzata dal bar, non una
+      dimenticanza. Se `StatusBar.tsx` si riapre per altro, si unifica li'.
+      **Non guidato e dichiarato tale** (dal critic): Shift+Tab e l'armamentario
+      tasti non-CDP sulle due colonne, un reload a freddo della selezione
+      persistita (accept di F7, non di F4b), un drag reale **delle due colonne
+      nuove** (guidato solo su `text`; le loro larghezze osservate costanti come
+      effetto collaterale).
 - [ ] F5 [impl] — Tariffe e campo Currency nel dialogo People
       **Da tagliare prima di briefarlo** (Log, dimensionamento): le superfici
       tariffa del dialogo (colonna Daily rate, lista dei periodi
@@ -899,7 +919,9 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 
 ## Log
 - **Dimensionamento**: impl oltre ~200k = task da splittare (T35 215k, T18
-  182k+250k, F7 257k, F1 222k). **Splittare si misura**: F2 tagliato in calcolo
+  182k+250k, F7 257k, F1 222k, F4b 228k/213k — splittato una volta e ancora
+  sopra soglia: due colonne, quattro campi di riga e un debito di rebuild sono
+  tre cose). **Splittare si misura**: F2 tagliato in calcolo
   + cablaggio ha reso F2a 141k/130k, F3a 122k/122k e F3b 133k/168k (il critic
   nel browser, non la corsia), e F2b, dall'hub, zero corsia.
   **F4 e F5 vanno tagliati prima di briefarli.** Una correzione via SendMessage

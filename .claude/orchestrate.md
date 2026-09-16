@@ -80,6 +80,15 @@ this file binds it to this repo.
   (T49: the implementer was `completed` while its server held 5173; the
   critic's `dev:fresh` killed it, harmless only because the measuring was
   over).
+- **A completion notification is not a completion — and a hub is not exempt
+  from the rule above.** Gen 7 broke it as the hub, not as a lane: two of its
+  three turns ended on a stated intention ("now I write the brief and spawn")
+  with the lock frozen, the tree clean and **nothing in flight**. From outside
+  that is indistinguishable from a dead agent, and only the lock's `at` tells
+  the two apart. The turn that produced (F4a, closed clean) is the one that
+  followed an imperative prompt: a narrative handoff produces a summary, an
+  imperative one produces work. **Never end a turn announcing the next step —
+  do it, or say in one paragraph what blocks you.**
 - **Verify a spawn with `ListAgents`, always.** The Agent tool answers
   "launched successfully" for a lane that never starts — an interrupt landing
   on the same turn kills it, the transcript stays 0 bytes, and the hub
