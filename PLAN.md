@@ -860,6 +860,73 @@ righe.
       **preesistente**, identico sul percorso legacy alla stessa `width`
       (confrontato direttamente dal critic), quindi non una regressione.
 
+
+**Goal review girata il 2026-09-16: `fix-first`** (fable-5-1 confermato in
+header; read-only, niente commit). Nessun MISSING negli accept e nessuno
+SMUGGLED: `src/scheduler/` intatto verificato sulla diff, le quattro decisioni
+dell'utente onorate, e `FigureOptions.columns` senza chiamante giudicato
+scoping onesto (l'opzione C l'ha comprato, 220 righe di test lo appuntano).
+Ha confermato di passaggio, contro i sospetti in giacenza, che il filtro
+`roots` di F2b e' corretto (`plan.ts` — i summary tutti-disabled stanno in
+`disabledIds`, i nidificati cadono sul filtro `live` del padre), che il
+suffisso di `PeriodRowList` e' giusto, e che l'assenza di un harness React non
+e' un debito che questo goal ha aggravato: le regole stanno in moduli puri, ed
+e' il seam giusto. L'unico posto dove la UI fabbrica uno zero resta il periodo
+tariffa seminato a `0` (`RatePeriodList.tsx`), dichiarato.
+**Quattro azioni, e la review resta il bar finche' non sono chiuse** — quindi
+la spec `T59-costs.md` non si pota ancora, e la release non si propone.
+
+- [ ] F9 [impl] — La ragione del costo su un summary non deve nominare una
+      persona che sulla riga non c'e'
+      Il template `cost` di `GRID_CELLS` prende `resourceName` dal
+      `resource_id` grezzo della riga, e su un summary quel campo e' **la
+      risorsa che la riga aveva da foglia**: `ganttRows.ts` scrive
+      `task.resourceId ?? ''` e solo `serialization.ts` lo azzera, in salvataggio.
+      Scenario: foglia assegnata a Marta (tariffata), le si aggiunge un figlio
+      senza risorsa → il summary mostra `—` col `title` *No rate for Marta on
+      these days*, mentre dialogo e figura dicono *No resource*.
+      **Gen 11 l'aveva misurato e archiviato come «§5.4 alla lettera, non un
+      difetto»; la review dissente e ha ragione**: e' la lettera applicata a
+      un campo sbagliato, e F6 era stato splittato proprio perche' griglia e
+      dialogo non potessero divergere.
+      Da fare: **dare a `costCellText` un `isSummary`** e ignorare lì
+      `resourceName` — cosi' la regola resta in una casa sola ed e' pinnabile
+      in `costCells.test.ts`, che e' il motivo di preferirlo al filtro nel
+      template. Allineare il bullet *Measured divergence* di `docs/view.md`
+      § *Details dialog*, che oggi registra la divergenza come non-difetto.
+      Accept: unit in `costCells.test.ts` (summary + `cost: null` →
+      `title` *No resource* qualunque sia `resourceName`), e nell'app la
+      griglia, il dialogo e la figura dicono la stessa cosa su quella riga.
+- [ ] F10 [self] — `currencyLabel` e il testo dell'effort non costato tornino a
+      una casa sola
+      `planCsv.ts` ri-scrive `Cost (${currency})` a mano invece di chiamare
+      `currencyLabel`, e `docs/view.md` (F6b) afferma che quella forma «vive in
+      un posto solo»: **quinta ragione falsa del goal, stessa forma delle altre
+      quattro.** `"<n> d of effort not costed"` resta duplicato in
+      `StatusBar.tsx` accanto a `costCells.ts` — nota di gen 7, ora che il file
+      si riapre per altro va instradato. E `columns.ts` dice ancora «a
+      figure-side record later»: F8 l'ha atterrato, la riga e' stantia dallo
+      stesso commit.
+      Accept: `planCsv.test.ts` passa invariato, un solo `Cost (` in `src/`,
+      e le due affermazioni nei commenti/doc sono vere.
+- [ ] F11 [self] — README e `agentApi.help.md` dicano che il piano costa
+      Unico MISSING della review: il README non nomina tariffe, colonne costo,
+      `currency` ne' il picker, e `CLAUDE.md` dice che il README cambia quando
+      cambia il set di feature — e' cambiato. `agentApi.help.md` da' ancora
+      `getResources()` → `Resource[]`, che ora porta le tariffe; quel file
+      **e'** `yagni.help()` e `/llms.txt`, quindi una modifica sola e mai una
+      seconda copia.
+      Accept: `npm test` (`changelog.test.ts` incluso), e la riga *Reading*
+      dell'help combacia con cio' che `getResources()` ritorna davvero.
+- [ ] F12 [impl] — Estrarre `toDraft`/`toResources` e appuntare
+      «absent stays absent»
+      Azione dichiarata **opzionale** dalla review. Le due funzioni sono pure e
+      dentro `ResourceDialog.tsx`, quindi oggi la regola che salvare il dialogo
+      People intatto non sporchi il file e' guidata solo a mano (il critic di
+      F5a). Estratte in un modulo, le quattro combinazioni assente/presente si
+      pinnano senza jsdom. Nessun harness React da introdurre — e' proprio il
+      punto.
+
 **Non cancellare `.claude/specs/T59-costs.md` allo sweep degli orfani finche'
 la goal review di F non e' girata**: gli accept dei sottotask stanno nella sua
 §8 e sono meta' del bar della review.
