@@ -875,6 +875,9 @@ e' il seam giusto. L'unico posto dove la UI fabbrica uno zero resta il periodo
 tariffa seminato a `0` (`RatePeriodList.tsx`), dichiarato.
 **Quattro azioni, e la review resta il bar finche' non sono chiuse** — quindi
 la spec `T59-costs.md` non si pota ancora, e la release non si propone.
+L'utente ha scelto il 2026-09-16 di farle **tutte e quattro**, F12 compresa.
+**Ordine: F9 → F10 → F11 → F12**, seriale: F9 e F10 toccano entrambe
+`costCells.ts` e F9 ne cambia la firma, quindi F10 la segue e non la precede.
 
 - [ ] F9 [impl] — La ragione del costo su un summary non deve nominare una
       persona che sulla riga non c'e'
@@ -897,6 +900,18 @@ la spec `T59-costs.md` non si pota ancora, e la release non si propone.
       Accept: unit in `costCells.test.ts` (summary + `cost: null` →
       `title` *No resource* qualunque sia `resourceName`), e nell'app la
       griglia, il dialogo e la figura dicono la stessa cosa su quella riga.
+      **Ricognizione fatta dall'hub il 2026-09-16, valida su `5456587`, da non
+      ripagare**: `costCellText` ha **tre** chiamanti — `gridColumns.ts` (cella
+      `cost` di `GRID_CELLS`), `planFigure.ts` (`FIGURE_CELLS`) e
+      `TaskDialog.tsx` — e ognuno dei tre ha gia' il flag sotto mano
+      (`task.is_summary` nella griglia, `task.isSummary` negli altri due),
+      quindi aggiungere `isSummary` al descrittore non costa un campo nuovo a
+      nessuno. **Solo la griglia cambia comportamento**: `plan.ts` azzera
+      `resourceId` sui summary (`summaryIds.has(task.id) ? null : …`), quindi
+      la figura dice gia' *No resource*, e il dialogo lo dice perche'
+      `getTaskDetails` scrive `resourceId: ''`. Il bullet da correggere in
+      `docs/view.md` e' *Measured divergence*, sotto § *Details dialog*: oggi
+      chiude con «not a bug this task fixes».
 - [ ] F10 [self] — `currencyLabel` e il testo dell'effort non costato tornino a
       una casa sola
       `planCsv.ts` ri-scrive `Cost (${currency})` a mano invece di chiamare
@@ -1305,8 +1320,8 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   costo si sposta sulle celle, non sparisce. Una correzione via SendMessage
   costa meno di un fresh spawn (~40k), ma non oltre ~190k. **Il critic e' la
   voce piu' cara e la piu' redditizia**: 75-95k a tavolino, 132-242k nel
-  browser; su T58 ha ribaltato una premessa, su F8 ha rifatto il pin da
-  `git show` invece di crederlo.
+  browser, e 191k la goal review di F; su T58 ha ribaltato una premessa, su F8
+  ha rifatto il pin da `git show`, e la review di F un archivio dell'hub.
 - **Un elenco enumerato da una sezione di spec e' completo o non e' un elenco.**
   F2b: la consegna dava due regole del null su tre e taceva il filtro
   `disabledIds` della §5.3, e l'hub ha poi giustificato la scelta da se' senza
