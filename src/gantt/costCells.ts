@@ -72,3 +72,12 @@ export function costCellText(row: {
   }
   return { text: formatMoney(row.cost), title: null, derived: false };
 }
+
+/**
+ * The unit a rate or a cost is in, said in the label — never in the cell,
+ * which stays a bare number. One home for the parenthesis form: the grid
+ * header (`columns.ts`) and the details dialog's entry label read it.
+ */
+export function currencyLabel(base: 'Rate' | 'Cost', currency: string | null): string {
+  return currency ? `${base} (${currency})` : base;
+}

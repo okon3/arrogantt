@@ -287,6 +287,13 @@ restart happens *before* the measurement, not during it.
   against the input's **content box**, and mind which box: one field here is
   104px of track, 102px of padding box and 86px of content box, so a figure
   quoted without its box invites a second agent to disagree with the first.
+- **On a block element `scrollWidth === clientWidth` whether the text wrapped
+  or not**, so it cannot prove "no wrap". A `Range` over the text node and
+  `getClientRects().length === 1` can — but **two rects are not a wrap when the
+  element holds two text nodes** (`{formatDays(x)} d` renders as two), so
+  compare the rects' `top` and `height` before calling it one. A lane read the
+  two rects as ambiguous and a critic settled it by measuring; the cheap check
+  is the `top`.
 - **Smart rendering**: off-screen bars have no DOM node. Read the task data, or
   `showTask(id)` first.
 - A synthetic `wheel` doesn't reproduce the scroll/zoom capture-phase interplay

@@ -839,13 +839,21 @@
   visibility: hidden;
 }
 
-/* Fixed tracks over the dialog's 512px content box (1fr = 128px) so the four
-   entries stop drifting with their content — see docs/view.md § Details
-   dialog. Widest strings measured to fit inside a track, not derived: header
-   "Total effort", data `31/12/2026` and `999.75 d`. */
+/* Fixed tracks over the dialog's 512px content box (1fr, measured
+   170.656/170.672/170.672px — the browser's own subpixel split of 512 ÷ 3)
+   so the six entries stop drifting with their content — see docs/view.md §
+   Details dialog. Widest strings measured to fit inside a track, not
+   derived: header "Total effort", label "Rate (XXXXXXXX)"/"Cost (XXXXXXXX)"
+   (an 8-character currency, the widest `validateCurrency` allows), a Cost
+   reading `≥ 999,999.75`, and an End date (`dd/mm/yyyy`, tabular-nums keeps
+   every date the same width — measured on 17/09/2026 and 18/09/2026).
+   row-gap: the block is two rows now and nothing else separates them;
+   var(--space-2) is the grain this dialog already stacks blocks on
+   (.taskinfo__notes' own gap). */
 .taskinfo__readonly {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+  row-gap: var(--space-2);
   margin: 0;
   font-size: 13px;
 }

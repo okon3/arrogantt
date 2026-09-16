@@ -769,15 +769,62 @@ righe.
       summary i cui figli sono **tutti** non costati rende `—` con `title`
       *No resource* invece di un `≥`, perche' `reportedCost` da' `null` e la
       guardia del null precede quella di `uncostedDays`. E' la §5.4 alla
-      lettera (`costedDays === 0 && uncostedDays > 0` → `—` col motivo), e il
-      motivo e' corretto in ogni caso costruibile: su un summary il
-      `resource_id` rolla dalle foglie, quindi *No resource* compare solo
-      quando la riga davvero non ha una risorsa sola. Preesistente a F6a,
-      non un task.
-- [ ] F6b [impl] — Il costo nel pannello dettagli
-      Le due voci *Computed* etichettate con la valuta, la griglia a
-      `repeat(3, 1fr)` in due righe da tre, sui descrittori di F6a. Docs:
-      `view.md` *Details dialog*. Accept: la §8 di T59, tutti e tre i punti.
+      lettera (`costedDays === 0 && uncostedDays > 0` → `—` col motivo).
+      **La ragione che gen 10 ha scritto qui era falsa** e F6b l'ha corretta
+      leggendo il codice: su un summary il `resource_id` **non** rolla dalle
+      foglie (`ganttRows.ts` scrive `task.resourceId ?? ''`), quindi in griglia
+      il motivo nomina la persona che la riga aveva quando era foglia. Il
+      comportamento resta non difetto; la ragione vera e la divergenza col
+      dialogo stanno in `docs/view.md` § *Details dialog*, misurate. Il quarto
+      doc di questo goal che registrava male una ragione.
+- [x] F6b [impl] — Il costo nel pannello dettagli — `SHA_F6B`.
+      Le due voci *Computed* sui descrittori di F6a (`title` sul `<dd>`,
+      `taskinfo__derived` e mai `--cell`, React che escapa da se'), la griglia
+      a `repeat(3, 1fr)` con `row-gap: var(--space-2)`, e `currencyLabel` in
+      `costCells.ts` — **unica casa della forma `Cost (EUR)`**, letta dalla
+      testata di griglia (`columns.ts`) e dall'etichetta della voce. 529 → 532.
+      Nessun file sotto `src/scheduler/`, nessuno fra `cost.ts`/`resources.ts`/
+      `plan.ts`: verificato sul diff.
+      **Il predicato milestone del dialogo non e' quello che il prompt di
+      consegna diceva**: e' `!task.isSummary && effort.trim() !== '' &&
+      Number(effort) === 0`, cioe' legge il **campo in edit**, e serve a far
+      commutare il titolo mentre si digita uno zero. Le due voci nuove leggono
+      invece `task.nominalDays === 0 && !task.isSummary` — il predicato di
+      `project.ts` da cui nasce il `type` della riga di griglia — quindi le
+      due superfici partizionano le righe per costruzione, non per fortuna.
+      Ri-localizzato al brief: un `file:line` copiato non e' verificato, e
+      nemmeno un predicato.
+      **Critic `sonnet`: pass, zero finding.** Corsia 181k, critic 181k — la
+      campagna era quella di F5c e il brief l'ha tenuta a 181k invece di 242k
+      dettando tutto il codice: la corsia ha speso il suo contesto nel browser,
+      non a decidere. Ha ri-guidato i cinque accept (nove righe di Fixture C,
+      raise il `2026-09-24`), **piu' otto celle sue**: lo zero digitato in
+      Effort su una foglia costata (titolo che commuta, Computed che tiene la
+      soluzione — e il simmetrico su una milestone), un nome ostile nel
+      `title` del `—` (nessun doppio escape, nessun nodo iniettato, zero
+      `escapeHtml` nel file), `title` **assente** e non `title=""` dove non
+      c'e' motivo, `is_summary` di griglia e `isSummary` del dialogo che
+      leggono la stessa `solved.summaryIds` (anche su un summary col solo
+      figlio disabled), la testata dopo un `setCurrency` a colonne nascoste e
+      dal quarto call site (People), il viewport a 480px (tracce a 128px,
+      niente wrap) e lo schema chiaro caricato da subito.
+      **La riga che nessuno dei due dava per provata**: un `Range` su un `dd`
+      rende **due** rect quando l'elemento ha due nodi di testo
+      (`{formatDays(x)} d`), che e' anche cio' che sembra un wrap. Il critic
+      l'ha chiusa misurando `top` e `height` dei due rect. Graduata in
+      `docs/verification.md` nello stesso commit, accanto alla regola dello
+      `scrollWidth`: su un blocco `scrollWidth === clientWidth` vale wrappato
+      o no, quindi non prova niente.
+      **Chiuso dall'hub prima del critic**, due righe: il docblock di
+      `currencyLabel` citava `§5.4` di una spec che la goal review cancella (una
+      citazione appesa), e la frase nuova di `view.md` registrava lo stato
+      precedente del blocco. Entrambi difetti del mio brief, che dettava il
+      docblock alla lettera.
+      **Non guidato e dichiarato tale** (dal critic): Tab/Shift+Tab nel `dl`
+      (misurato invece: zero discendenti focusabili, quindi non c'e' dove
+      andare), un toggle *live* di `prefers-color-scheme` (non emette `change`,
+      solo da caricamento), viewport sotto i 480px, e le vie di export col
+      blocco Computed (fuori scope).
 - [ ] F8 [impl] — Colonne e banda di testata in `planFigure`
       **Non ha effetto visibile nell'app dentro questo goal**, e non e' una
       dimenticanza: `App.tsx` non passa `columns`, il default legacy resta
@@ -1153,20 +1200,20 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 
 ## Log
 - **Dimensionamento**: impl oltre ~200k = task da splittare (T35 215k, T18
-  182k+250k, F7 257k, F1 222k, F4b 228k/213k — splittato una volta e ancora
-  sopra soglia: due colonne, quattro campi di riga e un debito di rebuild sono
-  tre cose). **Splittare si misura**: F2 tagliato in calcolo
-  + cablaggio ha reso F2a 141k/130k, F3a 122k/122k e F3b 133k/168k (il critic
-  nel browser, non la corsia), e F2b, dall'hub, zero corsia. **Ri-splittare
-  paga solo la meta' su cui cade il taglio**: F5a, tagliata sulla campagna di
-  misura, ha reso 186k/215k; F5c, che di quella campagna ha ereditato la
-  parte grossa (un allineamento fra due liste) su ~100 righe di diff, e' uscita
-  a 218k/242k. Si taglia la campagna, non il codice, e si conta **prima** quanti
-  scenari di browser un accept impone. Una correzione via SendMessage
-  costa meno di un fresh spawn (~40k), ma non oltre ~190k: li' chiude l'hub se
-  ha le misure. **Un critic guidato nel browser e' la voce piu' cara**: 75-95k
-  a tavolino, 148-168k nel browser, 211k su T58 — e su T58 e' l'unico che ha
-  ribaltato una premessa. Si paga.
+  182k+250k, F7 257k, F1 222k, F4b 228k/213k). **Splittare si misura**: F2
+  tagliato in calcolo + cablaggio ha reso F2a 141k/130k, F3a 122k/122k, F3b
+  133k/168k, F6a 129k/132k. **Ri-splittare paga solo la meta' su cui cade il
+  taglio**: F5a, tagliata sulla campagna, 186k/215k; F5c, che di quella
+  campagna ha ereditato la parte grossa su ~100 righe di diff, 218k/242k. Si
+  taglia la campagna, non il codice, e si conta **prima** quanti scenari di
+  browser un accept impone. **E quando la campagna non si puo' tagliare, si
+  detta il codice**: F6b aveva la campagna di F5c e un brief che scriveva ogni
+  riga di JSX e CSS — 181k/181k, perche' la corsia ha speso il contesto nel
+  browser invece che a decidere. Una correzione via SendMessage costa meno di
+  un fresh spawn (~40k), ma non oltre ~190k: li' chiude l'hub se ha le misure.
+  **Un critic guidato nel browser e' la voce piu' cara**: 75-95k a tavolino,
+  132-181k nel browser, 242k su F5c — e su T58 e' l'unico che ha ribaltato una
+  premessa. Si paga.
 - **Un elenco enumerato da una sezione di spec e' completo o non e' un elenco.**
   F2b: la consegna dava due regole del null su tre e taceva il filtro
   `disabledIds` della §5.3, e l'hub ha poi giustificato la scelta da se' senza
@@ -1177,16 +1224,17 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   Explore non residenti (T57) hanno chiuso un task a testa per pochi k, dove
   una corsia paga 40k di solo ingresso. **Prima di briefare, misurare la
   premessa**: se cade, il brief non serve.
-- **Una citazione copiata non e' verificata**: ne' un `file:line` (T43) ne' un
-  nome di tipo (T48). Si ri-localizza dopo l'ultima modifica (T54, T55) — su
-  F5a otto su otto della spec erano scadute, e si cita per simbolo.
+- **Una citazione copiata non e' verificata**: ne' un `file:line` (T43), ne' un
+  nome di tipo (T48), **ne' un predicato** (F6b: il `isMilestone` del dialogo
+  legge il campo in edit, non `effortDays` come diceva la consegna). Si
+  ri-localizza dopo l'ultima modifica, e si cita per simbolo.
 - Il critic trova cio' che l'accept non chiedeva: e' la regola, non l'eccezione
   — si briefa chiedendogli **la domanda che fa paura**, e su uno spostamento
   **l'hash, non la lettura**. Misurata, e' cio' che rende il pass non speranza.
 - **Cio' che una corsia dichiara impossibile o preesistente va confrontato con
   l'evidenza**: T43 dava il drag reale per non guidabile, T41 e poi F4b
   l'hanno fatto. Fatto bene su T48: misurato su HEAD **e** sul tree.
-- **Il `fill` del tool su un campo controllato gia' pieno fallisce in
-  silenzio**: DOM aggiornato, stato React no. Corsia e critic ci sono cascati
-  indipendentemente (F5b) e l'hanno letta come difetto dell'app. In
-  `docs/verification.md`; si verifica il **modello**, non il `value`.
+- **Una ragione registrata male in un doc e' peggio di nessun doc**, e in
+  questo goal e' successo quattro volte (F7, F5c, F5b, F6a), sempre per mano
+  dell'hub. Si verifica la ragione sul percorso che la usa, non sulla riga che
+  la enuncia.

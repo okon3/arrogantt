@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { costCellText, rateCellText } from './costCells';
+import { costCellText, currencyLabel, rateCellText } from './costCells';
 
 describe('rateCellText', () => {
   it('is empty on a summary', () => {
@@ -104,5 +104,19 @@ describe('costCellText', () => {
       resourceName: null,
     });
     expect(cell).toEqual({ text: '162.5', title: null, derived: false });
+  });
+});
+
+describe('currencyLabel', () => {
+  it('appends the currency in parentheses when one is set', () => {
+    expect(currencyLabel('Rate', 'EUR')).toBe('Rate (EUR)');
+  });
+
+  it('is the bare base label when currency is null', () => {
+    expect(currencyLabel('Cost', null)).toBe('Cost');
+  });
+
+  it('carries an eight-character currency, the widest validateCurrency allows', () => {
+    expect(currencyLabel('Cost', 'XXXXXXXX')).toBe('Cost (XXXXXXXX)');
   });
 });

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Resource } from '../scheduler';
 import { setAutofocus } from './autofocus';
+import { costCellText, currencyLabel, rateCellText } from './costCells';
 import { Dialog } from './Dialog';
 import { formatDays } from './format';
 import type { TaskDetails, TaskPatch } from './ganttHandle';
@@ -99,6 +100,23 @@ export function TaskDialog({
   const whatCostsWhat = slack?.floatDays
     ? `can start up to ${formatDays(slack.floatDays)} d later, but one more day of work moves the project end`
     : 'any delay here moves the project end';
+
+  // Both entries read the solve, like every other figure in the Computed
+  // block — not the effort field being typed. `isMilestone` here is
+  // `project.ts`'s predicate spelled out (`nominalDays === 0 && !summary`),
+  // which is what the grid's row `type` is built from, so the two surfaces
+  // partition the rows identically by construction.
+  const rateCell = rateCellText({
+    dailyRates: task.dailyRates,
+    isSummary: task.isSummary,
+    isMilestone: task.nominalDays === 0 && !task.isSummary,
+  });
+  const costCell = costCellText({
+    effortDays: task.effortDays,
+    cost: task.cost,
+    uncostedDays: task.uncostedDays,
+    resourceName: resources.find((resource) => resource.id === task.resourceId)?.name ?? null,
+  });
 
   return (
     <Dialog
@@ -313,6 +331,26 @@ export function TaskDialog({
               <span className="taskinfo__derived">&mdash;</span>
             ) : (
               `${formatDays(slack.floatDays)} d`
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt>{currencyLabel('Rate', task.currency)}</dt>
+          <dd title={rateCell.title ?? undefined}>
+            {rateCell.derived ? (
+              <span className="taskinfo__derived">{rateCell.text}</span>
+            ) : (
+              rateCell.text
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt>{currencyLabel('Cost', task.currency)}</dt>
+          <dd title={costCell.title ?? undefined}>
+            {costCell.derived ? (
+              <span className="taskinfo__derived">{costCell.text}</span>
+            ) : (
+              costCell.text
             )}
           </dd>
         </div>

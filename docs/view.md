@@ -309,14 +309,39 @@ that isn't there.
   - **The intro hint (`p.dialog__hint.taskinfo__intro`) reserves a min-height**
     for its normal/milestone text swap — both variants measure 48px at this
     dialog's width.
-  - **Computed (`.taskinfo__readonly`) is a fixed 4-track grid**
-    (`grid-template-columns: repeat(4, 1fr)`), not the flex row it was —
-    entries no longer drift with their content. Tracks measure 128px over the
-    512px content box; the widest strings (header `Total effort`, data
-    `31/12/2026`/`999.75 d`) fit inside a track with room to spare. `dt`/`dd`
-    stay the sole descendant exception (semantic structure, no primitive
-    reached); order and inks (`tabular-nums`, `gantt-stretched`,
-    `.taskinfo__critical`, the Float em-dash) unchanged.
+  - **Computed (`.taskinfo__readonly`) is a fixed 3-track grid**
+    (`grid-template-columns: repeat(3, 1fr)`), six entries over two rows —
+    DOM order End · Duration · Total effort / Float · Rate · Cost. Fixed
+    tracks, so no entry drifts with its content. Tracks
+    measure 170.656/170.672/170.672px over the same 512px content box (the
+    browser's own subpixel split of 512 ÷ 3). Widest strings measured to fit,
+    not derived: header `Total effort`, label `Rate (XXXXXXXX)`/
+    `Cost (XXXXXXXX)` (an 8-character currency — nine is refused by
+    `validateCurrency`), a Cost reading `≥ 999,999.75`, and an End date
+    (`dd/mm/yyyy`, `tabular-nums` keeps every date the same width). `row-gap:
+    var(--space-2)` separates the two rows — the block's own only internal
+    seam, the same 8px grain `.taskinfo__notes` stacks on. `dt`/`dd` stay the
+    sole descendant exception (semantic structure, no primitive reached);
+    order and inks (`tabular-nums`, `gantt-stretched`, `.taskinfo__critical`,
+    the Float em-dash) unchanged.
+    - **Rate and Cost read the same two descriptors the grid cell renders**
+      (`rateCellText`/`costCellText`, `costCells.ts`) — the dialog and the
+      grid cannot say different things about the same row because they run
+      the same function. The dialog's milestone test is `project.ts`'s
+      predicate spelled out (`task.nominalDays === 0 && !task.isSummary`),
+      never the dialog's own `isMilestone` (which reads the `effort` field
+      being typed, on purpose, so its hint can swap mid-edit) — the Computed
+      block shows the last solve and must not flicker while a zero is typed.
+      The `(CUR)` parenthesis form lives in one place, `currencyLabel`
+      (`costCells.ts`), read by both the grid header (`columns.ts`) and this
+      entry's `dt`.
+    - **Measured divergence**: `getTaskDetails` deliberately returns
+      `resourceId: ''` for a summary, while the grid's raw `resource_id`
+      field is `task.resourceId ?? ''` with no roll-up — so a task that was a
+      rated leaf, then gained a child assigned to an unrated person (turning
+      it into an uncosted summary), shows the grid's Cost reason as `No rate
+      for <the stale name> on these days` and the dialog's as `No resource`.
+      Documented behaviour of `getTaskDetails`, not a bug this task fixes.
   - **Notes (`.taskinfo__notes`) are a region with a reserved minimum, not a
     fixed band.** `min-height` is one real two-line `.taskinfo__note`,
     measured at this width (12px font: 16px × 2 = 32px) — not derived from

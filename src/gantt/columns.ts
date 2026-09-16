@@ -7,6 +7,7 @@
  * are.
  */
 
+import { currencyLabel } from './costCells';
 import type { DraftStorage } from './draft';
 import type { Project } from './project';
 
@@ -78,7 +79,7 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
   // may show (§5.4 — cells stay bare numbers).
   {
     name: 'rate',
-    label: (project) => (project.currency ? `Rate (${project.currency})` : 'Rate'),
+    label: (project) => currencyLabel('Rate', project.currency ?? null),
     gridWidth: 62,
     figureWidth: 70,
     defaultShown: false,
@@ -86,7 +87,7 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
   },
   {
     name: 'cost',
-    label: (project) => (project.currency ? `Cost (${project.currency})` : 'Cost'),
+    label: (project) => currencyLabel('Cost', project.currency ?? null),
     gridWidth: 84,
     figureWidth: 84,
     defaultShown: false,
