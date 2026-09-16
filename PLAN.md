@@ -832,6 +832,55 @@ righe.
       scegliendo C, e il suo cliente e' il dialogo di export di Goal G.
       Dichiarato qui perche' la goal review non lo legga come codice
       infilato di straforo.
+      **È il primo sottotask di questo goal senza campagna nel browser**:
+      l'accept della §8 e' interamente unit (`planFigure.test.ts`), quindi si
+      brieffa come un task di codice e non di misura — nessun `dev:fresh`,
+      nessuna Fixture C guidata, la fixture la costruisce il test. Aspettarsi
+      una corsia molto sotto le 181k di F6b.
+      **Ricognizione fatta da gen 11 e da non ripagare** (letta su `planFigure.ts`,
+      `plan.ts`, `gridColumns.ts` dopo F6b, quindi valida su `1362652`):
+      - `geometryOf(from, to, width)` calcola `left = PADDING + NAME_WIDTH +
+        PERSON_WIDTH` (16+250+110): e' **li'** che entra la somma dei
+        `figureWidth` del registro, e `geometryOf` va quindi a prendere la
+        lista. Il pin `:68` dell'accept (1) e' esattamente quel `16+250+110`.
+      - La banda: `chartTop = PADDING + (title ? TITLE_HEIGHT : 0)` e
+        `rowsTop = chartTop + MONTH_BAND + TICK_BAND`. **Decisione dell'hub, da
+        mettere nel brief**: `HEADER_BAND` e' la banda *piu' alta* del chart
+        (`chartTop` si sposta di `HEADER_BAND` quando `columns` c'e'), cosi'
+        l'altezza cresce di esattamente `HEADER_BAND` come chiede l'accept (2)
+        e l'aritmetica cambia in un punto solo. Non e' una scelta visibile
+        all'utente in questo goal — e' API, la decide l'hub.
+      - **Nessuna etichetta per la colonna Name**: l'accept (2) elenca tre
+        `<text>` per tre `columns`, e l'accept (3) vuole `columns: []` con una
+        banda **senza etichette**. Settlato dalla spec, non da inventare.
+      - `PlanTask` **non porta** `nominalDays` ne' un `isMilestone`, quindi la
+        cella `rate` deve passare a `rateCellText` un `isMilestone:
+        !task.isSummary && task.effortDays === 0` — che e' `project.ts`
+        letto sull'unico campo disponibile (su una foglia `effortDays` *e'*
+        l'effort dichiarato) **ed e' lo stesso discriminante che
+        `costCellText` usa gia' nella cella accanto**. Non toccare `plan.ts`
+        per aggiungere un campo: e' un file che implementa un invariante e
+        manderebbe il critic su opus.
+      - `cost` e `rate` passano da `costCells.ts` (F6a/F6b), mai
+        re-implementate: e' cio' che rende vera la tabella della §8
+        nell'accept (2). L'etichetta `Cost (EUR)` viene da `currencyLabel`
+        (F6b) oppure da `PLAN_COLUMNS[].label(project)` — **decidere quale
+        nel brief**: `label()` prende un `Project` e `planFigure` ce l'ha.
+      - Le altre cinque celle rispecchiano i template di `GRID_CELLS` senza
+        l'HTML: `nominal_days` → `formatDays(effortDays)`+`d`, `start_date` /
+        `end_shown` → il `formatDay` locale (`DD/MM/YYYY`), `elapsed_days` →
+        `formatDays(elapsedDays)`+`d`, `resource_id` → il nome dalla mappa
+        `names` che `planFigure` costruisce gia'.
+      - Ogni testo di cella passa da `truncate(text, figureWidth - 6)`, come
+        fa oggi la colonna Person; allineamento a sinistra sul bordo della
+        colonna, come la Person — non inventare il center della griglia.
+      - `planFigurePages` **inoltra `columns` gratis** (fa `...options` e
+        `columns` sta in `Omit<FigureOptions,'slice'>`): l'accept (5) e' solo
+        un test, non una modifica.
+      - Il pin byte-identico dell'accept (1) va **catturato prima di editare
+        `planFigure.ts`** (una probe vitest usa-e-getta che stampa l'`svg` di
+        una fixture a 3 righe), non dopo: e' la stessa trappola d'ordine che
+        F6b ha risolto col round-trip da `git show`, ma qui costa una probe.
 
 **Non cancellare `.claude/specs/T59-costs.md` allo sweep degli orfani finche'
 la goal review di F non e' girata**: gli accept dei sottotask stanno nella sua
