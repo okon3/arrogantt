@@ -135,6 +135,16 @@ that isn't there.
   is decided, keyed exhaustively so a registry entry with no renderer is a
   compile error. `text`, `info`, `toggle`, `add` are structural and never
   hideable.
+- **Every numeric column is `align: 'right'`; dates and the avatar stay
+  `center`.** Effort, Duration, Rate and Cost are read down the column against
+  the rows above, and centring makes figures of unequal width (`2d` against
+  `55d`, `600` against `33,000`) impossible to line up; a date is fixed-width,
+  so it has nothing to gain. The 6px cell gutter keeps a figure off the column
+  border, and a `≥` prefix pushes left while the digits stay aligned. **The
+  headers remain centred, measured not chosen**: a column's `align` does not
+  reach `.gantt_grid_head_cell` in this build (`docs/dhtmlx.md`), and moving
+  them would cost a stylesheet rule plus a gutter to match for no legibility
+  the grid actually shows.
 - **`rate` and `cost`, `defaultShown: false`.** A project that never enters a
   rate looks exactly as it did before these two existed; ticking either in the
   picker persists across projects and reloads like any other column. Their

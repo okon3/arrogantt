@@ -414,3 +414,15 @@ touching `src/gantt` code that talks to the library.
 - **Refuse links in `onBeforeLinkAdd`**: by `onAfterLinkAdd`, `syncLinks()` has
   written the predecessors and `solve()` throws with the model already mutated.
   `rejectionForLink` is the guard; mouse and script both go through it.
+- **A column's `align` reaches its data cells, never its header.** Measured in
+  the app on this Community build: with `align: 'right'` on `nominal_days`,
+  `elapsed_days`, `rate` and `cost`, every `.gantt_cell` computes
+  `text-align: right` while every `.gantt_grid_head_cell` stays `center`. The
+  typings say the opposite — `GridColumn.align` is documented as "the
+  horizontal title alignment" and there is no second field — so the one place
+  it is claimed to apply is the one place it does not. A header that must
+  follow its column needs a rule of our own, and the two surfaces have
+  different gutters to match (cells `padding: 6px`, headers `0`).
+- **The inline editor's input does not inherit the cell's `align`**: the
+  `number` editor on Effort computes `text-align: start` inside a `right` cell,
+  so alignment is a display choice only and no editor is affected by it.

@@ -935,24 +935,35 @@ L'utente ha scelto il 2026-09-16 di farle **tutte e quattro**, F12 compresa.
       pinnano senza jsdom. Nessun harness React da introdurre — e' proprio il
       punto.
 
-- [ ] F13 [self] — I numeri della colonna Cost si leggano in colonna
-      Richiesta dell'utente il 2026-09-16, con la sua ragione: centrati sono
-      difficili da confrontare fra righe, e cifre di lunghezza diversa
-      (`1,500` e `33,250`) non allineano le unita'. Vanno a destra.
-      Noto: l'allineamento **non** sta nel registro, sta per cella in
-      `gridColumns.ts` (`align: 'center'`, oggi su tutte e sette le colonne
-      numeriche); la status bar e il CSV non c'entrano; il percorso colonne
-      della figura non ha chiamante (`docs/file-format.md`), quindi lato figura
-      non e' osservabile.
-      **Domanda aperta all'utente, non deciderla da soli**: solo Cost, o anche
-      Rate, Effort e Duration? La sua ragione — confrontabilita' fra righe —
-      vale per tutte, e Cost da sola a destra accanto a Effort e Duration
-      centrate e' una terza convenzione in tabella. Se la risposta e' "tutte",
-      il task esce dal perimetro di Goal F (Effort e Duration sono di Goal E,
-      chiuso) e va misurato anche col dialogo e la griglia collassata.
-      Accept: le cifre di Cost allineate a destra nell'app, misurate e non
-      dedotte, con un gutter che non le faccia toccare il bordo colonna, e la
-      testata coerente con la colonna.
+- [x] F13 [self] — I numeri si leggano in colonna — `PENDING`. Richiesta
+      dell'utente il 2026-09-16 sulla sola Cost; alla domanda di perimetro ha
+      scelto **tutte le numeriche**, quindi `align: 'right'` su `nominal_days`,
+      `elapsed_days`, `rate` e `cost` in `gridColumns.ts`, e `center` solo su
+      date e avatar. Esce dal perimetro di Goal F (Effort e Duration sono di
+      Goal E, chiuso) per scelta sua, coi numeri davanti.
+      **Misurato nell'app, ed e' il motivo per cui la mia accept scritta a
+      tavolino era sbagliata**: le celle seguono `align` (tutte e quattro
+      `right`), **le testate no** — ogni `.gantt_grid_head_cell` resta
+      `center`, e i typings dicono l'opposto (`GridColumn.align` e'
+      documentato come allineamento *del titolo*, e non esiste un secondo
+      campo). Quindi «testata coerente con la colonna» costa una regola CSS
+      nostra piu' un gutter da far combaciare (celle 6px, testate 0), per una
+      leggibilita' che lo screenshot non mostra: testate lasciate centrate,
+      decisione dell'80% dichiarata, non silenziosa. Trap in `docs/dhtmlx.md`.
+      Guidato oltre l'accept: editor inline di Effort (l'unica delle quattro
+      che ne ha uno) apre con `55`, `text-align: start` proprio — non eredita
+      la cella, quindi nessun editor e' toccato; cella `≥ 3,000` allineata col
+      prefisso a sinistra e le cifre in colonna; `—`/`No resource` su summary
+      con risorsa stantia (F9 riconfermato su una riga nuova); collapse ed
+      expand della griglia e il redraw non perdono l'allineamento; console
+      pulita.
+      **Difetto preesistente trovato di passaggio e non toccato**: la testata
+      `Rate (EUR)` **non entra** nei suoi 62px di `gridWidth` e viene tagliata
+      a `Rate (EUR` (misurato con `currency` `EUR`; con `$` dell'utente entra).
+      E' la stessa forma del finding di F8 sulla figura — la stringa piu' larga
+      di una colonna e' una testata, non una cella — ma sulla griglia. Allargare
+      le due colonne cambia il layout di ogni progetto esistente e i 706px:
+      **decisione dell'utente**, da aprire come task a se'.
 
 **Non cancellare `.claude/specs/T59-costs.md` allo sweep degli orfani finche'
 la goal review di F non e' girata**: gli accept dei sottotask stanno nella sua

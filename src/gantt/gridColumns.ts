@@ -158,6 +158,10 @@ function resourceStack(solved: SolvedProject, resources: Resource[], taskId: str
  * One renderer per registry entry, keyed exhaustively: a `PlanColumnName`
  * added to the registry without an entry here is a compile error, which is
  * what keeps this the only place a column's cell content is decided.
+ *
+ * The mixed `align` is deliberate, not an oversight: a figure is read down
+ * the column against the rows above it, so every numeric column is `right`
+ * and only the dates and the avatar stay `center`.
  */
 const GRID_CELLS: Record<
   PlanColumnName,
@@ -177,7 +181,7 @@ const GRID_CELLS: Record<
     },
   }),
   nominal_days: () => ({
-    align: 'center',
+    align: 'right',
     // One format for both branches, or a summary's 9g reads as a different
     // kind of figure from the 5g of the leaf under it.
     template: (task) =>
@@ -203,7 +207,7 @@ const GRID_CELLS: Record<
     template: (task) => `<span class="gantt-derived">${shortDate(task.end_shown as Date)}</span>`,
   }),
   elapsed_days: () => ({
-    align: 'center',
+    align: 'right',
     template: (task) =>
       `<span class="gantt-derived">${formatDays(Number(task.elapsed_days ?? 0))}d</span>`,
   }),
@@ -211,7 +215,7 @@ const GRID_CELLS: Record<
   // with the details dialog (F6b); this entry only feeds it the grid's task
   // shape and renders the descriptor as HTML.
   rate: () => ({
-    align: 'center',
+    align: 'right',
     template: (task) =>
       renderCellText(
         rateCellText({
@@ -222,7 +226,7 @@ const GRID_CELLS: Record<
       ),
   }),
   cost: (ctx) => ({
-    align: 'center',
+    align: 'right',
     template: (task) => {
       const resourceId = (task.resource_id as string | undefined) || undefined;
       const resource = resourceId
