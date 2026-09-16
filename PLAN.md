@@ -658,7 +658,52 @@ metodo `scrollWidth <= clientWidth` stanno entrambi nei bullet di *Dialogs*
       di una riga per lista o con le liste invertite, Tab fra le righe nuove,
       uno screenshot in schema chiaro (solo albero di accessibilita'), e un
       `0` dichiarato come tariffa di periodo attraverso il dialogo.
-- [ ] F5b [impl] — Il campo `Currency` nel dialogo People
+- [x] F5b [impl] — Il campo `Currency` nel dialogo People — `bd24e98`.
+      `.people__currency` (un `<label>`, come ogni controllo etichettato di
+      questi dialoghi) sopra la tabella, controllo 88px, `placeholder e.g. EUR`;
+      prop `currency: string | null` e terzo argomento di `onSave`; il trim nel
+      dialogo e `validateCurrency` sull'etichetta trimmata non nulla; il terzo
+      argomento `currency?` a `setResources` scritto **prima** di
+      `applySolution()` e il **quarto** call site di `rebuildColumns()` dopo;
+      `openResources` che fotografa `getProject().currency`; la frase del
+      `.dialog__hint` che nomina il bottone per il suo nome accessibile
+      (`Choose grid columns`: e' icon-only, non c'e' testo visibile da citare);
+      i due bullet di `view.md` (quattro call site, campo Currency), la misura
+      del carry sul quarto call site in `dhtmlx.md` e **il bullet
+      `CHANGELOG.md` delle superfici tariffa del dialogo**, differito qui da
+      F5a. 517 test invariati, nessun test nuovo: **non esiste harness React in
+      `src/`** (nessun `.test.tsx`, nessun jsdom), quindi ogni claim e' una
+      misura nel browser. Nessun file sotto `src/scheduler/`, nessuno dei file
+      che implementano un invariante: verificato sul diff.
+      **Chiuso dall'hub prima del critic**: la corsia aveva reso il campo un
+      `<div>`+`<span>` senza `placeholder` — la §5.8 lo dichiara e il repo
+      etichetta con `<label>` (`.taskinfo__field`, `.calendar__day`). Due
+      righe, piu' la correzione del bullet di `view.md` che l'hub aveva appena
+      scritto **sbagliato** sul wrapper: un doc che registra male la ragione di
+      una decisione e' peggio di nessun doc, ed e' la terza volta in questo goal.
+      **Critic `sonnet`: pass, zero finding.** Corsia 209k, critic 176k — la
+      campagna tagliata come da regola di F5c ha tenuto entrambi sotto soglia,
+      su un diff di ~110 righe. Ha ri-guidato i sei accept, la Fixture C (nove
+      righe, raise il `2026-09-24`), il drag reale via CDP (`text` 230→279
+      identico alla cifra di `dhtmlx.md`), il click-to-focus attraverso il
+      `<label>` nuovo, e **le quattro celle che l'hub gli ha chiesto per nome**:
+      il braccio `undefined` del tri-stato (`updateResource`/`addResource`/
+      `removeResource` su un progetto con `USD`: etichetta intatta — nessun
+      accept del brief lo guidava), un Save di sola valuta (un passo di undo,
+      `changed currency`, tariffe intatte), Cancel dopo aver digitato (niente
+      scritto), e una modifica di valuta a **griglia chiusa** (`grid_width` a 0
+      lungo il Save, restore a 901: il quarto call site passa dal ramo
+      `savedGridWidthRef` come gli altri tre).
+      **La trappola vera non era nell'app**: il `fill` del tool su un campo
+      controllato **gia' pieno** fallisce in silenzio (il `value` del DOM
+      risponde, lo stato React no, e il componente salva il vecchio). Corsia e
+      critic ci sono cascati **indipendentemente sullo stesso campo** e l'hanno
+      letta come difetto dell'app. Graduata in `docs/verification.md` nello
+      stesso commit, accanto al throw che quella sezione descriveva gia'.
+      **Non guidato e dichiarato tale** (dal critic): Shift+Tab e frecce sul
+      campo nuovo, il campo in viewport stretto, due Save rapidi nella stessa
+      sessione di dialogo, e le vie di export (print/PNG/CSV) con una valuta
+      dichiarata — quest'ultima fuori da Goal F per la §6 della spec.
       §5.8: il campo dichiarato nel dialogo People (e' l'unita' dei numeri
       digitati li'), il terzo argomento `currency?` a `GanttHandle.setResources`
       (`ganttHandle.ts:64`) portato per la catena `ResourceDialog.save` →
@@ -1091,7 +1136,7 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 - **Cio' che una corsia dichiara impossibile o preesistente va confrontato con
   l'evidenza**: T43 dava il drag reale per non guidabile, T41 e poi F4b
   l'hanno fatto. Fatto bene su T48: misurato su HEAD **e** sul tree.
-- **Un accept deve essere osservabile, indipendente dalla scala, e provare cio'
-  che dice di provare.** T45 chiedeva ctrl+wheel (non misurabile in sintetico),
-  T46 «le bande spariscono a Months» (vero su un piano corto, falso su uno
-  lungo), T48 «Tab muove fra le celle» (ne muove due). Cinque fette su cinque.
+- **Il `fill` del tool su un campo controllato gia' pieno fallisce in
+  silenzio**: DOM aggiornato, stato React no. Corsia e critic ci sono cascati
+  indipendentemente (F5b) e l'hanno letta come difetto dell'app. In
+  `docs/verification.md`; si verifica il **modello**, non il `value`.
