@@ -739,8 +739,8 @@ avuto), F6b rende le due voci e il layout a tre tracce. Il taglio cade sulla
 campagna: F6b se la prende quasi tutta, F6a paga una sola ri-guida delle nove
 righe.
 
-- [>] F6a [impl] — La regola della cella costo/tariffa, in un posto solo
-      `src/gantt/costCells.ts` nuovo: `rateCellText` e `costCellText`, puri,
+- [x] F6a [impl] — La regola della cella costo/tariffa, in un posto solo —
+      `2795c7d`. `src/gantt/costCells.ts` nuovo: `rateCellText` e `costCellText`, puri,
       che restituiscono un descrittore neutro rispetto al medium
       (`{ text, title, derived }`) — la griglia lo avvolge in HTML, il dialogo
       in JSX, e la classe del registro *derived* la scegle ognuno per se'
@@ -748,8 +748,32 @@ righe.
       due, **niente altro cambia**: `escapeHtml` resta al confine HTML (il
       `title` porta il nome di una persona, cioe' input dell'utente), la
       regola del null resta in `reportedCost` (`cost.ts`, intatto).
-      `costCells.test.ts` nuovo. Accept: le nove righe della Fixture C
-      identiche alla tabella della §8 dopo il refactor, misurate nell'app.
+      `costCells.test.ts` nuovo: **12 test, i primi che quella regola abbia mai
+      avuto** (era verificata solo nel browser). 517 → 529. `renderCellText`
+      locale a `gridColumns.ts` ricostruisce le tre forme HTML in un punto
+      solo: deviazione dichiarata, accettata.
+      **Critic `sonnet`: pass, zero finding.** Corsia 129k, critic 132k — il
+      taglio ha fatto il suo lavoro (F5c, stesso dialogo senza taglio della
+      campagna, era 218k/242k). Mappatura ramo-per-ramo provata nei due sensi
+      contro `git show HEAD:gridColumns.ts`, em dash U+2014 verificato sul
+      `codePointAt` di una cella viva (e il separatore del range e' U+2013,
+      come dice `view.md`), le nove righe ri-derivate dal DOM, il ciclo
+      nascondi/ri-mostra byte-identico, e **tre celle sue**: un nome ostile
+      (`"><img src=x onerror=alert(1)>`) escapato correttamente nel `title`
+      (`imgCount 0`, nessun alert) e `A & B` senza doppio escape; una tariffa
+      a tre valori **non monotona nel tempo** (100 → 200 → 162.555) che rende
+      `100–200`, cioe' min–max vero e non primo–ultimo (`cost.ts` ordina per
+      valore, quindi l'indice non e' un off-by-one); e il summary a effort
+      zero, dove solo la prima guardia decide.
+      **Un rilievo fuori bar, misurato e giudicato non difetto dall'hub**: un
+      summary i cui figli sono **tutti** non costati rende `—` con `title`
+      *No resource* invece di un `≥`, perche' `reportedCost` da' `null` e la
+      guardia del null precede quella di `uncostedDays`. E' la §5.4 alla
+      lettera (`costedDays === 0 && uncostedDays > 0` → `—` col motivo), e il
+      motivo e' corretto in ogni caso costruibile: su un summary il
+      `resource_id` rolla dalle foglie, quindi *No resource* compare solo
+      quando la riga davvero non ha una risorsa sola. Preesistente a F6a,
+      non un task.
 - [ ] F6b [impl] — Il costo nel pannello dettagli
       Le due voci *Computed* etichettate con la valuta, la griglia a
       `repeat(3, 1fr)` in due righe da tre, sui descrittori di F6a. Docs:
