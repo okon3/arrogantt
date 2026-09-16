@@ -612,9 +612,11 @@
 }
 
 /* One grammar for every period-row list (Calendar shutdowns, People
-   absences): fixed date/count/remove tracks so they align down the list
-   regardless of content; `--pct` inserts the percentage track shared with
-   AvailabilityList. Label is the only elastic (1fr) track. */
+   availability, People rate periods): fixed date/count/remove tracks so they
+   align down the list regardless of content; `--pct` inserts the value track
+   shared by AvailabilityList and RatePeriodList (both built on
+   PeriodRowList), which is what keeps the two lists' tracks aligned in the
+   People panel. Label is the only elastic (1fr) track. */
 .ranges__row {
   display: grid;
   grid-template-columns: 120px 12px 120px 1fr 88px 28px; /* date → date label count remove */
@@ -710,9 +712,20 @@
 }
 
 .ranges__pct::-webkit-outer-spin-button,
-.ranges__pct::-webkit-inner-spin-button {
+.ranges__pct::-webkit-inner-spin-button,
+.ranges__rate::-webkit-outer-spin-button,
+.ranges__rate::-webkit-inner-spin-button {
   appearance: none;
   margin: 0;
+}
+
+/* No `.dialog__field` wrapper and no suffix, so this takes the whole 68px
+   track the `--pct` modifier opens; right-aligned like every numeric field
+   in these rows. */
+.ranges__rate {
+  width: 100%;
+  text-align: right;
+  appearance: textfield;
 }
 
 .taskinfo__grid {

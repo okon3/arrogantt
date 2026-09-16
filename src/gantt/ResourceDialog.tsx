@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { countWorkingDaysInRange, type AvailabilityOverride } from '../scheduler';
 import { AvailabilityList } from './AvailabilityList';
-import type { Person } from './cost';
+import type { Person, RateOverride } from './cost';
 import { Dialog } from './Dialog';
 import { nextResourceId, releasedBy, validateResources } from './resources';
+import { RatePeriodList } from './RatePeriodList';
 
 export interface ResourceUsage {
   /** Number of tasks assigned to each resource id. */
@@ -20,6 +21,7 @@ interface DraftResource {
       `validateResources`, so an unparseable entry must reach it. */
   dailyRate: string;
   periods: AvailabilityOverride[];
+  ratePeriods: RateOverride[];
 }
 
 function toDraft(resources: Person[]): DraftResource[] {
@@ -29,6 +31,7 @@ function toDraft(resources: Person[]): DraftResource[] {
     availability: String(Math.round((resource.availability ?? 1) * 100)),
     dailyRate: resource.dailyRate === undefined ? '' : String(resource.dailyRate),
     periods: resource.availabilityOverrides ?? [],
+    ratePeriods: resource.rateOverrides ?? [],
   }));
 }
 
@@ -38,25 +41,20 @@ function toDraft(resources: Person[]): DraftResource[] {
  * The percentage is the form's own unit; everything downstream — the rules, the
  * engine, the file — works in fractions of a working day.
  *
- * The default rate is edited here and written only when the trimmed text is
- * non-empty, so an intact dialog leaves an absent rate absent. Rate overrides
- * are not yet editable in this dialog, so they still reach `previous` by id
- * rather than being rebuilt — losing that pass-through would silently erase
- * every rate period in the project on Save.
+ * The default rate and its periods are written only when they carry
+ * something (an empty rate is absent text, an empty period list is omitted
+ * entirely), so an intact dialog leaves an absent rate absent and a person
+ * with no rate periods keeps no `rateOverrides` key.
  */
-function toResources(drafts: DraftResource[], previous: Person[]): Person[] {
-  const byId = new Map(previous.map((person) => [person.id, person]));
-  return drafts.map((draft) => {
-    const before = byId.get(draft.id);
-    return {
-      id: draft.id,
-      name: draft.name.trim(),
-      availability: Number(draft.availability) / 100,
-      ...(draft.periods.length > 0 ? { availabilityOverrides: draft.periods } : {}),
-      ...(draft.dailyRate.trim() !== '' ? { dailyRate: Number(draft.dailyRate) } : {}),
-      ...(before?.rateOverrides?.length ? { rateOverrides: before.rateOverrides } : {}),
-    };
-  });
+function toResources(drafts: DraftResource[]): Person[] {
+  return drafts.map((draft) => ({
+    id: draft.id,
+    name: draft.name.trim(),
+    availability: Number(draft.availability) / 100,
+    ...(draft.periods.length > 0 ? { availabilityOverrides: draft.periods } : {}),
+    ...(draft.dailyRate.trim() !== '' ? { dailyRate: Number(draft.dailyRate) } : {}),
+    ...(draft.ratePeriods.length > 0 ? { rateOverrides: draft.ratePeriods } : {}),
+  }));
 }
 
 /** Mounted only while open, so the drafts initialise from props without an effect. */
@@ -81,7 +79,7 @@ export function ResourceDialog({
   /** Which person's absences are expanded; only one at a time keeps it readable. */
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  /** Short summary for the collapsed row: how many days are away, how many reduced. */
+  /** Short summary for the collapsed row: days away/reduced, plus rate periods. */
   const periodSummary = (draft: DraftResource) => {
     let away = 0;
     let reduced = 0;
@@ -90,11 +88,17 @@ export function ResourceDialog({
       if (period.availability === 0) away += working;
       else reduced += working;
     }
-    if (away === 0 && reduced === 0) return 'none';
-    const parts = [];
+    const parts: string[] = [];
     if (away > 0) parts.push(`${away} d away`);
     if (reduced > 0) parts.push(`${reduced} d reduced`);
-    return parts.join(', ');
+    if (draft.ratePeriods.length > 0) {
+      parts.push(
+        `${draft.ratePeriods.length} rate ${draft.ratePeriods.length === 1 ? 'period' : 'periods'}`,
+      );
+    }
+    // 'none' is the availability answer; once any part exists, 'none' would
+    // read as a contradiction beside it, so it only appears alone.
+    return parts.length > 0 ? parts.join(', ') : 'none';
   };
 
   const update = (index: number, patch: Partial<DraftResource>) => {
@@ -121,17 +125,18 @@ export function ResourceDialog({
     setDrafts((current) => [
       ...current,
       {
-        id: nextResourceId(toResources(current, resources)),
+        id: nextResourceId(toResources(current)),
         name: '',
         availability: '100',
         dailyRate: '',
         periods: [],
+        ratePeriods: [],
       },
     ]);
   };
 
   const save = () => {
-    const next = toResources(drafts, resources);
+    const next = toResources(drafts);
     const problem = validateResources(next);
     if (problem) {
       setError(problem);
@@ -249,10 +254,22 @@ export function ResourceDialog({
               <tr key={`${draft.id}-off`} className="people__offRow">
                 <td colSpan={6}>
                   <div className="people__offPanel">
+                    <h3 className="dialog__subhead dialog__subhead--flush">Availability periods</h3>
                     <AvailabilityList
                       periods={draft.periods}
                       workingWeekdays={workingWeekdays}
                       onChange={(periods) => update(index, { periods })}
+                    />
+                    <h3 className="dialog__subhead">Rate periods</h3>
+                    <RatePeriodList
+                      periods={draft.ratePeriods}
+                      workingWeekdays={workingWeekdays}
+                      defaultRate={
+                        draft.dailyRate.trim() !== '' && Number.isFinite(Number(draft.dailyRate))
+                          ? Number(draft.dailyRate)
+                          : 0
+                      }
+                      onChange={(ratePeriods) => update(index, { ratePeriods })}
                     />
                   </div>
                 </td>

@@ -574,10 +574,20 @@ that isn't there.
   class instead (`.people__pct`, `.ranges__date`, `.taskinfo__amount` — same
   element, same specificity, App.css later, so it wins by order alone). Grep
   for what else selects a control before assuming its class styles it.
-- **Period-row lists (`.ranges__row`: Calendar shutdowns, People absences)
-  share one CSS grid template**: fixed date/count/remove tracks (`120px 12px
-  120px 1fr 88px 28px`), plus a `--pct` modifier that inserts a 68px
-  percentage track between the dates and the label (`AvailabilityList`).
+- **Period-row lists (`.ranges__row`: Calendar shutdowns, People availability,
+  People rate periods) share one CSS grid template**: fixed date/count/remove
+  tracks (`120px 12px 120px 1fr 88px 28px`), plus a `--pct` modifier that
+  inserts a 68px value track between the dates and the label. The template
+  lives once, in `PeriodRowList`, with a render prop for that value track;
+  `AvailabilityList` and `RatePeriodList` are thin wrappers over it. The rate
+  rows reuse the `--pct` modifier verbatim rather than a modifier of their
+  own, so the two lists in People's expanded panel share their tracks **by
+  construction** — same class, same computed template, whatever each list
+  holds. Confirmed rather than assumed, with one row in each:
+  `getComputedStyle(row).gridTemplateColumns` byte-identical and all seven
+  `getBoundingClientRect().x` equal to the pixel. Nothing here owes a
+  tolerance — a divergence would mean the rate rows had stopped sharing the
+  modifier, not that they had drifted within it.
   Count is `white-space: nowrap` — 88px is "no working days" (measured 87px, the
   widest string either list produces) rounded up to the `--space-*` grain;
   a fixed track whose content wraps would change that one row's height
@@ -587,7 +597,10 @@ that isn't there.
   down the list whatever the label or count text is. A field's unit (`%`)
   sits inside the field (`.dialog__field`/`.dialog__suffix`, dialog.css), so
   the fixed track carries the whole field and not a bare input with a span
-  beside it. Same primitive in `TaskDialog`'s Effort ("days") and Progress
+  beside it — the rate row is the deliberate exception: its unit is a
+  currency declared once for the whole dialog, not per row, so its value
+  track (`.ranges__rate`) is a bare input with no wrapper and no suffix.
+  Same primitive in `TaskDialog`'s Effort ("days") and Progress
   ("%") fields (`.taskinfo__amount`), outside any period-row list.
 - **The People table (`.people__table`) is `table-layout: fixed` with a
   `<colgroup>`**, so no cell's content can move a column: Name auto (≈260 at
@@ -600,13 +613,20 @@ that isn't there.
   (56px) still outmeasures the widest value (35px). The expanded absences
   panel (`.people__offPanel`) spans the table's content box — zero
   horizontal padding on `.people__offRow td` plus the panel's own padding —
-  so it reads as part of the row above rather than a separate block.
+  so it reads as part of the row above rather than a separate block. The
+  Periods column button now summarises both the availability and the rate
+  periods (one string, `title` and text the same), and the expanded panel
+  hosts both lists under their own `.dialog__subhead`s.
 - **`.dialog__subhead` is the one grammar for a section subhead inside a
   dialog body** (12px/600/uppercase/`letter-spacing: 0.06em`/`--ink-faint`) —
-  Calendar's "Working days"/"Shutdowns" and Task info's "Computed" share it;
-  one that opens a body straight under its hint adds
-  `.dialog__subhead--flush` (the hint's own bottom margin already spaces it)
-  rather than forking the grammar or reaching for a descendant selector.
+  Calendar's "Working days"/"Shutdowns", Task info's "Computed" and People's
+  expanded panel ("Availability periods"/"Rate periods") share it; one that
+  opens a body — or a padded panel — straight under its hint adds
+  `.dialog__subhead--flush` (the hint's own bottom margin already spaces it;
+  inside `.people__offPanel` it is the panel's own top padding that would
+  otherwise stack with the primitive's margin and read as a gap the panel
+  does not own) rather than forking the grammar or reaching for a descendant
+  selector.
 - **`.dialog__hint` caps its measure at 58ch**, which keeps a caption from
   outrunning the fields below it. A hint that is the dialog's whole prose adds
   `.dialog__hint--wide` (`max-width: none`) — Help's opening paragraph, whose
