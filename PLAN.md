@@ -376,26 +376,47 @@ Due `file:line` della §8 sono **scaduti** e il brief porta quelli riletti:
 `setResources` e' a `GanttChart.tsx:473-481` (non `:434-442`), `rebuildColumns`
 a `:300-324` col suo unico call site a `:638`, `loadProject` a `:326-367`.
 
-- [ ] F3a [impl] — Report del file, colonne CSV, `docs/file-format.md`
-      `serialization.ts` `reportFor` (`:60-70`) e il blocco `solved` di
-      progetto (`:75-81`), due colonne CSV appese dopo `Disabled`, i pin e il
-      doc. Nessun browser: il dato c'e' gia' tutto su `Plan`/`PlanTask`.
-      Tre decisioni prese qui, non dalla spec:
-      **(1)** il blocco `solved` di progetto prende `totalCost` e
-      `uncostedDays` e **non** `currency` — la chiave di root esiste gia' come
-      input (F1, `docs/file-format.md:38-40`) e riscriverla dentro il report
-      sarebbe una seconda casa per lo stesso fatto;
-      **(2)** la cella CSV del costo usa `decimal()` (`planCsv.ts:49-51`:
-      `formatDays` + virgola), **non** `formatMoney` — la §5.4 chiede «plain
-      number with a decimal comma and no grouping» e `formatMoney` raggruppa;
-      **(3)** `Uncosted (d)` scrive sempre la cifra, anche `0`, come
-      `Effort (d)`, mentre `Cost` resta **vuota** quando il costo e' null: una
-      colonna numerica bianca su quasi tutte le righe si legge peggio in un
-      foglio, ma un costo assente non e' `0` — e' la decisione del goal.
-      Da correggere nel doc: `docs/file-format.md:95-96` dice che `Disabled`
-      e' «appended last», e non lo e' piu'.
-      **Debito di F2b**: la riga `toText()` dell'help (`agentApi.help.md:51`)
-      dice «same fields as `getPlan()`» mentre il report ne porta 5 su 16.
+- [x] F3a [impl] — Report del file, colonne CSV, `docs/file-format.md` —
+      `39b59ed`. `reportFor` porta `cost`/`uncostedDays`/`dailyRates`, il
+      blocco `solved` di progetto `totalCost`/`uncostedDays`; due colonne CSV
+      appese dopo `Disabled`, l'etichetta solo nell'header; il doc e la riga
+      `toText()` dell'help. 508 test (+7). Nessun file sotto `src/scheduler/`
+      e nessun `.tsx`: verificato sul diff, non sul report.
+      **Lo split ha pagato ancora**: corsia 122k, critic 122k — le misure di
+      F2a, contro i 257k di F7.
+      Le tre decisioni della riga reggono, **riverificate sul codice prima
+      del brief e non ereditate**: la chiave `currency` di root e' gia' un
+      input (F1); `formatMoney` raggruppa via `Intl.NumberFormat('en-GB')` e
+      in un dialetto `;` + virgola decimale un raggruppamento corrompe la
+      cella; `PlanTask.cost` distingue gia' null da `0`.
+      **I due finding del critic erano entrambi nei docs e dicevano entrambi
+      piu' di quanto il codice sostenga.** (1) «nessuna marca `≥`, che e'
+      della griglia» dichiarava un comportamento che a questo commit non
+      esiste (`gridColumns.ts` non ha colonna `cost`: e' di F4) e piantava in
+      `file-format.md` un fatto che la §5.6 assegna a `view.md` — la forma di
+      T58, un fatto una casa. Clausola tolta, nel doc e nel commento del test.
+      (2) «mai `0`, che e' la cifra di un milestone»: falso, una tariffa
+      dichiarata `0` e' **prezzata** e scrive `0` (`leafCost` somma `0` e
+      conta quei giorni come costati). Riscritto: vuoto non e' `0`, e `0` e'
+      una riga che e' stata prezzata.
+      **Due aggiunte dell'hub sui fuori-bar del critic**: un test della
+      tariffa `0`, cosi' la frase nuova del doc e' **misurata** e non dedotta
+      (il critic la conosceva per derivazione); e un pin `1200` sul
+      round-trip prezzato, che senza restava verde su `null === null`. Piu'
+      la cautela «sommare senza il flag raddoppia» generalizzata da
+      `Effort (d)` a tutte le colonne numeriche, invece di una seconda frase
+      per le due nuove.
+      **Non guidato e dichiarato tale** (derivato dal critic sul codice, non
+      misurato): foglia disabled con tariffa → scrive il proprio importo
+      mentre padre e `totalCost` la escludono; summary coi figli tutti non
+      prezzati → cella vuota e i giorni rollati; foglia a cavallo di un
+      aumento → un solo totale nudo, le due tariffe affiorano solo nei
+      `dailyRates` del report.
+      **Debito di F2b chiuso**: la riga `toText()` dell'help non dice piu'
+      «same fields as `getPlan()`», elenca i campi del report.
+      **Nessun bullet in `CHANGELOG.md`, deciso al brief**: la §5.6 assegna a
+      F4 il bullet dei costi, dove le cifre diventano visibili nell'app; qui
+      lo raddoppierebbe.
 - [ ] F3b [impl] — Parita' di `getTask()`, scrittura di `currency`, help
       `TaskDetails` + `getTaskDetails`, `GanttHandle.setCurrency`,
       `setResources(…, currency?)`, `AgentApi.setCurrency`, le chiamate a
@@ -800,7 +821,7 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 ## Log
 - **Dimensionamento**: impl oltre ~200k = task da splittare (T35 215k, T18
   182k+250k, F7 257k, F1 222k). **Splittare si misura**: F2 tagliato in calcolo
-  + cablaggio ha reso F2a 141k/130k, e F2b, fatto dall'hub, zero corsia.
+  + cablaggio ha reso F2a 141k/130k e F3a 122k/122k, e F2b, dall'hub, zero corsia.
   **F4 e F5 vanno tagliati prima di briefarli.** Una correzione via SendMessage
   costa meno di un fresh spawn (~40k), ma non oltre ~190k: li' chiude l'hub se
   ha le misure. **Un critic guidato nel browser e' la voce piu' cara**: 75-95k
