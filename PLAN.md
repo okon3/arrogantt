@@ -225,9 +225,10 @@ indietro), per un task che si blocca in fondo alla scala di escalation, e al
 verdetto della goal review. **La rinomina dell'heading `Unreleased` resta da
 confermare**: la deroga non e' stata comprata.
 
-**La scomposizione: F7 → F1 → F2a → F2b → F3 → F4 → F5 → F6 →
-F8**, seriale (un
-browser, una porta). Gli accept per esteso stanno nella §8 della spec, con la
+**La scomposizione: F7 → F1 → F2a → F2b → F3a → F3b → F4a → F4b → F5a →
+F5c → F5b → F6 → F8**, seriale (un browser, una porta). Tre dei nove pezzi
+originali si sono splittati strada facendo — F3, F4 e F5 — e ogni split ha
+pagato: la nota di ciascuno sta sopra la sua coppia. Gli accept per esteso stanno nella §8 della spec, con la
 **Fixture C** condivisa e la sua tabella dei valori attesi per cella; qui sta
 lo stato. Solo F2a e' `deep` (effort conservato); **nessun sottotask tocca
 `src/scheduler/`**, ed e' la decisione che tiene il motore fuori dal denaro.
@@ -532,38 +533,73 @@ sono di F4a, tutto il resto di F4b.
       persistita (accept di F7, non di F4b), un drag reale **delle due colonne
       nuove** (guidato solo su `text`; le loro larghezze osservate costanti come
       effetto collaterale).
-**F5 e' splittato in F5a + F5b** (2026-09-16, sul seam che la sua riga
-indicava): le superfici tariffa del dialogo e il campo `Currency` sono due
-cose, e la misura di F4b lo conferma — 228k/213k su un task gia' splittato una
-volta. **F5a va per primo**: il campo Currency ha bisogno che il dialogo abbia
-gia' la sua forma nuova, e il vincolo «una sola chiamata all'handle o sono due
-passi di undo» regge in entrambi gli ordini, quindi decide la dimensione. Il
-terzo argomento `currency?` a `setResources` e' **tutto** di F5b: e' lui a
-cambiare la firma e il suo unico call site.
+**F5 e' splittato in F5a + F5c + F5b** (2026-09-16; F5a+F5b il 2026-09-16,
+F5c staccato da F5a poco dopo). **Le lettere non sono l'ordine: si esegue
+F5a → F5c → F5b.** Il primo taglio era sul seam che la riga di F5 indicava
+(superfici tariffa vs campo `Currency`). Il secondo e' sulla misura, non sul
+codice: F5a restava di classe F4b (228k/213k su un task gia' splittato una
+volta) perche' la sua campagna browser cumulava sette scenari su un dialogo da
+riaprire ogni volta — il dirty su Save intatto, il giro tariffa → costo, il
+blanking, `0`/`-1`/`abc`, i periodi sovrapposti, `scrollWidth` a 728 e
+l'allineamento delle tracce fra due liste. Il seam del secondo taglio: **la
+colonna Daily rate non ha bisogno del componente generalizzato**, e il
+pass-through di `rateOverrides` (`ResourceDialog.tsx:50-51`) regge intatto
+fino a F5c, che lo sostituisce con un campo del draft. Accept §8 di F5
+ripartiti per clausola: (1)(2) e la meta' `scrollWidth` di (4) a F5a; (3) e la
+meta' allineamento di (4) a F5c; (5)(6) a F5b.
+**`file:line` della §5.5 riletti dall'hub, quattro su quattro scaduti** (il
+codice e' cambiato con F1): il vizio di `availability` sempre scritto e' a
+`ResourceDialog.tsx:47` (non `:40`), il commento del testo di `availability` a
+`:17-18` (non `:16-17`), il bottone di riepilogo a `:193-203` (non `:189-199`),
+il pannello espanso a `:217-231` (non `:214-226`). E **i due rimandi a
+`docs/view.md` della §5.5 puntano altrove**: `:497-511` cade in *In-app help*
+e `:513-517` in *Resource load lanes* — la grammatica delle righe-periodo e il
+metodo `scrollWidth <= clientWidth` stanno entrambi nei bullet di *Dialogs*
+(`docs/view.md:578-604`). I brief citano per simbolo, non per riga.
 
-- [ ] F5a [impl] — Le superfici tariffa del dialogo People
+- [>] F5a [impl] — La colonna Daily rate nel dialogo People
       §5.5: colonna **Daily rate** (88px, `<colgroup>` + header) fra
       Availability e Periods, larghezza del dialogo 640 → 728 perche' Name
-      tenga i suoi ≈260, `AvailabilityList` **generalizzata** in un solo
-      componente di riga-periodo con una render prop per la cella valore (due
-      wrapper sottili: *Availability periods* e *Rate periods*, stessa
-      grammatica `.ranges__row--pct`), e il bottone di riepilogo che appende
-      `, n rate periods`. `DraftResource` prende `dailyRate: string` (testo,
-      vuoto = assente) e `ratePeriods: RateOverride[]`.
+      tenga i suoi ≈260 (680 di content box = 260+88+88+160+48+36, aritmetica
+      da **misurare** non da dedurre). `DraftResource` prende
+      `dailyRate: string` (testo, vuoto = assente); `toResources` lo scrive
+      **solo a testo trimmato non vuoto** (§5.2).
       **Il vizio da non copiare, gia' accertato in T59**: `toResources` scrive
-      *sempre* `availability` (`ResourceDialog.tsx:40`), quindi salvare il
-      dialogo intatto sporca un file che non aveva quella chiave. `dailyRate`
-      si scrive **solo a testo trimmato non vuoto** (§5.2).
-      **Debito di F1, misurato dal critic**: `App.tsx` (`:145,163,169,562`) e
-      `resourceSnapshot.resources` sono tipati `Resource[]`; `Person` aggiunge
-      solo campi opzionali, quindi il pass-through delle tariffe regge oggi per
-      **identita' di oggetto**, non per tipo — un rebuild
-      `{id, name, availability}` in `App` compilerebbe cancellando ogni
-      tariffa. Tiparle `Person` rende statica la garanzia, ed e' questo il task
-      che tocca quella catena.
+      *sempre* `availability` (`:47`), quindi salvare il dialogo intatto sporca
+      un file che non aveva quella chiave. Fuori scopo qui, e la misura si
+      protegge scegliendo una fixture le cui persone hanno `availability`
+      esplicita.
+      **Il docblock di `toResources` diventa mezzo falso e va riscritto**: dice
+      che una tariffa «e' passata per id anziche' ricostruita» — vero solo per
+      `rateOverrides` dopo questo commit. Forma T58.
+      **Debito di F1, misurato dal critic**: `App.tsx` (`:149,167,173,575`, non
+      piu' `:145,163,169,562`) e `resourceSnapshot.resources` sono tipati
+      `Resource[]`; `Person` aggiunge solo campi opzionali, quindi il
+      pass-through delle tariffe regge oggi per **identita' di oggetto**, non
+      per tipo — un rebuild `{id, name, availability}` in `App` compilerebbe
+      cancellando ogni tariffa. Tiparle `Person` rende statica la garanzia, ed
+      e' questo il task che tocca quella catena.
       Larghezze **non misurate** dalla spec: la corsia verifica
-      `scrollWidth <= clientWidth` col metodo di `docs/view.md:513-517`.
-      Accept §8 di F5 meno le clausole `Currency`. Docs: `view.md` *Dialogs*.
+      `scrollWidth <= clientWidth` col metodo che il bullet *People table* di
+      `docs/view.md` nomina. Accept §8 di F5: (1), (2), la meta' `scrollWidth`
+      di (4). Docs: `view.md` *Dialogs* (bullet *People table*).
+- [ ] F5c [impl] — La lista dei periodi di tariffa, generalizzata
+      §5.5: `AvailabilityList` **generalizzata** in un solo componente di
+      riga-periodo con una render prop per la cella valore (due wrapper
+      sottili: *Availability periods* e *Rate periods*, stessa grammatica
+      `.ranges__row--pct`), il pannello espanso (`:217-231`) che ospita le due
+      liste sotto due `.dialog__subhead`, `DraftResource` che prende
+      `ratePeriods: RateOverride[]` **al posto** del pass-through di F5a, e il
+      bottone di riepilogo (`:193-203`) che appende `, n rate periods`.
+      **`DayRangeList` non si tocca**: e' la variante senza cella valore e la
+      §5.5 non la include — generalizzarla anche lei e' allargare lo scopo.
+      **Due enumerazioni nei docs diventano incomplete e sono la forma T58**:
+      il bullet *Period-row lists* di `view.md` elenca «Calendar shutdowns,
+      People absences» (ne arriva una terza) e quello di `.dialog__subhead`
+      elenca «Calendar's Working days/Shutdowns and Task info's Computed» (ne
+      arrivano due). Stessa cosa nel commento di `.ranges__row` in `App.css`.
+      Accept §8 di F5: (3), la meta' allineamento di (4). Docs: `view.md`
+      *Dialogs*.
 - [ ] F5b [impl] — Il campo `Currency` nel dialogo People
       §5.8: il campo dichiarato nel dialogo People (e' l'unita' dei numeri
       digitati li'), il terzo argomento `currency?` a `GanttHandle.setResources`
