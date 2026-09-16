@@ -432,18 +432,89 @@ a `:300-324` col suo unico call site a `:638`, `loadProject` a `:326-367`.
       (`GanttChart.tsx:375-404`, non passa da `buildPlan`), quindi scriverla
       due volte e' esattamente il «una regola mai in due posti» di CLAUDE.md
       — e questo goal ci e' gia' cascato una volta sul totale.
-      **Debito di F7**: F3b e' il task che fa leggere `currency` a una
-      `label()`, quindi **la chiamata a `rebuildColumns()` da `loadProject`
-      va rimessa** — F7 l'aveva tolta perche' non comprava niente e
-      distruggeva le larghezze trascinate, e oggi non le distrugge piu' (il
-      rebuild le riporta per nome). Da rimisurare, non da dare per buono.
-      Vincolo della §5.8: tariffe e `currency` devono passare da **una**
-      chiamata all'handle o costano due passi di undo (`recordedChange`
-      deduplica solo su testo identico, `history.ts:49-50`). `describeChange`
-      ha gia' il caso `changed currency` (`history.ts:138`, da F1).
+      **Il debito di F7 non e' di F3b: passa a F4** (verificato dall'hub sul
+      codice il 2026-09-16, non ereditato). La riga diceva che F3b fa leggere
+      `currency` a una `label()`: falso — le cinque entry di `columns.ts` sono
+      tutte `label: () => 'Resource'` e simili, e il suo stesso docblock dice
+      «A later goal makes the currency label ride here». Le entry `rate`/`cost`
+      con la label dal `currency` sono di **F4** (§8). Rimettere la chiamata
+      qui sarebbe di nuovo una chiamata che non compra niente al commit che la
+      aggiunge, cioe' la forma esatta del difetto di F7.
+      **Anche il terzo argomento di `setResources` passa a F5**, stessa regola
+      e stessa verifica (hub, 2026-09-16): l'handle **non e' raggiungibile da
+      `window.yagni`** — `AgentApi` non ha nessuna op che scriva persone e
+      `currency` insieme, quindi in F3b quel parametro non e' misurabile da
+      nessun percorso. E' il dialogo People di F5 a passarlo, ed e' F5 che puo'
+      provarne il contratto. **La regola, una per entrambi gli spostamenti:
+      una superficie che al commit che la aggiunge non si puo' misurare non
+      appartiene a quel commit** — e' la forma del difetto di F7.
+      Vincolo della §5.8, **riletto e confermato sul codice**: `recordedChange`
+      (`history.ts:48-60`) scarta solo un testo **identico** byte a byte, non
+      fonde mai due scritture diverse — quindi una chiamata all'handle = un
+      passo di undo, due chiamate = due. `describeChange` ha gia' il caso
+      `changed currency` (`history.ts:138`, da F1).
+
+      **Ricognizione del 2026-09-16, gia' pagata — non rifarla** (tutti i
+      `file:line` riletti a `408cc88`; F3a non ha toccato nessuno di questi
+      file):
+      - `getTaskDetails` (`GanttChart.tsx:375-404`) **non passa da
+        `buildPlan`**: legge `projectRef.current` e `solvedRef.current`, e
+        quest'ultimo porta gia' `costs` e `currency` (`project.ts:81,89`).
+        Nessun cablaggio nuovo: bastano `solved.costs.get(id)` e
+        `solved.currency`. `TaskDetails` e' a `ganttHandle.ts:104-128`,
+        `GanttHandle` a `:38-101`, `setResources` a `:64`.
+      - La regola del null sta **solo** a `plan.ts:112`. Attenzione:
+        `plan.ts:132` (il totale) e' un predicato **diverso**
+        (`costedDays === 0` e basta) e non va fuso con l'altro.
+      - Modello per `setCurrency`: `AgentApi.setCalendar`
+        (`agentApi.ts:412-417`) copia → valida → `throw` → chiama l'handle;
+        l'handle (`GanttChart.tsx:482-489`) scrive su `projectRef.current` e
+        chiama `applySolution()`. Il `gantt.render()` che ha in piu' e' per
+        l'asse dei tempi che si sposta: `setCurrency` non ne ha bisogno
+        (nessuna `label()` legge ancora il progetto — e' di F4).
+      - `validateCurrency` (`cost.ts:64-74`) ha **un solo** call site non di
+        test oggi, `serialization.ts:337`: nessun percorso di scrittura vivo
+        valida il `currency`. `setCurrency` e' il primo.
+      - `agentApi.help.md`: tabella *Writing — project and calendar* righe
+        `:270-273` (dove va `setCurrency`); la semantica di `getTask()` e'
+        sparsa a `:204-245`; i bullet di `cost`/`uncostedDays` di `getPlan()`
+        sono a `:77-81` e `currency` a `:88` — **puntarci, non riscriverli**.
+      **Un accept della §8 e' sbagliato e va corretto nel brief**: l'accept (5)
+      di F3 chiede `getPlan().tasks[i].cost === costs.get(id).amount` per ogni
+      riga, ma i due divergono proprio dove la regola del null morde — su T4 e
+      T5 della Fixture C `cost` e' `null` e `amount` e' `0`. La parita' da
+      guidare e' `getTask(id)` contro `getPlan().tasks[i]`, piu' la tabella
+      della §8.
+      **Nidificazione della Fixture C** (le graffe della §8 sono sciatte; i
+      totali la fissano): `S1 { T1, T2, S2 { T3, T4, T5, T6 } }` e **`M1`
+      fratello di `S1` al primo livello** — nove righe, `S1 7800 + M1 0`.
+      **La Fixture C la scrive F3b**, non F4: la §8 ne assegna lo script a F4
+      perche' la supponeva prima, ma F3b arriva per primo e la usa. Lo script
+      esatto va nel suo STATUS, e F4/F5/F6/F8 lo riusano.
+      Porta 5173 **libera** al momento della consegna.
 - [ ] F4 [impl] — Colonne Rate e Cost **nate sul registro**, marca del
       parziale, totale in status bar
+      **Da tagliare prima di briefarlo** (Log, dimensionamento): il totale in
+      status bar legge solo `Plan` e non tocca la griglia — e' disgiunto dalle
+      due colonne, dai campi di riga e dal registro.
+      **Debito di F7, arrivato qui da F3b**: e' F4 a introdurre le prime
+      `label()` che leggono il progetto, quindi e' F4 che deve rimettere la
+      chiamata a `rebuildColumns()` — su `setCurrency` **e** su `loadProject`,
+      o aprire un file con un `currency` diverso lascia le testate stantie
+      (l'accept (4) della §8 copre solo il primo dei due). F7 l'aveva tolta
+      perche' distruggeva le larghezze trascinate; oggi il rebuild le riporta
+      per nome, ma **va rimisurato, non dato per buono**.
 - [ ] F5 [impl] — Tariffe e campo Currency nel dialogo People
+      **Da tagliare prima di briefarlo** (Log, dimensionamento): le superfici
+      tariffa del dialogo (colonna Daily rate, lista dei periodi
+      generalizzata, larghezza) e il campo `Currency` sono due cose.
+      **Arrivato da F3b**: e' F5 ad aggiungere il terzo argomento `currency?`
+      a `GanttHandle.setResources` (`ganttHandle.ts:64`) e a portarlo per la
+      catena `ResourceDialog.save` → `App.tsx:563` → handle, perche' e' il
+      primo percorso che lo puo' **misurare**. Tri-stato: assente = non
+      toccare (e' cio' che fa `commitResources`, `agentApi.ts:231`), `null` =
+      cancella, stringa = imposta. Una sola chiamata all'handle o sono due
+      passi di undo.
       **Debito di F1, misurato dal critic**: `App.tsx` (`:145,163,169,562`) e
       `resourceSnapshot.resources` restano tipati `Resource[]`, e siccome
       `Person` aggiunge solo campi opzionali i due tipi sono mutuamente
