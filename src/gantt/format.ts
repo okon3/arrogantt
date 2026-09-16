@@ -21,3 +21,20 @@
 export function formatDays(days: number): string {
   return String(Number(days.toFixed(2)));
 }
+
+const moneyFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 2 });
+
+/**
+ * A figure of money as the UI prints it, wherever it prints one.
+ *
+ * Grouped, so a five-figure total is read at a glance, and at most two decimals:
+ * a rate may itself be fractional and a fractional day of effort multiplies it,
+ * so the product has a tail nobody reads past the hundredth.
+ *
+ * Unitless like `formatDays`: the `currency` label is the caller's business, and
+ * it belongs to a header or a field label rather than repeated in every cell.
+ * Nothing here converts, and nothing picks a locale's symbol.
+ */
+export function formatMoney(amount: number): string {
+  return moneyFormat.format(amount);
+}

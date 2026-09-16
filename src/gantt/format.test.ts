@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDays } from './format';
+import { formatDays, formatMoney } from './format';
 
 describe('formatDays', () => {
   it('prints a whole number of days without decimals', () => {
@@ -32,5 +32,22 @@ describe('formatDays', () => {
   it('rounds a duration that no number of days divides evenly', () => {
     // Three tasks sharing one person for a day each: 8/3 working days.
     expect(formatDays(8 / 3)).toBe('2.67');
+  });
+});
+
+describe('formatMoney', () => {
+  it('groups the thousands of a figure nobody reads digit by digit', () => {
+    expect(formatMoney(12500)).toBe('12,500');
+    expect(formatMoney(7800)).toBe('7,800');
+  });
+
+  it('keeps the fraction a part-day of effort produces, to two decimals', () => {
+    expect(formatMoney(162.5)).toBe('162.5');
+    expect(formatMoney(2133.3333333)).toBe('2,133.33');
+  });
+
+  it('writes the number and nothing else, the currency label belongs to the caller', () => {
+    expect(formatMoney(0)).toBe('0');
+    expect(formatMoney(600)).toBe('600');
   });
 });

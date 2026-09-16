@@ -163,3 +163,124 @@ describe('buildPlan', () => {
     }
   });
 });
+
+describe('buildPlan — cost', () => {
+  // Marta is priced, Luca is not, and the milestone owns no effort at all: one
+  // tree covers the three answers a cost cell can give.
+  const priced: Project = {
+    calendar: DEFAULT_CALENDAR,
+    resources: [
+      { id: 'r1', name: 'Marta', dailyRate: 600 },
+      { id: 'r2', name: 'Luca' },
+    ],
+    tasks: [
+      { id: 'S1', name: 'Gruppo', nominalDays: 0, start: at(0) },
+      { id: 'T1', name: 'Una', nominalDays: 4, start: at(0), resourceId: 'r1', parentId: 'S1' },
+      { id: 'T2', name: 'Due', nominalDays: 3, start: at(0), resourceId: 'r2', parentId: 'S1' },
+      { id: 'M1', name: 'Consegna', nominalDays: 0, start: at(0) },
+    ],
+  };
+  const rowsOf = (project: Project) => new Map(planOf(project).tasks.map((t) => [t.id, t]));
+
+  it('prices a leaf at its own rate', () => {
+    expect(rowsOf(priced).get('T1')).toMatchObject({
+      cost: 2400,
+      uncostedDays: 0,
+      dailyRates: [600],
+    });
+  });
+
+  it('reports an unpriced leaf as null, not as zero, with its effort uncosted', () => {
+    expect(rowsOf(priced).get('T2')).toMatchObject({
+      cost: null,
+      uncostedDays: 3,
+      dailyRates: [],
+    });
+  });
+
+  it('costs a milestone zero: it has no effort to leave uncosted', () => {
+    expect(rowsOf(priced).get('M1')).toMatchObject({
+      cost: 0,
+      uncostedDays: 0,
+      dailyRates: [],
+    });
+  });
+
+  it('rolls a summary up to its costed children and keeps the rest uncosted', () => {
+    // The lower bound the UI marks with an aggregate sign, plus what it excludes.
+    expect(rowsOf(priced).get('S1')).toMatchObject({
+      cost: 2400,
+      uncostedDays: 3,
+      dailyRates: [],
+    });
+  });
+
+  it('totals the top-level rows, never every row', () => {
+    const plan = planOf(priced);
+    expect(plan.totalCost).toBe(2400);
+    expect(plan.uncostedDays).toBe(3);
+    // Summing every row would count the summary and its children both: 4800.
+    const everyRow = plan.tasks.reduce((sum, task) => sum + (task.cost ?? 0), 0);
+    expect(everyRow).toBe(4800);
+  });
+
+  it('has no total to show when nothing in the plan was costed', () => {
+    const unpriced = { ...priced, resources: [{ id: 'r2', name: 'Luca' }] };
+    const plan = planOf({ ...unpriced, tasks: priced.tasks.filter((t) => t.id !== 'T1') });
+    expect(plan.totalCost).toBeNull();
+    expect(plan.uncostedDays).toBe(3);
+    expect(planOf({ ...priced, tasks: [] }).totalCost).toBeNull();
+  });
+
+  it('leaves a disabled top-level row out of the total, as its effort is', () => {
+    // Nothing above it applies the roll-up's exclusion, so the total must.
+    const withPlaceholder: Project = {
+      calendar: DEFAULT_CALENDAR,
+      resources: [{ id: 'r1', name: 'Marta', dailyRate: 600 }],
+      tasks: [
+        { id: 'T1', name: 'Una', nominalDays: 4, start: at(0), resourceId: 'r1' },
+        {
+          id: 'T6',
+          name: 'Segnaposto',
+          nominalDays: 5,
+          start: at(0),
+          resourceId: 'r1',
+          disabled: true,
+        },
+      ],
+    };
+    const plan = planOf(withPlaceholder);
+    expect(plan.totalCost).toBe(2400);
+    // Priced on its own row all the same: dimmed, not blank.
+    expect(plan.tasks.find((task) => task.id === 'T6')?.cost).toBe(3000);
+  });
+
+  it('has no total when every top-level row is a placeholder', () => {
+    const allPlaceholders: Project = {
+      calendar: DEFAULT_CALENDAR,
+      resources: [{ id: 'r1', name: 'Marta', dailyRate: 600 }],
+      tasks: [
+        { id: 'S1', name: 'Gruppo', nominalDays: 0, start: at(0) },
+        {
+          id: 'T1',
+          name: 'Una',
+          nominalDays: 4,
+          start: at(0),
+          resourceId: 'r1',
+          parentId: 'S1',
+          disabled: true,
+        },
+      ],
+    };
+    const plan = planOf(allPlaceholders);
+    expect(plan.totalCost).toBeNull();
+    expect(plan.uncostedDays).toBe(0);
+    // A summary all of whose leaves are disabled still carries their figure.
+    expect(plan.tasks.find((task) => task.id === 'S1')?.cost).toBe(2400);
+  });
+
+  it('carries the project currency label onto the plan, or nothing', () => {
+    expect(planOf({ ...priced, currency: 'EUR' }).currency).toBe('EUR');
+    expect(planOf(priced).currency).toBeNull();
+  });
+});

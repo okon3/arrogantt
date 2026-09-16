@@ -15,7 +15,7 @@ import {
   type Task,
   type TaskCriticality,
 } from '../scheduler';
-import type { Person } from './cost';
+import { taskCosts, type Person, type TaskCost } from './cost';
 
 /**
  * A task as the user edits it.
@@ -77,6 +77,16 @@ export interface SolvedProject {
    * disagree with `solve`.
    */
   engineTasks: Task[];
+  /** What every row costs, keyed by task id: a reading of the schedule, never an input. */
+  costs: ReadonlyMap<string, TaskCost>;
+  /**
+   * The label to print beside the money, or none.
+   *
+   * Carried here because the report is built from the solution alone —
+   * `buildPlan` never sees the project — and the figures and their unit would
+   * otherwise come from two places.
+   */
+  currency: string | null;
 }
 
 export class TaskCycleError extends Error {
@@ -418,6 +428,8 @@ export function solve(project: Project): SolvedProject {
     hierarchy,
     resourcesByTask: resourcesByTask(project.tasks, hierarchy),
     engineTasks,
+    costs: taskCosts(project, { hierarchy, schedule: result, disabledIds, calendar }),
+    currency: project.currency ?? null,
   };
 }
 

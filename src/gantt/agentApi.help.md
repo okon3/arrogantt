@@ -42,7 +42,7 @@ yagni.loadText(before); // changed my mind
 
 | Call | Returns |
 | --- | --- |
-| `getPlan()` | `{ projectStart, projectEnd, tasks[] }` — the solved schedule |
+| `getPlan()` | `{ projectStart, projectEnd, totalCost, uncostedDays, currency, tasks[] }` — the solved schedule |
 | `getTask(id)` | one task in full, derived figures included |
 | `getCriticalChain()` | float and criticality per row. **Expensive** — see below |
 | `getResourceLoad()` | the plan per person: what is booked on them, and what is free |
@@ -57,7 +57,8 @@ A `getPlan()` task:
 { "id": "t1", "name": "Analysis", "parentId": null, "depth": 0, "isSummary": true,
   "start": "2026-09-07T08:00", "end": "2026-09-16T17:00",
   "effortDays": 8, "elapsedDays": 8, "shared": false, "disabled": false,
-  "resourceId": null, "predecessors": [] }
+  "resourceId": null, "predecessors": [],
+  "cost": 4800, "uncostedDays": 0, "dailyRates": [] }
 ```
 
 - `parentId` is the only structural truth; `depth` is there to print an outline.
@@ -73,6 +74,20 @@ A `getPlan()` task:
   predecessors) but weightless — no capacity, no roll-up above it, absent from
   `getCriticalChain()` and from the load. True on a summary once every leaf
   under it is disabled.
+- `cost` is the money over the part of the effort a rate priced, and `null` when
+  no rate priced any of it — *unknown*, which is not `0`. A milestone has no
+  effort to leave unpriced, so it costs `0`. `uncostedDays` is what `cost`
+  leaves out, in person-days: a `cost` beside a non-zero `uncostedDays` is a
+  lower bound, not a total.
+- `dailyRates` are the distinct rates the row was paid, ascending — one figure,
+  or the pair a task straddling a rate change owes. Empty on a summary, which
+  has as many rates as it has people, and empty wherever nothing was priced.
+- **The plan's own `totalCost` and `uncostedDays` roll up the top-level rows
+  that are not disabled, not every row** — a summary already holds its children,
+  and a placeholder weighs nothing in a total either — and `totalCost` is
+  `null` when nothing in the plan was costed. `currency` is the project's free
+  label (`EUR`, `k€`) or `null`: what to print beside the figures, which are
+  bare numbers. Nothing converts.
 - **Tasks come back in tree order** (a parent immediately before its own
   subtree) and identically between calls, so two snapshots diff row by row.
   Dragging a row on screen reorders siblings visually but not in the model, so
