@@ -10,8 +10,14 @@ Aperti: **Goal F** (costi), la cui spec e' consegnata (T59) e che aspetta
 quattro risposte dell'utente prima di scrivere i sottotask; **Goal G** (export
 cliente), il cui primo passo e' ancora analisi (T60) e che **erediteva** da F
 la decisione sul meccanismo delle colonne; **T16**, unico task di Goal C, che
-lo porterebbe alla sua review. **O4** in giacenza. La manutenzione e' vuota. Su T60 leggere prima il fatto accertato in testa a Goal G: l'export
-non fotografa il DOM.
+lo porterebbe alla sua review. **O4** in giacenza. Su T60 leggere prima il
+fatto accertato in testa a Goal G: l'export non fotografa il DOM.
+
+In manutenzione: **T63** (il picker non prende il fuoco) e il rename a
+**ARROGANTT**, in due pezzi e in quest'ordine — **T64** fuori dal repo
+(GitHub + Pages, lo fa l'utente, non una corsia) e **T65** dentro, che aspetta
+due risposte: l'espansione del nome, e se le chiavi di localStorage restano
+`yagni.*`.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
@@ -355,6 +361,75 @@ Task che non servono una milestone: difetti puntuali e salute del codice,
 arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
+
+- [ ] T64 [utente + hub] — Rinominare il repo in `arrogantt` e ripubblicare Pages
+      Va **prima** di T65, cosi' i link che T65 scrive nel README nascono
+      vivi. Non lo esegue una corsia: sta fuori dal repo e cambia un URL
+      pubblico.
+      Misurato prima di scriverlo: `origin` e'
+      `https://github.com/okon3/yagni.git`; `vite.config.ts:39` ha
+      `base: './'`, quindi gli asset sono relativi e **il deploy non va
+      toccato** — e' la cosa che di solito si rompe qui (un `base: '/yagni/'`
+      avrebbe voluto un commit suo); `deploy.yml` passa `enablement: true` a
+      `configure-pages`, quindi Pages si riconfigura al push successivo.
+      GitHub tiene redirect permanenti di web, API e git dopo un rename: i
+      clone esistenti continuano a spingere. Muoiono solo se qualcuno ricrea
+      `okon3/yagni` — non ricrearlo.
+      **Quel che non redirige e' Pages**: `okon3.github.io/yagni/` sparisce,
+      il sito rinasce su `okon3.github.io/arrogantt/`. Chi ha il vecchio link
+      va avvisato.
+      Accept: il workflow del primo push dopo il rename e' verde **e** il
+      nuovo URL apre l'app — aperta davvero, non dedotta dal workflow verde;
+      `git remote -v` dice `arrogantt`.
+
+- [ ] T65 [impl] — ARROGANTT dentro il repo: nome, agent API, docs, README
+      Rename del nome visibile e della superficie agenti. **Nessun alias
+      `window.yagni`**: taglio netto, non esistono script fuori da qui.
+      L'espansione del nome da mettere in `<title>` e in testa a
+      `agentApi.help.md` la conferma l'utente prima di briefare: senza, il
+      task non ha la stringa da scrivere.
+      Censimento misurato (`grep -ri`, esclusi `dist/` e i log):
+      - `index.html:7` — `<title>`
+      - `src/App.tsx:761` `window.yagni =`, `:770` messaggio in console,
+        `:293` commento
+      - `src/gantt/agentApi.ts:72` — la dichiarazione su `Window`
+      - `src/gantt/agentApi.help.md` — 7; **e'** anche `/llms.txt` e
+        `help()`, quindi stesso commit e mai una seconda copia
+      - `vite.config.ts:12,20` — il plugin si chiama `yagni-llms-txt`
+      - `README.md` — 17: titolo, badge del deploy, tre link a Pages, URL di
+        clone, alt della hero
+      - `docs/view.md` 3, `docs/verification.md` 2, `CLAUDE.md` 3,
+        `CHANGELOG.md` 1
+      - `package.json:2` — `"name"`; `private: true`, nessun registry dietro
+      - `columns.test.ts` 6, `draft.test.ts` 1 — leggono le chiavi di storage
+      **Fuori dal find-replace**: `src/assets/favicon.svg` porta il testo
+      `YAGNI` (due occorrenze) — e' il logo, non una stringa, e nove lettere
+      non stanno dove ne stavano cinque. Monogramma o ridisegno; se cresce,
+      task a se'.
+      **`.claude/` non si tocca** (briefs, specs, `launch.json`): e' archivio,
+      dice come si chiamava allora.
+      **Questione aperta, decide l'utente — le chiavi di localStorage**:
+      `yagni.draft.v1` (`draft.ts:16`), `yagni.seenVersion`
+      (`seenVersion.ts:8`), `yagni.columns.v1` (`columns.ts:78`).
+      Rinominarle butta il draft non salvato, riapre il changelog a tutti e
+      azzera le colonne spuntate, in cambio di niente che si veda: nessuna UI
+      le mostra. Raccomandazione: **restano `yagni.*`**, col perche' in un
+      commento (deviazione deliberata, non svista). Se invece si rinominano,
+      sono tre migrazioni leggi-vecchia-scrivi-nuova, non tre replace.
+      Accept: `grep -ri yagni` fuori da `.claude/` e `dist/` non trova altro
+      che le chiavi di storage; nel browser `arrogantt.help()` ritorna il
+      testo nuovo e `/llms.txt` servito e' identico ad `agentApi.help.md`; un
+      draft salvato **prima** del rename si riapre dopo (e' la prova che le
+      chiavi non sono cambiate); `npm test`, `npm run build`, `npm run lint`
+      puliti.
+
+**Notato dal critic di F7 e deliberatamente non aperto come task**: il
+popover del picker si posiziona una volta dall'ancora catturata all'apertura
+e **non segue un resize della finestra** (misurato: da 760 a 500px di
+larghezza resta a left 475 / right 645, cioe' fuori dal viewport). E' la
+stessa forma di `RowMenu`, che ha lo stesso comportamento da sempre e che
+nessuno ha segnalato: sotto la regola dell'80% non vale un meccanismo nuovo.
+Se qualcuno lo segnala, si aggiusta **una volta per entrambi**, non due.
 
 - [ ] T63 [impl] — Il popover delle colonne non prende il fuoco
       Trovato fuori dal bar dal critic di F7 e **misurato**: aprendo il
