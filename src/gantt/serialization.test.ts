@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CALENDAR } from '../scheduler';
 import { validateCurrency, type RateOverride } from './cost';
+import { buildPlan } from './plan';
 import { emptyProject, sampleProject, solve, type Project } from './project';
 import { validateResources } from './resources';
 import {
@@ -29,10 +30,42 @@ describe('round trip', () => {
       expect(task.solved.start).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
       expect(task.solved.end).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
       expect(typeof task.solved.shared).toBe('boolean');
+      expect(task.solved.cost === null || typeof task.solved.cost === 'number').toBe(true);
+      expect(typeof task.solved.uncostedDays).toBe('number');
+      expect(Array.isArray(task.solved.dailyRates)).toBe(true);
     }
     // A summary's report is the rollup the file's inputs cannot express.
     const summary = file.tasks.find((task: { id: string }) => task.id === '7');
     expect(summary.solved.effortDays).toBeCloseTo(3);
+    // sampleProject names nobody a rate, so nothing is priced anywhere.
+    expect(file.tasks.every((task: { solved: { cost: unknown } }) => task.solved.cost === null)).toBe(
+      true,
+    );
+    expect(file.solved.totalCost).toBeNull();
+    expect(file.solved.uncostedDays).toBeGreaterThan(0);
+  });
+
+  it('writes the file per-task cost and project totalCost from the same plan getPlan() reads', () => {
+    const project: Project = {
+      calendar: DEFAULT_CALENDAR,
+      currency: 'EUR',
+      resources: [{ id: 'r1', name: 'Marta', dailyRate: 600 }],
+      tasks: [{ id: '1', name: 'A', nominalDays: 2, start: new Date(2026, 0, 5, 8, 0), resourceId: 'r1' }],
+    };
+    const solved = solve(project);
+    const plan = buildPlan(solved);
+    const text = serializeProject(project, solved);
+    const file = JSON.parse(text);
+    const task = file.tasks.find((entry: { id: string }) => entry.id === '1');
+    const expected = plan.tasks.find((entry) => entry.id === '1')!;
+    // Pinned as well as compared: a fixture that silently stopped being priced
+    // would leave the comparison green on null === null.
+    expect(expected.cost).toBe(1200);
+    expect(task.solved.cost).toBe(expected.cost);
+    expect(file.solved.totalCost).toBe(plan.totalCost);
+    // The root key is the input; the report never repeats it.
+    expect(file.currency).toBe('EUR');
+    expect('currency' in file.solved).toBe(false);
   });
 
   it('ignores the report on load: the inputs alone decide the schedule', () => {

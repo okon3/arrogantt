@@ -48,7 +48,7 @@ yagni.loadText(before); // changed my mind
 | `getResourceLoad()` | the plan per person: what is booked on them, and what is free |
 | `getResources()` | `Resource[]`, `availability` as a fraction `0..1` |
 | `getCalendar()` | `{ workingDays, windows, holidays? }` |
-| `toText()` | the project as `.gantt`, what Save downloads: the inputs plus a `solved` report per task and per project — same fields as `getPlan()`, ignored on load. **Throws** rather than return a text `loadText()` would refuse |
+| `toText()` | the project as `.gantt`, what Save downloads: the inputs plus a `solved` report — per task the solved start, end, effort, elapsed days, contention, cost, uncosted days and daily rates; per project the solved start/end, `solvedAt`, `totalCost` and `uncostedDays` — ignored on load. **Throws** rather than return a text `loadText()` would refuse |
 | `getFilename()`, `isDirty()` | what the toolbar shows |
 
 A `getPlan()` task:

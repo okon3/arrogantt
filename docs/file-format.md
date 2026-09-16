@@ -9,11 +9,13 @@
   `YYYY-MM-DD` strings, never `Date`s (a `Date` carries time+zone that can push
   a holiday onto the neighbouring day).
 - A save also writes the solved schedule as a **report**: `solved` per task
-  (start, end, effort, elapsed, contention) and per project (`projectStart`,
-  `projectEnd`, `solvedAt`). Same solve as the inputs beside it, **ignored
-  entirely on load** — it exists for an agent reading the file without the app
-  (`start` = what was asked, report = where it landed, `solvedAt` = snapshot
-  date).
+  (start, end, effort, elapsed, contention, cost, uncosted days, daily rates)
+  and per project (`projectStart`, `projectEnd`, `solvedAt`, `totalCost`,
+  `uncostedDays`). No `currency` in the project block — the root `currency`
+  key (below) is where that fact lives. Same solve as the inputs beside it,
+  **ignored entirely on load** — it exists for an agent reading the file
+  without the app (`start` = what was asked, report = where it landed,
+  `solvedAt` = snapshot date).
 - Undo history, draft and the `dirty` comparison use the **input-only**
   serialization (a report in a snapshot is noise; `dirty` would compare
   mismatched shapes). The file is written compact (no indentation) — agents
@@ -90,13 +92,22 @@ CSV import (results are not premises).
 
 Dialect for the target spreadsheet locale: `;` separator, decimal comma, CRLF,
 UTF-8 BOM, dates `DD/MM/YYYY HH:mm`. `Level` = outline depth; `Summary` marks
-summaries (their effort is the children's rollup — summing without the flag
-double-counts); `Contended` = stretched by sharing, vs part-time/absence;
-`Disabled` marks a placeholder the effort column would otherwise sum in as
-committed work (appended last, so a sheet built on the earlier column order
-still reads). Dates come from
-the schedule's own `Date`s, never re-converted from working minutes (milestone
-lands on its diamond's instant).
+summaries (their figures are the children's rollup — summing a column without
+the flag double-counts); `Contended` = stretched by sharing, vs
+part-time/absence; `Disabled` marks a placeholder the numeric columns would
+otherwise sum in as committed work. Dates come from the schedule's own `Date`s, never re-converted
+from working minutes (milestone lands on its diamond's instant).
+
+`Cost` and `Uncosted (d)` are appended after `Disabled`, the last two columns
+so a sheet built on the earlier order still reads. `Cost` carries the
+`currency` label in its header (`Cost (EUR)`, plain `Cost` with none); the
+cell itself is a bare number, empty when nothing priced the row (no resource,
+or a person with no rate on those days). Empty is not `0`: a `0` is a row that
+*was* priced — a milestone, with no effort to leave out, or a rate declared at
+`0`. `Uncosted (d)` always writes its person-days, `0` included. Both figures
+use the same decimal comma as the other columns and **no grouping** (a grouped
+figure is a text cell). A summary's `Cost` sums only its priced children, so
+beside a non-zero `Uncosted (d)` it is a lower bound.
 
 ## PNG and print
 

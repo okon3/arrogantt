@@ -38,6 +38,11 @@ const HEADERS = [
   'Disabled',
 ];
 
+/** The currency label rides the header; cells stay bare numbers (§5.4). */
+function headers(currency: string | null): string[] {
+  return [...HEADERS, currency ? `Cost (${currency})` : 'Cost', 'Uncosted (d)'];
+}
+
 /** `YYYY-MM-DDTHH:mm` as the day comes first here, purely textual. */
 function localDateTime(wallClock: string): string {
   const [date, time] = wallClock.split('T');
@@ -46,8 +51,8 @@ function localDateTime(wallClock: string): string {
 }
 
 /** Decimal comma, or the figure lands in a text cell nobody can sum. */
-function decimal(days: number): string {
-  return formatDays(days).replace('.', ',');
+function decimal(value: number): string {
+  return formatDays(value).replace('.', ',');
 }
 
 function escape(value: string): string {
@@ -73,6 +78,8 @@ function row(task: PlanTask, nameOfResource: (id: string) => string): string[] {
     // Without it an exported plan reads a placeholder as committed work, and
     // the effort column sums it in with the rest.
     task.disabled ? 'yes' : '',
+    task.cost === null ? '' : decimal(task.cost),
+    decimal(task.uncostedDays),
   ];
 }
 
@@ -82,6 +89,6 @@ export function planToCsv(plan: Plan, resources: Resource[]): string {
   // and the agent API all refuse one — so falling back to the id is a last
   // resort rather than a case.
   const nameOfResource = (id: string) => names.get(id) ?? id;
-  const lines = [HEADERS, ...plan.tasks.map((task) => row(task, nameOfResource))];
+  const lines = [headers(plan.currency), ...plan.tasks.map((task) => row(task, nameOfResource))];
   return BOM + lines.map((line) => line.map(escape).join(SEPARATOR)).join(NEWLINE) + NEWLINE;
 }

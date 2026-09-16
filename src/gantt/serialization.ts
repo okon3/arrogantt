@@ -66,6 +66,9 @@ export function serializeProject(project: Project, solved?: SolvedProject): stri
       effortDays: row.effortDays,
       elapsedDays: row.elapsedDays,
       shared: row.shared,
+      cost: row.cost,
+      uncostedDays: row.uncostedDays,
+      dailyRates: row.dailyRates,
     };
   };
   return JSON.stringify(
@@ -77,6 +80,8 @@ export function serializeProject(project: Project, solved?: SolvedProject): stri
             solvedAt: serializeDate(new Date()),
             projectStart: plan.projectStart,
             projectEnd: plan.projectEnd,
+            totalCost: plan.totalCost,
+            uncostedDays: plan.uncostedDays,
           }
         : undefined,
       calendar: project.calendar,
