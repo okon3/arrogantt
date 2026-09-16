@@ -11,9 +11,15 @@ import {
   Plus,
 } from 'lucide-react';
 import { CRITICAL_CHAIN_LIMIT, type ChainState } from './project';
+import { formatDays, formatMoney } from './format';
 
 export interface StatusBarProps {
   taskCount: number;
+  /**
+   * The plan's total, or null when nothing in it was costed — which is what the
+   * footer then shows: nothing.
+   */
+  cost: { totalCost: number; uncostedDays: number; currency: string | null } | null;
   /** Label of the active zoom level, already localised by the chart. */
   scale: string;
   /** What the chart is showing of the critical chain, which decides what the control offers. */
@@ -75,6 +81,7 @@ const CHAIN_SHOWN: Record<ChainState, boolean> = {
 
 export function StatusBar({
   taskCount,
+  cost,
   scale,
   chainState,
   loadShown,
@@ -96,6 +103,21 @@ export function StatusBar({
   return (
     <footer className="statusbar">
       <span>{taskCount} tasks</span>
+      {cost && (
+        <span
+          className="statusbar__cost"
+          title={
+            cost.uncostedDays > 0
+              ? `${formatDays(cost.uncostedDays)} d of effort not costed`
+              : undefined
+          }
+        >
+          Cost {cost.uncostedDays > 0 ? '≥ ' : ''}
+          {formatMoney(cost.totalCost)}
+          {cost.currency ? ` ${cost.currency}` : ''}
+          {cost.uncostedDays > 0 ? ` · ${formatDays(cost.uncostedDays)} d not costed` : ''}
+        </span>
+      )}
       {/* Nothing is filtered, so this is a way through the plan and belongs with
           the other controls over the view rather than with the file actions. */}
       <div className="statusbar__search">

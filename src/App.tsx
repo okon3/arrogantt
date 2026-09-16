@@ -29,7 +29,7 @@ import { buildPlan } from './gantt/plan';
 import { planToCsv } from './gantt/planCsv';
 import { planFigure, planFigurePages } from './gantt/planFigure';
 import { installPrintFigure } from './gantt/printPlan';
-import { StatusBar } from './gantt/StatusBar';
+import { StatusBar, type StatusBarProps } from './gantt/StatusBar';
 import { Toolbar } from './gantt/Toolbar';
 import {
   PROJECT_EXTENSION,
@@ -98,6 +98,10 @@ export default function App() {
   const [seenVersionAtStart] = useState<string | null>(() => readSeenVersion(draftStore));
   const [error, setError] = useState<string | null>(null);
   const [taskCount, setTaskCount] = useState(initialProject.tasks.length);
+  // `initialProject` is `emptyProject()` — nothing to cost — so null is its
+  // exact answer and no solve at first render is needed; every later value
+  // comes from `syncFromChart` reading `buildPlan(handle.getSolved())`.
+  const [cost, setCost] = useState<StatusBarProps['cost']>(null);
   const [dragging, setDragging] = useState(false);
   const [scale, setScale] = useState(INITIAL_SCALE_LABEL);
   // Off by default: the outlines read as a warning on every bar before anyone
@@ -185,6 +189,15 @@ export default function App() {
     setPeople([...resources]);
     setPinnedResource((pinned) =>
       pinned && resources.some((resource) => resource.id === pinned) ? pinned : null,
+    );
+    // The status bar's total: a reading of the solve, not a predicate on the
+    // people list, and the roll-up rule stays in `buildPlan` alone.
+    const solved = chart.current?.getSolved();
+    const plan = solved ? buildPlan(solved) : null;
+    setCost(
+      plan && plan.totalCost !== null
+        ? { totalCost: plan.totalCost, uncostedDays: plan.uncostedDays, currency: plan.currency }
+        : null,
     );
   }, []);
 
@@ -925,6 +938,7 @@ export default function App() {
 
       <StatusBar
         taskCount={taskCount}
+        cost={cost}
         scale={scale}
         chainState={chainState}
         loadShown={showLoad}

@@ -333,6 +333,15 @@ that isn't there.
   (dhtmlx drops hand-set classes on redraw, and a hover redraw would replace the
   node under the pointer).
 
+## Status bar
+
+- The project total sits beside `N tasks`: `Cost 12,500 EUR`, or `Cost ≥
+  12,500 EUR · 7 d not costed` when part of it is a lower bound (rates are
+  non-negative, so `≥` cannot lie), or with no suffix when the project has no
+  `currency` label. Shown iff `buildPlan(...).totalCost !== null` — a reading
+  of the solve, not of the people list: a rate with nothing assigned prices
+  nothing and shows nothing. Independent of the grid's column selection.
+
 ## Search
 
 - Status-bar box: marks matches in grid and timeline, shows count; Enter walks
