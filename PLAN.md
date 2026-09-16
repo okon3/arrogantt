@@ -211,13 +211,21 @@ Il resto della spec — §2 a §6 — regge intatto. Il delta e' il prossimo pas
       all'handle o costano due passi di undo.
       Verificato dall'hub: 11 `file:line` nuovi su 11 combaciano.
 
+**Autonomia concessa dall'utente il 2026-09-16**: l'hub lavora **tutto Goal F
+fino alla goal review** senza la pausa di fine task — brief, corsia, checks,
+critic e commit per ognuno degli otto. Si fermano i lavori solo per una
+decisione che e' sua (comportamento visibile o difficile da tornare
+indietro), per un task che si blocca in fondo alla scala di escalation, e al
+verdetto della goal review. **La rinomina dell'heading `Unreleased` resta da
+confermare**: la deroga non e' stata comprata.
+
 **La scomposizione: F7 → F1 → F2 → F3 → F4 → F5 → F6 → F8**, seriale (un
 browser, una porta). Gli accept per esteso stanno nella §8 della spec, con la
 **Fixture C** condivisa e la sua tabella dei valori attesi per cella; qui sta
 lo stato. Solo F2 e' `deep` (effort conservato); **nessun sottotask tocca
 `src/scheduler/`**, ed e' la decisione che tiene il motore fuori dal denaro.
 
-- [ ] F7 [impl] — Registro delle colonne, selezione, persistenza, picker
+- [>] F7 [impl] — Registro delle colonne, selezione, persistenza, picker
       Accept: §8. **Il task piu' grosso del goal, e non e' splittato**: la
       spec sostiene che un registro senza il suo picker non e' verificabile
       nel browser, e la ragione regge perche' `setColumns` vive
