@@ -879,7 +879,9 @@ L'utente ha scelto il 2026-09-16 di farle **tutte e quattro**, F12 compresa.
 **Ordine: F9 → F13 → F14 → F10 → F11 → F12**, seriale: F9 e F10 toccano
 entrambe `costCells.ts` e F9 ne cambia la firma, quindi F10 la segue e non la
 precede. F13 e F14 sono due richieste dell'utente arrivate a goal aperto, e
-rientrano nella review che girera' sul delta.
+rientrano nella review che girera' sul delta. **F15 e' nato dalla misura di
+F14 e la sua posizione e' dell'utente**: tocca `columns.ts` come F14 ma e' una
+decisione sua, non un'azione della review.
 
 - [x] F9 [impl] — La ragione del costo su un summary non deve nominare una
       persona che sulla riga non c'e' — `12e1006`. `costCellText` prende un
@@ -907,7 +909,7 @@ rientrano nella review che girera' sul delta.
       parziale → `≥ 1,200` / `3 d of effort not costed`, summary interamente
       costato → cifra nuda, milestone e summary a effort zero → cella vuota,
       riga disabled e ramo chiuso invariati, console pulita.
-- [ ] F14 [self] — Nessuna testata di colonna sia tagliata
+- [x] F14 [self] — Nessuna testata di colonna sia tagliata — `7db1229`
       Aperto dall'utente il 2026-09-16 su richiesta esplicita, **in testa alla
       coda**: prima di F10.
       Misurato dall'hub su F13 e da non ripagare: con `currency` `EUR` la
@@ -935,6 +937,64 @@ rientrano nella review che girera' sul delta.
       Accept: la matrice nel report, nessuna testata tagliata con una valuta da
       3 caratteri, e per il caso da 8 una decisione dichiarata (allargare, o
       `title` sulla testata, o taglio accettato) con la misura accanto.
+      **Censito e chiuso con un solo numero: `rate.gridWidth` 62 → 84.**
+      Guidate: le 7 testate del registro piu' `text`, e su Rate/Cost dieci
+      valute — assente, `$`, `₽`, `EUR`, `€€€`, `CHF`, `人民元`, `WWW`,
+      `EUROCENT`, `WWWWWWWW` — in due font. **Non guidate**: le celle delle
+      altre cinque colonne, i `figureWidth` (di Goal G), una larghezza
+      trascinata a mano (ogni colonna e' `resize: true` e la trascinata non
+      persiste), il tema chiaro, le valute da 4 a 7 caratteri, e un'altra
+      macchina. I tre esiti che contano. (a) La testata e' clippata **a
+      qualunque valuta da 3
+      caratteri**, non solo `EUR`: la piu' larga misurata e' `Rate (WWW)`
+      79.22px, la CJK `Rate (人民元)` 78.06, e 84 le tiene tutte con 4.78px di
+      margine (80 ne lascerebbe 0.78, cioe' un secondo `Duration`). `Cost` a
+      84 teneva gia' ogni valuta da 3 (`Cost (WWW)` 81.98, +2.02) e non si e'
+      toccata. (b) `Duration` ha **esattamente 0.00px di margine** (ink 62.00
+      su 62; il `Range` dice 62.66 perche' il letter-spacing si somma anche
+      dopo l'ultimo glifo) — lasciata cosi': il difetto visibile non era
+      `DURATION` ma `DURATIONRATE (EUR`, due testate attaccate perche' `rate`
+      sforava, e allargarla sposterebbe i 706px per nulla che si veda.
+      (c) **`text-overflow: ellipsis` misurata e scartata**, non dedotta:
+      iniettata e fotografata a 4×, il browser riserva la larghezza dei
+      puntini e `DURATION` perde *due* caratteri (`DURATI…`) per 0.66px di
+      sforamento. Il clip e' il renderer migliore qui.
+      Totali misurati: default **706 invariato** (`rate` e `cost` restano
+      `defaultShown: false`, quindi il budget dell'utente non si muove), +Rate
+      790 (era 768), +Rate+Cost 874 (era 852).
+      **Trovato dal censimento e graduato in `docs/dhtmlx.md`**: il font della
+      testata non e' dell'app — `Inter` non compare da nessuna parte in `src/`,
+      lo mette il CSS di dhtmlx sulla head cell (piu' specifico del nostro
+      `font-family: inherit`) con un `@font-face` che lo scarica da
+      `fonts.gstatic.com` in `font-display: swap`. Quindi ogni numero di testata
+      e' di un webfont, e offline resta il fallback: misurati entrambi, 84 tiene
+      in Inter **e** in Helvetica (che sulle etichette piu' larghe e' piu'
+      stretto). Le celle invece ereditano e rendono `system-ui` a 13px.
+      **La ragione nel doc era falsa, ed e' la settima del goal**: la prima
+      stesura diceva che sono «le sole due colonne la cui testata e' la loro
+      stringa piu' larga» — l'ha trovata il critic misurando una cella da
+      109px. Riscritta su cio' che resiste alla misura (la testata ha un
+      massimo legale, `validateCurrency` 8 caratteri; la cella nessuno,
+      `resources.ts:120` vuole solo finito e `>= 0`), con la premessa in **una**
+      casa sola (`columns.ts`) e `docs/view.md` che la indica.
+
+- [ ] F15 [self] — La cella di costo di un summary parziale e' tagliata
+      Trovato dal censimento di F14 (misurato, non dedotto) e **lasciato
+      all'utente perche' muove il suo budget**: la cella ha un box contenuto di
+      72px dentro gli 84 della colonna (`padding: 0 6px`, `system-ui` 13px), e
+      `≥ 12,250,000` misura 74.17px — **tagliata di 2.17px**, senza ellissi e
+      senza `title`. Non e' il caso patologico: una cifra nuda ci sta fino a
+      `122,250,000` (68.72px, +3.28), ma il prefisso `≥ ` di un summary
+      parzialmente costato costa ~5.5px, quindi **un totale a 8 cifre con del
+      costo mancante basta** — un programma da 12M in una valuta qualunque.
+      Preesistente (F14 non ha toccato `cost.gridWidth`) e **una decisione
+      diversa dalla sua**: allargare `cost` sposta la griglia di chi mostra la
+      colonna (874 → 880+ con Rate), e il tetto non esiste comunque, quindi la
+      scelta e' fra «un caso plausibile in piu' ci sta» e «la cella si taglia
+      in silenzio, dichiarato». Il range tariffa e' sullo stesso filo:
+      `2,400–2,600` misura 68.20px, +3.80.
+      Accept: la larghezza scelta dall'utente con la somma nuova accanto, o il
+      taglio dichiarato in `docs/view.md` con la misura.
 - [ ] F10 [self] — `currencyLabel` e il testo dell'effort non costato tornino a
       una casa sola
       `planCsv.ts` ri-scrive `Cost (${currency})` a mano invece di chiamare
@@ -1362,16 +1422,15 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 
 ## Log
 - **Dimensionamento**: impl oltre ~200k = task da splittare (T35, F7 257k, F1
-  222k, F4b 228k); splittato rende 120-170k a meta' (F2a, F3a, F3b, F6a).
-  **Si taglia la campagna di verifica, non il codice**: F5a e F5c, ri-splittate
-  sul codice, sono risalite a 215k e 242k; se la campagna non si taglia si
-  detta il codice (F6b 181k), e **toglierla del tutto non rende economico il
-  task** (F8, accept tutto unit, 157k/146k). F9, un flag e tre chiamanti,
-  113k/123k. Una correzione via SendMessage costa meno di un fresh spawn
-  (~40k), ma non oltre ~190k. **Il critic e' la voce piu' cara e la piu'
-  redditizia**: 75-95k a tavolino, 122-242k nel browser, 191k la goal review;
-  su T58 ha ribaltato una premessa, su F8 rifatto il pin da `git show`, su F9
-  chiuso un overclaim dell'hub.
+  222k, F4b 228k); splittato rende 120-170k a meta' (F2a, F3a, F3b, F6a, F9
+  113k). **Si taglia la campagna di verifica, non il codice**: F5a e F5c,
+  ri-splittate sul codice, sono risalite a 215k e 242k; se la campagna non si
+  taglia si detta il codice (F6b 181k), e **toglierla del tutto non rende
+  economico il task** (F8, accept tutto unit, 157k/146k). Una correzione via
+  SendMessage costa meno di un fresh spawn (~40k), ma non oltre ~190k. **Il
+  critic e' la voce piu' cara e la piu' redditizia**: 75-95k a tavolino,
+  122-242k nel browser, 191k la goal review; su T58 ha ribaltato una premessa,
+  su F8 rifatto il pin da `git show`, su F9 e F14 un overclaim dell'hub.
 - **Un elenco enumerato da una sezione di spec e' completo o non e' un elenco.**
   F2b: la consegna dava due regole del null su tre e taceva il filtro
   `disabledIds` della §5.3, e l'hub ha poi giustificato la scelta da se' senza
@@ -1380,10 +1439,10 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   ha ristretto «the widest string of each» alle stringhe della fixture, e la
   piu' larga legale era una testata — l'ha trovata il critic. Vale per chi
   consegna, per chi implementa e per l'hub che briefa: si rilegge la sezione.
-- **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta (T56) e due
-  Explore non residenti (T57) hanno chiuso un task a testa per pochi k, dove
-  una corsia paga 40k di solo ingresso. **Prima di briefare, misurare la
-  premessa**: se cade, il brief non serve.
+- **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta (T56), due
+  Explore non residenti (T57) e il censimento di F14 nel browser hanno chiuso
+  un task a testa dove una corsia paga 40k di solo ingresso. **Prima di
+  briefare, misurare la premessa**: se cade, il brief non serve.
 - **Una citazione copiata non e' verificata**: ne' un `file:line` (T43), ne' un
   nome di tipo (T48), **ne' un predicato** (F6b: il `isMilestone` del dialogo
   legge il campo in edit, non `effortDays` come diceva la consegna). Si
@@ -1394,9 +1453,10 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 - **Cio' che una corsia dichiara impossibile o preesistente va confrontato con
   l'evidenza**: T43 dava il drag reale per non guidabile, T41 e F4b l'hanno
   fatto. Su T48 fatto bene: misurato su HEAD **e** sul tree.
-- **Una ragione registrata male in un doc e' peggio di nessun doc**: sei volte
-  in questo goal (F7, F5c, F5b, F6a, il `currencyLabel` di F6b, F9), quasi
-  sempre per mano dell'hub. Si verifica sul percorso che la usa, non sulla riga
-  che la enuncia — **e riscriverla non la ripara**: su F9 l'hub ha riscritto
-  l'overclaim della corsia avendo in mano la misura contraria, e in forma piu'
-  sottile e' sopravvissuto. Chi enumera superfici dica quale rende il campo.
+- **Una ragione registrata male in un doc e' peggio di nessun doc**: sette
+  volte in questo goal (F7, F5c, F5b, F6a, il `currencyLabel` di F6b, F9,
+  F14), quasi sempre per mano dell'hub, e tre volte l'ha chiusa il critic. Si
+  verifica sul percorso che la usa, non sulla riga che la enuncia, **e
+  riscriverla non la ripara** (F9). Chi enumera superfici dica quale rende il
+  campo; **chi dice «la stringa piu' larga» dica contro cosa e' limitata** —
+  la testata di F14 ha un massimo legale, la sua cella nessuno.
