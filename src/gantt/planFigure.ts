@@ -1,6 +1,9 @@
 import { dateOfDay, dayIndexOf } from '../scheduler';
 import { DEFAULT_BAR_COLOR, shade } from './colors';
+import { PLAN_COLUMNS, type PlanColumnName } from './columns';
+import { costCellText, rateCellText } from './costCells';
 import { parseWallClock } from './dates';
+import { formatDays } from './format';
 import { buildPlan, type PlanTask } from './plan';
 import { effectiveColorOf, type Project, type SolvedProject } from './project';
 
@@ -35,6 +38,11 @@ export interface FigureOptions {
    * figure shares one time scale and the bars line up from one to the next.
    */
   slice?: { from: number; count: number };
+  /**
+   * The plan columns to draw between the name column and the timeline, in
+   * registry order. Absent = the legacy Name + Person outline.
+   */
+  columns?: PlanColumnName[];
 }
 
 export interface Figure {
@@ -47,6 +55,8 @@ const PADDING = 16;
 const TITLE_HEIGHT = 26;
 const MONTH_BAND = 18;
 const TICK_BAND = 18;
+/** The band of column labels above the month band, drawn only when `columns` is given. */
+const HEADER_BAND = 18;
 const ROW_HEIGHT = 24;
 const NAME_WIDTH = 250;
 const PERSON_WIDTH = 110;
@@ -120,12 +130,12 @@ interface Geometry {
   x(date: Date): number;
 }
 
-function geometryOf(from: Date, to: Date, width: number): Geometry {
+function geometryOf(from: Date, to: Date, width: number, labelWidth: number): Geometry {
   const firstDay = dayIndexOf(from);
   // Inclusive of the closing day, or a plan ending on a Friday would run out of
   // axis at Thursday midnight and lose its last bar.
   const lastDay = Math.max(dayIndexOf(to), firstDay);
-  const left = PADDING + NAME_WIDTH + PERSON_WIDTH;
+  const left = PADDING + NAME_WIDTH + labelWidth;
   const pxPerDay = (width - PADDING - left) / (lastDay - firstDay + 1);
   return {
     firstDay,
@@ -147,6 +157,45 @@ function isMilestone(task: PlanTask): boolean {
   // too — and that one is a bracket over a row, not a date.
   return task.effortDays === 0 && !task.isSummary;
 }
+
+/** One cell's plain text; the drawing loop truncates and escapes it. */
+type FigureCell = (task: PlanTask, ctx: { names: ReadonlyMap<string, string> }) => string;
+
+/**
+ * One renderer per registry entry, keyed exhaustively — the figure-side twin
+ * of `GRID_CELLS` in `gridColumns.ts`, minus the HTML: the figure draws plain
+ * `<text>`, with no hover and no register class.
+ */
+const FIGURE_CELLS: Record<PlanColumnName, FigureCell> = {
+  resource_id: (task, ctx) =>
+    task.resourceId ? ctx.names.get(task.resourceId) ?? task.resourceId : '',
+  nominal_days: (task) => `${formatDays(task.effortDays)}d`,
+  start_date: (task) => {
+    const date = parseWallClock(task.start);
+    return date ? formatDay(date) : '';
+  },
+  end_shown: (task) => {
+    const date = parseWallClock(task.end);
+    return date ? formatDay(date) : '';
+  },
+  elapsed_days: (task) => `${formatDays(task.elapsedDays)}d`,
+  // The rule that decides a rate or cost cell's text lives in costCells.ts,
+  // shared with the grid and the details dialog (F6a/F6b) — never re-derived
+  // here.
+  rate: (task) =>
+    rateCellText({
+      dailyRates: task.dailyRates,
+      isSummary: task.isSummary,
+      isMilestone: isMilestone(task),
+    }).text,
+  cost: (task, ctx) =>
+    costCellText({
+      effortDays: task.effortDays,
+      cost: task.cost,
+      uncostedDays: task.uncostedDays,
+      resourceName: task.resourceId ? ctx.names.get(task.resourceId) ?? task.resourceId : null,
+    }).text,
+};
 
 function bar(task: PlanTask, top: number, geometry: Geometry, color: string): string {
   const start = parseWallClock(task.start);
@@ -243,11 +292,27 @@ export function planFigure(
     ? plan.tasks.slice(options.slice.from, options.slice.from + options.slice.count)
     : plan.tasks;
 
-  const chartTop = PADDING + (options.title ? TITLE_HEIGHT : 0);
+  // Absent `columns` is the legacy Name + Person outline, kept byte-identical:
+  // `selected` stays null rather than `[]`, which is itself a valid (empty)
+  // selection that still draws the header band.
+  const selected = options.columns
+    ? PLAN_COLUMNS.filter((entry) => new Set(options.columns).has(entry.name))
+    : null;
+  const labelWidth = selected
+    ? selected.reduce((total, entry) => total + entry.figureWidth, 0)
+    : PERSON_WIDTH;
+
+  const chartTop =
+    PADDING + (options.title ? TITLE_HEIGHT : 0) + (options.columns ? HEADER_BAND : 0);
   const rowsTop = chartTop + MONTH_BAND + TICK_BAND;
   const rowsBottom = rowsTop + rows.length * ROW_HEIGHT;
   const height = rowsBottom + PADDING;
-  const geometry = geometryOf(solved.schedule.projectStart, solved.schedule.projectEnd, width);
+  const geometry = geometryOf(
+    solved.schedule.projectStart,
+    solved.schedule.projectEnd,
+    width,
+    labelWidth,
+  );
 
   const parts: string[] = [`<rect width="${width}" height="${round(height)}" fill="#fff" />`];
 
@@ -264,6 +329,23 @@ export function planFigure(
       `<text x="${width - PADDING}" y="${PADDING + 14}" font-size="11" fill="${INK_MUTED}" ` +
         `text-anchor="end">${escapeXml(span)}</text>`,
     );
+  }
+
+  // The topmost band, above the month band — drawn whenever `columns` is
+  // given, `columns: []` included, which is a band with no labels in it.
+  if (options.columns) {
+    const headerTop = PADDING + (options.title ? TITLE_HEIGHT : 0);
+    let left = PADDING + NAME_WIDTH;
+    for (const entry of selected!) {
+      const label = truncate(entry.label(project), entry.figureWidth - 6);
+      if (label) {
+        parts.push(
+          `<text x="${round(left)}" y="${round(headerTop + 13)}" font-size="11" ` +
+            `font-weight="600" fill="${INK_MUTED}">${escapeXml(label)}</text>`,
+        );
+      }
+      left += entry.figureWidth;
+    }
   }
 
   if (rows.length > 0) {
@@ -292,12 +374,26 @@ export function planFigure(
           `${task.isSummary ? 'font-weight="600" ' : ''}fill="${INK}">` +
           `${escapeXml(truncate(task.name, PADDING + NAME_WIDTH - nameLeft - 6))}</text>`,
       );
-      const person = task.resourceId ? names.get(task.resourceId) ?? task.resourceId : '';
-      if (person) {
-        parts.push(
-          `<text x="${PADDING + NAME_WIDTH}" y="${round(top + 16)}" font-size="11" ` +
-            `fill="${INK_MUTED}">${escapeXml(truncate(person, PERSON_WIDTH - 6))}</text>`,
-        );
+      if (selected) {
+        let left = PADDING + NAME_WIDTH;
+        for (const entry of selected) {
+          const text = FIGURE_CELLS[entry.name](task, { names });
+          if (text) {
+            parts.push(
+              `<text x="${round(left)}" y="${round(top + 16)}" font-size="11" ` +
+                `fill="${INK_MUTED}">${escapeXml(truncate(text, entry.figureWidth - 6))}</text>`,
+            );
+          }
+          left += entry.figureWidth;
+        }
+      } else {
+        const person = task.resourceId ? names.get(task.resourceId) ?? task.resourceId : '';
+        if (person) {
+          parts.push(
+            `<text x="${PADDING + NAME_WIDTH}" y="${round(top + 16)}" font-size="11" ` +
+              `fill="${INK_MUTED}">${escapeXml(truncate(person, PERSON_WIDTH - 6))}</text>`,
+          );
+        }
       }
       parts.push(bar(task, top, geometry, colorOf(task, project, solved)));
     });

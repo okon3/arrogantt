@@ -119,3 +119,5 @@ beside a non-zero `Uncosted (d)` it is a lower bound.
   and axis repeated, one shared time scale (browsers won't break an image across
   pages — unpaged = cropped). *Save as PDF* in the print dialog **is** the PDF
   export.
+- The figure takes a `columns` list (`FigureOptions.columns`, drawn as a
+  header band above the month band); the app passes none yet.
