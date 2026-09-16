@@ -10,7 +10,7 @@ import { CircleHelp } from 'lucide-react';
 // ?inline: as a data URI the mark survives even a lone single-file index.html,
 // where a URL beside the page would have nothing to point at.
 import markUrl from './assets/favicon.svg?inline';
-import type { CalendarSpec, Resource } from './scheduler';
+import type { CalendarSpec } from './scheduler';
 import { GanttChart } from './gantt/GanttChart';
 import { INITIAL_SCALE_LABEL } from './gantt/zoomLevels';
 import type { GanttHandle } from './gantt/ganttHandle';
@@ -23,6 +23,7 @@ import { EmptyState } from './gantt/EmptyState';
 import { HelpDialog } from './gantt/HelpDialog';
 import { ResourceDialog } from './gantt/ResourceDialog';
 import { TaskDialog } from './gantt/TaskDialog';
+import type { Person } from './gantt/cost';
 import type { TaskDetails, TaskPatch } from './gantt/ganttHandle';
 import { createAgentApi } from './gantt/agentApi';
 import { buildPlan } from './gantt/plan';
@@ -146,7 +147,7 @@ export default function App() {
   const [resourcesOpen, setResourcesOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
-  const [people, setPeople] = useState<Resource[]>(initialProject.resources);
+  const [people, setPeople] = useState<Person[]>(initialProject.resources);
   // Two sources for one highlight: the toolbar pins a person until they are
   // unpinned, an avatar under the pointer borrows it for as long as it is there.
   const [pinnedResource, setPinnedResource] = useState<string | null>(null);
@@ -164,13 +165,13 @@ export default function App() {
     details: TaskDetails;
     /** Measured when the dialog opens, since the figure costs a search. */
     slack: MeasuredSlack | null;
-    resources: Resource[];
+    resources: Person[];
   } | null>(null);
   const [calendarSnapshot, setCalendarSnapshot] = useState<CalendarSpec>(DEFAULT_CALENDAR);
   // Snapshotted when the dialog opens: the chart owns the live project, and
   // reading it on every render would fight the imperative handle.
   const [resourceSnapshot, setResourceSnapshot] = useState<{
-    resources: Resource[];
+    resources: Person[];
     taskCounts: Map<string, number>;
   }>({ resources: [], taskCounts: new Map() });
 
@@ -572,7 +573,7 @@ export default function App() {
     setCalendarOpen(false);
   }, []);
 
-  const saveResources = useCallback((resources: Resource[], releasedIds: string[]) => {
+  const saveResources = useCallback((resources: Person[], releasedIds: string[]) => {
     chart.current?.setResources(resources, releasedIds);
     setResourcesOpen(false);
   }, []);

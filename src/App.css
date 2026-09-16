@@ -340,6 +340,14 @@
   margin: 0;
 }
 
+/* `type="text"`, not `number` (ResourceDialog.tsx): the field must be able to
+   carry `abc` or `-1` to validateResources's error line rather than the
+   browser silently dropping it first. Right-aligned like a money figure. */
+.people__rate {
+  width: 100%;
+  text-align: right;
+}
+
 .people__count {
   text-align: center;
   color: var(--ink-muted);

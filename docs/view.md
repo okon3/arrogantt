@@ -591,14 +591,16 @@ that isn't there.
   ("%") fields (`.taskinfo__amount`), outside any period-row list.
 - **The People table (`.people__table`) is `table-layout: fixed` with a
   `<colgroup>`**, so no cell's content can move a column: Name auto (≈260 at
-  the dialog's 592px content box) · Availability 88 · Periods 160 · Tasks 48 ·
-  Remove 36 — all measured against both the header string and the widest cell
-  content (`scrollWidth <= clientWidth`), not derived on paper. In the
-  Availability and Tasks columns the widest content is the header string
-  itself, not the data. The expanded absences panel (`.people__offPanel`)
-  spans the table's content box — zero horizontal padding on `.people__offRow
-  td` plus the panel's own padding — so it reads as part of the row above
-  rather than a separate block.
+  the dialog's 680px content box, 728px dialog width) · Availability 88 ·
+  Daily rate 88 · Periods 160 · Tasks 48 · Remove 36 — all measured against
+  both the header string and the widest cell content (`scrollWidth <=
+  clientWidth`), not derived on paper. In the Availability, Daily rate and
+  Tasks columns the widest content is the header string itself, not the data
+  — measured with a 5-digit rate in every row, the "Daily rate" header
+  (56px) still outmeasures the widest value (35px). The expanded absences
+  panel (`.people__offPanel`) spans the table's content box — zero
+  horizontal padding on `.people__offRow td` plus the panel's own padding —
+  so it reads as part of the row above rather than a separate block.
 - **`.dialog__subhead` is the one grammar for a section subhead inside a
   dialog body** (12px/600/uppercase/`letter-spacing: 0.06em`/`--ink-faint`) —
   Calendar's "Working days"/"Shutdowns" and Task info's "Computed" share it;

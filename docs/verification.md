@@ -101,6 +101,17 @@ evaluation — a turn later, or after two `requestAnimationFrame`s — and never
 conclude "the write did not land" from them. Measured on F3b, where the undo
 step count was read off the button title and only settled after the frame.
 
+**And `toText()` is not byte-stable, whatever you do.** It serialises through
+`serializeForFile` (`agentApi.ts:294-299`), which dates its `solved` report
+with `solvedAt: serializeDate(new Date())` at minute precision
+(`serialization.ts:80`). Two calls either side of a minute boundary therefore
+differ on a project nobody touched, so **an accept phrased as raw byte
+identity is undrivable**: normalise `solvedAt` away before comparing, and
+never read a difference there as a write that landed. The input-only form —
+what history, the draft and the `dirty` comparison use — carries no report and
+does not move. Cost F5a two measurements, the lane's and the critic's, both
+straddling the same minute.
+
 ## Synthetic keyboard events
 
 Three harnesses drive keys here, and they differ in two independent ways —

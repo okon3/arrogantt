@@ -16,6 +16,9 @@ interface DraftResource {
   name: string;
   /** Percentage, 100 = full time. Kept as text so a half-typed value survives. */
   availability: string;
+  /** Money per working day, as typed. Blank = absent; the rules live in
+      `validateResources`, so an unparseable entry must reach it. */
+  dailyRate: string;
   periods: AvailabilityOverride[];
 }
 
@@ -24,6 +27,7 @@ function toDraft(resources: Person[]): DraftResource[] {
     id: resource.id,
     name: resource.name,
     availability: String(Math.round((resource.availability ?? 1) * 100)),
+    dailyRate: resource.dailyRate === undefined ? '' : String(resource.dailyRate),
     periods: resource.availabilityOverrides ?? [],
   }));
 }
@@ -34,9 +38,11 @@ function toDraft(resources: Person[]): DraftResource[] {
  * The percentage is the form's own unit; everything downstream — the rules, the
  * engine, the file — works in fractions of a working day.
  *
- * The drafts hold only what this form edits, so a rate reaches `previous` and
- * nothing else: it is passed through by id rather than rebuilt, or saving this
- * dialog would silently erase every rate in the project.
+ * The default rate is edited here and written only when the trimmed text is
+ * non-empty, so an intact dialog leaves an absent rate absent. Rate overrides
+ * are not yet editable in this dialog, so they still reach `previous` by id
+ * rather than being rebuilt — losing that pass-through would silently erase
+ * every rate period in the project on Save.
  */
 function toResources(drafts: DraftResource[], previous: Person[]): Person[] {
   const byId = new Map(previous.map((person) => [person.id, person]));
@@ -47,7 +53,7 @@ function toResources(drafts: DraftResource[], previous: Person[]): Person[] {
       name: draft.name.trim(),
       availability: Number(draft.availability) / 100,
       ...(draft.periods.length > 0 ? { availabilityOverrides: draft.periods } : {}),
-      ...(before?.dailyRate !== undefined ? { dailyRate: before.dailyRate } : {}),
+      ...(draft.dailyRate.trim() !== '' ? { dailyRate: Number(draft.dailyRate) } : {}),
       ...(before?.rateOverrides?.length ? { rateOverrides: before.rateOverrides } : {}),
     };
   });
@@ -118,6 +124,7 @@ export function ResourceDialog({
         id: nextResourceId(toResources(current, resources)),
         name: '',
         availability: '100',
+        dailyRate: '',
         periods: [],
       },
     ]);
@@ -136,7 +143,7 @@ export function ResourceDialog({
   return (
     <Dialog
       title="People"
-      width={640}
+      width={728}
       className="people"
       onDismiss={onCancel}
       error={error}
@@ -165,6 +172,7 @@ export function ResourceDialog({
         <colgroup>
           <col />
           <col style={{ width: 88 }} />
+          <col style={{ width: 88 }} />
           <col style={{ width: 160 }} />
           <col style={{ width: 48 }} />
           <col style={{ width: 36 }} />
@@ -173,6 +181,7 @@ export function ResourceDialog({
           <tr>
             <th>Name</th>
             <th>Availability</th>
+            <th>Daily rate</th>
             <th>Periods</th>
             <th>Tasks</th>
             <th />
@@ -203,6 +212,15 @@ export function ResourceDialog({
                 </span>
               </td>
               <td>
+                <input
+                  className="dialog__control people__rate"
+                  type="text"
+                  inputMode="decimal"
+                  value={draft.dailyRate}
+                  onChange={(event) => update(index, { dailyRate: event.target.value })}
+                />
+              </td>
+              <td>
                 <button
                   type="button"
                   className={`people__absences${
@@ -229,7 +247,7 @@ export function ResourceDialog({
             </tr>,
             expanded === draft.id ? (
               <tr key={`${draft.id}-off`} className="people__offRow">
-                <td colSpan={5}>
+                <td colSpan={6}>
                   <div className="people__offPanel">
                     <AvailabilityList
                       periods={draft.periods}
@@ -243,7 +261,7 @@ export function ResourceDialog({
           ])}
           {drafts.length === 0 && (
             <tr>
-              <td colSpan={5} className="people__empty">
+              <td colSpan={6} className="people__empty">
                 No people yet. Add one to be able to assign tasks.
               </td>
             </tr>
