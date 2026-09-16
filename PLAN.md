@@ -265,12 +265,43 @@ lo stato. Solo F2 e' `deep` (effort conservato); **nessun sottotask tocca
       intatta), due nascoste insieme, Shift+Tab, milestone, riga disabled,
       ramo chiuso, highlight di ricerca, e un fresh tab con una chiave stantia
       che nomina colonne inesistenti. Nessuno stato si rompe.
-- [>] F1 [impl] — Tariffe e `currency` nel modello, nel file e nelle regole
+- [x] F1 [impl] — Tariffe e `currency` nel modello, nel file e nelle regole —
+      `1fc20d8`. `src/gantt/cost.ts` nuovo (`Person`, `RateOverride`,
+      `rateOnDay`, `validateCurrency`), `Project.resources: Person[]` +
+      `Project.currency?`, regole dei tassi in `validateResources`,
+      `ResourcePatch` + `applied()` che li portano, parser e serializer,
+      `describeChange` → `changed currency`. Nessun file sotto
+      `src/scheduler/`: verificato sul diff, non sul report. 473 test.
+      **Un solo finding del critic, e il buco era nel mio brief**: la regola
+      del tasso di un periodo la dettavo «non un numero, o `NaN`» mentre la
+      gemella tre righe sopra usa `Number.isFinite` — un `Infinity` passava il
+      gate e nel testo diventa `null`, che il parser di questa stessa app
+      rifiuta (Save, undo e draft giu' insieme). Chiuso dall'hub in una riga
+      piu' il pin; la lezione e' nel binding.
+      **Tre decisioni prese al brief, non nella spec**: `import type` per
+      `Person` in `project.ts` (F2 fara' il ciclo inverso: l'edge di soli tipi
+      lo tiene fuori dal runtime); `validateCurrency` rifiuta un'etichetta non
+      gia' trimmata (era l'unica lettura che conciliava «trimmed non-empty»
+      della §5.8 col suo «un `" EUR "` paddato e' rifiutato»); e il
+      **pass-through** delle tariffe in `toResources` — il dialogo People
+      ricostruisce ogni persona da zero, quindi senza quelle tre righe un
+      salvataggio del dialogo fra F1 e F5 cancellava ogni tariffa del progetto.
+      Il GAP dichiarato dalla corsia su `currency: ""` (lo intercetta
+      `requireString` col suo messaggio prima di `validateCurrency`) e' stato
+      giudicato non difetto: i rifiuti di `requireString` sono un
+      sottoinsieme, il gate non si indebolisce.
 - [ ] F2 [deep] — La lettura del costo (`costs` su `SolvedProject`)
 - [ ] F3 [impl] — Superfici di report, scrittura di `currency`, help dell'agente
 - [ ] F4 [impl] — Colonne Rate e Cost **nate sul registro**, marca del
       parziale, totale in status bar
 - [ ] F5 [impl] — Tariffe e campo Currency nel dialogo People
+      **Debito di F1, misurato dal critic**: `App.tsx` (`:145,163,169,562`) e
+      `resourceSnapshot.resources` restano tipati `Resource[]`, e siccome
+      `Person` aggiunge solo campi opzionali i due tipi sono mutuamente
+      assegnabili — quindi oggi il pass-through delle tariffe regge solo per
+      **identita' di oggetto**, non per tipo: un futuro rebuild
+      `{id, name, availability}` in `App` compilerebbe cancellando le tariffe.
+      Tipare `Person` quelle superfici rende la garanzia statica.
 - [ ] F6 [impl] — Il costo nel pannello dettagli
 - [ ] F8 [impl] — Colonne e banda di testata in `planFigure`
       **Non ha effetto visibile nell'app dentro questo goal**, e non e' una
@@ -640,12 +671,14 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 
 ## Log
 - Dimensionamento: impl oltre ~200k = task da splittare (T35 215k, T18
-  182k+250k, F7 257k); una correzione via SendMessage riusa il contesto e
-  costa meno di un fresh spawn (~40k) — **ma non oltre ~190k**: li' chiude
-  l'hub, se ha le misure (T52; T55 188k/129k; T56 131k+166k; F7 critic 184k,
-  tre findings chiusi dall'hub). Un architect di goal: 248k, il delta 203k. **Un critic guidato nel browser e'
-  la voce piu' cara del task**: 75-95k a tavolino, 148-168k nel browser (T56),
-  211k su T58 — e su T58 e' l'unico che ha ribaltato una premessa. Si paga.
+  182k+250k, F7 257k, F1 222k — **due di fila su Goal F: i sottotask sono
+  tarati grossi, tagliare piu' fine da F4**); una correzione via SendMessage
+  riusa il contesto e costa meno di un fresh spawn (~40k) — **ma non oltre
+  ~190k**: li' chiude l'hub, se ha le misure (T52; T55 188k/129k; T56
+  131k+166k; F7 critic 184k; F1 critic 125k). Un architect di goal: 248k, il
+  delta 203k. **Un critic guidato nel browser e' la voce piu' cara del task**:
+  75-95k a tavolino, 148-168k nel browser (T56), 211k su T58 — e su T58 e'
+  l'unico che ha ribaltato una premessa. Si paga.
 - **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta hanno chiuso
   la condizione dello stallo e il round-trip del salvataggio (T56) per pochi k,
   dove una corsia paga 40k di solo ingresso. T57 e' il caso limite: due
@@ -658,14 +691,10 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   prima, correggi solo se la catena si chiude**, con «nessun diff» esito
   valido.
 - Ricognizione a monte del brief: paga, **ma una citazione copiata non e'
-  verificata** — ne' un `file:line` (T43) ne' un nome di tipo (T48: la spec
-  citava `GanttConfig['columns']`, inesistente). Quel che il brief non ha
-  letto, **ordinare alla corsia di verificarlo**; quel che ha letto, risolverlo
-  nel brief (ha pagato su T44, T46, T48). Due corollari misurati:
-  ri-localizzare invece di copiare **trova** (T54 cercava riferimenti scaduti e
-  ha scoperto un difetto vivo), e un `file:line` si rilegge **dopo** l'ultima
-  modifica, mai calcolato (T55: accorciare il commento da `+7` a `+6` ha
-  riscaduto quattro riferimenti gia' riallineati).
+  verificata** — ne' un `file:line` (T43) ne' un nome di tipo (T48). Quel che
+  il brief non ha letto, **ordinare alla corsia di verificarlo**; quel che ha
+  letto, risolverlo nel brief (T44, T46, T48). Ri-localizzare invece di copiare
+  **trova** (T54); un `file:line` si rilegge **dopo** l'ultima modifica (T55).
 - Il critic trova cio' che l'accept non chiedeva (T41, T42, T45). Su uno
   spostamento **l'hash, non la lettura** — e il diff complementare di cio' che
   resta (T47, T48: e' l'unica prova contro un ripristino sporco). E sempre **la

@@ -89,6 +89,18 @@ this file binds it to this repo.
   gia' chiuso, quindi senza canale di notifica verso l'hub. Il `ListAgents`
   l'ha mostrato subito. Fermato con tree pulito, rispawnato col **divieto
   esplicito di delegare scritto nel prompt** — mettilo in ogni spawn.
+- **Una cella di tabella in un brief e' codice che la corsia scrive alla
+  lettera — quindi copiare il predicato piu' stretto, non la forma.** Su F1
+  (2026-09-16) il brief dettava la regola del tasso di un periodo come «non un
+  numero, o `NaN`», copiando la forma della regola gemella
+  dell'availability; ma quella gemella si permette `NaN` solo perche' la riga
+  dopo (`> 1`) intercetta gli infiniti, e la regola del tasso di default tre
+  righe sopra usa `Number.isFinite`. Risultato: un `Infinity` passava il gate,
+  e `JSON.stringify` lo scrive `null` — cioe' un progetto il cui **stesso testo
+  di input questo parser rifiuta**, portandosi giu' Save, undo e draft. La
+  corsia ha implementato la lettera del brief, correttamente. L'ha trovato il
+  critic, non i 473 test. Quando un brief riusa la forma di una regola vicina,
+  verificare **perche'** quella vicina puo' essere piu' debole.
 - **Docs duty**: a commit changing behaviour described in `docs/` updates the
   affected file in the same commit (map in CLAUDE.md); significant features
   add a CHANGELOG bullet under `## Unreleased` in the same commit.
