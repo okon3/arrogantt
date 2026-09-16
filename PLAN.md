@@ -15,9 +15,9 @@ fatto accertato in testa a Goal G: l'export non fotografa il DOM.
 
 In manutenzione: **T63** (il picker non prende il fuoco) e il rename a
 **ARROGANTT**, in due pezzi e in quest'ordine — **T64** fuori dal repo
-(GitHub + Pages, lo fa l'utente, non una corsia) e **T65** dentro, che aspetta
-due risposte: l'espansione del nome, e se le chiavi di localStorage restano
-`yagni.*`.
+(GitHub + Pages, lo fa l'utente, non una corsia) e **T65** dentro. Nessuno dei
+due aspetta piu' una risposta: nome, tagline e sorte delle chiavi di storage
+sono decisi dentro T65.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
@@ -265,7 +265,7 @@ lo stato. Solo F2 e' `deep` (effort conservato); **nessun sottotask tocca
       intatta), due nascoste insieme, Shift+Tab, milestone, riga disabled,
       ramo chiuso, highlight di ricerca, e un fresh tab con una chiave stantia
       che nomina colonne inesistenti. Nessuno stato si rompe.
-- [ ] F1 [impl] — Tariffe e `currency` nel modello, nel file e nelle regole
+- [>] F1 [impl] — Tariffe e `currency` nel modello, nel file e nelle regole
 - [ ] F2 [deep] — La lettura del costo (`costs` su `SolvedProject`)
 - [ ] F3 [impl] — Superfici di report, scrittura di `currency`, help dell'agente
 - [ ] F4 [impl] — Colonne Rate e Cost **nate sul registro**, marca del
@@ -385,9 +385,16 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 - [ ] T65 [impl] — ARROGANTT dentro il repo: nome, agent API, docs, README
       Rename del nome visibile e della superficie agenti. **Nessun alias
       `window.yagni`**: taglio netto, non esistono script fuori da qui.
-      L'espansione del nome da mettere in `<title>` e in testa a
-      `agentApi.help.md` la conferma l'utente prima di briefare: senza, il
-      task non ha la stringa da scrivere.
+      **Nome deciso dall'utente, si scrive cosi' e non si reinterpreta**:
+      `ARROGANTT — Automatic Resource Resolution & Optimization`, in
+      `index.html:7`, in testa ad `agentApi.help.md` (quindi in `/llms.txt`) e
+      come H1 + sottotitolo del README, che gia' ha i due slot.
+      **La tagline italic del README resta quella di oggi** («the Gantt chart
+      that knows people can't do two things at once»): dice cosa fa il
+      prodotto, dove «the end date is not up for negotiation» spiega solo il
+      nome — non si spende la riga migliore del README per una battuta.
+      Il globale e' `window.arrogantt`, per intero: nessuna abbreviazione, o
+      la help e `/llms.txt` insegnerebbero un nome che il README non usa.
       Censimento misurato (`grep -ri`, esclusi `dist/` e i log):
       - `index.html:7` — `<title>`
       - `src/App.tsx:761` `window.yagni =`, `:770` messaggio in console,
@@ -408,20 +415,24 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       task a se'.
       **`.claude/` non si tocca** (briefs, specs, `launch.json`): e' archivio,
       dice come si chiamava allora.
-      **Questione aperta, decide l'utente — le chiavi di localStorage**:
+      **Deciso dall'utente il 2026-09-16, coi costi davanti e contro la
+      raccomandazione — le chiavi di localStorage si rinominano**:
       `yagni.draft.v1` (`draft.ts:16`), `yagni.seenVersion`
-      (`seenVersion.ts:8`), `yagni.columns.v1` (`columns.ts:78`).
-      Rinominarle butta il draft non salvato, riapre il changelog a tutti e
-      azzera le colonne spuntate, in cambio di niente che si veda: nessuna UI
-      le mostra. Raccomandazione: **restano `yagni.*`**, col perche' in un
-      commento (deviazione deliberata, non svista). Se invece si rinominano,
-      sono tre migrazioni leggi-vecchia-scrivi-nuova, non tre replace.
-      Accept: `grep -ri yagni` fuori da `.claude/` e `dist/` non trova altro
-      che le chiavi di storage; nel browser `arrogantt.help()` ritorna il
-      testo nuovo e `/llms.txt` servito e' identico ad `agentApi.help.md`; un
-      draft salvato **prima** del rename si riapre dopo (e' la prova che le
-      chiavi non sono cambiate); `npm test`, `npm run build`, `npm run lint`
-      puliti.
+      (`seenVersion.ts:8`) e `yagni.columns.v1` (`columns.ts:78`) diventano
+      `arrogantt.*`. **Nessuna migrazione**: tre replace, non tre
+      leggi-vecchia-scrivi-nuova. Conseguenze accettate adesso, non da
+      scoprire alla prima apertura — un draft non salvato sparisce, il
+      changelog si riapre una volta per tutti, le colonne spuntate tornano al
+      default, e le tre chiavi vecchie restano orfane nel browser. Ripulirle
+      sarebbe un `removeItem`, ma e' codice che esiste solo per il passato:
+      non si scrive.
+      Accept: `grep -ri yagni` fuori da `.claude/` e `dist/` non trova
+      **niente** — le chiavi comprese; nel browser `arrogantt.help()` ritorna il
+      testo nuovo e `/llms.txt` servito e' identico ad `agentApi.help.md`;
+      con un `yagni.draft.v1` in storage l'app parte pulita e non fa la
+      domanda del draft, e al primo edit compare `arrogantt.draft.v1` (la
+      vecchia resta orfana e non viene letta); `npm test`, `npm run build`,
+      `npm run lint` puliti.
 
 **Notato dal critic di F7 e deliberatamente non aperto come task**: il
 popover del picker si posiziona una volta dall'ancora catturata all'apertura
