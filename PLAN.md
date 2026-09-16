@@ -876,8 +876,10 @@ tariffa seminato a `0` (`RatePeriodList.tsx`), dichiarato.
 **Quattro azioni, e la review resta il bar finche' non sono chiuse** — quindi
 la spec `T59-costs.md` non si pota ancora, e la release non si propone.
 L'utente ha scelto il 2026-09-16 di farle **tutte e quattro**, F12 compresa.
-**Ordine: F9 → F10 → F11 → F12**, seriale: F9 e F10 toccano entrambe
-`costCells.ts` e F9 ne cambia la firma, quindi F10 la segue e non la precede.
+**Ordine: F9 → F13 → F14 → F10 → F11 → F12**, seriale: F9 e F10 toccano
+entrambe `costCells.ts` e F9 ne cambia la firma, quindi F10 la segue e non la
+precede. F13 e F14 sono due richieste dell'utente arrivate a goal aperto, e
+rientrano nella review che girera' sul delta.
 
 - [x] F9 [impl] — La ragione del costo su un summary non deve nominare una
       persona che sulla riga non c'e' — `12e1006`. `costCellText` prende un
@@ -905,6 +907,34 @@ L'utente ha scelto il 2026-09-16 di farle **tutte e quattro**, F12 compresa.
       parziale → `≥ 1,200` / `3 d of effort not costed`, summary interamente
       costato → cifra nuda, milestone e summary a effort zero → cella vuota,
       riga disabled e ramo chiuso invariati, console pulita.
+- [ ] F14 [self] — Nessuna testata di colonna sia tagliata
+      Aperto dall'utente il 2026-09-16 su richiesta esplicita, **in testa alla
+      coda**: prima di F10.
+      Misurato dall'hub su F13 e da non ripagare: con `currency` `EUR` la
+      testata `Rate (EUR)` **non entra** nei suoi 62px e viene resa
+      `Rate (EUR`, tagliata, senza ellissi e senza `title` che la riveli
+      all'hover. Col `$` dell'utente entra. `gridWidth` oggi: `resource_id` 76,
+      `nominal_days` 62, `start_date` 84, `end_shown` 84, `elapsed_days` 62,
+      `rate` 62, `cost` 84 (`columns.ts`).
+      **Non e' «allargare Rate»: e' un censimento.** Ho misurato *una* cella e
+      una sola valuta — la lezione di F8, F2b e F3b e' che un elenco e'
+      completo o non e' un elenco. Il task deve produrre una **matrice**: ogni
+      testata del registro × la valuta piu' larga che `validateCurrency`
+      ammette (8 caratteri → `Rate (XXXXXXXX)`, 15 caratteri) e una da 3, con
+      la larghezza resa misurata contro il `gridWidth`, piu' un elenco
+      esplicito di cio' che la misura **non** ha guidato. `Duration` a 62px e
+      `Resource` a 76 sono sospette e non misurate.
+      **Vincoli che non si riaprono**: la valuta sta nella testata e mai nella
+      cella (decisione #2 dell'utente), e Rate/Cost restano nascoste per
+      default (#5). Le larghezze **non sono persistite** — `yagni.columns.v1`
+      porta solo i nomi, e il rebuild del picker riporta per nome solo le
+      larghezze trascinate *nella sessione* (F7) — quindi cambiare un
+      `gridWidth` di default non ha migrazione, ma **sposta la griglia di ogni
+      progetto esistente**: il budget dei 706px e' dell'utente, e una somma
+      nuova va riportata a lui prima del commit.
+      Accept: la matrice nel report, nessuna testata tagliata con una valuta da
+      3 caratteri, e per il caso da 8 una decisione dichiarata (allargare, o
+      `title` sulla testata, o taglio accettato) con la misura accanto.
 - [ ] F10 [self] — `currencyLabel` e il testo dell'effort non costato tornino a
       una casa sola
       `planCsv.ts` ri-scrive `Cost (${currency})` a mano invece di chiamare
