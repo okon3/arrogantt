@@ -7,6 +7,9 @@
 - Rate and Cost columns, off by default and turned on from the same column
   button: a task's daily rate and what it costs, rolled up on a summary and
   shown as a lower bound when part of its effort has no rate.
+- A `Currency` field in the People dialog, next to the rates it labels: sets
+  the unit shown in the Rate and Cost column headers, and travels with a rate
+  change in the same Save so undo takes back both in one step.
 
 ## v1.2 — 2026-09-08
 

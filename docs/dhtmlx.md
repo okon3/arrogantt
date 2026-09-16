@@ -355,7 +355,11 @@ touching `src/gantt` code that talks to the library.
   `loadText(toText())`, and through a Ctrl+Z of the `setCurrency` — on all
   three, every other column's width (including the two just-shown `rate`/
   `cost`) held too. Believed since the carry-by-name landed, proven here on
-  these two paths specifically.
+  these two paths specifically. **F5b re-measured it on the fourth call site**,
+  `setResources`'s new third argument (the People dialog's currency field):
+  `text` dragged 230 → 279 held 279 through a People Save that changed the
+  currency label (`EUR` → `USD`), and every other column's width (`rate`/
+  `cost` included) held too.
 - **`moveTask(id, -1, parent)` appends** (dhtmlx's own indent convention;
   typings just say `tindex: number`).
 - **A parent that was a leaf renders collapsed** — set `$open` before

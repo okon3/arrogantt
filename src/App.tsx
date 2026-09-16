@@ -173,7 +173,8 @@ export default function App() {
   const [resourceSnapshot, setResourceSnapshot] = useState<{
     resources: Person[];
     taskCounts: Map<string, number>;
-  }>({ resources: [], taskCounts: new Map() });
+    currency: string | null;
+  }>({ resources: [], taskCounts: new Map(), currency: null });
 
   /**
    * Pulls back out of the chart whatever the toolbar and the status bar show.
@@ -531,6 +532,7 @@ export default function App() {
     setResourceSnapshot({
       resources: handle.getResources(),
       taskCounts: handle.countTasksByResource(),
+      currency: handle.getProject().currency ?? null,
     });
     setCalendarSnapshot(handle.getCalendar());
     setResourcesOpen(true);
@@ -573,10 +575,13 @@ export default function App() {
     setCalendarOpen(false);
   }, []);
 
-  const saveResources = useCallback((resources: Person[], releasedIds: string[]) => {
-    chart.current?.setResources(resources, releasedIds);
-    setResourcesOpen(false);
-  }, []);
+  const saveResources = useCallback(
+    (resources: Person[], releasedIds: string[], currency: string | null) => {
+      chart.current?.setResources(resources, releasedIds, currency);
+      setResourcesOpen(false);
+    },
+    [],
+  );
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -964,6 +969,7 @@ export default function App() {
           resources={resourceSnapshot.resources}
           usage={{ taskCounts: resourceSnapshot.taskCounts }}
           workingWeekdays={calendarSnapshot.workingDays}
+          currency={resourceSnapshot.currency}
           confirm={ask}
           onCancel={() => setResourcesOpen(false)}
           onSave={saveResources}

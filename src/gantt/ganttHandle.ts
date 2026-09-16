@@ -60,8 +60,14 @@ export interface GanttHandle {
   /** Takes the task's subtree with it, and clears dependencies on any of them. */
   deleteTask(id: string): void;
   getResources(): Person[];
-  /** Tasks assigned to a removed resource are released to "no resource". */
-  setResources(resources: Person[], releasedResourceIds: string[]): void;
+  /** Tasks assigned to a removed resource are released to "no resource".
+   *  The currency travels here so a dialog Save is one undo step, not two:
+   *  absent leaves the label alone, null clears it, a string sets it. */
+  setResources(
+    resources: Person[],
+    releasedResourceIds: string[],
+    currency?: string | null,
+  ): void;
   getCalendar(): CalendarSpec;
   setCalendar(calendar: CalendarSpec): void;
   /** Null clears the label. Undoable: one snapshot, like any model write. */

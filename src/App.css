@@ -289,6 +289,23 @@
   background: var(--dirty);
 }
 
+/* One line, above the table: a label-and-field pair reads as a single field,
+   not a section of its own the way a stacked label would (docs/view.md). The
+   unit for every rate typed below, so it belongs beside the table rather than
+   in a settings dialog this app does not have. A `<label>`, like every other
+   labelled control in these dialogs (`.taskinfo__field`, `.calendar__day`). */
+.people__currency {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  font-size: 13px;
+}
+
+.people__currencyInput {
+  width: 88px;
+}
+
 .people__table {
   width: 100%;
   table-layout: fixed;

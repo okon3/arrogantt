@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { countWorkingDaysInRange, type AvailabilityOverride } from '../scheduler';
 import { AvailabilityList } from './AvailabilityList';
 import type { Person, RateOverride } from './cost';
+import { validateCurrency } from './cost';
 import { Dialog } from './Dialog';
 import { nextResourceId, releasedBy, validateResources } from './resources';
 import { RatePeriodList } from './RatePeriodList';
@@ -62,6 +63,7 @@ export function ResourceDialog({
   resources,
   usage,
   workingWeekdays,
+  currency,
   confirm,
   onCancel,
   onSave,
@@ -69,12 +71,15 @@ export function ResourceDialog({
   resources: Person[];
   usage: ResourceUsage;
   workingWeekdays: number[];
+  /** The project's label as it stands; null = none declared. */
+  currency: string | null;
   /** Native dialogs are suppressed in embedded browsers; App owns the real one. */
   confirm(message: string, confirmLabel: string): Promise<boolean>;
   onCancel(): void;
-  onSave(resources: Person[], releasedTaskIds: string[]): void;
+  onSave(resources: Person[], releasedTaskIds: string[], currency: string | null): void;
 }) {
   const [drafts, setDrafts] = useState<DraftResource[]>(() => toDraft(resources));
+  const [currencyDraft, setCurrencyDraft] = useState(currency ?? '');
   const [error, setError] = useState<string | null>(null);
   /** Which person's absences are expanded; only one at a time keeps it readable. */
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -142,7 +147,19 @@ export function ResourceDialog({
       setError(problem);
       return;
     }
-    onSave(next, releasedBy(resources, next));
+    // Trimmed here, not by validateCurrency: that rule is for machine input
+    // (file, script), and a typed field saving "  " as absent already makes
+    // trimming the dialog's own job — same as the rate field beside it.
+    const label = currencyDraft.trim();
+    const nextCurrency = label === '' ? null : label;
+    if (nextCurrency !== null) {
+      const currencyProblem = validateCurrency(nextCurrency);
+      if (currencyProblem) {
+        setError(currencyProblem);
+        return;
+      }
+    }
+    onSave(next, releasedBy(resources, next), nextCurrency);
   };
 
   return (
@@ -170,8 +187,21 @@ export function ResourceDialog({
       <p className="dialog__hint">
         Availability is the share of a working day the person gives to the project: 50% means half
         a day. In <strong>periods</strong> you can override it for specific ranges — 0% is an
-        absence. Available effort is still split evenly across concurrent tasks.
+        absence. Available effort is still split evenly across concurrent tasks. Rates and costs
+        are grid columns, hidden until you turn them on with the toolbar's{' '}
+        <strong>Choose grid columns</strong> button.
       </p>
+
+      <label className="people__currency">
+        <span>Currency</span>
+        <input
+          className="dialog__control people__currencyInput"
+          type="text"
+          placeholder="e.g. EUR"
+          value={currencyDraft}
+          onChange={(event) => setCurrencyDraft(event.target.value)}
+        />
+      </label>
 
       <table className="people__table">
         <colgroup>

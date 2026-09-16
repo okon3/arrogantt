@@ -179,14 +179,15 @@ that isn't there.
   there is no op for this one either).
 - **One rebuild path, `rebuildColumns()` in `GanttChart`**, called from
   `setColumns`, from `loadProject` (after `gantt.parse` — an opened file's
-  `currency` can change a header label) and from `setCurrency` — and nowhere
-  in `applySolution` (nothing on that path changes which columns exist or
-  their labels). **It carries over the width of every column the user
-  dragged**, by name: the registry decides which columns exist, never how wide
-  someone made them — a rebuild that forgot them re-truncated every task name
-  on the next tick, on every one of its call sites, `loadProject` and
-  `setCurrency` included (`docs/dhtmlx.md` carries the measurement). Grid
-  open: sets
+  `currency` can change a header label), from `setCurrency`, and from
+  `setResources` when its third argument (the People dialog's currency field)
+  is present — and nowhere in `applySolution` (nothing on that path changes
+  which columns exist or their labels). **It carries over the width of every
+  column the user dragged**, by name: the registry decides which columns
+  exist, never how wide someone made them — a rebuild that forgot them
+  re-truncated every task name on the next tick, on every one of its call
+  sites, `loadProject`, `setCurrency` and `setResources` included
+  (`docs/dhtmlx.md` carries the measurement). Grid open: sets
   `config.grid_width` from the new columns. Grid collapsed
   (`savedGridWidthRef.current !== null`): leaves `grid_width` at 0 and writes
   the new budget into `savedGridWidthRef`, so a restore comes back at the size
@@ -617,6 +618,20 @@ that isn't there.
   Periods column button now summarises both the availability and the rate
   periods (one string, `title` and text the same), and the expanded panel
   hosts both lists under their own `.dialog__subhead`s.
+- **The People dialog's `Currency` field sits above the table, on its own
+  line** (`.people__currency`, a `<label>` like every other labelled control
+  in these dialogs): the word beside an 88px `.dialog__control`, not stacked
+  above it — a single field reads as one line, not a section of the dialog.
+  It carries the project's `currency` label to `GanttChart`'s `setResources`
+  as that call's third argument, so a Save that changes both a rate and the
+  label costs one undo step, never two. **The dialog trims; the parser and
+  the API do not** — a typed `"  "` saves as
+  absent, same as the rate field beside it trimming by accident
+  (`Number('  600 ')`); a padded `" EUR "` saves as `EUR`. `validateCurrency`
+  (`cost.ts`) still runs on the trimmed, non-null label — one rule, one place.
+  The dialog's hint gained a sentence pointing at the toolbar's column picker
+  by its accessible name (`Choose grid columns`), since that button is
+  icon-only and has no visible label to point at otherwise.
 - **`.dialog__subhead` is the one grammar for a section subhead inside a
   dialog body** (12px/600/uppercase/`letter-spacing: 0.06em`/`--ink-faint`) —
   Calendar's "Working days"/"Shutdowns", Task info's "Computed" and People's

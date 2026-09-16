@@ -485,14 +485,25 @@ export function GanttChart({
         applySolution();
       },
       getResources: () => projectRef.current.resources,
-      setResources: (resources, releasedResourceIds) => {
+      setResources: (resources, releasedResourceIds, currency) => {
         projectRef.current.resources = resources;
         const released = new Set(releasedResourceIds);
         for (const task of projectRef.current.tasks) {
           if (task.resourceId && released.has(task.resourceId)) task.resourceId = undefined;
         }
+        // Absent (commitResources' two-argument call) leaves the label alone;
+        // written here, before applySolution, so the People dialog's rates and
+        // currency land in the same snapshot instead of costing two undo steps.
+        if (currency !== undefined) {
+          if (currency === null) delete projectRef.current.currency;
+          else projectRef.current.currency = currency;
+        }
         refreshResourceOptions(resources);
         applySolution();
+        // Same reason setCurrency rebuilds after applySolution: the two cost
+        // headers read project.currency and would otherwise show the old label
+        // until some other trigger came along.
+        if (currency !== undefined) rebuildColumns();
       },
       getCalendar: () => projectRef.current.calendar,
       setCalendar: (calendar) => {

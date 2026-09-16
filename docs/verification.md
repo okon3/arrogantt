@@ -83,6 +83,15 @@ Inject a `<script>` element with the same code — it runs in the page context,
 the setter works, the `input` event reaches React. (How the details dialog's
 date field is driven in verifications.)
 
+**And the browser tool's own `fill` on an already-filled controlled field
+fails silently, which is worse than the throw above**: the DOM `value` reads
+back as asked while React's state keeps the old one, so the component saves
+what was there before. Two agents hit it independently on the same field
+(F5b's Currency, clearing `EUR`) and both first read it as an app defect.
+Clearing needs either the injected setter or a real select-all + Backspace;
+verify the model (`getResources()`, `getPlan()`), never the DOM value, that
+an overwrite landed.
+
 ## Which `yagni` reads lag a write
 
 A write through `window.yagni` and a read of its effect in the **same
