@@ -360,6 +360,10 @@ lo stato. Solo F2a e' `deep` (effort conservato); **nessun sottotask tocca
       `formatMoney` non puo' ricevere un negativo, `-0`, `NaN` o `Infinity`
       perche' ogni percorso di scrittura passa da `validateResources`.
       Le nove righe della Fixture C restano quelle: `S1 7800 + M1 0`.
+      **La seconda passata del critic non e' girata** (terminato da
+      un'interruzione del turno): le due correzioni reggono sui due pin nuovi
+      — che senza il filtro danno `5400` e `2400` invece di `2400` e `null` —
+      e sulla §5.3 e `resources.ts:118-137` letti dall'hub, non sul suo ok.
       **Non ancora fatto e di F3**: la riga `toText()` dell'help dice «same
       fields as `getPlan()`» mentre il report del file ne porta 5 su 16 — era
       gia' un sottoinsieme prima, ora e' piu' largo.
