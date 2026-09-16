@@ -22,10 +22,19 @@ function fakeStorage(failing = false): DraftStorage & { entries: Map<string, str
 }
 
 const ALL_NAMES = PLAN_COLUMNS.map((entry) => entry.name);
+const DEFAULT_SHOWN_NAMES = PLAN_COLUMNS.filter((entry) => entry.defaultShown).map(
+  (entry) => entry.name,
+);
 
 describe('the default column selection', () => {
   it('is every registry entry whose defaultShown is true', () => {
-    expect([...defaultColumnSelection()].sort()).toEqual([...ALL_NAMES].sort());
+    expect([...defaultColumnSelection()].sort()).toEqual([...DEFAULT_SHOWN_NAMES].sort());
+  });
+
+  it('excludes an entry whose defaultShown is false', () => {
+    const hidden = PLAN_COLUMNS.filter((entry) => !entry.defaultShown).map((entry) => entry.name);
+    expect(hidden.length).toBeGreaterThan(0);
+    for (const name of hidden) expect(defaultColumnSelection().has(name)).toBe(false);
   });
 });
 

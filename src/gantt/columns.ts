@@ -15,11 +15,13 @@ export type PlanColumnName =
   | 'nominal_days'
   | 'start_date'
   | 'end_shown'
-  | 'elapsed_days';
+  | 'elapsed_days'
+  | 'rate'
+  | 'cost';
 
 export interface PlanColumn {
   name: PlanColumnName;
-  /** Header text. A later goal makes the currency label ride here. */
+  /** Header text; the currency label rides here, on the cost columns. */
   label(project: Project): string;
   gridWidth: number;
   figureWidth: number;
@@ -70,6 +72,25 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
     figureWidth: 60,
     defaultShown: true,
     clientSafe: true,
+  },
+  // The first two labels that read `project`: a rate or a cost is meaningless
+  // without the currency it is in, and the label is the only place that unit
+  // may show (§5.4 — cells stay bare numbers).
+  {
+    name: 'rate',
+    label: (project) => (project.currency ? `Rate (${project.currency})` : 'Rate'),
+    gridWidth: 62,
+    figureWidth: 70,
+    defaultShown: false,
+    clientSafe: false,
+  },
+  {
+    name: 'cost',
+    label: (project) => (project.currency ? `Cost (${project.currency})` : 'Cost'),
+    gridWidth: 84,
+    figureWidth: 84,
+    defaultShown: false,
+    clientSafe: false,
   },
 ];
 

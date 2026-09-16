@@ -129,11 +129,33 @@ that isn't there.
 
 - **Columns are a registry (`src/gantt/columns.ts`), the grid a filter over
   it.** `PLAN_COLUMNS` holds `resource_id`, `nominal_days`, `start_date`,
-  `end_shown`, `elapsed_days` — metadata only (label, grid width, figure
-  width, default visibility, client-safety); `gridColumns.ts`'s `GRID_CELLS`
-  is the one place a column's cell (`template`/`editor`/`align`) is decided,
-  keyed exhaustively so a registry entry with no renderer is a compile error.
-  `text`, `info`, `toggle`, `add` are structural and never hideable.
+  `end_shown`, `elapsed_days`, `rate`, `cost` — metadata only (label, grid
+  width, figure width, default visibility, client-safety); `gridColumns.ts`'s
+  `GRID_CELLS` is the one place a column's cell (`template`/`editor`/`align`)
+  is decided, keyed exhaustively so a registry entry with no renderer is a
+  compile error. `text`, `info`, `toggle`, `add` are structural and never
+  hideable.
+- **`rate` and `cost`, `defaultShown: false`.** A project that never enters a
+  rate looks exactly as it did before these two existed; ticking either in the
+  picker persists across projects and reloads like any other column. Their
+  `label(project)` is the first in the registry that reads its argument: the
+  header carries the currency (`Rate (EUR)` / `Cost (EUR)`), the bare word when
+  `project.currency` is absent — the unit lives in the header, never in a cell
+  (`format.ts`'s `formatMoney`/`formatDays` are unitless by the same rule the
+  status bar total follows). Cost cell: empty when the row's own effort
+  (`rolled_effort_days`) is zero (a milestone, or an all-zero summary); `—` in
+  the `gantt-derived` register, titled *No resource* or *No rate for `<name>`
+  on these days*, when `cost_amount` is `null` (the null rule is
+  `reportedCost` in `cost.ts` — never re-derived here from the day counts);
+  `≥ <amount>` titled `<n> d of effort not costed` when some of the row's
+  effort had no rate — the `≥` needs no legend because a rate is never
+  negative, so a partial sum is always a true lower bound; otherwise the plain
+  amount. Rate cell: the row's own `daily_rates` — one figure, an en dash
+  range (`600–650`) when the rate changed inside the task, `—` when a leaf has
+  effort and no rate, empty on a summary and on a milestone (every non-summary
+  zero-effort leaf is a milestone, so there is no leaf left uncovered). Neither
+  column carries an `editor` or a `DERIVED_ON_SUMMARY` entry — there is
+  nothing on either cell a click could open.
 - **Hidden means not built, never `hide: true`.** `GridColumn.hide` is `(PRO)`
   in the typings and unprobed in this Community build; a column absent from
   `config.columns` cannot be tabbed into, edited or measured, which is what
@@ -156,12 +178,15 @@ that isn't there.
   (`agentApi.ts` is an adapter over the same handle ops the buttons use, and
   there is no op for this one either).
 - **One rebuild path, `rebuildColumns()` in `GanttChart`**, called from
-  `setColumns` only — not from `loadProject`, and nowhere in `applySolution`
-  (nothing on either path changes which columns exist; a label that read the
-  project would change that, and none does). **It carries over the width of
-  every column the user dragged**, by name: the registry decides which columns
-  exist, never how wide someone made them — a rebuild that forgot them
-  re-truncated every task name on the next tick. Grid open: sets
+  `setColumns`, from `loadProject` (after `gantt.parse` — an opened file's
+  `currency` can change a header label) and from `setCurrency` — and nowhere
+  in `applySolution` (nothing on that path changes which columns exist or
+  their labels). **It carries over the width of every column the user
+  dragged**, by name: the registry decides which columns exist, never how wide
+  someone made them — a rebuild that forgot them re-truncated every task name
+  on the next tick, on every one of its call sites, `loadProject` and
+  `setCurrency` included (`docs/dhtmlx.md` carries the measurement). Grid
+  open: sets
   `config.grid_width` from the new columns. Grid collapsed
   (`savedGridWidthRef.current !== null`): leaves `grid_width` at 0 and writes
   the new budget into `savedGridWidthRef`, so a restore comes back at the size
@@ -209,18 +234,22 @@ that isn't there.
   nothing here depends on an internal side effect it doesn't own. Not
   persisted — it does not survive a reload, and it is view state only: no
   undo entry, no dirty flag.
-- **The dhtmlx row schema is written in five places**: `toGanttData`
-  (`ganttRows.ts:37`) and `applySolution` (`GanttChart.tsx:217`, plus
-  `writeChainOntoRows` `ganttRows.ts:116` for the chain flags) map model → row;
-  `handle.addTask` (`GanttChart.tsx:449`) builds a new row; `onAfterTaskAdd`
-  (`GanttChart.tsx:982`) and `pullFromView` (`GanttChart.tsx:740`) read row →
-  model. A new field goes in **both** model → row paths wherever the row
-  mirrors the model — derived figures and carried inputs (`nominal_days`,
-  `resource_id`) alike; identity and view state are the exception the next
-  bullet draws. Added to one path only, a field is right on open and stale
-  after every edit — it doesn't throw, it lies. `progress` sits on the
-  exception side and is not an oversight: the parse and `updateTask` write it,
-  and no path clears it on the model without writing the row.
+- **The dhtmlx row schema is written in five places** (cited by symbol, not by
+  line — the count moves with every field added): `toGanttData` and
+  `applySolution` (plus `writeChainOntoRows` for the chain flags) map model →
+  row; `handle.addTask` builds a new row; `onAfterTaskAdd` and `pullFromView`
+  read row → model. A new field goes in **both** model → row paths wherever
+  the row mirrors the model — derived figures and carried inputs
+  (`nominal_days`, `resource_id`, and now `cost_amount`, `cost_costed_days`,
+  `cost_uncosted_days`, `daily_rates`) alike; identity and view state are the
+  exception the next bullet draws. Added to one path only, a field is right on
+  open and stale after every edit — it doesn't throw, it lies. `progress` sits
+  on the exception side and is not an oversight: the parse and `updateTask`
+  write it, and no path clears it on the model without writing the row. The
+  cost fields are read-only derivations of the solve, like `elapsed_days`, so
+  `handle.addTask`'s placeholder values (`null`/`0`/`0`/`[]`) are overwritten
+  by the `applySolution()` its own caller (`onAfterTaskAdd`) triggers, never
+  rendered.
 - **The two model → row paths are not interchangeable**, so a single
   `rowFieldsOf` could not be the whole of either. `toGanttData` formats
   `start_date`/`end_date` as **strings** — `gantt.parse` wants them

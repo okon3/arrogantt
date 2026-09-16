@@ -275,6 +275,11 @@ export function GanttChart({
         ganttTask.shared = isShared(scheduled);
         ganttTask.disabled = solved.disabledIds.has(task.id);
         ganttTask.resource_classes = resourceClassesOf(solved, task.id);
+        const cost = solved.costs.get(task.id)!;
+        ganttTask.cost_amount = reportedCost(cost);
+        ganttTask.cost_costed_days = cost.costedDays;
+        ganttTask.cost_uncosted_days = cost.uncostedDays;
+        ganttTask.daily_rates = [...cost.dailyRates];
       }
       writeChainOntoRows(projectRef.current, chainRef.current);
       // refreshData redraws from the mutated task objects without firing the
@@ -355,6 +360,10 @@ export function GanttChart({
         if (collapsed?.has(String(task.id))) task.open = false;
       }
       gantt.parse(data);
+      // The loaded project may carry a different `currency` than the one the
+      // headers were built from — the label lives on the two new columns'
+      // `label(project)`, which nothing else here re-reads.
+      rebuildColumns();
       refreshResourceOptions(next.resources);
       fitRangeToPlan(solvedRef.current.schedule);
       applyingRef.current = false;
@@ -364,7 +373,7 @@ export function GanttChart({
       if (selected && gantt.isTaskExists(selected)) gantt.selectTask(selected);
       reportChainState();
     },
-    [reportChainState],
+    [reportChainState, rebuildColumns],
   );
 
   useImperativeHandle(
@@ -499,6 +508,10 @@ export function GanttChart({
         if (label === null) delete projectRef.current.currency;
         else projectRef.current.currency = label;
         applySolution();
+        // The two new headers read `project.currency` (`columns.ts`): a
+        // currency change without this leaves them showing the old label
+        // until some other rebuild trigger comes along.
+        rebuildColumns();
       },
       countTasksByResource: () => {
         const counts = new Map<string, number>();
@@ -548,6 +561,12 @@ export function GanttChart({
               bar_color: task?.color ?? '',
               shared: false,
               disabled: task?.disabled ?? false,
+              // Overwritten by the applySolution() onAfterTaskAdd triggers —
+              // never rendered as anything but these placeholders.
+              cost_amount: null,
+              cost_costed_days: 0,
+              cost_uncosted_days: 0,
+              daily_rates: [],
             },
             parent,
             index,

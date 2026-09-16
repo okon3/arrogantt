@@ -4,6 +4,9 @@
 
 - Grid columns are now optional: a toolbar button picks which of Resource,
   Effort, Start, End and Duration show, remembered across a reload.
+- Rate and Cost columns, off by default and turned on from the same column
+  button: a task's daily rate and what it costs, rolled up on a summary and
+  shown as a lower bound when part of its effort has no rate.
 
 ## v1.2 — 2026-09-08
 

@@ -349,6 +349,13 @@ touching `src/gantt` code that talks to the library.
   they are carried over by name: the new array is the registry's, and dhtmlx
   keeps a dragged width nowhere else (measured: `text` dragged 230 → 300 came
   back 230 on the next rebuild, before `rebuildColumns` learned to copy it).
+  **F4b re-measured the carry on the two call sites `rebuildColumns` gained
+  after F7** (`loadProject` after `gantt.parse`, `setCurrency`): `text` dragged
+  230 → 280 came back 280 through `setCurrency(null)`, through
+  `loadText(toText())`, and through a Ctrl+Z of the `setCurrency` — on all
+  three, every other column's width (including the two just-shown `rate`/
+  `cost`) held too. Believed since the carry-by-name landed, proven here on
+  these two paths specifically.
 - **`moveTask(id, -1, parent)` appends** (dhtmlx's own indent convention;
   typings just say `tindex: number`).
 - **A parent that was a leaf renders collapsed** — set `$open` before

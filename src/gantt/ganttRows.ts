@@ -9,6 +9,7 @@ import {
   type SolvedProject,
 } from './project';
 import { resourceClass, shade } from './colors';
+import { reportedCost } from './cost';
 import { isShared } from './segmentBar';
 import type { LoadLane } from './loadPanel';
 import type { ScheduledTask } from '../scheduler';
@@ -41,6 +42,9 @@ export function toGanttData(project: Project, solved: SolvedProject, chain: Mark
       const scheduled = solved.schedule.tasks.get(task.id);
       const summary = solved.summaryIds.has(task.id);
       const inherited = effectiveColorOf(project.tasks, solved.hierarchy, task.id);
+      // Priced by the same walk that reaches every row `plan.ts` reports on
+      // (`cost.ts:taskCosts`), so the grid and getPlan() read one figure.
+      const cost = solved.costs.get(task.id)!;
       return {
         id: task.id,
         text: task.name,
@@ -79,6 +83,10 @@ export function toGanttData(project: Project, solved: SolvedProject, chain: Mark
         // Rendered on every row whether or not anyone is highlighted: the
         // highlight is then one stylesheet rule away, with no redraw.
         resource_classes: resourceClassesOf(solved, task.id),
+        cost_amount: reportedCost(cost),
+        cost_costed_days: cost.costedDays,
+        cost_uncosted_days: cost.uncostedDays,
+        daily_rates: [...cost.dailyRates],
       };
     }),
     links: project.tasks.flatMap((task) =>
