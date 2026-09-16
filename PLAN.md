@@ -777,7 +777,7 @@ righe.
       comportamento resta non difetto; la ragione vera e la divergenza col
       dialogo stanno in `docs/view.md` § *Details dialog*, misurate. Il quarto
       doc di questo goal che registrava male una ragione.
-- [x] F6b [impl] — Il costo nel pannello dettagli — `SHA_F6B`.
+- [x] F6b [impl] — Il costo nel pannello dettagli — `1362652`.
       Le due voci *Computed* sui descrittori di F6a (`title` sul `<dd>`,
       `taskinfo__derived` e mai `--cell`, React che escapa da se'), la griglia
       a `repeat(3, 1fr)` con `row-gap: var(--space-2)`, e `currencyLabel` in
