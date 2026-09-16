@@ -248,9 +248,6 @@ lo stato. Solo F2a e' `deep` (effort conservato); **nessun sottotask tocca
       dall'hub, non dalla corsia, che era troppo carica per una correzione:
       il rebuild ora **riporta per nome la larghezza di ogni colonna
       trascinata**, e `loadProject` non ricostruisce piu' le colonne.
-      **Quando F3 fara' leggere `currency` a una label, la chiamata da
-      `loadProject` va rimessa** — e con essa il difetto sparisce solo perche'
-      le larghezze sono ora preservate.
       Rimisurato nell'app dopo il fix: la larghezza sopravvive a edit+undo, a
       un untick/re-tick nel picker e a un `loadText(toText())`; zero errori in
       console. **Non guidato e dichiarato tale**: un drag vero del bordo
@@ -327,20 +324,52 @@ lo stato. Solo F2a e' `deep` (effort conservato); **nessun sottotask tocca
       un difetto che un utente vede. **Non guidato e dichiarato tale**: nessun
       calendario non-default in nessuna fixture (un periodo di tariffa che
       incontra una chiusura aziendale o una settimana non lun-ven).
-- [ ] F2b [self] — `costs` e `currency` su `SolvedProject`, i campi costo di
-      `buildPlan`, `formatMoney`
-      Cablaggio puro, ~110 righe su quattro file che l'hub ha gia' in
-      contesto: lo fa l'hub, non una corsia che ne ripagherebbe 40k di solo
-      ingresso. Tre decisioni prese al brief di F2a e vincolanti anche qui:
-      `SolvedProject` prende **anche** `currency: string | null` (da
-      `project.currency ?? null`), perche' `buildPlan(solved)` non vede il
-      progetto e la §5.6 gli chiede `Plan.currency`; `formatMoney` sta in
-      `format.ts`; e le due regole del null sono **diverse di proposito** —
-      `PlanTask.cost` null ⇔ `costedDays === 0 && uncostedDays > 0` (una
-      milestone vale quindi `0`, come chiede la §5.6), `Plan.totalCost` null ⇔
-      `costedDays` totale zero (un progetto vuoto non ha una cifra da
-      mostrare, una milestone si').
+- [x] F2b [self] — `costs` e `currency` su `SolvedProject`, i campi costo di
+      `buildPlan`, `formatMoney` — `fcfb61a`. 501 test (+12). `SolvedInputs`
+      era gia' un sottoinsieme strutturale, quindi `solve()` passa i quattro
+      pezzi che ha e `cost.ts` non e' stato toccato; `agentApi.help.md` e'
+      mosso nello stesso commit, perche' e' questo commit a muovere la
+      superficie agente. Nessun file sotto `src/scheduler/`.
+      **Il difetto del totale, e la sua causa e' doppia.** `Plan.totalCost`
+      sommava **tutte** le righe di primo livello, disabilitate incluse: il
+      critic l'ha misurato a `3500` contro i `2000` della spec sulla fixture
+      di roll-up di `cost.test.ts`, e a `2500` invece di `null` su un piano
+      interamente di segnaposto — cioe' **F4 avrebbe stampato in status bar il
+      costo di un piano in cui nulla e' impegnato**, e `getPlan().totalCost`
+      lo dava gia' sbagliato. Prima causa: la riga di consegna di gen 3 e il
+      suo prompt di handoff **enunciavano due regole su tre** — il null di
+      `PlanTask.cost`, il null di `Plan.totalCost`, e non il filtro su
+      `disabledIds` che la §5.3 richiede («sum over top-level rows not in
+      `disabledIds`»), derivato da gen 3 e mai scritto. Seconda causa: l'hub
+      ha giustificato il roll-up sui root con un ragionamento proprio
+      («`taskCosts` ha gia' applicato la regola del disabled» — vero solo
+      *sotto* un summary) senza rileggere la §5.3 sul posto, avendo letto
+      §5.4 e §5.6. **La lezione e' una e sta nel Log**: un elenco di decisioni
+      consegnate e' completo o non e' una decisione. Vale per chi consegna e
+      per chi implementa, e vale al brief di F4.
+      Secondo finding del critic, chiuso: il docblock di `formatMoney`
+      diceva «una tariffa si inserisce intera», mentre `validateResources`
+      (`resources.ts:118-137`) ammette qualunque tariffa finita ≥ 0,
+      frazionaria inclusa — verificato sul codice, non ereditato.
+      Verificato dal critic e senza finding: l'asserzione `costs.get(id)!` di
+      `buildPlan` regge (stessa ricorsione sulla stessa `hierarchy`, e
+      **nessun `SolvedProject` e' costruito fuori da `solve()`** in `src/` o
+      nei test); la regola del null di `PlanTask.cost` guidata su nove forme
+      di riga (tariffa `0` dichiarata → costa `0`, milestone → `0`, foglia
+      disabled → il proprio importo, summary tutto non prezzato → `null`);
+      `formatMoney` non puo' ricevere un negativo, `-0`, `NaN` o `Infinity`
+      perche' ogni percorso di scrittura passa da `validateResources`.
+      Le nove righe della Fixture C restano quelle: `S1 7800 + M1 0`.
+      **Non ancora fatto e di F3**: la riga `toText()` dell'help dice «same
+      fields as `getPlan()`» mentre il report del file ne porta 5 su 16 — era
+      gia' un sottoinsieme prima, ora e' piu' largo.
 - [ ] F3 [impl] — Superfici di report, scrittura di `currency`, help dell'agente
+      **Debito di F7**: F3 e' il task che fa leggere `currency` a una `label()`,
+      quindi **la chiamata a `rebuildColumns()` da `loadProject` va rimessa** —
+      F7 l'aveva tolta perche' non comprava niente e distruggeva le larghezze
+      trascinate, e oggi non le distrugge piu' (il rebuild le riporta per nome).
+      **Debito di F2b**: la riga `toText()` dell'help dice «same fields as
+      `getPlan()`» mentre il report del file ne porta 5 su 16.
 - [ ] F4 [impl] — Colonne Rate e Cost **nate sul registro**, marca del
       parziale, totale in status bar
 - [ ] F5 [impl] — Tariffe e campo Currency nel dialogo People
@@ -719,40 +748,40 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   summary, milestone, undo della creazione) e reggono.
 
 ## Log
-- Dimensionamento: impl oltre ~200k = task da splittare (T35 215k, T18
-  182k+250k, F7 257k, F1 222k — **due di fila su Goal F: i sottotask sono
-  tarati grossi, tagliare piu' fine da F4**); una correzione via SendMessage
-  riusa il contesto e costa meno di un fresh spawn (~40k) — **ma non oltre
-  ~190k**: li' chiude l'hub, se ha le misure (T52; T55 188k/129k; T56
-  131k+166k; F7 critic 184k; F1 critic 125k). **Splittare funziona e si
-  misura**: F2 tagliato in calcolo + cablaggio ha reso F2a 141k/130k. Un architect di goal: 248k, il
-  delta 203k. **Un critic guidato nel browser e' la voce piu' cara del task**:
-  75-95k a tavolino, 148-168k nel browser (T56), 211k su T58 — e su T58 e'
-  l'unico che ha ribaltato una premessa. Si paga.
+- **Dimensionamento**: impl oltre ~200k = task da splittare (T35 215k, T18
+  182k+250k, F7 257k, F1 222k). **Splittare si misura**: F2 tagliato in calcolo
+  + cablaggio ha reso F2a 141k/130k, e F2b, fatto dall'hub, zero corsia.
+  **F4 e F5 vanno tagliati prima di briefarli.** Una correzione via SendMessage
+  costa meno di un fresh spawn (~40k), ma non oltre ~190k: li' chiude l'hub se
+  ha le misure. **Un critic guidato nel browser e' la voce piu' cara**: 75-95k
+  a tavolino, 148-168k nel browser, 211k su T58 — e su T58 e' l'unico che ha
+  ribaltato una premessa. Si paga.
+- **Un elenco di decisioni consegnate e' completo o non e' una decisione.** F2b:
+  la riga di consegna enunciava due regole del null su tre e taceva il filtro
+  `disabledIds` della §5.3, derivato da gen 3 e mai scritto; l'hub ha poi
+  giustificato la scelta con un ragionamento proprio senza rileggere la §5.3.
+  Doppia causa, una lezione: **chi implementa rilegge tutte le sezioni di spec
+  che il task cita, prima di giustificare una scelta da se'.**
 - **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta hanno chiuso
-  la condizione dello stallo e il round-trip del salvataggio (T56) per pochi k,
-  dove una corsia paga 40k di solo ingresso. T57 e' il caso limite: due
-  Explore (71k + 56k, non residenti) e una misura di dieci secondi hanno
-  ribaltato la premessa e chiuso il task in una riga, senza aprire corsia.
+  lo stallo e il round-trip del salvataggio (T56) per pochi k, dove una corsia
+  paga 40k di solo ingresso. T57: due Explore non residenti e dieci secondi di
+  misura hanno ribaltato la premessa e chiuso il task in una riga.
   **Prima di briefare, misurare la premessa**: se cade, il brief non serve.
 - Un accept che e' una campagna di misura va scopato come task di sola misura
-  (T31: misura + modifica, tre contesti saturati per 21 righe; T42, solo
-  misura, 99k/135k e zero correzioni). Variante che regge (T55): **misura
-  prima, correggi solo se la catena si chiude**, con «nessun diff» esito
-  valido.
+  (T31, T42 99k/135k e zero correzioni). Variante che regge (T55): **misura
+  prima, correggi solo se la catena si chiude**, con «nessun diff» esito valido.
 - Ricognizione a monte del brief: paga, **ma una citazione copiata non e'
-  verificata** — ne' un `file:line` (T43) ne' un nome di tipo (T48). Quel che
-  il brief non ha letto, **ordinare alla corsia di verificarlo**; quel che ha
-  letto, risolverlo nel brief (T44, T46, T48). Ri-localizzare invece di copiare
-  **trova** (T54); un `file:line` si rilegge **dopo** l'ultima modifica (T55).
-- Il critic trova cio' che l'accept non chiedeva (T41, T42, T45). Su uno
-  spostamento **l'hash, non la lettura** — e il diff complementare di cio' che
-  resta (T47, T48: e' l'unica prova contro un ripristino sporco). E sempre **la
-  domanda che fa paura**: misurata, e' cio' che rende il pass non una speranza.
+  verificata** — ne' un `file:line` (T43) ne' un nome di tipo (T48).
+  Ri-localizzare invece di copiare **trova** (T54); un `file:line` si rilegge
+  **dopo** l'ultima modifica (T55).
+- Il critic trova cio' che l'accept non chiedeva (T41, T42, T45, F2b). Su uno
+  spostamento **l'hash, non la lettura**, col diff complementare di cio' che
+  resta (T47, T48). E sempre **la domanda che fa paura**: misurata, e' cio' che
+  rende il pass non una speranza.
 - **Cio' che una corsia dichiara impossibile o preesistente va confrontato con
   l'evidenza.** T43 dava il drag reale per non guidabile, T41 l'aveva fatto;
   T46 dava per difetto dello scheduler la propria `setCalendar`. Fatto bene su
-  T48: il Tab misurato su HEAD **e** sul tree, prima di dirlo preesistente.
+  T48: il Tab misurato su HEAD **e** sul tree prima di dirlo preesistente.
 - **Un accept deve essere osservabile, indipendente dalla scala, e provare cio'
   che dice di provare.** T45 chiedeva ctrl+wheel (non misurabile in sintetico),
   T46 «le bande spariscono a Months» (vero su un piano corto, falso su uno
