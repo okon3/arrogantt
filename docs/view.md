@@ -350,8 +350,9 @@ that isn't there.
       being typed, on purpose, so its hint can swap mid-edit) — the Computed
       block shows the last solve and must not flicker while a zero is typed.
       The `(CUR)` parenthesis form lives in one place, `currencyLabel`
-      (`costCells.ts`), read by both the grid header (`columns.ts`) and this
-      entry's `dt`.
+      (`costCells.ts`): this `dt` reads it like every other surface that
+      labels a figure — grid header and CSV export included — and nothing
+      re-spells the parentheses.
     - **A summary's Cost reason ignores `resourceName`**: `costCellText` takes
       a required `isSummary`, and on the no-figure branch a summary reads `No
       resource` whatever name it is handed. The two surfaces that render the

@@ -1,4 +1,5 @@
 import type { Resource } from '../scheduler';
+import { currencyLabel } from './costCells';
 import { formatDays } from './format';
 import type { Plan, PlanTask } from './plan';
 
@@ -40,7 +41,7 @@ const HEADERS = [
 
 /** The currency label rides the header; cells stay bare numbers (§5.4). */
 function headers(currency: string | null): string[] {
-  return [...HEADERS, currency ? `Cost (${currency})` : 'Cost', 'Uncosted (d)'];
+  return [...HEADERS, currencyLabel('Cost', currency), 'Uncosted (d)'];
 }
 
 /** `YYYY-MM-DDTHH:mm` as the day comes first here, purely textual. */

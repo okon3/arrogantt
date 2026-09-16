@@ -11,6 +11,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { CRITICAL_CHAIN_LIMIT, type ChainState } from './project';
+import { uncostedNote } from './costCells';
 import { formatDays, formatMoney } from './format';
 
 export interface StatusBarProps {
@@ -106,11 +107,7 @@ export function StatusBar({
       {cost && (
         <span
           className="statusbar__cost"
-          title={
-            cost.uncostedDays > 0
-              ? `${formatDays(cost.uncostedDays)} d of effort not costed`
-              : undefined
-          }
+          title={cost.uncostedDays > 0 ? uncostedNote(cost.uncostedDays) : undefined}
         >
           Cost {cost.uncostedDays > 0 ? '≥ ' : ''}
           {formatMoney(cost.totalCost)}

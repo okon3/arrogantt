@@ -2,8 +2,8 @@
  * The plan columns a user can show or hide in the grid.
  *
  * Metadata only — a renderer lives beside what it renders (`GRID_CELLS` in
- * `gridColumns.ts`, a figure-side record later): this file never draws a
- * cell, it only says which columns exist, in what order, and how wide they
+ * `gridColumns.ts`, `FIGURE_CELLS` in `planFigure.ts`): this file never draws
+ * a cell, it only says which columns exist, in what order, and how wide they
  * are.
  */
 

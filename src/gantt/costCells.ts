@@ -71,7 +71,7 @@ export function costCellText(row: {
     // mark needs no legend and cannot lie.
     return {
       text: `≥ ${formatMoney(row.cost)}`,
-      title: `${formatDays(row.uncostedDays)} d of effort not costed`,
+      title: uncostedNote(row.uncostedDays),
       derived: false,
     };
   }
@@ -79,9 +79,18 @@ export function costCellText(row: {
 }
 
 /**
+ * Why a figure is only a lower bound. One wording for the whole application:
+ * a partial cost cell's hover and the status bar's project total say it about
+ * the same effort, and a reader who meets both must not have to tell them apart.
+ */
+export function uncostedNote(days: number): string {
+  return `${formatDays(days)} d of effort not costed`;
+}
+
+/**
  * The unit a rate or a cost is in, said in the label — never in the cell,
- * which stays a bare number. One home for the parenthesis form: the grid
- * header (`columns.ts`) and the details dialog's entry label read it.
+ * which stays a bare number. One home for the parenthesis form: every surface
+ * that labels a figure calls this, and none re-spells the parentheses.
  */
 export function currencyLabel(base: 'Rate' | 'Cost', currency: string | null): string {
   return currency ? `${base} (${currency})` : base;
