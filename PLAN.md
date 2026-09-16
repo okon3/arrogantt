@@ -418,7 +418,7 @@ a `:300-324` col suo unico call site a `:638`, `loadProject` a `:326-367`.
       F4 il bullet dei costi, dove le cifre diventano visibili nell'app; qui
       lo raddoppierebbe.
 - [x] F3b [impl] — Parita' di `getTask()`, scrittura di `currency`, help —
-      `SHA_PLACEHOLDER`. `TaskDetails` prende i tre campi di `PlanTask` piu'
+      `9c9e0ac`. `TaskDetails` prende i tre campi di `PlanTask` piu'
       `currency` (letti da `solvedRef.current`, nessun cablaggio nuovo);
       `GanttHandle.setCurrency` e `AgentApi.setCurrency` sul modello di
       `setCalendar`, senza `gantt.render()`; la regola del null estratta in
