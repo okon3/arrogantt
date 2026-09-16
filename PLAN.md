@@ -291,6 +291,25 @@ lo stato. Solo F2 e' `deep` (effort conservato); **nessun sottotask tocca
       giudicato non difetto: i rifiuti di `requireString` sono un
       sottoinsieme, il gate non si indebolisce.
 - [ ] F2 [deep] — La lettura del costo (`costs` su `SolvedProject`)
+      **Ricognizione gia' fatta e riletta sul codice dopo F1** (non ripagarla;
+      la spec e' pre-F7, questi sono i numeri di `62e73db`): `solve()` ritorna
+      a `project.ts:413-421` — `costs` si attacca li'; `SolvedProject` e'
+      `:61-80`; la regola dei figli vivi di `rollUp` e' `:714-715`
+      (`live.length > 0 ? live : rows`), le sue summary sono ordinate
+      deepest-first a `:703-706`; il leaf disabled entra unassigned a `:400`
+      (quindi il costo va letto dal `resourceId` del **modello**);
+      `capacityIntervals` da specchiare e' `availability.ts:44-61`;
+      `AllocationSegment` (`rate`, `startWorkingMinutes`, `endWorkingMinutes`)
+      e' `types.ts:55-72`, `effortMinutes` `:88`; `hierarchy.childrenOf` e'
+      `project.ts:93` e i top-level sono `childrenOf(undefined)`;
+      `dayStartInWorkingMinutes` `calendar.ts:249`, `minutesToDays` `:280`.
+      **Due cose da sapere prima di briefare**: (1) la §8 mette `formatMoney`
+      nello scope di `cost.ts` ma la §5.4 dice `format.ts`, accanto a
+      `formatDays` — vince la §5.4, e' la piu' specifica e quel file esiste
+      per questo; (2) l'accept (4) chiede di aggiungere `costs` a ogni
+      `SolvedProject` costruito a mano nei test: **non ce n'e' nessuno**
+      (cercati per `summaryIds:`/`disabledIds:` su tutti i `*.test.ts`), i
+      test passano da `solve()`. Se la corsia ne trova uno, e' un file nuovo.
 - [ ] F3 [impl] — Superfici di report, scrittura di `currency`, help dell'agente
 - [ ] F4 [impl] — Colonne Rate e Cost **nate sul registro**, marca del
       parziale, totale in status bar

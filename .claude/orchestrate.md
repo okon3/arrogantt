@@ -61,6 +61,12 @@ this file binds it to this repo.
   **Read `git log` at every checkpoint and compare against the commits you
   made yourself**: a report's CHANGES list is not the diff, and a read-only
   agent is read-only by convention only.
+  **E non e' solo un agente a poterlo fare**: il 2026-09-16, mentre F1 era in
+  corsia, una sessione sorella dell'utente (che non aveva preso il lock) ha
+  committato `PLAN.md` — `3868bf7`, scoping di T64/T65 — inglobando il `[>]`
+  che l'hub aveva appena scritto. Disgiunto, quindi innocuo, ma il lock non
+  protegge il piano da chi non lo legge: la regola vale per **ogni** scrittore,
+  e un `git log` a ogni checkpoint e' l'unico modo di accorgersene.
 - **The lock is hand-written here, and its shape is load-bearing.** With no
   heartbeat hook, whatever the hub writes into `.claude/orchestrator.lock` is
   what the next generation reads — and invocation parses it as JSON,
