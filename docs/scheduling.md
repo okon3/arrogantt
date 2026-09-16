@@ -148,6 +148,42 @@ arrival or capacity edge can move the clock. Measured, not derived:
 - Working week and daily hours are **global** — per-person hours would break the
   shared axis.
 
+## Cost — a reading of the schedule
+
+`src/gantt/cost.ts`, view-side only: the engine never learns that a task costs
+anything (`Person extends Resource` adds `dailyRate` and `rateOverrides`
+structurally).
+
+- **Rates are the twin of availability**: default + ordered overrides, override
+  **replaces** the default, **last declared wins** (`rateOnDay`). Two
+  departures: no implicit default (absent = *unknown*, never 0) and no clamp —
+  `validateResources` owns the range rules. A declared `0` is a value and costs
+  nothing.
+- `rateIntervals` mirrors `capacityIntervals` on the working-minute axis: one
+  interval per day any period touches, zero-width days (weekend, shutdown)
+  skipped, equal neighbours merged.
+- **A leaf costs its allocation, never its elapsed time**: per
+  `AllocationSegment`, per piece `[from, to)` cut at every rate change strictly
+  inside it, person-days = `minutesToDays(segment.rate × (to − from))` — the
+  bounds are working minutes, so the conversion is not optional — priced at the
+  rate in force at `from`. A half-time person with 4 d of effort spread over 8
+  days costs 4 × rate.
+- **Effort is conserved**: the pieces partition the segment, so
+  `costedDays + uncostedDays` equals the task's effort in days — pinned per
+  leaf.
+- **An absent rate is not 0**: those person-days go to `uncostedDays`, so a
+  caller can show a partial sum as a lower bound instead of a wrong total. No
+  resource at all → the whole effort is uncosted, read off `effortMinutes`
+  rather than summed over segments.
+- **A summary rolls up** over the same children as `rollUp` — the live ones, or
+  all of them when none is live — and has no `dailyRates` of its own. A
+  disabled leaf is out of every roll-up and still priced on its own row: the
+  model's `resourceId` decides, not the engine's (which is cleared to free the
+  capacity).
+- **No `Date` is ever produced here**: `dayStartInWorkingMinutes` is the only
+  bridge in, every bound is half-open, and every comparison is on working
+  minutes — so the ambiguity below cannot arise.
+
 ## Day-boundary ambiguity
 
 A working-minute on a day boundary = two wall-clock instants: 17:00 that day /
