@@ -152,7 +152,14 @@ that isn't there.
   header carries the currency (`Rate (EUR)` / `Cost (EUR)`), the bare word when
   `project.currency` is absent — the unit lives in the header, never in a cell
   (`format.ts`'s `formatMoney`/`formatDays` are unitless by the same rule the
-  status bar total follows). Cost cell: empty when the row's own effort
+  status bar total follows). They are also **the only two columns sized against
+  their header instead of their cells**, 84px each — a currency has a legal
+  maximum and a figure has none, and `columns.ts` carries that reason with the
+  measurements that fixed the number. Up to a three-character currency no
+  header is cut; past three it is, and the cut is accepted rather than paid for
+  in grid width. The figure's own header (`figureWidth`) is a separate budget
+  that still cuts past three characters; Goal G's export dialog redecides it.
+  Cost cell: empty when the row's own effort
   (`rolled_effort_days`) is zero (a milestone, or an all-zero summary); `—` in
   the `gantt-derived` register, titled *No resource* or *No rate for `<name>`
   on these days*, when `cost_amount` is `null` (the null rule is

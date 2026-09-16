@@ -287,6 +287,15 @@ restart happens *before* the measurement, not during it.
   against the input's **content box**, and mind which box: one field here is
   104px of track, 102px of padding box and 86px of content box, so a figure
   quoted without its box invites a second agent to disagree with the first.
+- **Measuring whether a label fits: subtract one `letter-spacing`.** CSS adds
+  the tracking after the *last* glyph too, so a `Range` over an element's
+  contents reports ink + one space and a label that fits exactly reads as
+  overflowing — the grid's `DURATION` measures 62.66px of rect in a 62px cell
+  while its ink is 62.00 and nothing is cut. Mind the box as well: a
+  `.gantt_grid_head_cell` has `padding: 0`, so its `clientWidth` *is* the
+  content box, while the data cell below it has 6px a side. And read the
+  cell's own `fontFamily` rather than the app's: the two disagree here
+  (`docs/dhtmlx.md`).
 - **On a block element `scrollWidth === clientWidth` whether the text wrapped
   or not**, so it cannot prove "no wrap". A `Range` over the text node and
   `getClientRects().length === 1` can — but **two rects are not a wrap when the

@@ -426,3 +426,30 @@ touching `src/gantt` code that talks to the library.
 - **The inline editor's input does not inherit the cell's `align`**: the
   `number` editor on Effort computes `text-align: start` inside a `right` cell,
   so alignment is a display choice only and no editor is affected by it.
+- **A head cell spends its whole declared width on text and clips it without a
+  sign.** `.gantt_grid_head_cell` computes `padding: 0` (so `clientWidth ===`
+  the content box, unlike the 6px data cell), `white-space: nowrap`,
+  `overflow: hidden` and **`text-overflow: clip`** — a label one character too
+  long simply loses the character, with no ellipsis and no `title` to reveal it
+  on hover, and since the text is centred it abuts the neighbouring header and
+  the two read as one word (`DURATIONRATE (EUR`). Measure a label with a
+  `Range` over the cell's contents and subtract one `letter-spacing`: CSS adds
+  the tracking after the *last* glyph too, so `DURATION` reports 62.66px of
+  rect in a 62px cell while its ink is exactly 62.00 and nothing is cut.
+  **`text-overflow: ellipsis` is not the cheap fix it looks like**: the browser
+  reserves the ellipsis' own width, so a header overflowing by that 0.66px tail
+  loses *two* characters (`DURATION` → `DURATI…`, measured) — worse than the
+  clip. Width is the only lever; size a header-driven column against its widest
+  legal label.
+- **The header renders in a webfont this app never declares.** The vendor
+  stylesheet sets `font-family: Inter, Helvetica, Arial, sans-serif` on the head
+  cell — more specific than our `font-family: inherit` on `.gantt_container` —
+  and ships its own `@font-face` pulling Inter from `fonts.gstatic.com` with
+  `font-display: swap`. So a header's metrics are a *network* dependency: on a
+  cold or offline load (this is a local tool) the cut-off point is the
+  fallback's, not Inter's. Data cells are unaffected — they do inherit, and
+  compute `system-ui` at 13px against the header's 11px. Measured both ways
+  before sizing a column: Helvetica sits within 4px of Inter on every header
+  here and is **narrower** on the widest ones (`Cost (WWW)` 78.03 against
+  81.98), so Inter is the sizing case — but that is a measurement, not a
+  given.
