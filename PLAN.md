@@ -453,13 +453,37 @@ a `:300-324` col suo unico call site a `:638`, `loadProject` a `:326-367`.
       il draft dopo un reload con `currency`, Ctrl+Z come tasto, la profondita'
       dello stack oltre la cima, `setCurrency` prima del mount e dopo
       `newProject()`.
-- [ ] F4 [impl] — Colonne Rate e Cost **nate sul registro**, marca del
-      parziale, totale in status bar
-      **Da tagliare prima di briefarlo** (Log, dimensionamento): il totale in
-      status bar legge solo `Plan` e non tocca la griglia — e' disgiunto dalle
-      due colonne, dai campi di riga e dal registro.
-      **Debito di F7, arrivato qui da F3b**: e' F4 a introdurre le prime
-      `label()` che leggono il progetto, quindi e' F4 che deve rimettere la
+**F4 e' splittato in F4a + F4b** (2026-09-16, sul seam che la sua stessa riga
+indicava): il totale in status bar legge solo `Plan`, non tocca la griglia, non
+tocca il registro e non ha nessuna delle trappole di larghezza. **F4a va per
+primo perche' e' il piu' piccolo e perche' rende misurabile un accept di F4b**:
+la §8 chiede che il totale non aspetti le colonne, e quella frase si guida solo
+se il totale c'e' gia' quando le colonne arrivano. Gli accept della §8 si
+dividono per clausola, non per numero: le clausole status bar di (1), (4) e (6)
+sono di F4a, tutto il resto di F4b.
+
+- [ ] F4a [impl] — Il totale di progetto nella status bar
+      `StatusBarProps.cost: { totalCost, uncostedDays, currency } | null`,
+      cablaggio in `syncFromChart` (`App.tsx:161-169`) che legge
+      `buildPlan(handle.getSolved())`, accanto a `N tasks`
+      (`StatusBar.tsx:97-98`). §5.4: mostrato sse `plan.totalCost !== null`
+      (una lettura della soluzione, **non** un predicato sulla lista delle
+      persone), indipendente da quali colonne sono a schermo; `Cost 12,500
+      EUR`, parziale → `Cost ≥ 12,500 EUR · 7 d not costed` col `title`, senza
+      label → `Cost 12,500`.
+      **Niente bullet di `CHANGELOG.md` qui**: la §5.6 ne prevede uno per i
+      costi e lo chiude F4b, che e' il commit dopo il quale la feature e'
+      intera. Deciso come su F3a e F3b — un bullet per riga visibile li
+      moltiplicherebbe.
+- [ ] F4b [impl] — Colonne Rate e Cost **nate sul registro**, marca del
+      parziale
+      Due entry `PLAN_COLUMNS` (`rate` 62, `cost` 84, `defaultShown: false`,
+      `clientSafe: false`, label dal `currency`) coi loro `GRID_CELLS` sui
+      template della §5.4; campi di riga `cost_amount`, `cost_costed_days`,
+      `cost_uncosted_days`, `daily_rates` in `toGanttData`, `applySolution` e
+      nel literal di `addTask`. Docs: `view.md` *Grid*; bullet `CHANGELOG.md`.
+      **Debito di F7, arrivato qui da F3b**: sono queste le prime `label()` che
+      leggono il progetto, quindi e' questo il task che deve rimettere la
       chiamata a `rebuildColumns()` — su `setCurrency` **e** su `loadProject`,
       o aprire un file con un `currency` diverso lascia le testate stantie
       (l'accept (4) della §8 copre solo il primo dei due). F7 l'aveva tolta
