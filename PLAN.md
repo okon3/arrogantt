@@ -880,7 +880,7 @@ L'utente ha scelto il 2026-09-16 di farle **tutte e quattro**, F12 compresa.
 `costCells.ts` e F9 ne cambia la firma, quindi F10 la segue e non la precede.
 
 - [x] F9 [impl] — La ragione del costo su un summary non deve nominare una
-      persona che sulla riga non c'e' — `PENDING`. `costCellText` prende un
+      persona che sulla riga non c'e' — `12e1006`. `costCellText` prende un
       `isSummary` **obbligatorio** e sul ramo senza cifra ignora `resourceName`;
       i tre chiamanti (`gridColumns.ts`, `planFigure.ts`, `TaskDialog.tsx`) lo
       passano, ed e' l'obbligatorieta' — non il flag — il meccanismo contro la
@@ -934,6 +934,25 @@ L'utente ha scelto il 2026-09-16 di farle **tutte e quattro**, F12 compresa.
       F5a). Estratte in un modulo, le quattro combinazioni assente/presente si
       pinnano senza jsdom. Nessun harness React da introdurre — e' proprio il
       punto.
+
+- [ ] F13 [self] — I numeri della colonna Cost si leggano in colonna
+      Richiesta dell'utente il 2026-09-16, con la sua ragione: centrati sono
+      difficili da confrontare fra righe, e cifre di lunghezza diversa
+      (`1,500` e `33,250`) non allineano le unita'. Vanno a destra.
+      Noto: l'allineamento **non** sta nel registro, sta per cella in
+      `gridColumns.ts` (`align: 'center'`, oggi su tutte e sette le colonne
+      numeriche); la status bar e il CSV non c'entrano; il percorso colonne
+      della figura non ha chiamante (`docs/file-format.md`), quindi lato figura
+      non e' osservabile.
+      **Domanda aperta all'utente, non deciderla da soli**: solo Cost, o anche
+      Rate, Effort e Duration? La sua ragione — confrontabilita' fra righe —
+      vale per tutte, e Cost da sola a destra accanto a Effort e Duration
+      centrate e' una terza convenzione in tabella. Se la risposta e' "tutte",
+      il task esce dal perimetro di Goal F (Effort e Duration sono di Goal E,
+      chiuso) e va misurato anche col dialogo e la griglia collassata.
+      Accept: le cifre di Cost allineate a destra nell'app, misurate e non
+      dedotte, con un gutter che non le faccia toccare il bordo colonna, e la
+      testata coerente con la colonna.
 
 **Non cancellare `.claude/specs/T59-costs.md` allo sweep degli orfani finche'
 la goal review di F non e' girata**: gli accept dei sottotask stanno nella sua
