@@ -462,7 +462,19 @@ se il totale c'e' gia' quando le colonne arrivano. Gli accept della §8 si
 dividono per clausola, non per numero: le clausole status bar di (1), (4) e (6)
 sono di F4a, tutto il resto di F4b.
 
-- [ ] F4a [impl] — Il totale di progetto nella status bar
+- [>] F4a [impl] — Il totale di progetto nella status bar
+      **Il brief e' gia' scritto e pagato: `.claude/briefs/F4a.md`** (gen 6,
+      dopo lo split, prima dell'handoff). Nessuna corsia e' mai partita e il
+      tree e' pulito — si spawna quello, non se ne riscrive un altro. Porta
+      5173 libera alla consegna.
+      **Ricognizione dentro il brief, riletta sul codice il 2026-09-16**:
+      `syncFromChart` e' a `App.tsx:181-189` (i numeri della §5.4 sono
+      scaduti) ed e' l'unico imbuto — `onChange` a `:903-907` piu' undo,
+      `reset`, `adopt`, row menu, `handleAddTask`; **non gira al mount**, ma
+      `initialProject` (`:80`) e' `emptyProject()`, quindi il seed esatto e'
+      `null` e nessun `solve()` al primo render serve. In `src/` **non esiste
+      nessun `.test.tsx`**: i componenti si verificano nel browser, e il brief
+      vieta di introdurre un harness.
       `StatusBarProps.cost: { totalCost, uncostedDays, currency } | null`,
       cablaggio in `syncFromChart` (`App.tsx:161-169`) che legge
       `buildPlan(handle.getSolved())`, accanto a `N tasks`
