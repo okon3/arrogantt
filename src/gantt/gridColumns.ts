@@ -1,7 +1,8 @@
 import { gantt } from 'dhtmlx-gantt';
 import type { GridColumn } from 'dhtmlx-gantt';
 import { Info, Ban } from 'lucide-static';
-import { formatDays, formatMoney } from './format';
+import { formatDays } from './format';
+import { costCellText, rateCellText, type CellText } from './costCells';
 import { escapeHtml } from './html';
 import { isShared, renderSegments } from './segmentBar';
 import { DEFAULT_BAR_COLOR, avatarColorOf, initialsOf, shade } from './colors';
@@ -206,51 +207,51 @@ const GRID_CELLS: Record<
     template: (task) =>
       `<span class="gantt-derived">${formatDays(Number(task.elapsed_days ?? 0))}d</span>`,
   }),
-  // A milestone is every non-summary leaf isMilestone marks (zero effort), so
-  // there is no "leaf with effort and no rate" case left uncovered by the
-  // dash below — the two guards above account for the whole domain.
+  // The rule that decides a rate cell's text lives in costCells.ts, shared
+  // with the details dialog (F6b); this entry only feeds it the grid's task
+  // shape and renders the descriptor as HTML.
   rate: () => ({
     align: 'center',
-    template: (task) => {
-      if (task.is_summary || task.type === MILESTONE_TYPE) return '';
-      const rates = (task.daily_rates as number[] | undefined) ?? [];
-      if (rates.length === 0) return '<span class="gantt-derived">—</span>';
-      if (rates.length === 1) return formatMoney(rates[0]);
-      // A range, not every distinct value: the tooltip's own Share range reads
-      // the same way (min–max), and a mid-task rate change is what it is for.
-      return `${formatMoney(rates[0])}–${formatMoney(rates[rates.length - 1])}`;
-    },
+    template: (task) =>
+      renderCellText(
+        rateCellText({
+          dailyRates: (task.daily_rates as number[] | undefined) ?? [],
+          isSummary: Boolean(task.is_summary),
+          isMilestone: task.type === MILESTONE_TYPE,
+        }),
+      ),
   }),
   cost: (ctx) => ({
     align: 'center',
     template: (task) => {
-      // rolled_effort_days is the one field that already means "this row's
-      // effort" on both branches (nominal_days column's own template reads it
-      // the same way on a summary) — a milestone and an all-zero summary share
-      // it, so one check clears both without a second effort concept.
-      if (Number(task.rolled_effort_days ?? 0) === 0) return '';
-      const amount = task.cost_amount as number | null;
-      const uncostedDays = Number(task.cost_uncosted_days ?? 0);
-      // The null rule lives in reportedCost (cost.ts) — cost_amount is its
-      // output, never re-derived from the day counts here.
-      if (amount === null) {
-        const resourceId = (task.resource_id as string | undefined) || undefined;
-        const resource = resourceId
-          ? ctx.project().resources.find((entry) => entry.id === resourceId)
-          : undefined;
-        const reason = resource ? `No rate for ${resource.name} on these days` : 'No resource';
-        return `<span class="gantt-derived" title="${escapeHtml(reason)}">—</span>`;
-      }
-      if (uncostedDays > 0) {
-        const title = escapeHtml(`${formatDays(uncostedDays)} d of effort not costed`);
-        // Rates are never negative, so a partial sum is a true lower bound —
-        // the mark needs no legend and cannot lie.
-        return `<span title="${title}">≥ ${formatMoney(amount)}</span>`;
-      }
-      return formatMoney(amount);
+      const resourceId = (task.resource_id as string | undefined) || undefined;
+      const resource = resourceId
+        ? ctx.project().resources.find((entry) => entry.id === resourceId)
+        : undefined;
+      return renderCellText(
+        costCellText({
+          effortDays: Number(task.rolled_effort_days ?? 0),
+          cost: task.cost_amount as number | null,
+          uncostedDays: Number(task.cost_uncosted_days ?? 0),
+          resourceName: resource ? resource.name : null,
+        }),
+      );
     },
   }),
 };
+
+/**
+ * Renders a `costCells.ts` descriptor as this medium's HTML: the `title`
+ * carries a person's name (user input), so it is escaped here rather than in
+ * the descriptor, which the details dialog's JSX also consumes and would
+ * otherwise double-escape.
+ */
+function renderCellText(cell: CellText): string {
+  if (cell.text === '') return '';
+  const titleAttr = cell.title !== null ? ` title="${escapeHtml(cell.title)}"` : '';
+  if (cell.derived) return `<span class="gantt-derived"${titleAttr}>${cell.text}</span>`;
+  return titleAttr ? `<span${titleAttr}>${cell.text}</span>` : cell.text;
+}
 
 export function buildColumns(ctx: RowContext, shown: ReadonlySet<PlanColumnName>): GridColumn[] {
   return [
