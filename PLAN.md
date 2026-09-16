@@ -462,31 +462,42 @@ se il totale c'e' gia' quando le colonne arrivano. Gli accept della §8 si
 dividono per clausola, non per numero: le clausole status bar di (1), (4) e (6)
 sono di F4a, tutto il resto di F4b.
 
-- [>] F4a [impl] — Il totale di progetto nella status bar
-      **Il brief e' gia' scritto e pagato: `.claude/briefs/F4a.md`** (gen 6,
-      dopo lo split, prima dell'handoff). Nessuna corsia e' mai partita e il
-      tree e' pulito — si spawna quello, non se ne riscrive un altro. Porta
-      5173 libera alla consegna.
-      **Ricognizione dentro il brief, riletta sul codice il 2026-09-16**:
-      `syncFromChart` e' a `App.tsx:181-189` (i numeri della §5.4 sono
-      scaduti) ed e' l'unico imbuto — `onChange` a `:903-907` piu' undo,
-      `reset`, `adopt`, row menu, `handleAddTask`; **non gira al mount**, ma
-      `initialProject` (`:80`) e' `emptyProject()`, quindi il seed esatto e'
-      `null` e nessun `solve()` al primo render serve. In `src/` **non esiste
-      nessun `.test.tsx`**: i componenti si verificano nel browser, e il brief
-      vieta di introdurre un harness.
-      `StatusBarProps.cost: { totalCost, uncostedDays, currency } | null`,
-      cablaggio in `syncFromChart` (`App.tsx:161-169`) che legge
-      `buildPlan(handle.getSolved())`, accanto a `N tasks`
-      (`StatusBar.tsx:97-98`). §5.4: mostrato sse `plan.totalCost !== null`
-      (una lettura della soluzione, **non** un predicato sulla lista delle
-      persone), indipendente da quali colonne sono a schermo; `Cost 12,500
-      EUR`, parziale → `Cost ≥ 12,500 EUR · 7 d not costed` col `title`, senza
-      label → `Cost 12,500`.
-      **Niente bullet di `CHANGELOG.md` qui**: la §5.6 ne prevede uno per i
-      costi e lo chiude F4b, che e' il commit dopo il quale la feature e'
-      intera. Deciso come su F3a e F3b — un bullet per riga visibile li
-      moltiplicherebbe.
+- [x] F4a [impl] — Il totale di progetto nella status bar — `6965482`.
+      `StatusBarProps.cost` (`{totalCost, uncostedDays, currency} | null`, un
+      solo `null` da interrogare), stato seminato `null` e calcolato in
+      `syncFromChart` da `buildPlan(handle.getSolved())`, `docs/view.md`
+      *Status bar*. 516 test invariati — non c'e' nessun `.test.tsx` in `src/`
+      e il brief vietava di introdurne uno. Corsia 157k, critic 151k.
+      **Nessun bullet `CHANGELOG.md`**, come da brief: lo porta F4b.
+      **Il critic ha guidato tutti e sette gli accept piu' due celle sue**: la
+      riga top-level prezzata e disabilitata (`totalCost` → `null`, elemento
+      rimosso — il difetto di F2b non si ripresenta) e la forma parziale senza
+      etichetta. Il picker guidato davvero (`grid_width` 706→644→706), testo
+      identico code-point per code-point; Ctrl+Z col tasto vero.
+      **Unico finding, ed era nel commento, non nel codice: la forma di T58.**
+      Il commento di `.statusbar__cost` dichiarava una misura che la regola non
+      consegna — «1150-1300px, `9 tasks` va a capo a meta' parola, e non scatta
+      mai a larghezza normale». Misurato dal critic: in quella banda la regola
+      cambia **0px** di altezza e taglia solo 2-40px della cifra; il suo effetto
+      vero e' a **≤1040px** (59 e 75 → 49, cioe' l'altezza che la barra aveva
+      gia' li' senza costo). Il rischio concreto era che un lettore successivo
+      misurasse la banda documentata, trovasse 49px coi due versi e cancellasse
+      la classe. Riscritto dall'hub con le cifre vere.
+      **Regressione comprata, non nascosta**: fra ~1100 e 1290px la barra passa
+      da 35 a 49px per via della cifra stessa. Il critic ha misurato **le due
+      alternative scartate** — `flex-shrink` sulla sola cifra recupera solo
+      1290, e uno schema di shrink-priority su tutta la barra tiene 35px fino a
+      1120 ma svuota la cifra e spinge *Fit* fuori schermo sotto 1100. Regola
+      dell'80%, con la prova di cio' che non si e' spedito.
+      **Fuori bar, per F4b**: sotto 1290px la cifra e' ellissata e nel caso
+      tutto-prezzato non c'e' `title` che la recuperi (§5.4 lo vieta li') — e'
+      una domanda alla spec, non un difetto. E quando F4b porta la cella costo,
+      `"<n> d of effort not costed"` esistera' in due file: decidere li' se ha
+      una casa sola.
+      **Non guidato e dichiarato tale** (dal critic): reload + ripresa del
+      draft al primo render (il seme `null` verificato sul codice a
+      `App.tsx:104` e sul progetto vuoto, non sul percorso di ripresa), schema
+      scuro, print/PNG/CSV, larghezze sotto 1024 e sopra 1920.
 - [ ] F4b [impl] — Colonne Rate e Cost **nate sul registro**, marca del
       parziale
       Due entry `PLAN_COLUMNS` (`rate` 62, `cost` 84, `defaultShown: false`,
