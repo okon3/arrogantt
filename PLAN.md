@@ -640,7 +640,13 @@ metodo `scrollWidth <= clientWidth` stanno entrambi nei bullet di *Dialogs*
       dice «three call sites»: va aggiornato nello stesso commit, o mente.
       **Il dialogo deve nominare il picker** (accept §8): chi inserisce la prima
       tariffa e' la persona che deve sapere che le colonne esistono e nascono
-      nascoste.
+      nascoste — e' la frase che riscrive il `.dialog__hint`, che F5a e F5c
+      lasciano intatto per questo.
+      **E porta lui il bullet `CHANGELOG.md` delle superfici tariffa del
+      dialogo**, deciso al brief di F5a e non dimenticato: qui la storia del
+      dialogo e' intera (tariffa di default, periodi, valuta), e un bullet
+      emendato tre volte e' peggio di uno alla fine. Sotto `## Unreleased`,
+      che **non** si rinomina (la deroga non e' comprata).
 - [ ] F6 [impl] — Il costo nel pannello dettagli
 - [ ] F8 [impl] — Colonne e banda di testata in `planFigure`
       **Non ha effetto visibile nell'app dentro questo goal**, e non e' una
@@ -657,6 +663,13 @@ la goal review di F non e' girata**: gli accept dei sottotask stanno nella sua
 ## Goal C — valutazione mobile-friendly                              [aperto]
 Agevolare la visualizzazione da smartphone/tablet nascondendo le azioni
 superflue; non tutto deve funzionare da mobile.
+
+Misurato di passaggio dal critic di F5a, e da non ri-supporre: il dialogo
+People a 728px **non sfonda** sotto i 776px di viewport (dove
+`width: min(var(--dialog-width), calc(100vw - 48px))` inizia a stringere) —
+`table-layout: fixed` comprime solo la colonna Name, fino a 0px a ~452px di
+spazio disponibile, con `scrollWidth === clientWidth` su tutto l'intervallo
+provato. Degrada, non si rompe.
 
 - [ ] T16 [opus] — Valutazione mobile: audit + proposta
       Scope: audit dell'app a viewport smartphone (375px) e tablet (768px),
