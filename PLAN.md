@@ -557,32 +557,55 @@ e `:513-517` in *Resource load lanes* — la grammatica delle righe-periodo e il
 metodo `scrollWidth <= clientWidth` stanno entrambi nei bullet di *Dialogs*
 (`docs/view.md:578-604`). I brief citano per simbolo, non per riga.
 
-- [>] F5a [impl] — La colonna Daily rate nel dialogo People
-      §5.5: colonna **Daily rate** (88px, `<colgroup>` + header) fra
-      Availability e Periods, larghezza del dialogo 640 → 728 perche' Name
-      tenga i suoi ≈260 (680 di content box = 260+88+88+160+48+36, aritmetica
-      da **misurare** non da dedurre). `DraftResource` prende
-      `dailyRate: string` (testo, vuoto = assente); `toResources` lo scrive
-      **solo a testo trimmato non vuoto** (§5.2).
-      **Il vizio da non copiare, gia' accertato in T59**: `toResources` scrive
-      *sempre* `availability` (`:47`), quindi salvare il dialogo intatto sporca
-      un file che non aveva quella chiave. Fuori scopo qui, e la misura si
-      protegge scegliendo una fixture le cui persone hanno `availability`
-      esplicita.
-      **Il docblock di `toResources` diventa mezzo falso e va riscritto**: dice
-      che una tariffa «e' passata per id anziche' ricostruita» — vero solo per
-      `rateOverrides` dopo questo commit. Forma T58.
-      **Debito di F1, misurato dal critic**: `App.tsx` (`:149,167,173,575`, non
-      piu' `:145,163,169,562`) e `resourceSnapshot.resources` sono tipati
-      `Resource[]`; `Person` aggiunge solo campi opzionali, quindi il
-      pass-through delle tariffe regge oggi per **identita' di oggetto**, non
-      per tipo — un rebuild `{id, name, availability}` in `App` compilerebbe
-      cancellando ogni tariffa. Tiparle `Person` rende statica la garanzia, ed
-      e' questo il task che tocca quella catena.
-      Larghezze **non misurate** dalla spec: la corsia verifica
-      `scrollWidth <= clientWidth` col metodo che il bullet *People table* di
-      `docs/view.md` nomina. Accept §8 di F5: (1), (2), la meta' `scrollWidth`
-      di (4). Docs: `view.md` *Dialogs* (bullet *People table*).
+- [x] F5a [impl] — La colonna Daily rate nel dialogo People — `3787f43`.
+      `DraftResource.dailyRate: string`, `toDraft`/`toResources` con la regola
+      del testo trimmato non vuoto, colonna 88px fra Availability e Periods,
+      dialogo 640 → 728, i due `colSpan` 5 → 6, `.people__rate`, i quattro
+      `Resource[]` → `Person[]` di `App.tsx` (import di `Resource` caduto,
+      inutilizzato) e il bullet *People table* di `view.md`. 517 test
+      invariati. Nessun file sotto `src/scheduler/`, nessun `rebuildColumns()`,
+      nessun terzo argomento a `setResources`: verificato sul diff.
+      **Il secondo split ha pagato**: corsia 186k, critic 215k, contro i
+      228k/213k di F4b che era splittato una volta sola.
+      **Critic `sonnet`: pass, zero finding.** Ha ri-guidato le nove righe
+      della Fixture C prima di ogni edit, tutti e sette gli accept, il Ctrl+Z
+      reale via CDP, e quattro celle sue: **le quattro combinazioni di campi
+      opzionali** (solo tariffa / solo override / entrambi / nessuno) con
+      `availability` esplicita per isolarle dal vizio noto — Save intatto su
+      tutte e quattro, zero passi di undo, **nessun secondo campo che si
+      scrive sempre**; il campo vero con `6e2` → 600, `0x10` → 16, `100.567`,
+      `Infinity` rifiutato da `Number.isFinite` (la trappola di F1 non si
+      ripresenta) e **round-trip `loadText()` pulito su tutti**; Tab, Save da
+      tastiera, schema scuro; e i numeri del doc ri-misurati su canvas
+      (header 56.22px vs valore a 5 cifre 35.05px).
+      **Tre decisioni prese al brief, non nella spec**: il campo e'
+      `type="text"` con `inputMode="decimal"` e non `type="number"` — la regola
+      del tasso vive in `validateResources` e sola, e un input `number`
+      scarterebbe `abc` prima che il draft lo veda, mettendo una seconda regola
+      muta nel campo (l'accept `-1`/`abc` e' cio' che lo prova); l'**ordine di
+      inserimento delle chiavi** in `toResources` deve restare quello di
+      `applied()` (`resources.ts:44-52`) perche' `JSON.stringify` scrive in
+      ordine di inserimento e `recordedChange` deduplica l'undo su testo
+      identico — spostare `dailyRate` costerebbe un passo di undo spurio a ogni
+      Save intatto; e **nessun bullet `CHANGELOG.md` qui**, lo porta F5b dove
+      la storia tariffe del dialogo e' intera.
+      **Chiuso dall'hub, misurato dalla corsia e confermato sul codice**:
+      `toText()` e' `serializeForFile` e data il report con `solvedAt` a
+      precisione di minuto, quindi **non e' mai byte-stabile** — un accept
+      scritto come identita' byte non e' guidabile a cavallo di un minuto.
+      Costato due misure (corsia e critic, stesso minuto attraversato); la
+      trappola e' ora in `docs/verification.md`, che il brief metteva fuori
+      scopo e che la corsia ha segnalato invece di toccare.
+      **Fuori bar, misurato dal critic e non un difetto**: sotto i 776px di
+      viewport il `<colgroup>` fisso **non** sfonda — `table-layout: fixed`
+      stringe solo Name, fino a 0px a ~452px di spazio disponibile, con
+      `scrollWidth === clientWidth` su tutto l'intervallo provato (728 → 452).
+      E' materiale di Goal C, e ora e' misurato invece che supposto. Piu' due
+      conseguenze dichiarate della scelta `type="text"`: una tariffa con molti
+      decimali si rivede intera nel campo (`100.567`) e arrotondata in griglia
+      (`100.57`, `maximumFractionDigits: 2`), e `6e2`/`0x10` passano come 600 e
+      16 senza segnalazione — coerenti col «una sola regola, in
+      `validateResources`», non difetti.
 - [ ] F5c [impl] — La lista dei periodi di tariffa, generalizzata
       §5.5: `AvailabilityList` **generalizzata** in un solo componente di
       riga-periodo con una render prop per la cella valore (due wrapper
@@ -991,7 +1014,9 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   sopra soglia: due colonne, quattro campi di riga e un debito di rebuild sono
   tre cose). **Splittare si misura**: F2 tagliato in calcolo
   + cablaggio ha reso F2a 141k/130k, F3a 122k/122k e F3b 133k/168k (il critic
-  nel browser, non la corsia), e F2b, dall'hub, zero corsia.
+  nel browser, non la corsia), e F2b, dall'hub, zero corsia. **Ri-splittare un
+  task gia' splittato paga anche lui**: F5a tagliato sulla campagna di misura,
+  non sul codice, ha reso 186k/215k dove F5a-intera era di classe F4b.
   **F4 e F5 vanno tagliati prima di briefarli.** Una correzione via SendMessage
   costa meno di un fresh spawn (~40k), ma non oltre ~190k: li' chiude l'hub se
   ha le misure. **Un critic guidato nel browser e' la voce piu' cara**: 75-95k
@@ -1003,22 +1028,18 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   rileggerla. F3b: il brief ha enumerato le superfici della §5.6 saltando la
   tabella *Writing — people*, da cui dipende la fixture del goal. Vale per chi
   consegna, per chi implementa e per l'hub che briefa: si rilegge la sezione.
-- **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta hanno chiuso
-  lo stallo e il round-trip del salvataggio (T56) per pochi k, dove una corsia
-  paga 40k di solo ingresso. T57: due Explore non residenti e dieci secondi di
-  misura hanno ribaltato la premessa e chiuso il task in una riga.
-  **Prima di briefare, misurare la premessa**: se cade, il brief non serve.
-- Un accept che e' una campagna di misura va scopato come task di sola misura
-  (T31, T42 99k/135k e zero correzioni). Variante che regge (T55): **misura
-  prima, correggi solo se la catena si chiude**, con «nessun diff» esito valido.
-- Ricognizione a monte del brief: paga, **ma una citazione copiata non e'
-  verificata** — ne' un `file:line` (T43) ne' un nome di tipo (T48).
-  Ri-localizzare invece di copiare **trova** (T54); un `file:line` si rilegge
-  **dopo** l'ultima modifica (T55).
-- Il critic trova cio' che l'accept non chiedeva (T41, T42, T45, F2b). Su uno
-  spostamento **l'hash, non la lettura**, col diff complementare di cio' che
-  resta (T47, T48). E sempre **la domanda che fa paura**: misurata, e' cio' che
-  rende il pass non una speranza.
+- **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta (T56) e due
+  Explore non residenti (T57) hanno chiuso un task a testa per pochi k, dove
+  una corsia paga 40k di solo ingresso. **Prima di briefare, misurare la
+  premessa**: se cade, il brief non serve.
+- Un accept che e' una campagna di misura e' un task di sola misura (T31, T42);
+  variante che regge (T55): **misura prima, correggi se la catena si chiude**.
+- **Una citazione copiata non e' verificata**: ne' un `file:line` (T43) ne' un
+  nome di tipo (T48). Si ri-localizza dopo l'ultima modifica (T54, T55) — su
+  F5a otto su otto della spec erano scadute, e si cita per simbolo.
+- Il critic trova cio' che l'accept non chiedeva: e' la regola, non l'eccezione
+  — si briefa chiedendogli **la domanda che fa paura**, e su uno spostamento
+  **l'hash, non la lettura**. Misurata, e' cio' che rende il pass non speranza.
 - **Cio' che una corsia dichiara impossibile o preesistente va confrontato con
   l'evidenza.** T43 dava il drag reale per non guidabile, T41 l'aveva fatto;
   T46 dava per difetto dello scheduler la propria `setCalendar`. Fatto bene su
