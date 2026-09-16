@@ -532,24 +532,56 @@ sono di F4a, tutto il resto di F4b.
       persistita (accept di F7, non di F4b), un drag reale **delle due colonne
       nuove** (guidato solo su `text`; le loro larghezze osservate costanti come
       effetto collaterale).
-- [ ] F5 [impl] — Tariffe e campo Currency nel dialogo People
-      **Da tagliare prima di briefarlo** (Log, dimensionamento): le superfici
-      tariffa del dialogo (colonna Daily rate, lista dei periodi
-      generalizzata, larghezza) e il campo `Currency` sono due cose.
-      **Arrivato da F3b**: e' F5 ad aggiungere il terzo argomento `currency?`
-      a `GanttHandle.setResources` (`ganttHandle.ts:64`) e a portarlo per la
-      catena `ResourceDialog.save` → `App.tsx:563` → handle, perche' e' il
-      primo percorso che lo puo' **misurare**. Tri-stato: assente = non
-      toccare (e' cio' che fa `commitResources`, `agentApi.ts:231`), `null` =
-      cancella, stringa = imposta. Una sola chiamata all'handle o sono due
-      passi di undo.
+**F5 e' splittato in F5a + F5b** (2026-09-16, sul seam che la sua riga
+indicava): le superfici tariffa del dialogo e il campo `Currency` sono due
+cose, e la misura di F4b lo conferma — 228k/213k su un task gia' splittato una
+volta. **F5a va per primo**: il campo Currency ha bisogno che il dialogo abbia
+gia' la sua forma nuova, e il vincolo «una sola chiamata all'handle o sono due
+passi di undo» regge in entrambi gli ordini, quindi decide la dimensione. Il
+terzo argomento `currency?` a `setResources` e' **tutto** di F5b: e' lui a
+cambiare la firma e il suo unico call site.
+
+- [ ] F5a [impl] — Le superfici tariffa del dialogo People
+      §5.5: colonna **Daily rate** (88px, `<colgroup>` + header) fra
+      Availability e Periods, larghezza del dialogo 640 → 728 perche' Name
+      tenga i suoi ≈260, `AvailabilityList` **generalizzata** in un solo
+      componente di riga-periodo con una render prop per la cella valore (due
+      wrapper sottili: *Availability periods* e *Rate periods*, stessa
+      grammatica `.ranges__row--pct`), e il bottone di riepilogo che appende
+      `, n rate periods`. `DraftResource` prende `dailyRate: string` (testo,
+      vuoto = assente) e `ratePeriods: RateOverride[]`.
+      **Il vizio da non copiare, gia' accertato in T59**: `toResources` scrive
+      *sempre* `availability` (`ResourceDialog.tsx:40`), quindi salvare il
+      dialogo intatto sporca un file che non aveva quella chiave. `dailyRate`
+      si scrive **solo a testo trimmato non vuoto** (§5.2).
       **Debito di F1, misurato dal critic**: `App.tsx` (`:145,163,169,562`) e
-      `resourceSnapshot.resources` restano tipati `Resource[]`, e siccome
-      `Person` aggiunge solo campi opzionali i due tipi sono mutuamente
-      assegnabili — quindi oggi il pass-through delle tariffe regge solo per
-      **identita' di oggetto**, non per tipo: un futuro rebuild
-      `{id, name, availability}` in `App` compilerebbe cancellando le tariffe.
-      Tipare `Person` quelle superfici rende la garanzia statica.
+      `resourceSnapshot.resources` sono tipati `Resource[]`; `Person` aggiunge
+      solo campi opzionali, quindi il pass-through delle tariffe regge oggi per
+      **identita' di oggetto**, non per tipo — un rebuild
+      `{id, name, availability}` in `App` compilerebbe cancellando ogni
+      tariffa. Tiparle `Person` rende statica la garanzia, ed e' questo il task
+      che tocca quella catena.
+      Larghezze **non misurate** dalla spec: la corsia verifica
+      `scrollWidth <= clientWidth` col metodo di `docs/view.md:513-517`.
+      Accept §8 di F5 meno le clausole `Currency`. Docs: `view.md` *Dialogs*.
+- [ ] F5b [impl] — Il campo `Currency` nel dialogo People
+      §5.8: il campo dichiarato nel dialogo People (e' l'unita' dei numeri
+      digitati li'), il terzo argomento `currency?` a `GanttHandle.setResources`
+      (`ganttHandle.ts:64`) portato per la catena `ResourceDialog.save` →
+      `App.tsx:563` → handle. **Tri-stato**: assente = non toccare (cio' che fa
+      gia' `commitResources`, `agentApi.ts:231`), `null` = cancella, stringa =
+      imposta.
+      **Una sola chiamata all'handle, o sono due passi di undo**: `recordedChange`
+      deduplica solo su testo identico, quindi tariffe e `currency` devono
+      passare insieme. E' l'accept che vale la pena guidare per primo.
+      **E' il secondo scrittore di `currency` della §5.7**: quindi e' questo il
+      task che aggiunge il **quarto** call site di `rebuildColumns()` — F4b ne
+      ha messi tre (`setColumns`, `loadProject`, `setCurrency`) e le testate
+      `Rate (EUR)` / `Cost (EUR)` devono seguire anche da qui. `docs/view.md`
+      dice «three call sites»: va aggiornato nello stesso commit, o mente.
+      **Il dialogo deve nominare il picker** (accept §8): chi inserisce la prima
+      tariffa e' la persona che deve sapere che le colonne esistono e nascono
+      nascoste.
 - [ ] F6 [impl] — Il costo nel pannello dettagli
 - [ ] F8 [impl] — Colonne e banda di testata in `planFigure`
       **Non ha effetto visibile nell'app dentro questo goal**, e non e' una
