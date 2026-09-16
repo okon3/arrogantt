@@ -935,7 +935,7 @@ L'utente ha scelto il 2026-09-16 di farle **tutte e quattro**, F12 compresa.
       pinnano senza jsdom. Nessun harness React da introdurre — e' proprio il
       punto.
 
-- [x] F13 [self] — I numeri si leggano in colonna — `PENDING`. Richiesta
+- [x] F13 [self] — I numeri si leggano in colonna — `dbf747e`. Richiesta
       dell'utente il 2026-09-16 sulla sola Cost; alla domanda di perimetro ha
       scelto **tutte le numeriche**, quindi `align: 'right'` su `nominal_days`,
       `elapsed_days`, `rate` e `cost` in `gridColumns.ts`, e `center` solo su
