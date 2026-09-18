@@ -1177,21 +1177,6 @@ arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 
-- [ ] T66 [utente] — Gli screenshot del README rappresentano un'altra app
-      `docs/assets/hero.png` e' del 2026-09-04 e **la sua UI e' in italiano**,
-      mentre l'app e' inglese end-to-end (`gantt.i18n.setLocale('en')` cablato,
-      `GanttChart.tsx:699`, e nessun dizionario italiano in `src/`): e' lo
-      scarto piu' netto, e non l'ha introdotto Goal F. Gli altri tre, misurati
-      dal critic di F11 contro lo stato di default di oggi: Effort e Duration
-      centrati nell'immagine e allineati a destra nell'app (F13), i due bottoni
-      nuovi in toolbar (comprimi griglia e scelta colonne, F7) assenti, e il
-      badge di versione assente. `resource-load.png` non e' stato confrontato.
-      **Decisione dell'utente, e il momento naturale e' T65**, che riscrive il
-      README col nome nuovo: rifare le due immagini li' costa una fixture sola.
-      `CLAUDE.md` chiede la ripresa «quando la UI deriva abbastanza da
-      travisarle»; quattro scarti su uno screenshot solo sono la misura, la
-      soglia e' sua.
-
 - [ ] T64 [utente + hub] — Rinominare il repo in `arrogantt` e ripubblicare Pages
       Va **prima** di T65, cosi' i link che T65 scrive nel README nascono
       vivi. Non lo esegue una corsia: sta fuori dal repo e cambia un URL
@@ -1256,8 +1241,21 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       default, e le tre chiavi vecchie restano orfane nel browser. Ripulirle
       sarebbe un `removeItem`, ma e' codice che esiste solo per il passato:
       non si scrive.
+      **Gli screenshot si rifanno qui — deciso dall'utente il 2026-09-18**, che
+      ha anche confermato che la UI nel frattempo e' cambiata. Non e' solo il
+      nome nuovo: `docs/assets/hero.png` e' del 2026-09-04 e **la sua UI e' in
+      italiano**, mentre l'app e' inglese end-to-end (`setLocale('en')` cablato
+      in `GanttChart.tsx:699`, nessun dizionario italiano in `src/`) — lo
+      scarto piu' netto dei quattro che il critic di F11 ha misurato contro lo
+      stato di default di oggi; gli altri tre sono Effort e Duration centrati
+      invece che allineati a destra (F13), i due bottoni nuovi in toolbar
+      (comprimi griglia, scelta colonne) assenti, e il badge di versione
+      assente. `resource-load.png` non e' stato confrontato: va guardata prima
+      di rifarla o di tenerla. **La composizione e la fixture sono dell'utente**
+      — e' la vetrina, non una prova.
       Accept: `grep -ri yagni` fuori da `.claude/` e `dist/` non trova
-      **niente** — le chiavi comprese; nel browser `arrogantt.help()` ritorna il
+      **niente** — le chiavi comprese; le due immagini di `docs/assets/`
+      mostrano l'app di oggi col nome nuovo, in inglese; nel browser `arrogantt.help()` ritorna il
       testo nuovo e `/llms.txt` servito e' identico ad `agentApi.help.md`;
       con un `yagni.draft.v1` in storage l'app parte pulita e non fa la
       domanda del draft, e al primo edit compare `arrogantt.draft.v1` (la
