@@ -270,6 +270,34 @@ reports — the gap is the first rule.
 - **`window.gantt` is readable from an `eval`**: `getLinks`, `config` and
   `attachEvent` without touching code. Link ids are `"1->2"` strings after
   `loadText` (the app assigns them) and timestamps when drawn with the mouse.
+- **The viewport command is `set viewport <w> <h> [scale]`, and the third
+  argument is the `deviceScaleFactor`** — there is no `resize`, and looking for
+  one led an agent to conclude a viewport measurement had no way in here.
+  `set viewport 1600 612 2` measures `devicePixelRatio 2`, `innerWidth 1600`,
+  and writes a 3200x1224 PNG: that is how a retina capture is taken.
+  `set device` is no route to the same thing — this build offers only iPhone
+  15/16/16 Pro/17, iPad, iPad Pro, Pixel 9, Galaxy S25, and refuses
+  `Desktop Chrome HiDPI`.
+- **A `set viewport` does not move the pointer, and the reflow can slide a row
+  under it.** After a click in the status bar and a growth from 612 to 705,
+  `:hover` read `.gantt_row.gantt-res-r2 > .gantt-avatar` — the row was
+  highlighted and its icon in its active colour, in a screenshot meant to show
+  the default state. Park the pointer on an inert area before any capture (two
+  moves a pixel apart — one move does not fire), then read
+  `.gantt_row:hover` back to zero.
+- **A non-ASCII character survives a top-level return and not a structured
+  one.** `return "resp-€-here"` answers correctly; the same character as an
+  object **value** had its key silently dropped from the response, and inside a
+  13-element array of strings it failed the whole call with
+  `EOF while parsing a value at line 1 column 0`. So build the string in the
+  page (`String.fromCharCode(8364)`) and report it as a char code, never as
+  itself.
+- **That same `EOF while parsing a value` can arrive after the script has
+  already done its work.** A fixture calling `arrogantt.link()` nine times
+  answers it every time, and the identical script with the nine calls removed
+  answers normally — but the work landed: 13 tasks, 9 links and the right
+  costs, read back in a separate evaluation. Never read that error as a script
+  that did not run; read the state back before redoing anything.
 
 What no rule fixes: JS errors in a hand-written `eval` (36 calls — a bug in the
 script, not the tool), a selector covered by the sticky header, and `open` /
