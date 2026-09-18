@@ -19,11 +19,11 @@ unico task di Goal C, che lo porterebbe alla sua review. **O4** in giacenza. Su
 T60 leggere prima il fatto accertato in testa a Goal G: l'export non fotografa
 il DOM.
 
-In manutenzione resta **T65**: il rename ad ARROGANTT dentro il repo, ora il
-task piu' grosso sul tavolo. T64 (GitHub + Pages) e T63 (il fuoco del picker)
-sono chiusi. T65 non aspetta piu' nessuna risposta — nome, tagline, sorte delle
-chiavi di storage e screenshot sono decisi sulla sua riga — e **Pages non
-redirige**, quindi il README ha sei link morti finche' non gira.
+In manutenzione resta **T65b**: rifare i due screenshot di `docs/assets/`, che
+ora mostrano un'app che non esiste piu' (nome vecchio, e `hero.png` ha la UI in
+italiano). Composizione e fixture le decide l'utente prima dello scatto: e' la
+vetrina, non una prova. T63, T64 e T65a sono chiusi — il README punta a link
+vivi e `grep -i yagni` trova solo `PLAN.md` e il favicon.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
@@ -315,61 +315,75 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       redirect di web, API e git che tengono vivi i cloni esistenti muoiono
       nell'istante in cui qualcuno rioccupa il vecchio nome.
 
-- [ ] T65 [impl] — ARROGANTT dentro il repo: nome, agent API, docs, README
-      **Sbloccato: T64 e' chiuso, e questo alza la priorita' del task.** Il
-      README punta a sei URL che ora sono morti — il badge di `deploy.yml`
-      (`README.md:9`), *Try it live* (`:12`), il link a `/llms.txt` (`:84`),
-      *live version* (`:100`), l'URL di clone (`:103`) e il `cd yagni` (`:104`)
-      — perche' Pages non redirige e il vecchio sito risponde 404. Non sono
-      stringhe stantie: sono link rotti in vetrina. I link nuovi nascono vivi
-      e sono verificati (`https://okon3.github.io/arrogantt/` apre l'app, badge
-      `v1.3`).
-      Rename del nome visibile e della superficie agenti. **Nessun alias
-      `window.yagni`**: taglio netto, non esistono script fuori da qui.
-      **Nome deciso dall'utente, si scrive cosi' e non si reinterpreta**:
-      `ARROGANTT — Automatic Resource Resolution & Optimization`, in
-      `index.html:7`, in testa ad `agentApi.help.md` (quindi in `/llms.txt`) e
-      come H1 + sottotitolo del README, che gia' ha i due slot.
-      **La tagline italic del README resta quella di oggi** («the Gantt chart
-      that knows people can't do two things at once»): dice cosa fa il
-      prodotto, dove «the end date is not up for negotiation» spiega solo il
-      nome — non si spende la riga migliore del README per una battuta.
-      Il globale e' `window.arrogantt`, per intero: nessuna abbreviazione, o
-      la help e `/llms.txt` insegnerebbero un nome che il README non usa.
-      Censimento misurato (`grep -ri`, esclusi `dist/` e i log):
-      - `index.html:7` — `<title>`
-      - `src/App.tsx:761` `window.yagni =`, `:770` messaggio in console,
-        `:293` commento
-      - `src/gantt/agentApi.ts:72` — la dichiarazione su `Window`
-      - `src/gantt/agentApi.help.md` — 7; **e'** anche `/llms.txt` e
-        `help()`, quindi stesso commit e mai una seconda copia
-      - `vite.config.ts:12,20` — il plugin si chiama `yagni-llms-txt`
-      - `README.md` — 17: titolo, badge del deploy, tre link a Pages, URL di
-        clone, alt della hero
-      - `docs/view.md` 3, `docs/verification.md` 2, `CLAUDE.md` 3,
-        `CHANGELOG.md` 1
-      - `package.json:2` — `"name"`; `private: true`, nessun registry dietro
-      - `columns.test.ts` 6, `draft.test.ts` 1 — leggono le chiavi di storage
-      **Fuori dal find-replace**: `src/assets/favicon.svg` porta il testo
-      `YAGNI` (due occorrenze) — e' il logo, non una stringa, e nove lettere
-      non stanno dove ne stavano cinque. Monogramma o ridisegno; se cresce,
-      task a se'.
-      **`.claude/` non si tocca** (briefs, specs, `launch.json`): e' archivio,
-      dice come si chiamava allora.
-      **Deciso dall'utente il 2026-09-16, coi costi davanti e contro la
-      raccomandazione — le chiavi di localStorage si rinominano**:
-      `yagni.draft.v1` (`draft.ts:16`), `yagni.seenVersion`
-      (`seenVersion.ts:8`) e `yagni.columns.v1` (`columns.ts:78`) diventano
-      `arrogantt.*`. **Nessuna migrazione**: tre replace, non tre
-      leggi-vecchia-scrivi-nuova. Conseguenze accettate adesso, non da
-      scoprire alla prima apertura — un draft non salvato sparisce, il
-      changelog si riapre una volta per tutti, le colonne spuntate tornano al
-      default, e le tre chiavi vecchie restano orfane nel browser. Ripulirle
-      sarebbe un `removeItem`, ma e' codice che esiste solo per il passato:
-      non si scrive.
-      **Gli screenshot si rifanno qui — deciso dall'utente il 2026-09-18**, che
-      ha anche confermato che la UI nel frattempo e' cambiata. Non e' solo il
-      nome nuovo: `docs/assets/hero.png` e' del 2026-09-04 e **la sua UI e' in
+- [x] T65a [impl] — ARROGANTT dentro il repo: nome, agent API, chiavi, docs,
+      README — `51de948`. 21 file. `window.arrogantt` per intero, nessun alias, le
+      tre chiavi di `localStorage` rinominate **senza migrazione** (decisione
+      dell'utente presa coi costi davanti: draft non salvato perso, changelog
+      riaperto una volta, colonne al default, tre chiavi vecchie orfane e
+      nessun `removeItem` a ripulirle). La voce **v1.0** del changelog
+      rinominata — decisione dell'utente del 2026-09-18 **contro** la
+      raccomandazione dell'hub, che proponeva di lasciarla come cronaca; e un
+      bullet sotto `## Unreleased`, che resta il primo heading.
+      **Il censimento precedente era sbagliato e l'ha scoperto l'hub
+      rimisurando prima di briefare**: 22 file tracciati, non 12. Quattro
+      occorrenze non c'erano — `EmptyState.tsx` (`<h2>`), `StatusBar.tsx`
+      (testo visibile), **il brand in testata** e un commento in
+      `planFigure.test.ts` — `docs/verification.md` ne aveva 5 e non 2, e la
+      chiave delle colonne stava 49 righe piu' giu' di quanto scritto. **I
+      numeri di riga vanno a deriva: si ri-localizza per simbolo.** Senza la
+      rimisura il task avrebbe spedito un'app che si chiama ARROGANTT nel
+      titolo della pagina e YAGNI in testata.
+      **E una premessa dell'hub era sbagliata nella forma, ribaltata dalla
+      corsia misurando**: il brief trattava brand ed espansione come due slot
+      in flusso nella barra e chiedeva di misurare l'overflow di una stringa
+      44 caratteri contro 31. `.app__expansion` e' `position: absolute;
+      opacity: 0`, mostrata solo su hover/`focus-visible`: **fuori dal flusso
+      per costruzione**, quindi una stringa piu' lunga gonfia solo il box del
+      tooltip. La ragione sta in `App.css:40-41` — dov'era gia', e vale
+      identica per il nome nuovo: **non e' stata duplicata nei docs.**
+      Misurato (hub, `grep`/`diff` sul tree): accept meccanico
+      `git ls-files | grep -il yagni` → **solo** `PLAN.md` e `favicon.svg`;
+      `npm test` 559/559 su 25 file, build e oxlint exit 0; la regex vera del
+      parser (`changelog.ts:7`) combacia **prima** su `v1.3`, quindi il badge
+      non si muove e i bullet di Unreleased restano fuori dal dialogo;
+      `dist/llms.txt` byte-identico ad `agentApi.help.md`; nessun
+      `removeItem`; identificatori ed export delle tre costanti intatti;
+      `package-lock.json` rigenerato con npm, solo il campo `name`; nessuna
+      traccia dell'acronimo vecchio.
+      Misurato (hub, browser, sessione propria) — **le celle che il critic ha
+      dichiarato non raggiunte, cadendo su un rate-limit a 92k**: con
+      `yagni.draft.v1` in storage l'app parte **pulita**, zero `dialog[open]`
+      letti dal DOM e zero task adottati; al primo edit compare
+      `arrogantt.draft.v1` (`project.gantt`) e la vecchia e' **byte-identica**,
+      orfana e non letta; `arrogantt.seenVersion` porta `v1.3`; spuntando Rate
+      nel picker compare `arrogantt.columns.v1` con `rate` in coda e la
+      colonna compare davvero in griglia, mentre `yagni.columns.v1` non nasce
+      mai; `<h2>` ARROGANTT e `document.title` letti dal DOM vivo; **con un
+      progetto aperto** a 1264px la barra non trabocca (`scrollWidth` =
+      `clientWidth`, overflow del documento 0).
+      Misurato dal critic: `/llms.txt` identico **dopo un riavvio a freddo**
+      del server (il plugin vive in `vite.config.ts`, che era toccato), 33 op
+      sull'oggetto vivo, `window.yagni === undefined`, e il tooltip **mostrato**
+      con hover reale a 1264 e 768px — bordo destro 312.7, dentro entrambi.
+      **Non guidato**: nessun viewport sotto 768px; la testata a viewport
+      stretto **con un progetto aperto** (il CLI di questa sessione non ha un
+      `resize`); il trigger `:focus-visible` del tooltip separatamente da
+      `:hover`; i sei link del README in rete (verificati vivi dall'hub in T64,
+      qui conta il testo).
+
+**Misurato dal critic di T65a e deliberatamente non aperto come task**: il
+bottone «Fit» della `.statusbar` fa traboccare il documento gia' a 768px di
+viewport (bordo destro 955px su 768 di clientWidth), in empty state.
+**Preesistente e scollegato dal rename** — nessun file della `.statusbar` e'
+stato toccato per la larghezza. Stessa logica del popover che non segue il
+resize: sotto la regola dell'80% non vale un meccanismo, e se qualcuno segnala
+il layout sotto gli 800px si guarda **tutta** la status bar in una volta, non
+un bottone.
+
+- [ ] T65b [self + utente] — Rifare i due screenshot di `docs/assets/`
+      **Va dopo T65a**: devono mostrare il nome nuovo. Deciso dall'utente il
+      2026-09-18, che ha anche confermato che la UI nel frattempo e' cambiata.
+      Non e' solo il nome: `hero.png` e' del 2026-09-04 e **la sua UI e' in
       italiano**, mentre l'app e' inglese end-to-end (`setLocale('en')` cablato
       in `GanttChart.tsx:699`, nessun dizionario italiano in `src/`) — lo
       scarto piu' netto dei quattro che il critic di F11 ha misurato contro lo
@@ -377,16 +391,9 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       invece che allineati a destra (F13), i due bottoni nuovi in toolbar
       (comprimi griglia, scelta colonne) assenti, e il badge di versione
       assente. `resource-load.png` non e' stato confrontato: va guardata prima
-      di rifarla o di tenerla. **La composizione e la fixture sono dell'utente**
-      — e' la vetrina, non una prova.
-      Accept: `grep -ri yagni` fuori da `.claude/` e `dist/` non trova
-      **niente** — le chiavi comprese; le due immagini di `docs/assets/`
-      mostrano l'app di oggi col nome nuovo, in inglese; nel browser `arrogantt.help()` ritorna il
-      testo nuovo e `/llms.txt` servito e' identico ad `agentApi.help.md`;
-      con un `yagni.draft.v1` in storage l'app parte pulita e non fa la
-      domanda del draft, e al primo edit compare `arrogantt.draft.v1` (la
-      vecchia resta orfana e non viene letta); `npm test`, `npm run build`,
-      `npm run lint` puliti.
+      di rifarla o di tenerla.
+      **La composizione e la fixture sono dell'utente** — e' la vetrina, non
+      una prova: si chiedono prima di scattare, non dopo.
 
 **Notato dal critic di F7 e deliberatamente non aperto come task**: il
 popover del picker si posiziona una volta dall'ancora catturata all'apertura
