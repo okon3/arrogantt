@@ -376,6 +376,90 @@ describe('planFigure columns', () => {
   });
 });
 
+describe('planFigure collapsedIds', () => {
+  it('draws a closed branch’s summary but not its children', () => {
+    const { project, solved } = buildFixtureC();
+    const { svg } = planFigure(project, solved, { width: 1050, collapsedIds: new Set(['s2']) });
+    expect(svg).toContain('>S2<');
+    expect(svg).not.toContain('>T3<');
+    expect(svg).not.toContain('>T4<');
+    expect(svg).not.toContain('>T5<');
+    expect(svg).not.toContain('>T6<');
+  });
+
+  it('hides a grandchild even when its immediate parent stays open', () => {
+    const { project, solved } = buildFixtureC();
+    const { svg } = planFigure(project, solved, { width: 1050, collapsedIds: new Set(['s1']) });
+    expect(svg).toContain('>S1<');
+    expect(svg).toContain('>M1<');
+    expect(svg).not.toContain('>T1<');
+    expect(svg).not.toContain('>T2<');
+    expect(svg).not.toContain('>S2<');
+    expect(svg).not.toContain('>T3<');
+    expect(svg).not.toContain('>T4<');
+    expect(svg).not.toContain('>T5<');
+    expect(svg).not.toContain('>T6<');
+  });
+
+  it('leaves the axis and the totals alone: a surviving bar and the title span are unchanged', () => {
+    const { project, solved } = buildFixtureC();
+    const base = planFigure(project, solved, { width: 1050, title: 'plan.gantt' });
+    const collapsed = planFigure(project, solved, {
+      width: 1050,
+      title: 'plan.gantt',
+      collapsedIds: new Set(['s2']),
+    });
+
+    // The timeline's left edge (the vertical rule at `geometry.left`) is drawn
+    // once per figure and never depends on which rows survive the filter.
+    const timelineLeft = /<line x1="([\d.]+)" y1="[\d.]+" x2="\1" y2="[\d.]+" stroke="#dfe2e8" \/>/;
+    expect(collapsed.svg.match(timelineLeft)?.[1]).toBe(base.svg.match(timelineLeft)?.[1]);
+
+    // S1's bar (the first summary row, height 8) survives the s2 filter.
+    const s1Bar = /<rect x="([\d.]+)" y="[^"]+" width="[^"]+" height="8"/;
+    expect(collapsed.svg.match(s1Bar)?.[1]).toBe(base.svg.match(s1Bar)?.[1]);
+
+    const span = /\d\d\/\d\d\/\d{4} → \d\d\/\d\d\/\d{4}/;
+    expect(collapsed.svg.match(span)?.[0]).toBe(base.svg.match(span)?.[0]);
+  });
+
+  it('slices the filtered rows, not the raw ones', () => {
+    const { project, solved } = buildFixtureC();
+    const collapsedIds = new Set(['s2']);
+    const whole = planFigure(project, solved, { width: 1050, collapsedIds });
+    const sliced = planFigure(project, solved, {
+      width: 1050,
+      collapsedIds,
+      slice: { from: 0, count: 3 },
+    });
+    const rowNames = (svg: string) =>
+      [...svg.matchAll(/<text x="\d+" y="[^"]+" font-size="12"[^>]*>([^<]+)<\/text>/g)].map(
+        (match) => match[1],
+      );
+    expect(rowNames(sliced.svg)).toEqual(rowNames(whole.svg).slice(0, 3));
+  });
+
+  it('planFigurePages paginates the filtered rows, with no empty trailing page', () => {
+    const { project, solved } = buildFixtureC();
+    // T3..T6 hidden leaves S1, T1, T2, S2, M1 — five rows, three per page: two
+    // pages, the second holding the last two rather than nothing.
+    const pages = planFigurePages(project, solved, {
+      width: 1050,
+      collapsedIds: new Set(['s2']),
+      rowsPerPage: 3,
+    });
+    expect(pages).toHaveLength(2);
+    expect(pages[1].svg).toMatch(/font-size="12"/);
+  });
+
+  it('is a no-op absent, and an empty set matches the default figure exactly', () => {
+    const { project, solved } = buildFixtureC();
+    const withoutOption = planFigure(project, solved, { width: 1050 });
+    const withEmptySet = planFigure(project, solved, { width: 1050, collapsedIds: new Set() });
+    expect(withEmptySet.svg).toBe(withoutOption.svg);
+  });
+});
+
 describe('tickUnit', () => {
   it('climbs from days to weeks to months as the columns narrow', () => {
     expect(tickUnit(20)).toBe('day');

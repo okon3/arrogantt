@@ -657,6 +657,7 @@ export function GanttChart({
       zoomToFit: () => gantt.ext.zoom.zoomToFit({ rangeMode: 'target' }),
       collapseAll: () => setEveryBranchOpen(false),
       expandAll: () => setEveryBranchOpen(true),
+      collapsedBranches: () => collapsedBranches(),
       scrollToToday: () => gantt.showDate(new Date()),
       toggleGridCollapsed: () => {
         const grid = gantt.$grid;

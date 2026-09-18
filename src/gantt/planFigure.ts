@@ -43,6 +43,11 @@ export interface FigureOptions {
    * registry order. Absent = the legacy Name + Person outline.
    */
   columns?: PlanColumnName[];
+  /**
+   * The branches the user has closed. Their descendants are not drawn, at any
+   * depth; the summary itself is. Absent = every row, as before.
+   */
+  collapsedIds?: ReadonlySet<string>;
 }
 
 export interface Figure {
@@ -150,6 +155,24 @@ function geometryOf(from: Date, to: Date, width: number, labelWidth: number): Ge
       return left + (dayIndexOf(date) - firstDay + fraction) * pxPerDay;
     },
   };
+}
+
+/**
+ * The rows a closed branch hides, at any depth.
+ *
+ * `buildPlan` orders a parent before its own subtree, so one forward pass is
+ * enough: a task is hidden as soon as its parent is either collapsed or
+ * already found hidden, with no need to walk back up the chain of ancestors
+ * for every row.
+ */
+function visibleTasks(tasks: PlanTask[], collapsedIds: ReadonlySet<string> | undefined): PlanTask[] {
+  if (!collapsedIds) return tasks;
+  const hidden = new Set<string>();
+  return tasks.filter((task) => {
+    const parentHidden = task.parentId !== null && (collapsedIds.has(task.parentId) || hidden.has(task.parentId));
+    if (parentHidden) hidden.add(task.id);
+    return !parentHidden;
+  });
 }
 
 function isMilestone(task: PlanTask): boolean {
@@ -289,9 +312,10 @@ export function planFigure(
   const width = options.width ?? 1400;
   const plan = buildPlan(solved);
   const names = new Map(project.resources.map((resource) => [resource.id, resource.name]));
+  const filteredTasks = visibleTasks(plan.tasks, options.collapsedIds);
   const rows = options.slice
-    ? plan.tasks.slice(options.slice.from, options.slice.from + options.slice.count)
-    : plan.tasks;
+    ? filteredTasks.slice(options.slice.from, options.slice.from + options.slice.count)
+    : filteredTasks;
 
   // Absent `columns` is the legacy Name + Person outline, kept byte-identical:
   // `selected` stays null rather than `[]`, which is itself a valid (empty)
@@ -444,7 +468,7 @@ export function planFigurePages(
   solved: SolvedProject,
   options: Omit<FigureOptions, 'slice'> & { rowsPerPage?: number } = {},
 ): Figure[] {
-  const total = buildPlan(solved).tasks.length;
+  const total = visibleTasks(buildPlan(solved).tasks, options.collapsedIds).length;
   const perPage = Math.max(1, options.rowsPerPage ?? PAGE_ROWS);
   const pages = Math.max(1, Math.ceil(total / perPage));
   return Array.from({ length: pages }, (_, index) =>

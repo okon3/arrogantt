@@ -97,6 +97,8 @@ export interface GanttHandle {
   /** Collapses every branch of the grid. View state only: the project is untouched. */
   collapseAll(): void;
   expandAll(): void;
+  /** The branches closed in the grid, by task id. View state, read-only. */
+  collapsedBranches(): ReadonlySet<string>;
   scrollToToday(): void;
   /**
    * Collapses the task grid to zero width, or restores it to the width it had
