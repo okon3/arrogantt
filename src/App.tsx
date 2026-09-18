@@ -405,12 +405,18 @@ export default function App() {
     try {
       await downloadSvgAsPng(
         exportFilename(filename, 'png'),
-        planFigure(project, solved, { title: filename, today: new Date() }),
+        planFigure(project, solved, {
+          title: filename,
+          today: new Date(),
+          // Unconditional on purpose: an emptied selection is `[]`, and only an
+          // absent list means the legacy outline (`planFigure.ts`, `selected`).
+          columns: [...columns],
+        }),
       );
     } catch (cause) {
       setError(`Could not create the plan image: ${String(cause)}`);
     }
-  }, [filename]);
+  }, [columns, filename]);
 
   const handleAddTask = useCallback(() => {
     chart.current?.addTask();
@@ -753,10 +759,15 @@ export default function App() {
   // the scripting surface reads its state through a ref: a rename would leave
   // the printed title behind.
   const printTitle = useRef(filename);
+  // Same reason as `printTitle`: the install effect below has empty deps, so
+  // its callback closes over whatever `columns` was at first render unless it
+  // reads a ref that this effect keeps current instead.
+  const printColumns = useRef(columns);
   useEffect(() => {
     agentState.current = { filename, dirty, adopt, reset };
     printTitle.current = filename;
-  }, [adopt, dirty, filename, reset]);
+    printColumns.current = columns;
+  }, [adopt, columns, dirty, filename, reset]);
 
   // Printing draws the same figure the PNG does, paged: the chart itself prints
   // as the screenful the viewport holds, whatever the plan's height. The pages
@@ -771,6 +782,7 @@ export default function App() {
         return planFigurePages(project, solved, {
           title: printTitle.current,
           today: new Date(),
+          columns: [...printColumns.current],
         });
       }),
     [],

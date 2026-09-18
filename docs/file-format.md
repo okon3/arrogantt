@@ -128,4 +128,8 @@ beside a non-zero `Uncosted (d)` it is a lower bound.
   pages — unpaged = cropped). *Save as PDF* in the print dialog **is** the PDF
   export.
 - The figure takes a `columns` list (`FigureOptions.columns`, drawn as a
-  header band above the month band); the app passes none yet.
+  header band above the month band); PNG and print both pass the grid's
+  current column selection, so a deselected column drops out of the header
+  band and the resource cell too, and an empty selection still draws the band,
+  empty — never the legacy `Name + Person` outline that `columns` omitted
+  answers.
