@@ -211,29 +211,71 @@ gerarchia, **nessun filtro di collapse**.
       estrarla non la previene e il suo test non la vedrebbe. Il fatto resta
       in una casa sola: `planFigure.ts:296-298`.
 
-- [ ] G3 [deep] — Il dialogo di configurazione dell'export
-      Scope: la fetta a giudizio. Guscio `Dialog.tsx` (il modello e'
-      `ConfirmDialog`, non il popover `ColumnPicker` che e' legato
-      staticamente a `PLAN_COLUMNS`, `ColumnPicker.tsx:117`). Si interpone su
-      PNG e print — l'agent API non espone alcuna op di export, quindi non c'e'
-      parita' da mantenere (verificato). Contenuto: ambito («tutto il piano» /
-      «come lo vedo», che consuma G1), scelta colonne dal registro, e un preset
-      «per il cliente» che parte da `clientSafe` (`columns.ts:31-33`, oggi
-      consumato dal solo `planFigure.test.ts:334`).
-      Da decidere dentro il task, e scrivere: se la scelta del dialogo e'
-      effimera o persistita, e se e' separata da quella della griglia. Il
-      vincolo ereditato da F dice che **sono due clienti dello stesso registro
-      che scelgono diverso nello stesso momento**, quindi separata — ma la
-      persistenza e' una scelta nuova.
+Deciso con l'utente il 2026-09-18, prima di briefare G3 (non riaprire):
+- **Le impostazioni di export sono persistite in `localStorage`**, separate da
+  quelle della griglia — due clienti dello stesso registro, come da vincolo
+  ereditato da F. Chi esporta per il cliente ogni settimana ritrova le sue
+  scelte, e `beforeprint` legge le stesse, quindi anche una stampa che non
+  passa dal bottone esce coerente.
+- **Al primo export, senza nulla in `localStorage`: il comportamento di oggi**
+  — ambito «tutto il piano», colonne quelle della griglia. Un aggiornamento non
+  cambia sotto i piedi cosa esce; il preset cliente resta a un clic. Scartato
+  partire dal preset (il primo PNG dopo l'aggiornamento sarebbe diverso
+  dall'ultimo di prima, senza che nessuno abbia scelto).
+- **Ctrl+P non viene intercettato.** Misurato: `installPrintFigure` si aggancia
+  a `beforeprint` per decisione documentata (`printPlan.ts:7-11`), e da li' un
+  modale non puo' interporsi — la stampa del browser sta gia' arrivando.
+  Intercettare `keydown` si potrebbe (l'app lo fa gia' per Ctrl+Z,
+  `App.tsx:592-600`, e Ctrl+P non e' riservato dal browser), ma con le
+  impostazioni persistite Ctrl+P stampa con le scelte correnti, che e' cio' che
+  quel tasto promette: rubarlo per aprire un dialogo e' attrito per chi voleva
+  solo stampare. Se lo si volesse, e' un task a se' con la sua misura nel
+  browser — e la misura costa, perche' un `preventDefault` che non prende apre
+  la modale nativa, che blocca il pannello (`docs/verification.md:37-41`).
+
+- [ ] G3a [impl] — Le impostazioni di export come stato, senza UI
+      Scope: modulo nuovo `src/gantt/exportSettings.ts` con il tipo
+      (`scope: 'all' | 'visible'`, `columns: ReadonlySet<PlanColumnName>`) e la
+      coppia read/write su `DraftStorage`, modellata **riga per riga** su
+      `readColumnSelection`/`writeColumnSelection` (`columns.ts:140-174`):
+      chiave propria, parsing difensivo che ricade sul default a ogni sospetto,
+      scrittura che non lancia mai. Default = continuita' (`scope: 'all'`,
+      colonne = selezione di griglia). Lo stato vive in `App.tsx`; i due
+      chiamanti (`handleExportPng`, `App.tsx:401-419`, e la callback di
+      `installPrintFigure`, `App.tsx:776-789`) consumano scope e colonne da
+      li', il secondo dal ref che gia' esiste per le colonne. `scope:
+      'visible'` passa `collapsedIds: chart.current.collapsedBranches()` a
+      `planFigure`/`planFigurePages` — e' il primo consumatore di G1.
+      Accept: nessun cambiamento osservabile (il default e' il comportamento di
+      oggi, e nulla scrive ancora le impostazioni); test del round-trip e di
+      ogni ricaduta sul default (chiave assente, JSON rotto, nomi ignoti,
+      storage che lancia); test che con `scope: 'visible'` e un ramo chiuso la
+      figura perde i figli.
+
+- [ ] G3b [deep] — Il dialogo di configurazione dell'export
+      Scope: la fetta a giudizio, sopra lo stato di G3a. Guscio `Dialog.tsx`
+      (il modello e' `ConfirmDialog`, non il popover `ColumnPicker` che e'
+      legato staticamente a `PLAN_COLUMNS`, `ColumnPicker.tsx:117`). Si
+      interpone sul bottone PNG e sul bottone Print — l'agent API non espone
+      alcuna op di export, quindi non c'e' parita' da mantenere (verificato).
+      Contenuto: ambito («tutto il piano» / «come lo vedo»), colonne dal
+      registro, e un preset «per il cliente» che parte da `clientSafe`
+      (`columns.ts:31-33`, oggi consumato dal solo `planFigure.test.ts:334`).
+      Conferma = scrive le impostazioni e lancia l'export.
+      Da decidere dentro il task: se la lista di checkbox si ottiene
+      generalizzando `ColumnPicker` sull'elenco o scrivendola nel dialogo —
+      **nessuna seconda lista di colonne deve esistere nel codice**, e la
+      risposta e' quella che lascia un solo posto dove la regola vive.
       **Lasciato da G1 (critic, fuori scope allora):** `collapsedBranches()`
       (`GanttChart.tsx:69-75`) marca chiuso **ogni** task con `$open === false`,
       foglie mai toccate incluse. Innocuo finche' l'insieme torna dentro
       `planFigure` (una foglia non ha figli da nascondere); da guardare se il
       dialogo ne legge la cardinalita' o il contenuto — «2 rami chiusi» sarebbe
       un numero falso.
-      Accept: il dialogo governa PNG e print; nessuna seconda lista di colonne
-      esiste nel codice; verificato nell'app servita; `docs/view.md` porta la
-      ragione del preset.
+      Accept: il dialogo governa i due bottoni; le scelte sopravvivono a un
+      reload; Ctrl+P stampa con le impostazioni correnti senza aprire nulla;
+      verificato nell'app servita; `docs/view.md` porta la ragione del preset e
+      quella del default di continuita'.
 
 - [ ] G4 [self] — Docs e changelog dell'export cliente
       Scope: bullet in `CHANGELOG.md` sotto `## Unreleased` (ricreandola in
