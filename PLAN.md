@@ -875,9 +875,9 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 - **Dimensionamento, T60**: due Explore (56k + 72k), zero corsie, zero critic —
   un task di sola analisi paga bene la delega se l'hub tiene solo le
   conclusioni e rimisura da se' quelle portanti.
-- **Dimensionamento, G2 e G1**: G2 impl 88k / critic 86k, G1 impl 82k /
-  critic 94k, zero correzioni di corsia in entrambi (l'unica di G2 l'ha fatta
-  l'hub in due minuti, piu' economico di un giro). **Un brief che porta gia'
-  la fixture da usare e i sei casi dell'accept si paga**: la corsia non ne ha
+- **Dimensionamento, Goal G**: G2 88k/86k, G1 82k/94k, G3a 92k/81k
+  (impl/critic), zero correzioni di corsia in tutti e tre. **Un brief che
+  porta gia' la fixture e i casi dell'accept si paga**: nessuna corsia ne ha
   inventata una. E **al critic si danno le domande in ordine di paura**: le
-  quattro di G1 hanno prodotto quattro verifiche, non un giro di lode.
+  quattro di G1 e di G3a hanno prodotto otto verifiche, non due giri di lode
+  — e una ha trovato un test che passava per la ragione sbagliata.
