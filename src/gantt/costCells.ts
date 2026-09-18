@@ -79,9 +79,11 @@ export function costCellText(row: {
 }
 
 /**
- * Why a figure is only a lower bound. One wording for the whole application:
- * a partial cost cell's hover and the status bar's project total say it about
- * the same effort, and a reader who meets both must not have to tell them apart.
+ * Why a figure is only a lower bound. One wording for the two hovers — a
+ * partial cost cell's and the status-bar total's — about the same effort, so a
+ * reader who meets both does not have to tell them apart. Beside the total the
+ * status bar also states it visibly and shorter (`StatusBar.tsx`), where a
+ * full sentence has no room.
  */
 export function uncostedNote(days: number): string {
   return `${formatDays(days)} d of effort not costed`;
