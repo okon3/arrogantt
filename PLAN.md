@@ -262,7 +262,34 @@ Deciso con l'utente il 2026-09-18, prima di briefare G3 (non riaprire):
       storage che lancia); test che con `scope: 'visible'` e un ramo chiuso la
       figura perde i figli.
 
-- [ ] G3b [deep] — Il dialogo di configurazione dell'export
+- [>] G3b [deep] — Il dialogo di configurazione dell'export
+      **STATO, 2026-09-19: implementato e committato (`df64444`), critic NON
+      ancora girato.** Non ripartire dal brief e non stashare niente —
+      l'albero e' pulito perche' il lavoro e' dentro quel commit, non perche'
+      il task non e' cominciato. La prossima sessione riprende **da qui**:
+      spawna il critic (default opus/xhigh: dialogo verificato nel browser) su
+      `df64444` col brief `.claude/briefs/G3b.md`, arbitra, poi chiude il task
+      e valuta la goal review — sotto Goal G resterebbe il solo G4.
+      Costo finora: impl 197k, zero correzioni; il task era al limite del
+      dimensionamento, e la campagna di verifica ne e' stata meta'.
+      Cosa ha consegnato, dal suo report (**da verificare, non ereditare**):
+      `ExportDialog.tsx` nuovo; la lista di checkbox **estratta** in
+      `ColumnChecklist.tsx` e consumata anche dal popover di griglia, invece
+      di generalizzare `ColumnPicker` — che avrebbe trascinato in un modale il
+      comportamento non-modale del popover; la trappola del tempo risolta in
+      modo **asimmetrico** (PNG parte dalla callback, la stampa passa da uno
+      stato `pendingPrint` e un effetto che scrive il ref esplicitamente),
+      perche' un lanciatore simmetrico faceva scattare
+      `react(set-state-in-effect)` su oxlint e questo repo non ha disable;
+      `clientSafeColumns()` in `columns.ts`; `docs/view.md` con la nuova
+      sezione e la deroga sul fuoco; `## Unreleased` ricreata in
+      `CHANGELOG.md`.
+      **Due cose che il critic deve guardare per prime**: che il ramo chiuso
+      sparisca davvero dalla figura stampata dopo una conferma (la corsia
+      dice di averlo misurato con griglia e dialogo in disaccordo su
+      entrambi gli assi — righe `Design`/`Launch`, sette testate contro
+      cinque in griglia), e la regressione del popover dopo l'estrazione.
+      **G4 non rifa' il bullet di changelog ne' `docs/view.md`**: fatti qui.
       Scope: la fetta a giudizio, sopra lo stato di G3a. Guscio `Dialog.tsx`
       (il modello e' `ConfirmDialog`, non il popover `ColumnPicker` che e'
       legato staticamente a `PLAN_COLUMNS`, `ColumnPicker.tsx:117`). Si
