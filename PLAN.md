@@ -1087,14 +1087,39 @@ decisione sua, non un'azione della review.
       rateOverrides}`, persona nuda → `{id, name, availability}` — niente
       promesso che non ci sia. CSV scaricato davvero (Blob intercettato):
       `...;Disabled;Cost;Uncosted (d)`, e il badge resta `v1.2` senza popup.
-- [ ] F12 [impl] — Estrarre `toDraft`/`toResources` e appuntare
-      «absent stays absent»
+- [x] F12 [impl] — Estrarre `toDraft`/`toResources` e appuntare
+      «absent stays absent» — `73bf870`
       Azione dichiarata **opzionale** dalla review. Le due funzioni sono pure e
       dentro `ResourceDialog.tsx`, quindi oggi la regola che salvare il dialogo
       People intatto non sporchi il file e' guidata solo a mano (il critic di
       F5a). Estratte in un modulo, le quattro combinazioni assente/presente si
       pinnano senza jsdom. Nessun harness React da introdurre — e' proprio il
       punto.
+      Fatto in `src/gantt/resourceDrafts.ts`, e il difetto di T59 e' chiuso:
+      `toResources` scriveva `availability` sempre, quindi salvare il dialogo
+      intatto aggiungeva `"availability":1` a un file che non l'aveva.
+      **Il meccanismo e' `availabilityDeclared` sul draft**, non una soglia sul
+      valore: la chiave si riscrive se la sorgente la dichiarava *oppure* se la
+      percentuale digitata non legge piu' 100. Omettere ogni `availability`
+      pari a 1 avrebbe rotto la regola speculare (presente resta presente) su
+      chi l'ha dichiarata. Il form non cambia aspetto — un'availability assente
+      mostra 100% come prima.
+      18 pin: la matrice delle quattro chiavi opzionali (assente/presente e le
+      modifiche che le fanno comparire o sparire), il round trip di lista, il
+      round trip di **file** (due testi di `serializeProject` confrontati
+      byte a byte) e `blankDraft`.
+      Verificato dal critic nell'app, non dedotto: dialogo aperto e salvato
+      intatto → `isDirty()` resta `false` e `toText()` non guadagna chiavi;
+      percentuale a 50%, tariffa cancellata, persona aggiunta e poi rimossa,
+      currency a `EUR` → il file guadagna e perde **esattamente** le chiavi
+      toccate. Confermata di passaggio la trappola del campo controllato da
+      React: un `fill` nudo sul rate torna indietro al render dopo.
+      **Fuori scopo per decisione dell'hub, e resta aperto**: `applied()` in
+      `resources.ts` ha la stessa forma sul percorso delle patch
+      (`patch.availability ?? resource.availability ?? 1`), quindi una
+      `resourceUpdate` dell'agent API su una persona senza `availability`
+      aggiunge la chiave. Non raggiungibile dal dialogo; chiuderlo e' un task
+      a se', se l'utente lo vuole.
 
 - [ ] F16 [self] — `€` come currency preimpostata di un progetto nuovo
       Richiesta dell'utente il 2026-09-18, a goal aperto: oggi un progetto
