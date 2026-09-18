@@ -1240,7 +1240,8 @@ sono tutte su commenti e documentazione: il codice spedisce com'e'.**
       toccata. Critic non convocato: le cifre hanno gia' tre conferme
       indipendenti e il rischio residuo era la prosa, che l'hub ha letto.
 
-- [ ] F18 [self] — Due affermazioni troppo larghe, ristrette a cio' che e' vero
+- [x] F18 [self] — Due affermazioni troppo larghe, ristrette a cio' che e' vero
+      — `a37a7b6`
       1. `docs/file-format.md:33-34` (bullet di `availability`, scritto da F12)
       dice «a save never adds the key to a resource whose file had none»:
       **falso** su `resources.ts:48`, dove `applied()` scrive
@@ -1254,8 +1255,14 @@ sono tutte su commenti e documentazione: il codice spedisce com'e'.**
       dell'hover.
       Accept: le due frasi sono vere lette sul percorso che le usa; `npm test`
       verde. Nessun codice toccato.
+      Fatto: il bullet di file-format.md nomina i due percorsi separatamente
+      (dialogo tramite `resourceDrafts.ts`, patch tramite `applied()`) e dice
+      solo cosa **fanno** — che il secondo sia da chiudere sta qui sul piano,
+      non nel doc. Il commento di `costCells.ts` parla ora delle **due
+      finestre di hover**, e dichiara che la status bar ne rende anche una
+      versione breve visibile, che vive in `StatusBar.tsx`.
 
-- [ ] F19 [self] — I due adiacenti della review
+- [x] F19 [self] — I due adiacenti della review — `442a005`
       1. `agentApi.help.md:291`: `newProject()` non dice che un progetto nuovo
       dichiara `€`, quindi il `toText()` di uno script lo porta senza
       preavviso. Una riga.
@@ -1267,6 +1274,12 @@ sono tutte su commenti e documentazione: il codice spedisce com'e'.**
       Accept: `yagni.help()` e `/llms.txt` restano lo stesso file; il badge
       resta sull'ultima release e nessun popup scatta (`## Unreleased` resta in
       testa).
+      Fatto: la riga di `newProject()` dice anche che un file aperto con
+      `loadText` **non** guadagna il campo. Il bullet del changelog e' quello
+      dell'allineamento; il `€` e' una clausola in coda al bullet della
+      currency, non un bullet nuovo. Il badge non si muove per costruzione,
+      non per fortuna: `parseChangelog` raccoglie i bullet solo dopo una
+      testata con prefisso `v`, e `## Unreleased` non ne ha una.
 
 ## Goal C — valutazione mobile-friendly                              [aperto]
 Agevolare la visualizzazione da smartphone/tablet nascondendo le azioni
