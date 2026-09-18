@@ -290,34 +290,30 @@ arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 
-- [>] T64 [utente + hub] — Rinominare il repo in `arrogantt` e ripubblicare Pages
-      **Non ha un brief e non ne vuole uno**: non e' un task di corsia.
-      Premesse rimisurate dall'hub il 2026-09-18 e tutte confermate: `origin`
-      e' `https://github.com/okon3/yagni.git`, `vite.config.ts:39` ha
-      `base: './'`, `deploy.yml` passa `enablement: true` e gira sul push a
-      `master`. **E `gh` non e' su PATH ne' in Bash ne' in PowerShell**, quindi
-      la rinomina e' manualmente dell'utente per vincolo d'ambiente, non per
-      convenzione: Settings → General → Repository name → `arrogantt`.
-      La meta' dell'hub, dopo: aggiornare `origin`, spingere, e verificare il
-      workflow verde **e** il nuovo URL aperto davvero.
-      Va **prima** di T65, cosi' i link che T65 scrive nel README nascono
-      vivi. Non lo esegue una corsia: sta fuori dal repo e cambia un URL
-      pubblico.
-      Misurato prima di scriverlo: `origin` e'
-      `https://github.com/okon3/yagni.git`; `vite.config.ts:39` ha
-      `base: './'`, quindi gli asset sono relativi e **il deploy non va
-      toccato** — e' la cosa che di solito si rompe qui (un `base: '/yagni/'`
-      avrebbe voluto un commit suo); `deploy.yml` passa `enablement: true` a
-      `configure-pages`, quindi Pages si riconfigura al push successivo.
-      GitHub tiene redirect permanenti di web, API e git dopo un rename: i
-      clone esistenti continuano a spingere. Muoiono solo se qualcuno ricrea
-      `okon3/yagni` — non ricrearlo.
-      **Quel che non redirige e' Pages**: `okon3.github.io/yagni/` sparisce,
-      il sito rinasce su `okon3.github.io/arrogantt/`. Chi ha il vecchio link
-      va avvisato.
-      Accept: il workflow del primo push dopo il rename e' verde **e** il
-      nuovo URL apre l'app — aperta davvero, non dedotta dal workflow verde;
-      `git remote -v` dice `arrogantt`.
+- [x] T64 [utente + hub] — Rinominare il repo in `arrogantt` e ripubblicare
+      Pages — **nessun commit suo**: il lavoro sta fuori dal repo. Chiuso il
+      2026-09-18. L'utente ha rinominato, l'hub ha ripuntato `origin` e spinto.
+      Misurato e non dedotto: badge del workflow `deploy.yml` **passing** sul
+      **nuovo** URL del repo (l'API Actions era rate-limited non autenticata e
+      `gh` non c'e', quindi il badge SVG e' lo strumento che restava);
+      `https://okon3.github.io/arrogantt/` **aperto davvero** nel browser, DOM
+      sondato — 13 bottoni di toolbar, host dhtmlx montato, testata
+      TASK/RESOURCE/EFFORT/START/END/DURATION, `window.yagni` con 33 op,
+      console pulita a parte la riga informativa dell'app, e **il badge di
+      versione legge `v1.3`**: la release si verifica nella build servita, non
+      solo nel file locale. `ganttRows: 0` e' corretto, progetto vuoto.
+      **`https://okon3.github.io/yagni/` risponde 404**, come previsto: Pages
+      e' la sola cosa che non redirige. Chi ha il vecchio link va avvisato.
+      Premesse rimisurate prima di partire e tutte confermate:
+      `base: './'`, `enablement: true`, deploy sul push a `master`.
+      **Trovato di passaggio**: `origin/master` era gia' a `642d84f` con
+      reflog `update by push` — una sessione sorella ha spinto da questa
+      working tree senza avere il lock. Contenuto identico alla storia
+      dell'hub (`git diff HEAD~1..origin/master` vuoto), quindi innocuo, ma e'
+      la seconda volta che succede.
+      **Resta in piedi, e vale per sempre: non ricreare `okon3/yagni`.** I
+      redirect di web, API e git che tengono vivi i cloni esistenti muoiono
+      nell'istante in cui qualcuno rioccupa il vecchio nome.
 
 - [ ] T65 [impl] — ARROGANTT dentro il repo: nome, agent API, docs, README
       Rename del nome visibile e della superficie agenti. **Nessun alias
