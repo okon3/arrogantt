@@ -157,10 +157,31 @@ that isn't there.
   `rate` against its header, which has a legal maximum, and `cost` against a
   cell, whose widest plausible form is a partially costed summary's `≥` in
   front of a nine-digit total. `columns.ts` carries both reasons and the
-  measurements. Up to a three-character currency no header is cut; past three
-  it is, and the cut is accepted rather than paid for in grid width — as is a
-  ten-digit cost. The figure's own header (`figureWidth`) is a separate budget
-  that still cuts past three characters; Goal G's export dialog redecides it.
+  measurements. Whether a header is cut depends on the column and the glyphs,
+  not the character count — measured live in the running app (header font
+  Inter 600 11px, confirmed loaded at measure time; two instruments agreeing
+  on every cell below: a `Range` over the header text minus one trailing
+  `letter-spacing`, and `scrollWidth > clientWidth`):
+
+  | Currency | chars | `rate` (84px avail) | `cost` (98px avail) |
+  | --- | --- | --- | --- |
+  | `€` | 1 | 51.22 fits | 53.97 fits |
+  | `EUR` | 3, ordinary | 67.14 fits | 69.89 fits |
+  | `WWW` | 3, widest | 79.22 fits | 81.98 fits |
+  | `EURO` | 4, ordinary | 76.25 fits | 79.01 fits |
+  | `WWWW` | 4, widest | 91.34 **cut** | 94.11 fits |
+  | `EUROS` | 5, ordinary | 84.06 **cut** | 86.82 fits |
+  | `WWWWW` | 5, widest | 103.48 **cut** | 106.23 **cut** |
+  | `WWWWWWWW` | 8, `validateCurrency`'s max | 139.86 **cut** | 142.62 **cut** |
+
+  `EURO`/`WWWW` and `EUROS`/`WWWWW` are the same length on each side of that
+  split and land on opposite sides of it — the count never decided it, the
+  glyphs and the column did. The cut is accepted rather than paid for in grid
+  width, as is a ten-digit cost. **Not driven**: any currency string outside
+  these eight; the fallback font, had Inter failed to load (it was loaded at
+  measure time, so the fallback's own metrics are untested here); the
+  figure's own header. That one (`figureWidth`) is a separate budget that
+  still cuts past three characters; Goal G's export dialog redecides it.
   Cost cell: empty when the row's own effort
   (`rolled_effort_days`) is zero (a milestone, or an all-zero summary); `—` in
   the `gantt-derived` register, titled *No resource* or *No rate for `<name>`
