@@ -786,9 +786,17 @@ export function rejectionForLink(project: Project, from: string, to: string): st
   return null;
 }
 
-/** No people: inventing names the user has to delete is worse than starting bare. */
+/**
+ * No people: inventing names the user has to delete is worse than starting bare.
+ *
+ * The currency is the one field a new project does declare: most plans price in
+ * euro, and a label nobody has to go and find beats a bare `Cost` header. It
+ * lives here and not beside `validateCurrency` on purpose — a default the
+ * parser answered to would write the field into every file that opens without
+ * one, and an absent `currency` has to stay absent.
+ */
 export function emptyProject(): Project {
-  return { calendar: DEFAULT_CALENDAR, resources: [], tasks: [] };
+  return { calendar: DEFAULT_CALENDAR, currency: '€', resources: [], tasks: [] };
 }
 
 /** Fixture for the serialization tests, not something the app ever loads. */

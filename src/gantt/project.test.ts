@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CALENDAR } from '../scheduler';
+import { validateCurrency } from './cost';
 import {
   CRITICAL_CHAIN_LIMIT,
   TaskCycleError,
@@ -524,6 +525,11 @@ describe('empty project', () => {
   it('starts with no people', () => {
     expect(emptyProject().resources).toEqual([]);
     expect(emptyProject().tasks).toEqual([]);
+  });
+
+  it('declares euro as its currency, so a cost header carries a unit from the start', () => {
+    expect(emptyProject().currency).toBe('€');
+    expect(validateCurrency('€')).toBeNull();
   });
 
   it('schedules unassigned tasks at full rate, contending with nobody', () => {

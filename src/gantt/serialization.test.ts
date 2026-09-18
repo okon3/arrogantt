@@ -459,15 +459,17 @@ describe('rejects broken files', () => {
 });
 
 describe('rates and currency (F1)', () => {
-  // Pinned from the build at 1bb6cbe, before rates/currency existed: printed
-  // by a scratch test against `serializeProject(emptyProject())`, copied here,
-  // then deleted. A project that never enters either field must keep writing
-  // exactly this text.
+  // Every field but `currency` is pinned from the build at 1bb6cbe, before
+  // rates existed: printed by a scratch test against
+  // `serializeProject(emptyProject())`, copied here, then deleted. A project
+  // that never enters a rate must keep writing exactly this text, and the
+  // `€` is the only thing a new project declares of its own accord.
   const EMPTY_PROJECT_TEXT =
     '{"format":"gantt-effort-split","version":2,"calendar":{"workingDays":[1,2,3,4,5],' +
-    '"windows":[{"from":480,"to":720},{"from":780,"to":1020}]},"resources":[],"tasks":[]}';
+    '"windows":[{"from":480,"to":720},{"from":780,"to":1020}]},"currency":"€",' +
+    '"resources":[],"tasks":[]}';
 
-  it('serializes an empty project byte-identically to the pre-F1 build', () => {
+  it('serializes an empty project as the pre-F1 build did, plus its default currency', () => {
     expect(serializeProject(emptyProject())).toBe(EMPTY_PROJECT_TEXT);
   });
 

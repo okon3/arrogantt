@@ -43,6 +43,9 @@
 - Root `currency?: string`: a free label shown beside money (`EUR`, `€`,
   `k€`); the app never interprets it — nothing converts, nothing formats by
   locale. Optional and additive — v2 stays v2. Written only when present.
+  A project created by **New** declares `€` (`emptyProject`), which is a
+  property of the new project and not of the parser: a file opened without a
+  `currency` never gains one.
 
 ## Strict parsing
 
