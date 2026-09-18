@@ -6,12 +6,18 @@
 T51): chart 2228 → 1205. Nessuna release — refactoring, e il changelog non
 prende plumbing.
 
-Aperti: **Goal F** (costi), la cui spec e' consegnata (T59) e che aspetta
-quattro risposte dell'utente prima di scrivere i sottotask; **Goal G** (export
-cliente), il cui primo passo e' ancora analisi (T60) e che **erediteva** da F
-la decisione sul meccanismo delle colonne; **T16**, unico task di Goal C, che
-lo porterebbe alla sua review. **O4** in giacenza. Su T60 leggere prima il
-fatto accertato in testa a Goal G: l'export non fotografa il DOM.
+**Goal F e' chiuso e potato** (terza review `ship`): tariffe per persona che
+variano nel tempo, colonne Rate e Cost, registro delle colonne col picker,
+`currency` e totale in status bar. **Resta la sua release**, e la conferma la
+da' l'utente. Da riproporre appena F e' archiviato: `applied()` che scrive
+`availability` a ogni patch dell'agent API, l'ultimo gemello della regola di
+F12.
+
+Aperti: **Goal G** (export cliente), il cui primo passo e' ancora analisi (T60)
+e che **eredita** da F il meccanismo delle colonne, gia' costruito; **T16**,
+unico task di Goal C, che lo porterebbe alla sua review. **O4** in giacenza. Su
+T60 leggere prima il fatto accertato in testa a Goal G: l'export non fotografa
+il DOM.
 
 In manutenzione: **T63** (il picker non prende il fuoco) e il rename a
 **ARROGANTT**, in due pezzi e in quest'ordine — **T64** fuori dal repo
@@ -104,1182 +110,101 @@ trappola delle barre fuori schermo vale per il DOM, non per lui.
       incrociato sulle colonne e' deciso e scritto anche in Goal F, e il goal
       ha i suoi task scopati. Nessuna implementazione.
 
-## Goal F — quanto costa il piano, non solo quanto dura            [aperto]
-Associare a ogni persona una tariffa giornaliera che varia nel tempo come la
-sua disponibilita', e leggere sull'albero il costo di ogni riga e il totale di
-progetto. Il piano oggi risponde a *quando*; questo goal gli fa rispondere
-*quanto*.
+## Goal F — quanto costa il piano, non solo quanto dura              [chiuso]
+Una tariffa giornaliera per persona che varia nel tempo come la disponibilita',
+e il costo di ogni riga leggibile sull'albero. Consegnato: le tariffe vivono
+lato vista (`src/gantt/cost.ts`), il costo e' una lettura del report di
+soluzione attaccata come `SolvedProject.costs`, e **`src/scheduler/` e' intatto
+su tutto il goal** — `git diff b70d327~1..db8b50c -- src/scheduler` vuoto, il
+motore non ha imparato il denaro. Il prezzo si applica per segmento
+(rate x durata), quindi un task a cavallo di un aumento si spezza sui due
+prezzi; costo assente e' cella vuota, non `0`, e un summary parziale porta `≥`
+con l'effort non costato dichiarato accanto. Comprato per strada su scelta
+dell'utente **contro la raccomandazione della spec**: il registro delle colonne
+con picker e persistenza (opzione C — Goal G lo eredita, vedi il suo vincolo
+incrociato), l'etichetta `currency` nel file e nel dialogo People, e
+l'intervallo `600-650` sulla colonna Rate di un task a cavallo. Il totale sta
+nella status bar, non in una riga footer: dhtmlx Community non ne offre una
+verificata, e col picker la larghezza della griglia cambia a runtime.
 
-Deciso con l'utente in apertura, e vincolante per la spec (non riaprire):
-- **Base del costo: l'effort allocato, per segmento.** Ogni segmento della
-  simulazione (rate x durata) si converte in giorni-uomo e si moltiplica per
-  la tariffa vigente *in quel segmento*. Un task a cavallo di un aumento si
-  spezza sui due prezzi. E' la sola lettura coerente con l'invariante
-  dell'effort conservato, e la sola in cui una tariffa variabile nel tempo
-  significhi qualcosa. Scartate: tariffa congelata allo start (la variabilita'
-  diventa decorativa) e durata di calendario x tariffa (ignora il rate: una
-  persona al 50% costerebbe il doppio, e la contesa fra task farebbe salire il
-  prezzo).
-- **Costo assente non e' zero.** Task senza risorsa o persona senza tariffa:
-  cella vuota, non 0. Il roll-up di un summary somma i figli calcolabili e
-  resta marcato parziale; il totale di progetto dichiara accanto quanto effort
-  e' rimasto fuori dal calcolo. Scartata la tariffa di default di progetto:
-  nasconde chi sta girando su una stima.
-- **Nessuna vista nuova: lo stesso albero, con colonne in piu'** (tariffa della
-  risorsa scelta e costo della riga), con roll-up sui summary e totale. La
-  tabella costi a se' stante, con breakdown per persona e per periodo, resta
-  **in giacenza**: si compra dopo aver lavorato con le colonne, non adesso.
-- **Adiacente, da valutare nella spec, non ancora comprato**: rendere
-  scegliibili dall'utente le colonne visibili nella griglia. L'utente l'ha
-  proposto insieme al resto; e' un meccanismo generale che sopravvive al goal,
-  quindi la spec deve dire cosa costa e se conviene farlo *ora* (le colonne
-  costo sarebbero il suo primo cliente) oppure aggiungere due colonne fisse e
-  rimandare. La decisione torna all'utente con quei numeri.
-  **Non e' una questione solo di questo goal**: il dialogo di export di Goal G
-  deve far scegliere le colonne da esportare, cioe' vuole lo stesso
-  meccanismo. Chi dei due arriva primo decide per entrambi — due liste di
-  colonne separate sono un disallineamento che aspetta.
+Tre goal review, **fable-5-1 confermato in header** su tutte e tre, **nessun
+MISSING e nessuno SMUGGLED in nessuna**. *2026-09-16, `fix-first`*: quattro
+azioni (F9-F12), e ha confermato di passaggio che il filtro `roots` di F2b e'
+corretto e che l'assenza di un harness React non e' un debito che questo goal
+ha aggravato — le regole stanno in moduli puri, ed e' il seam giusto.
+*2026-09-18, `fix-first`* sul delta: tre azioni tutte su commenti e
+documentazione, «il codice spedisce com'e'». *2026-09-18, `ship`* sul delta di
+quelle tre: ha misurato la matrice di F17 contro `columns.ts` e `cost.test.ts`
+e la coerenza delle superfici del denaro (unita' nell'etichetta dove c'e' una
+testata, nel suffisso dove non ce n'e', `—` piu' ragione nel `title`, vuoto nel
+CSV, `null` in API e file). Le due COHERENCE che ha dichiarato **sotto** il bar
+erano vere lette sul codice, e sono chiuse in F20.
 
-- [x] T59 [architect] — Spec del goal costi — `.claude/specs/T59-costs.md`
-      (fable-5-1 confermato in header; nessun codice toccato). Le tre decisioni
-      vincolanti sono riportate e non rinegoziate. Deciso dalla spec: le
-      tariffe vivono **lato vista** (`Person extends Resource` in un
-      `src/gantt/cost.ts` nuovo, `dailyRate?` + `rateOverrides[]`), quindi
-      **nessun sottotask tocca `src/scheduler/`** e il motore non impara il
-      denaro; il costo e' una lettura del report di soluzione, attaccata come
-      `SolvedProject.costs` da `solve()`; lo split del segmento sul cambio
-      tariffa vive **solo sull'asse dei minuti lavorativi** (copia di
-      `capacityIntervals`, mai una `Date`), quindi il confine di giornata non
-      si riapre; **v2 resta v2** (campi additivi opzionali, precedente
-      `disabled`), il gate tiene su entrambi i versi perche' le regole stanno
-      in `validateResources` che `serializeForFile` riattraversa; marca del
-      parziale = prefisso `≥` (le tariffe sono non negative, quindi e' un
-      limite inferiore vero e non serve legenda); il dialogo People e'
-      confermato come sede; nessuna op nuova nell'agent API.
-      Verificato dall'hub: 14 `file:line` su 14 combaciano (segmenti con
-      `rate`/`soloRate`, `capacityIntervals`, `dayStartInWorkingMinutes`, il
-      return di `solve`, la regola dei figli disabilitati di `rollUp`,
-      `ResourceDialog`, `agentApi`, `planFigure`).
-      Trovato di passaggio e **non un difetto di questo goal**: `toResources`
-      scrive sempre `availability` (`ResourceDialog.tsx:40`), quindi salvare il
-      dialogo People intatto sporca un file che non aveva quella chiave. Da
-      scopare a se' se l'utente lo vuole; F5 non deve copiare il vizio.
-
-**Le quattro questioni sono chiuse dall'utente il 2026-09-15** (§7 e §9 della
-spec), e **due delle quattro vanno contro la raccomandazione** — decise coi
-numeri davanti, non riaprire:
-1. **Colonne selezionabili dall'utente adesso: opzione C**, contro la
-   raccomandazione B. Il registro delle colonne, il filtro con la sua
-   persistenza, il picker e le colonne insegnate a `planFigure` si comprano in
-   questo goal, non nel primo task di Goal G. Costo accettato: due sottotask in
-   piu' prima che la prima cifra di costo sia a schermo, e una matrice di
-   verifica per ogni colonna nascondibile (Tab, guardia del summary, griglia
-   collassata).
-2. **Etichetta `currency` nel file**, contro la raccomandazione dei numeri
-   senza unita'. Campo di progetto opzionale e additivo — allarga il gate di
-   parsing in entrata e in uscita, e vuole un posto dove dichiararla (deciso
-   in ricognizione, non qui).
-3. **La colonna Rate di un task a cavallo di un aumento mostra l'intervallo**
-   `600-650`, non la media: sono cifre che qualcuno ha dichiarato, quindi
-   verificabili contro il dialogo People.
-5. **Rate e Cost nascoste per default**, spuntabili dal picker, e la spunta
-   persiste fra i progetti: ogni piano esistente tiene la griglia di oggi e i
-   suoi 706px, senza nessun meccanismo che debba indovinare se ci sono
-   tariffe, e chi inserisce la prima tariffa e' la persona che sa del picker —
-   il dialogo People glielo nomina (accept di F5). Risposta del 2026-09-15; la
-   §8 della spec era gia' scritta su questa ipotesi.
-4. **Il totale vive nella status bar**, accanto a `N tasks`, con l'effort non
-   calcolato dichiarato di fianco. Nessuna riga footer in griglia: dhtmlx
-   Community non ne offre una che la spec abbia verificato, e col selettore di
-   colonne appena comprato la larghezza della griglia cambia a runtime.
-
-**La §8 della spec e' scritta sull'ipotesi B, quindi la sua scomposizione e'
-scaduta in due punti** (F1 non conosce `currency`, F4 condiziona le colonne su
-`hasRates` invece di leggerle da un registro) e servono i due sottotask di C.
-Il resto della spec — §2 a §6 — regge intatto. Il delta e' il prossimo passo.
-
-- [x] T62 [architect] — Delta della spec sulle quattro risposte —
-      `.claude/specs/T59-costs.md` §5.7, §5.8, §7 chiusa, §8 riscritta
-      (fable-5-1 confermato in header; nessun codice toccato, un solo file).
-      Le due decisioni tecniche che mancavano, prese sul codice: **registro
-      `src/gantt/columns.ts` di soli metadati**, coi nomi dhtmlx di oggi
-      perche' `DERIVED_ON_SUMMARY`, `refreshResourceOptions` e la guardia del
-      summary li usano gia'; i renderer restano dove sono come `Record`
-      esaustivi, cosi' il compilatore garantisce «una lista, due renderer»;
-      **nascosto = non costruito**, mai `hide: true` (PRO nei typings, non
-      sondato); selezione persistita in `localStorage['yagni.columns.v1']`
-      attraverso il seam `DraftStorage`, letta in un initializer come il draft;
-      view state, quindi **niente undo, niente dirty, nessuna op agent**. E
-      **`currency` si dichiara nel dialogo People** — e' l'unita' dei numeri
-      digitati li', e l'unico altro dialogo di progetto e' il calendario.
-      Vincolo scoperto e non ovvio: `recordedChange` deduplica solo su testo
-      identico, quindi tariffe e `currency` devono passare da **una** chiamata
-      all'handle o costano due passi di undo.
-      Verificato dall'hub: 11 `file:line` nuovi su 11 combaciano.
-
-**Autonomia concessa dall'utente il 2026-09-16**: l'hub lavora **tutto Goal F
-fino alla goal review** senza la pausa di fine task — brief, corsia, checks,
-critic e commit per ognuno degli otto. Si fermano i lavori solo per una
-decisione che e' sua (comportamento visibile o difficile da tornare
-indietro), per un task che si blocca in fondo alla scala di escalation, e al
-verdetto della goal review. **La rinomina dell'heading `Unreleased` resta da
-confermare**: la deroga non e' stata comprata.
-
-**La scomposizione: F7 → F1 → F2a → F2b → F3a → F3b → F4a → F4b → F5a →
-F5c → F5b → F6a → F6b → F8**, seriale (un browser, una porta). Quattro dei nove pezzi
-originali si sono splittati strada facendo — F3, F4, F5 e F6 — e ogni split ha
-pagato: la nota di ciascuno sta sopra la sua coppia. Gli accept per esteso stanno nella §8 della spec, con la
-**Fixture C** condivisa e la sua tabella dei valori attesi per cella; qui sta
-lo stato. Solo F2a e' `deep` (effort conservato); **nessun sottotask tocca
-`src/scheduler/`**, ed e' la decisione che tiene il motore fuori dal denaro.
-
-- [x] F7 [impl] — Registro delle colonne, selezione, persistenza, picker —
-      `b70d327`. `src/gantt/columns.ts` (metadati), `GRID_CELLS` esaustivo in
-      `gridColumns.ts`, `ColumnPicker` popover, `setColumns` sull'handle,
-      selezione in `localStorage['yagni.columns.v1']`. Non splittato, come
-      previsto: la corsia ha speso **257k**, oltre la soglia di split, e va
-      ricordato se un task di questa forma si ripresenta.
-      **Il difetto vero era nel brief dell'hub, non nella corsia.** Il brief
-      (e la §5.7) prescrivevano di chiamare `rebuildColumns()` da
-      `loadProject` «perche' il `currency` del file puo' cambiare una label» —
-      ma nessuna `label()` legge il progetto, quindi la chiamata non comprava
-      niente e **distruggeva le larghezze delle colonne trascinate a ogni
-      undo e a ogni apertura file** (misurato dal critic: `text` 230 → 300,
-      un Ctrl+Z la riportava a 230 insieme all'undo dell'effort). Chiuso
-      dall'hub, non dalla corsia, che era troppo carica per una correzione:
-      il rebuild ora **riporta per nome la larghezza di ogni colonna
-      trascinata**, e `loadProject` non ricostruisce piu' le colonne.
-      Rimisurato nell'app dopo il fix: la larghezza sopravvive a edit+undo, a
-      un untick/re-tick nel picker e a un `loadText(toText())`; zero errori in
-      console. **Non guidato e dichiarato tale**: un drag vero del bordo
-      colonna (lo strumento non ha primitive mouse a coordinate e la maniglia
-      di resize non ha un nodo indirizzabile) — al suo posto e' stato guidato
-      il percorso di resize della libreria con eventi sintetici.
-      Altri due findings del critic, entrambi nei docs e chiusi: un claim su
-      `refreshData` che nessuna misura sosteneva, e una citazione `:589-593`
-      gia' scaduta — ora il doc cita `toggleGridCollapsed` per simbolo.
-      Misurato dal critic e non dalla corsia (celle che la fixture non aveva
-      composto): **tutte e cinque le colonne nascoste insieme** (`grid_width`
-      338, griglia che rende, `text` ancora editabile, guardia del summary
-      intatta), due nascoste insieme, Shift+Tab, milestone, riga disabled,
-      ramo chiuso, highlight di ricerca, e un fresh tab con una chiave stantia
-      che nomina colonne inesistenti. Nessuno stato si rompe.
-- [x] F1 [impl] — Tariffe e `currency` nel modello, nel file e nelle regole —
-      `1fc20d8`. `src/gantt/cost.ts` nuovo (`Person`, `RateOverride`,
-      `rateOnDay`, `validateCurrency`), `Project.resources: Person[]` +
-      `Project.currency?`, regole dei tassi in `validateResources`,
-      `ResourcePatch` + `applied()` che li portano, parser e serializer,
-      `describeChange` → `changed currency`. Nessun file sotto
-      `src/scheduler/`: verificato sul diff, non sul report. 473 test.
-      **Un solo finding del critic, e il buco era nel mio brief**: la regola
-      del tasso di un periodo la dettavo «non un numero, o `NaN`» mentre la
-      gemella tre righe sopra usa `Number.isFinite` — un `Infinity` passava il
-      gate e nel testo diventa `null`, che il parser di questa stessa app
-      rifiuta (Save, undo e draft giu' insieme). Chiuso dall'hub in una riga
-      piu' il pin; la lezione e' nel binding.
-      **Tre decisioni prese al brief, non nella spec**: `import type` per
-      `Person` in `project.ts` (F2 fara' il ciclo inverso: l'edge di soli tipi
-      lo tiene fuori dal runtime); `validateCurrency` rifiuta un'etichetta non
-      gia' trimmata (era l'unica lettura che conciliava «trimmed non-empty»
-      della §5.8 col suo «un `" EUR "` paddato e' rifiutato»); e il
-      **pass-through** delle tariffe in `toResources` — il dialogo People
-      ricostruisce ogni persona da zero, quindi senza quelle tre righe un
-      salvataggio del dialogo fra F1 e F5 cancellava ogni tariffa del progetto.
-      Il GAP dichiarato dalla corsia su `currency: ""` (lo intercetta
-      `requireString` col suo messaggio prima di `validateCurrency`) e' stato
-      giudicato non difetto: i rifiuti di `requireString` sono un
-      sottoinsieme, il gate non si indebolisce.
-- [x] F2a [deep] — Il calcolo del costo: `rateIntervals` e `taskCosts` in
-      `cost.ts` — `5402bb5`. `TaskCost`, `RateInterval`, `SolvedInputs`,
-      `rateIntervals`, `taskCosts` piu' i privati `rateAt`/`piecesOf`/
-      `leafCost`; sezione nuova in `docs/scheduling.md`. 489 test (+16).
-      Nessun file sotto `src/scheduler/`: verificato sul diff, non sul report.
-      **Lo split ha pagato**: corsia 141k, critic 130k, contro i 257k di F7 e
-      i 222k di F1. Da qui in poi tagliare cosi'.
-      **La corsia ha rifiutato un docblock che le dettavo, e aveva ragione**:
-      dicevo che `RateInterval.dailyRate` e' `undefined` quando i bound di un
-      periodo sono malformati, e quel caso non esiste — `expandRanges` e
-      `rateOnDay` condividono la guardia `isDayString`, quindi un bound
-      malformato non produce **nessun** intervallo per quel giorno. Misurato da
-      lei, riconfermato dal critic. Il tipo `number | undefined` resta (specchia
-      `rateOnDay` ed evita un'asserzione non-null), documentato per il vero.
-      **Unico finding del critic, e ancora nel brief dell'hub**: la formula nei
-      docs perdeva `minutesToDays`, cioe' dichiarava man-minuti dove il codice
-      calcola giorni-uomo — 480× sul calendario di default, e F3/F5 l'avrebbero
-      letta per costruire le loro cifre. Chiuso dall'hub.
-      **Due pin aggiunti dall'hub sui fuori-bar del critic**: (1) un tasso
-      **decrescente** — ogni cambio di tariffa della suite era un aumento,
-      quindi `[...applied]` senza `.sort` passava 14 test su 14 mentre la §5.4
-      rende la coppia `600–650`; (2) il ramo senza persona e' **raggiungibile**,
-      non difensivo: la corsia lo dava per irraggiungibile e sbagliava — una
-      foglia disabled con `resourceId` pendente non stalla il motore, perche'
-      `project.ts:400` le azzera l'id. Il comportamento era gia' giusto.
-      **Fixture C: nove righe su nove ri-derivate in autonomia dal critic** e
-      combacianti con la §8 (T3 spinto al quinto giorno lavorativo, override
-      dal 2026-09-15, T6 disabled interamente sotto la soglia 2880 dell'asse).
-      F4 puo' fidarsi di quella tabella.
-      **Fuori bar e deliberatamente non scopato**: `expandRanges` espande
-      giorno per giorno, quindi un `to` al 2099 costa ~27k indici per persona
-      per `solve()` — identica esposizione della gemella dell'availability, il
-      fix vivrebbe in `src/scheduler/dayRange.ts`, fuori da Goal F, e non e'
-      un difetto che un utente vede. **Non guidato e dichiarato tale**: nessun
-      calendario non-default in nessuna fixture (un periodo di tariffa che
-      incontra una chiusura aziendale o una settimana non lun-ven).
-- [x] F2b [self] — `costs` e `currency` su `SolvedProject`, i campi costo di
-      `buildPlan`, `formatMoney` — `fcfb61a`. 501 test (+12). `SolvedInputs`
-      era gia' un sottoinsieme strutturale, quindi `solve()` passa i quattro
-      pezzi che ha e `cost.ts` non e' stato toccato; `agentApi.help.md` e'
-      mosso nello stesso commit, perche' e' questo commit a muovere la
-      superficie agente. Nessun file sotto `src/scheduler/`.
-      **Il difetto del totale, e la sua causa e' doppia.** `Plan.totalCost`
-      sommava **tutte** le righe di primo livello, disabilitate incluse: il
-      critic l'ha misurato a `3500` contro i `2000` della spec sulla fixture
-      di roll-up di `cost.test.ts`, e a `2500` invece di `null` su un piano
-      interamente di segnaposto — cioe' **F4 avrebbe stampato in status bar il
-      costo di un piano in cui nulla e' impegnato**, e `getPlan().totalCost`
-      lo dava gia' sbagliato. Prima causa: la riga di consegna di gen 3 e il
-      suo prompt di handoff **enunciavano due regole su tre** — il null di
-      `PlanTask.cost`, il null di `Plan.totalCost`, e non il filtro su
-      `disabledIds` che la §5.3 richiede («sum over top-level rows not in
-      `disabledIds`»), derivato da gen 3 e mai scritto. Seconda causa: l'hub
-      ha giustificato il roll-up sui root con un ragionamento proprio
-      («`taskCosts` ha gia' applicato la regola del disabled» — vero solo
-      *sotto* un summary) senza rileggere la §5.3 sul posto, avendo letto
-      §5.4 e §5.6. **La lezione e' una e sta nel Log**: un elenco di decisioni
-      consegnate e' completo o non e' una decisione. Vale per chi consegna e
-      per chi implementa, e vale al brief di F4.
-      Secondo finding del critic, chiuso: il docblock di `formatMoney`
-      diceva «una tariffa si inserisce intera», mentre `validateResources`
-      (`resources.ts:118-137`) ammette qualunque tariffa finita ≥ 0,
-      frazionaria inclusa — verificato sul codice, non ereditato.
-      Verificato dal critic e senza finding: l'asserzione `costs.get(id)!` di
-      `buildPlan` regge (stessa ricorsione sulla stessa `hierarchy`, e
-      **nessun `SolvedProject` e' costruito fuori da `solve()`** in `src/` o
-      nei test); la regola del null di `PlanTask.cost` guidata su nove forme
-      di riga (tariffa `0` dichiarata → costa `0`, milestone → `0`, foglia
-      disabled → il proprio importo, summary tutto non prezzato → `null`);
-      `formatMoney` non puo' ricevere un negativo, `-0`, `NaN` o `Infinity`
-      perche' ogni percorso di scrittura passa da `validateResources`.
-      Le nove righe della Fixture C restano quelle: `S1 7800 + M1 0`.
-      **La seconda passata del critic non e' girata** (terminato da
-      un'interruzione del turno): le due correzioni reggono sui due pin nuovi
-      — che senza il filtro danno `5400` e `2400` invece di `2400` e `null` —
-      e sulla §5.3 e `resources.ts:118-137` letti dall'hub, non sul suo ok.
-      **Non ancora fatto e di F3**: la riga `toText()` dell'help dice «same
-      fields as `getPlan()`» mentre il report del file ne porta 5 su 16 — era
-      gia' un sottoinsieme prima, ora e' piu' largo.
-**F3 e' splittato in F3a + F3b** (ricognizione del 2026-09-16, sulla lezione
-del Log): erano tre grappoli in un task — le superfici che **hanno gia'** il
-dato e si pinnano a tavolino, la parita' di `getTask()`, e il percorso di
-scrittura di `currency` che vuole il browser. Tagliato in due: F3a tutto cio'
-che si prova con `npm test`, F3b tutto cio' che si prova nell'app.
-Due `file:line` della §8 sono **scaduti** e il brief porta quelli riletti:
-`setResources` e' a `GanttChart.tsx:473-481` (non `:434-442`), `rebuildColumns`
-a `:300-324` col suo unico call site a `:638`, `loadProject` a `:326-367`.
-
-- [x] F3a [impl] — Report del file, colonne CSV, `docs/file-format.md` —
-      `39b59ed`. `reportFor` porta `cost`/`uncostedDays`/`dailyRates`, il
-      blocco `solved` di progetto `totalCost`/`uncostedDays`; due colonne CSV
-      appese dopo `Disabled`, l'etichetta solo nell'header; il doc e la riga
-      `toText()` dell'help. 508 test (+7). Nessun file sotto `src/scheduler/`
-      e nessun `.tsx`: verificato sul diff, non sul report.
-      **Lo split ha pagato ancora**: corsia 122k, critic 122k — le misure di
-      F2a, contro i 257k di F7.
-      Le tre decisioni della riga reggono, **riverificate sul codice prima
-      del brief e non ereditate**: la chiave `currency` di root e' gia' un
-      input (F1); `formatMoney` raggruppa via `Intl.NumberFormat('en-GB')` e
-      in un dialetto `;` + virgola decimale un raggruppamento corrompe la
-      cella; `PlanTask.cost` distingue gia' null da `0`.
-      **I due finding del critic erano entrambi nei docs e dicevano entrambi
-      piu' di quanto il codice sostenga.** (1) «nessuna marca `≥`, che e'
-      della griglia» dichiarava un comportamento che a questo commit non
-      esiste (`gridColumns.ts` non ha colonna `cost`: e' di F4) e piantava in
-      `file-format.md` un fatto che la §5.6 assegna a `view.md` — la forma di
-      T58, un fatto una casa. Clausola tolta, nel doc e nel commento del test.
-      (2) «mai `0`, che e' la cifra di un milestone»: falso, una tariffa
-      dichiarata `0` e' **prezzata** e scrive `0` (`leafCost` somma `0` e
-      conta quei giorni come costati). Riscritto: vuoto non e' `0`, e `0` e'
-      una riga che e' stata prezzata.
-      **Due aggiunte dell'hub sui fuori-bar del critic**: un test della
-      tariffa `0`, cosi' la frase nuova del doc e' **misurata** e non dedotta
-      (il critic la conosceva per derivazione); e un pin `1200` sul
-      round-trip prezzato, che senza restava verde su `null === null`. Piu'
-      la cautela «sommare senza il flag raddoppia» generalizzata da
-      `Effort (d)` a tutte le colonne numeriche, invece di una seconda frase
-      per le due nuove.
-      **Non guidato e dichiarato tale** (derivato dal critic sul codice, non
-      misurato): foglia disabled con tariffa → scrive il proprio importo
-      mentre padre e `totalCost` la escludono; summary coi figli tutti non
-      prezzati → cella vuota e i giorni rollati; foglia a cavallo di un
-      aumento → un solo totale nudo, le due tariffe affiorano solo nei
-      `dailyRates` del report.
-      **Debito di F2b chiuso**: la riga `toText()` dell'help non dice piu'
-      «same fields as `getPlan()`», elenca i campi del report.
-      **Nessun bullet in `CHANGELOG.md`, deciso al brief**: la §5.6 assegna a
-      F4 il bullet dei costi, dove le cifre diventano visibili nell'app; qui
-      lo raddoppierebbe.
-- [x] F3b [impl] — Parita' di `getTask()`, scrittura di `currency`, help —
-      `9c9e0ac`. `TaskDetails` prende i tre campi di `PlanTask` piu'
-      `currency` (letti da `solvedRef.current`, nessun cablaggio nuovo);
-      `GanttHandle.setCurrency` e `AgentApi.setCurrency` sul modello di
-      `setCalendar`, senza `gantt.render()`; la regola del null estratta in
-      `reportedCost` (`cost.ts`), chiamata dai due builder e da nessun altro —
-      `plan.ts:133`, predicato diverso, intatto. 516 test (+8). Nessun file
-      sotto `src/scheduler/`, nessun `rebuildColumns()`, nessun terzo argomento
-      a `setResources`: verificato sul diff.
-      **Lo script della Fixture C sta nella §8 della spec**, in una sola copia,
-      con le tre correzioni dell'hub che la sovrascrivono (graffe, accept (5)
-      sbagliato, chi lo scrive). F4/F5/F6/F8 leggono di li'.
-      **Critic: pass, zero finding** — corsia 133k, critic 168k (browser). Ha
-      guidato nove righe di parita', il conteggio dei passi di undo col tasto
-      vero e il verso del redo, il gate stretto su emoji/controlli/8 caratteri,
-      e ha misurato che `yagni.help()` e `/llms.txt` restano byte-identici.
-      **Quattro chiusure dell'hub sui suoi fuori-bar**, la prima delle quali e'
-      un buco dei brief e non del critic: la §5.6 assegna a **F3** anche la
-      tabella *Writing — people* (`dailyRate`, `rateOverrides`,
-      replace-not-multiply, last-wins, assente ≠ `0`) e nessuno dei due brief
-      l'ha chiesta — mentre la Fixture C dipende da entrambi i campi. Scritta
-      ora, coi limiti che `resources.ts:118-137` sostiene davvero (qualunque
-      cifra finita da `0` in su, frazioni incluse). Piu': la clausola del label
-      paddato nella riga di `setCurrency`; una guardia di tipo in
-      `validateCurrency` col suo pin, perche' `setCurrency(5)` da uno script
-      tirava un `TypeError` invece della regola (la gemella
-      `calendarRules.ts:60-62` si guarda gia' da sola); e la trappola
-      **misurata** dal critic in `docs/verification.md` — `isDirty()` e i
-      title dei tasti undo/redo leggono l'ultimo stato **renderizzato**
-      (`App.tsx:737-741`), quindi in un solo eval rispondono il valore
-      pre-scrittura, mentre `getPlan()`/`getTask()`/`toText()` sono vivi.
-      Quattro task riusano quella fixture: la trappola valeva il doc.
-      **Non guidato e dichiarato tale** (dal critic): Save e il file su disco,
-      il draft dopo un reload con `currency`, Ctrl+Z come tasto, la profondita'
-      dello stack oltre la cima, `setCurrency` prima del mount e dopo
-      `newProject()`.
-**F4 e' splittato in F4a + F4b** (2026-09-16, sul seam che la sua stessa riga
-indicava): il totale in status bar legge solo `Plan`, non tocca la griglia, non
-tocca il registro e non ha nessuna delle trappole di larghezza. **F4a va per
-primo perche' e' il piu' piccolo e perche' rende misurabile un accept di F4b**:
-la §8 chiede che il totale non aspetti le colonne, e quella frase si guida solo
-se il totale c'e' gia' quando le colonne arrivano. Gli accept della §8 si
-dividono per clausola, non per numero: le clausole status bar di (1), (4) e (6)
-sono di F4a, tutto il resto di F4b.
-
-- [x] F4a [impl] — Il totale di progetto nella status bar — `6965482`.
-      `StatusBarProps.cost` (`{totalCost, uncostedDays, currency} | null`, un
-      solo `null` da interrogare), stato seminato `null` e calcolato in
-      `syncFromChart` da `buildPlan(handle.getSolved())`, `docs/view.md`
-      *Status bar*. 516 test invariati — non c'e' nessun `.test.tsx` in `src/`
-      e il brief vietava di introdurne uno. Corsia 157k, critic 151k.
-      **Nessun bullet `CHANGELOG.md`**, come da brief: lo porta F4b.
-      **Il critic ha guidato tutti e sette gli accept piu' due celle sue**: la
-      riga top-level prezzata e disabilitata (`totalCost` → `null`, elemento
-      rimosso — il difetto di F2b non si ripresenta) e la forma parziale senza
-      etichetta. Il picker guidato davvero (`grid_width` 706→644→706), testo
-      identico code-point per code-point; Ctrl+Z col tasto vero.
-      **Unico finding, ed era nel commento, non nel codice: la forma di T58.**
-      Il commento di `.statusbar__cost` dichiarava una misura che la regola non
-      consegna — «1150-1300px, `9 tasks` va a capo a meta' parola, e non scatta
-      mai a larghezza normale». Misurato dal critic: in quella banda la regola
-      cambia **0px** di altezza e taglia solo 2-40px della cifra; il suo effetto
-      vero e' a **≤1040px** (59 e 75 → 49, cioe' l'altezza che la barra aveva
-      gia' li' senza costo). Il rischio concreto era che un lettore successivo
-      misurasse la banda documentata, trovasse 49px coi due versi e cancellasse
-      la classe. Riscritto dall'hub con le cifre vere.
-      **Regressione comprata, non nascosta**: fra ~1100 e 1290px la barra passa
-      da 35 a 49px per via della cifra stessa. Il critic ha misurato **le due
-      alternative scartate** — `flex-shrink` sulla sola cifra recupera solo
-      1290, e uno schema di shrink-priority su tutta la barra tiene 35px fino a
-      1120 ma svuota la cifra e spinge *Fit* fuori schermo sotto 1100. Regola
-      dell'80%, con la prova di cio' che non si e' spedito.
-      **Fuori bar, per F4b**: sotto 1290px la cifra e' ellissata e nel caso
-      tutto-prezzato non c'e' `title` che la recuperi (§5.4 lo vieta li') — e'
-      una domanda alla spec, non un difetto. E quando F4b porta la cella costo,
-      `"<n> d of effort not costed"` esistera' in due file: decidere li' se ha
-      una casa sola.
-      **Non guidato e dichiarato tale** (dal critic): reload + ripresa del
-      draft al primo render (il seme `null` verificato sul codice a
-      `App.tsx:104` e sul progetto vuoto, non sul percorso di ripresa), schema
-      scuro, print/PNG/CSV, larghezze sotto 1024 e sopra 1920.
-- [x] F4b [impl] — Colonne Rate e Cost **nate sul registro**, marca del
-      parziale — `56d0ba7`. Due entry `PLAN_COLUMNS` (`rate` 62/70, `cost`
-      84/84, `defaultShown: false`, `clientSafe: false`, label dal `currency`),
-      i due `GRID_CELLS` senza `editor`, i quattro campi di riga in
-      `toGanttData`, nel loop di `applySolution` e nel literal di `addTask`,
-      `view.md` *Grid*, l'addendum a `dhtmlx.md` e **il bullet costi di
-      `CHANGELOG.md`** — la feature e' intera qui. 517 test (+1).
-      **Il debito di F7 e' chiuso e rimisurato, non ereditato**: `rebuildColumns`
-      torna su `loadProject` (dopo `gantt.parse`) e arriva su `setCurrency`, tre
-      call site in tutto, **mai** `applySolution`. Il critic ha guidato un drag
-      **reale** del bordo colonna via CDP (`text` 230 → 279) — cosa che la
-      corsia di F7 non era riuscita a fare, e che li' era dichiarata non
-      guidabile — e la larghezza ha tenuto su tutti e tre i percorsi
-      (`setCurrency`, `loadText(toText())`, Ctrl+Z).
-      **Critic `sonnet`: pass, zero finding.** Ha ri-guidato tutti e nove gli
-      accept sulla Fixture C ricostruita da zero, piu' una cella sua: un task
-      aggiunto dal **bottone** della toolbar rende `—`/*No resource*, cioe' i
-      placeholder del literal di `addTask` sono sovrascritti da `applySolution`
-      e non arrivano mai a schermo.
-      **Chiuso dall'hub sul fuori-bar del critic**: il docblock di
-      `PlanColumn.label` diceva «a later goal makes the currency label ride
-      here» — reso falso da questo stesso commit, che quelle due label le
-      scrive. Un fatto che sopravvive alla sua verita' e' la forma T58: corretto
-      nel commit.
-      **Due case per una stringa, deciso e non subito**: `"<n> d of effort not
-      costed"` vive ora in `StatusBar.tsx` (F4a) e nel template della cella.
-      Unificarla richiederebbe toccare un file che il brief metteva fuori
-      scopo; il critic conferma che la scelta e' forzata dal bar, non una
-      dimenticanza. Se `StatusBar.tsx` si riapre per altro, si unifica li'.
-      **Non guidato e dichiarato tale** (dal critic): Shift+Tab e l'armamentario
-      tasti non-CDP sulle due colonne, un reload a freddo della selezione
-      persistita (accept di F7, non di F4b), un drag reale **delle due colonne
-      nuove** (guidato solo su `text`; le loro larghezze osservate costanti come
-      effetto collaterale).
-**F5 e' splittato in F5a + F5c + F5b** (2026-09-16; F5a+F5b il 2026-09-16,
-F5c staccato da F5a poco dopo). **Le lettere non sono l'ordine: si esegue
-F5a → F5c → F5b.** Il primo taglio era sul seam che la riga di F5 indicava
-(superfici tariffa vs campo `Currency`). Il secondo e' sulla misura, non sul
-codice: F5a restava di classe F4b (228k/213k su un task gia' splittato una
-volta) perche' la sua campagna browser cumulava sette scenari su un dialogo da
-riaprire ogni volta — il dirty su Save intatto, il giro tariffa → costo, il
-blanking, `0`/`-1`/`abc`, i periodi sovrapposti, `scrollWidth` a 728 e
-l'allineamento delle tracce fra due liste. Il seam del secondo taglio: **la
-colonna Daily rate non ha bisogno del componente generalizzato**, e il
-pass-through di `rateOverrides` (`ResourceDialog.tsx:50-51`) regge intatto
-fino a F5c, che lo sostituisce con un campo del draft. Accept §8 di F5
-ripartiti per clausola: (1)(2) e la meta' `scrollWidth` di (4) a F5a; (3) e la
-meta' allineamento di (4) a F5c; (5)(6) a F5b.
-**`file:line` della §5.5 riletti dall'hub, quattro su quattro scaduti** (il
-codice e' cambiato con F1): il vizio di `availability` sempre scritto e' a
-`ResourceDialog.tsx:47` (non `:40`), il commento del testo di `availability` a
-`:17-18` (non `:16-17`), il bottone di riepilogo a `:193-203` (non `:189-199`),
-il pannello espanso a `:217-231` (non `:214-226`). E **i due rimandi a
-`docs/view.md` della §5.5 puntano altrove**: `:497-511` cade in *In-app help*
-e `:513-517` in *Resource load lanes* — la grammatica delle righe-periodo e il
-metodo `scrollWidth <= clientWidth` stanno entrambi nei bullet di *Dialogs*
-(`docs/view.md:578-604`). I brief citano per simbolo, non per riga.
-
-- [x] F5a [impl] — La colonna Daily rate nel dialogo People — `3787f43`.
-      `DraftResource.dailyRate: string`, `toDraft`/`toResources` con la regola
-      del testo trimmato non vuoto, colonna 88px fra Availability e Periods,
-      dialogo 640 → 728, i due `colSpan` 5 → 6, `.people__rate`, i quattro
-      `Resource[]` → `Person[]` di `App.tsx` (import di `Resource` caduto,
-      inutilizzato) e il bullet *People table* di `view.md`. 517 test
-      invariati. Nessun file sotto `src/scheduler/`, nessun `rebuildColumns()`,
-      nessun terzo argomento a `setResources`: verificato sul diff.
-      **Il secondo split ha pagato**: corsia 186k, critic 215k, contro i
-      228k/213k di F4b che era splittato una volta sola.
-      **Critic `sonnet`: pass, zero finding.** Ha ri-guidato le nove righe
-      della Fixture C prima di ogni edit, tutti e sette gli accept, il Ctrl+Z
-      reale via CDP, e quattro celle sue: **le quattro combinazioni di campi
-      opzionali** (solo tariffa / solo override / entrambi / nessuno) con
-      `availability` esplicita per isolarle dal vizio noto — Save intatto su
-      tutte e quattro, zero passi di undo, **nessun secondo campo che si
-      scrive sempre**; il campo vero con `6e2` → 600, `0x10` → 16, `100.567`,
-      `Infinity` rifiutato da `Number.isFinite` (la trappola di F1 non si
-      ripresenta) e **round-trip `loadText()` pulito su tutti**; Tab, Save da
-      tastiera, schema scuro; e i numeri del doc ri-misurati su canvas
-      (header 56.22px vs valore a 5 cifre 35.05px).
-      **Tre decisioni prese al brief, non nella spec**: il campo e'
-      `type="text"` con `inputMode="decimal"` e non `type="number"` — la regola
-      del tasso vive in `validateResources` e sola, e un input `number`
-      scarterebbe `abc` prima che il draft lo veda, mettendo una seconda regola
-      muta nel campo (l'accept `-1`/`abc` e' cio' che lo prova); l'**ordine di
-      inserimento delle chiavi** in `toResources` deve restare quello di
-      `applied()` (`resources.ts:44-52`) perche' `JSON.stringify` scrive in
-      ordine di inserimento e `recordedChange` deduplica l'undo su testo
-      identico — spostare `dailyRate` costerebbe un passo di undo spurio a ogni
-      Save intatto; e **nessun bullet `CHANGELOG.md` qui**, lo porta F5b dove
-      la storia tariffe del dialogo e' intera.
-      **Chiuso dall'hub, misurato dalla corsia e confermato sul codice**:
-      `toText()` e' `serializeForFile` e data il report con `solvedAt` a
-      precisione di minuto, quindi **non e' mai byte-stabile** — un accept
-      scritto come identita' byte non e' guidabile a cavallo di un minuto.
-      Costato due misure (corsia e critic, stesso minuto attraversato); la
-      trappola e' ora in `docs/verification.md`, che il brief metteva fuori
-      scopo e che la corsia ha segnalato invece di toccare.
-      **Fuori bar, misurato dal critic e non un difetto**: sotto i 776px di
-      viewport il `<colgroup>` fisso **non** sfonda — `table-layout: fixed`
-      stringe solo Name, fino a 0px a ~452px di spazio disponibile, con
-      `scrollWidth === clientWidth` su tutto l'intervallo provato (728 → 452).
-      E' materiale di Goal C, e ora e' misurato invece che supposto. Piu' due
-      conseguenze dichiarate della scelta `type="text"`: una tariffa con molti
-      decimali si rivede intera nel campo (`100.567`) e arrotondata in griglia
-      (`100.57`, `maximumFractionDigits: 2`), e `6e2`/`0x10` passano come 600 e
-      16 senza segnalazione — coerenti col «una sola regola, in
-      `validateResources`», non difetti.
-- [x] F5c [impl] — La lista dei periodi di tariffa, generalizzata —
-      `00d7a19`. `PeriodRowList` nuovo (generico su `T extends DayRange`, render
-      prop `valueCell`), `AvailabilityList` ridotta a wrapper a firma invariata,
-      `RatePeriodList` nuovo, `DraftResource.ratePeriods` **al posto** del
-      pass-through di F5a, due `.dialog__subhead` nel pannello espanso, il
-      riepilogo che appende i periodi tariffa, `.ranges__rate` e i tre bullet
-      *Dialogs* di `view.md`. 517 test invariati. Nessun file sotto
-      `src/scheduler/`, `DayRangeList` e `CalendarDialog` intatti,
-      `.dialog__hint` intatto per F5b: verificato sul diff.
-      **Ri-splittare non ha fatto scendere la misura**: corsia 218k, critic
-      242k — sopra soglia entrambi, dove F5a (stesso dialogo, taglio sulla
-      campagna) aveva reso 186k/215k. Il diff era ~100 righe di estrazione; la
-      campagna no. Se F5b/F6/F8 hanno questa forma, tagliare la campagna, non
-      il codice.
-      **Critic `sonnet`: pass, zero finding.** Ha ri-derivato la Fixture C da
-      §8 (nove righe, raise il `2026-09-24`) e ri-guidato tutti gli accept
-      assegnati, piu' cinque celle sue: il Save intatto (Gino e Luca senza
-      **nessuna** chiave `rateOverrides`, non un array vuoto, e zero passi di
-      undo), un periodo su Luca che **non ha default** (prezza T4 a `1,500`,
-      rimosso torna a `cost null, uncostedDays 3`), l'A/B dell'overlap
-      (dichiarato secondo: `[600,650,800]` e `4100`; ordine opposto via
-      `updateResource`: `[600,650]` e `3800`), le sette tracce **identiche al
-      pixel** con `gridTemplateColumns` byte-identico, e il gate su un `-5`
-      digitato (messaggio di `validateResources`, modello intatto).
-      **La trappola vera stava nel ramo che nessun test vede**: prima di questa
-      modifica il suffisso ` away` del conteggio si applicava **solo** al ramo
-      non-zero, quindi un periodo allo 0% su soli giorni non lavorativi poteva
-      diventare `no working days away`. Non e' successo — misurato sabato-
-      domenica nell'app, legge `no working days` — ma non esiste un test React
-      in `src/` che lo sorvegli: e' una riscrittura-in-wrapper e il ramo va
-      riletto a ogni ritocco di `PeriodRowList`.
-      **Tre decisioni prese al brief, non nella spec**: la cella periodo e'
-      `type="number"` e **non** il `type="text"` di F5a — la' il draft *era*
-      testo, qui `RateOverride.dailyRate` e' un numero, quindi il filtro del
-      browser e' imposto dal tipo e non una seconda regola muta; nessun clamp
-      in `onChange` (la regola resta sola in `validateResources`); e una riga
-      nuova e' **seminata con la tariffa di default della persona**, perche'
-      `0` qui e' un giorno *prezzato* e una riga non compilata prezzerebbe a
-      zero in silenzio. **Con default assente il seme e' `0` e la trappola
-      resta**: dichiarata, non mascherata.
-      **Unico finding, ed era mio, nel doc che la corsia ha scritto su mia
-      richiesta**: la frase nuova di *Period-row lists* registrava
-      l'allineamento come «entro 0.5px» — una tolleranza che il layout non
-      deve a nessuno (le due righe hanno la stessa classe, quindi lo stesso
-      template per costruzione) e una misura guidata su **una riga per lista**
-      data per generale. La forma del censimento-in-prosa del binding, scritta
-      dall'hub. Riscritta: la ragione copre le celle non guidate, la misura e'
-      dichiarata per quello che e'.
-      **Non guidato e dichiarato tale** (dal critic): l'allineamento con piu'
-      di una riga per lista o con le liste invertite, Tab fra le righe nuove,
-      uno screenshot in schema chiaro (solo albero di accessibilita'), e un
-      `0` dichiarato come tariffa di periodo attraverso il dialogo.
-- [x] F5b [impl] — Il campo `Currency` nel dialogo People — `bd24e98`.
-      `.people__currency` (un `<label>`, come ogni controllo etichettato di
-      questi dialoghi) sopra la tabella, controllo 88px, `placeholder e.g. EUR`;
-      prop `currency: string | null` e terzo argomento di `onSave`; il trim nel
-      dialogo e `validateCurrency` sull'etichetta trimmata non nulla; il terzo
-      argomento `currency?` a `setResources` scritto **prima** di
-      `applySolution()` e il **quarto** call site di `rebuildColumns()` dopo;
-      `openResources` che fotografa `getProject().currency`; la frase del
-      `.dialog__hint` che nomina il bottone per il suo nome accessibile
-      (`Choose grid columns`: e' icon-only, non c'e' testo visibile da citare);
-      i due bullet di `view.md` (quattro call site, campo Currency), la misura
-      del carry sul quarto call site in `dhtmlx.md` e **il bullet
-      `CHANGELOG.md` delle superfici tariffa del dialogo**, differito qui da
-      F5a. 517 test invariati, nessun test nuovo: **non esiste harness React in
-      `src/`** (nessun `.test.tsx`, nessun jsdom), quindi ogni claim e' una
-      misura nel browser. Nessun file sotto `src/scheduler/`, nessuno dei file
-      che implementano un invariante: verificato sul diff.
-      **Chiuso dall'hub prima del critic**: la corsia aveva reso il campo un
-      `<div>`+`<span>` senza `placeholder` — la §5.8 lo dichiara e il repo
-      etichetta con `<label>` (`.taskinfo__field`, `.calendar__day`). Due
-      righe, piu' la correzione del bullet di `view.md` che l'hub aveva appena
-      scritto **sbagliato** sul wrapper: un doc che registra male la ragione di
-      una decisione e' peggio di nessun doc, ed e' la terza volta in questo goal.
-      **Critic `sonnet`: pass, zero finding.** Corsia 209k, critic 176k — la
-      campagna tagliata come da regola di F5c ha tenuto entrambi sotto soglia,
-      su un diff di ~110 righe. Ha ri-guidato i sei accept, la Fixture C (nove
-      righe, raise il `2026-09-24`), il drag reale via CDP (`text` 230→279
-      identico alla cifra di `dhtmlx.md`), il click-to-focus attraverso il
-      `<label>` nuovo, e **le quattro celle che l'hub gli ha chiesto per nome**:
-      il braccio `undefined` del tri-stato (`updateResource`/`addResource`/
-      `removeResource` su un progetto con `USD`: etichetta intatta — nessun
-      accept del brief lo guidava), un Save di sola valuta (un passo di undo,
-      `changed currency`, tariffe intatte), Cancel dopo aver digitato (niente
-      scritto), e una modifica di valuta a **griglia chiusa** (`grid_width` a 0
-      lungo il Save, restore a 901: il quarto call site passa dal ramo
-      `savedGridWidthRef` come gli altri tre).
-      **La trappola vera non era nell'app**: il `fill` del tool su un campo
-      controllato **gia' pieno** fallisce in silenzio (il `value` del DOM
-      risponde, lo stato React no, e il componente salva il vecchio). Corsia e
-      critic ci sono cascati **indipendentemente sullo stesso campo** e l'hanno
-      letta come difetto dell'app. Graduata in `docs/verification.md` nello
-      stesso commit, accanto al throw che quella sezione descriveva gia'.
-      **Non guidato e dichiarato tale** (dal critic): Shift+Tab e frecce sul
-      campo nuovo, il campo in viewport stretto, due Save rapidi nella stessa
-      sessione di dialogo, e le vie di export (print/PNG/CSV) con una valuta
-      dichiarata — quest'ultima fuori da Goal F per la §6 della spec.
-      §5.8: il campo dichiarato nel dialogo People (e' l'unita' dei numeri
-      digitati li'), il terzo argomento `currency?` a `GanttHandle.setResources`
-      (`ganttHandle.ts:64`) portato per la catena `ResourceDialog.save` →
-      `App.tsx:563` → handle. **Tri-stato**: assente = non toccare (cio' che fa
-      gia' `commitResources`, `agentApi.ts:231`), `null` = cancella, stringa =
-      imposta.
-      **Una sola chiamata all'handle, o sono due passi di undo**: `recordedChange`
-      deduplica solo su testo identico, quindi tariffe e `currency` devono
-      passare insieme. E' l'accept che vale la pena guidare per primo.
-      **E' il secondo scrittore di `currency` della §5.7**: quindi e' questo il
-      task che aggiunge il **quarto** call site di `rebuildColumns()` — F4b ne
-      ha messi tre (`setColumns`, `loadProject`, `setCurrency`) e le testate
-      `Rate (EUR)` / `Cost (EUR)` devono seguire anche da qui. `docs/view.md`
-      dice «three call sites»: va aggiornato nello stesso commit, o mente.
-      **Il dialogo deve nominare il picker** (accept §8): chi inserisce la prima
-      tariffa e' la persona che deve sapere che le colonne esistono e nascono
-      nascoste — e' la frase che riscrive il `.dialog__hint`, che F5a e F5c
-      lasciano intatto per questo.
-      **E porta lui il bullet `CHANGELOG.md` delle superfici tariffa del
-      dialogo**, deciso al brief di F5a e non dimenticato: qui la storia del
-      dialogo e' intera (tariffa di default, periodi, valuta), e un bullet
-      emendato tre volte e' peggio di uno alla fine. Sotto `## Unreleased`,
-      che **non** si rinomina (la deroga non e' comprata).
-**F6 spezzato in due il 2026-09-16, sulla regola e non sulla campagna.** La
-sua accept (1) chiede che il dialogo dica **lo stesso testo** della cella di
-griglia su quattro righe: re-implementare i quattro rami nel dialogo lo
-renderebbe vero solo su quelle quattro (la trappola del censimento), e sarebbe
-il **terzo** domicilio della regola del `≥` e il secondo di `No rate for X on
-these days`. Il debito a due case di F4b diceva «se si riapre, si unifica»: F6
-e' quella riapertura. Quindi F6a estrae la regola e ci riporta la griglia
-(nessun cambiamento visibile, e i **primi test** che quella regola abbia mai
-avuto), F6b rende le due voci e il layout a tre tracce. Il taglio cade sulla
-campagna: F6b se la prende quasi tutta, F6a paga una sola ri-guida delle nove
-righe.
-
-- [x] F6a [impl] — La regola della cella costo/tariffa, in un posto solo —
-      `2795c7d`. `src/gantt/costCells.ts` nuovo: `rateCellText` e `costCellText`, puri,
-      che restituiscono un descrittore neutro rispetto al medium
-      (`{ text, title, derived }`) — la griglia lo avvolge in HTML, il dialogo
-      in JSX, e la classe del registro *derived* la scegle ognuno per se'
-      (`gantt-derived` vs `taskinfo__derived`). `gridColumns.ts` ricablato sui
-      due, **niente altro cambia**: `escapeHtml` resta al confine HTML (il
-      `title` porta il nome di una persona, cioe' input dell'utente), la
-      regola del null resta in `reportedCost` (`cost.ts`, intatto).
-      `costCells.test.ts` nuovo: **12 test, i primi che quella regola abbia mai
-      avuto** (era verificata solo nel browser). 517 → 529. `renderCellText`
-      locale a `gridColumns.ts` ricostruisce le tre forme HTML in un punto
-      solo: deviazione dichiarata, accettata.
-      **Critic `sonnet`: pass, zero finding.** Corsia 129k, critic 132k — il
-      taglio ha fatto il suo lavoro (F5c, stesso dialogo senza taglio della
-      campagna, era 218k/242k). Mappatura ramo-per-ramo provata nei due sensi
-      contro `git show HEAD:gridColumns.ts`, em dash U+2014 verificato sul
-      `codePointAt` di una cella viva (e il separatore del range e' U+2013,
-      come dice `view.md`), le nove righe ri-derivate dal DOM, il ciclo
-      nascondi/ri-mostra byte-identico, e **tre celle sue**: un nome ostile
-      (`"><img src=x onerror=alert(1)>`) escapato correttamente nel `title`
-      (`imgCount 0`, nessun alert) e `A & B` senza doppio escape; una tariffa
-      a tre valori **non monotona nel tempo** (100 → 200 → 162.555) che rende
-      `100–200`, cioe' min–max vero e non primo–ultimo (`cost.ts` ordina per
-      valore, quindi l'indice non e' un off-by-one); e il summary a effort
-      zero, dove solo la prima guardia decide.
-      **Un rilievo fuori bar, misurato e giudicato non difetto dall'hub**: un
-      summary i cui figli sono **tutti** non costati rende `—` con `title`
-      *No resource* invece di un `≥`, perche' `reportedCost` da' `null` e la
-      guardia del null precede quella di `uncostedDays`. E' la §5.4 alla
-      lettera (`costedDays === 0 && uncostedDays > 0` → `—` col motivo).
-      **La ragione che gen 10 ha scritto qui era falsa** e F6b l'ha corretta
-      leggendo il codice: su un summary il `resource_id` **non** rolla dalle
-      foglie (`ganttRows.ts` scrive `task.resourceId ?? ''`), quindi in griglia
-      il motivo nomina la persona che la riga aveva quando era foglia. Il
-      comportamento resta non difetto; la ragione vera e la divergenza col
-      dialogo stanno in `docs/view.md` § *Details dialog*, misurate. Il quarto
-      doc di questo goal che registrava male una ragione.
-- [x] F6b [impl] — Il costo nel pannello dettagli — `1362652`.
-      Le due voci *Computed* sui descrittori di F6a (`title` sul `<dd>`,
-      `taskinfo__derived` e mai `--cell`, React che escapa da se'), la griglia
-      a `repeat(3, 1fr)` con `row-gap: var(--space-2)`, e `currencyLabel` in
-      `costCells.ts` — **unica casa della forma `Cost (EUR)`**, letta dalla
-      testata di griglia (`columns.ts`) e dall'etichetta della voce. 529 → 532.
-      Nessun file sotto `src/scheduler/`, nessuno fra `cost.ts`/`resources.ts`/
-      `plan.ts`: verificato sul diff.
-      **Il predicato milestone del dialogo non e' quello che il prompt di
-      consegna diceva**: e' `!task.isSummary && effort.trim() !== '' &&
-      Number(effort) === 0`, cioe' legge il **campo in edit**, e serve a far
-      commutare il titolo mentre si digita uno zero. Le due voci nuove leggono
-      invece `task.nominalDays === 0 && !task.isSummary` — il predicato di
-      `project.ts` da cui nasce il `type` della riga di griglia — quindi le
-      due superfici partizionano le righe per costruzione, non per fortuna.
-      Ri-localizzato al brief: un `file:line` copiato non e' verificato, e
-      nemmeno un predicato.
-      **Critic `sonnet`: pass, zero finding.** Corsia 181k, critic 181k — la
-      campagna era quella di F5c e il brief l'ha tenuta a 181k invece di 242k
-      dettando tutto il codice: la corsia ha speso il suo contesto nel browser,
-      non a decidere. Ha ri-guidato i cinque accept (nove righe di Fixture C,
-      raise il `2026-09-24`), **piu' otto celle sue**: lo zero digitato in
-      Effort su una foglia costata (titolo che commuta, Computed che tiene la
-      soluzione — e il simmetrico su una milestone), un nome ostile nel
-      `title` del `—` (nessun doppio escape, nessun nodo iniettato, zero
-      `escapeHtml` nel file), `title` **assente** e non `title=""` dove non
-      c'e' motivo, `is_summary` di griglia e `isSummary` del dialogo che
-      leggono la stessa `solved.summaryIds` (anche su un summary col solo
-      figlio disabled), la testata dopo un `setCurrency` a colonne nascoste e
-      dal quarto call site (People), il viewport a 480px (tracce a 128px,
-      niente wrap) e lo schema chiaro caricato da subito.
-      **La riga che nessuno dei due dava per provata**: un `Range` su un `dd`
-      rende **due** rect quando l'elemento ha due nodi di testo
-      (`{formatDays(x)} d`), che e' anche cio' che sembra un wrap. Il critic
-      l'ha chiusa misurando `top` e `height` dei due rect. Graduata in
-      `docs/verification.md` nello stesso commit, accanto alla regola dello
-      `scrollWidth`: su un blocco `scrollWidth === clientWidth` vale wrappato
-      o no, quindi non prova niente.
-      **Chiuso dall'hub prima del critic**, due righe: il docblock di
-      `currencyLabel` citava `§5.4` di una spec che la goal review cancella (una
-      citazione appesa), e la frase nuova di `view.md` registrava lo stato
-      precedente del blocco. Entrambi difetti del mio brief, che dettava il
-      docblock alla lettera.
-      **Non guidato e dichiarato tale** (dal critic): Tab/Shift+Tab nel `dl`
-      (misurato invece: zero discendenti focusabili, quindi non c'e' dove
-      andare), un toggle *live* di `prefers-color-scheme` (non emette `change`,
-      solo da caricamento), viewport sotto i 480px, e le vie di export col
-      blocco Computed (fuori scope).
-- [x] F8 [impl] — Colonne e banda di testata in `planFigure` — `fa4fd44`.
-      `FigureOptions.columns`, `FIGURE_CELLS` (`Record<PlanColumnName,…>`
-      esaustivo), `geometryOf` che riceve la larghezza delle colonne invece di
-      `PERSON_WIDTH`, banda di testata di `HEADER_BAND` 18px. Chiuso al primo
-      giro, zero findings.
-      **Non ha effetto visibile nell'app e non e' una dimenticanza**: `App.tsx`
-      non passa `columns`, il default legacy resta byte-identico. L'utente l'ha
-      comprato come API scegliendo C; il suo cliente e' il dialogo di export di
-      Goal G. Dichiarato qui perche' la goal review non lo legga come codice
-      infilato di straforo.
-      Primo sottotask del goal **senza campagna nel browser**, e non e' venuto
-      economico: 157k/146k. Il pin byte-identico e' stato catturato prima
-      dell'edit — e **il critic l'ha ricostruito da `git show HEAD:` invece di
-      credere alla dichiarazione**, trovandolo identico: e' cio' che distingue
-      il pin da una tautologia. Ha anche sondato che l'esaustivita' del
-      `Record` e' una garanzia vera (un nome finto in `PlanColumnName` →
-      TS2741 su `planFigure.ts` e `gridColumns.ts`), e guidato 23 celle contro
-      le 6 dell'accept.
-      **Due misure fuori accept, da leggere in Goal G, non difetti qui.**
-      (a) La testata `Rate`/`Cost` della figura **si tronca appena `currency`
-      supera i 3 caratteri** (`Rate (EURO)` → `Rate (EUR…`): `figureWidth` 70
-      e 84 danno 10 e 12 caratteri a `truncate`, e `validateCurrency` accetta
-      fino a 8 — `Cost (XXXXXXXX)` sono 15 caratteri, 102px. **Qui l'accept
-      l'ha restretto il brief dell'hub**: la §8 dice «measures the widest
-      string of each», il brief ha circoscritto la misura alle stringhe della
-      Fixture C, e la stringa piu' larga legale e' la testata, non una cella.
-      Non allargata di proposito: il budget di larghezza della figura esiste
-      solo quando Goal G la cabla a un dialogo di export, e allargarla adesso
-      sarebbe indovinare contro una valuta che nessuno ha digitato. **Chi
-      cabla `columns` in Goal G ridecide i due `figureWidth` con un layout
-      davanti.**
-      (b) A `width` molto piccole `geometryOf` produce un `pxPerDay` negativo —
-      **preesistente**, identico sul percorso legacy alla stessa `width`
-      (confrontato direttamente dal critic), quindi non una regressione.
-
-
-**Goal review girata il 2026-09-16: `fix-first`** (fable-5-1 confermato in
-header; read-only, niente commit). Nessun MISSING negli accept e nessuno
-SMUGGLED: `src/scheduler/` intatto verificato sulla diff, le quattro decisioni
-dell'utente onorate, e `FigureOptions.columns` senza chiamante giudicato
-scoping onesto (l'opzione C l'ha comprato, 220 righe di test lo appuntano).
-Ha confermato di passaggio, contro i sospetti in giacenza, che il filtro
-`roots` di F2b e' corretto (`plan.ts` — i summary tutti-disabled stanno in
-`disabledIds`, i nidificati cadono sul filtro `live` del padre), che il
-suffisso di `PeriodRowList` e' giusto, e che l'assenza di un harness React non
-e' un debito che questo goal ha aggravato: le regole stanno in moduli puri, ed
-e' il seam giusto. L'unico posto dove la UI fabbrica uno zero resta il periodo
-tariffa seminato a `0` (`RatePeriodList.tsx`), dichiarato.
-**Quattro azioni, e la review resta il bar finche' non sono chiuse** — quindi
-la spec `T59-costs.md` non si pota ancora, e la release non si propone.
-L'utente ha scelto il 2026-09-16 di farle **tutte e quattro**, F12 compresa.
-**Ordine: F9 → F13 → F14 → F10 → F11 → F12**, seriale: F9 e F10 toccano
-entrambe `costCells.ts` e F9 ne cambia la firma, quindi F10 la segue e non la
-precede. F13 e F14 sono due richieste dell'utente arrivate a goal aperto, e
-rientrano nella review che girera' sul delta. **F15 e' nato dalla misura di
-F14 e la sua posizione e' dell'utente**: tocca `columns.ts` come F14 ma e' una
-decisione sua, non un'azione della review.
-
-- [x] F9 [impl] — La ragione del costo su un summary non deve nominare una
-      persona che sulla riga non c'e' — `12e1006`. `costCellText` prende un
-      `isSummary` **obbligatorio** e sul ramo senza cifra ignora `resourceName`;
-      i tre chiamanti (`gridColumns.ts`, `planFigure.ts`, `TaskDialog.tsx`) lo
-      passano, ed e' l'obbligatorieta' — non il flag — il meccanismo contro la
-      deriva: un renderer nuovo non compila senza rispondere. 540 test (+1).
-      Accept coperto: unit che passa `resourceName: 'Marta'` **con**
-      `isSummary: true` e pretende `No resource` (un caso con `null` non
-      proverebbe niente), e nell'app griglia e dialogo misurati concordi sulla
-      riga (`—` / `No resource`), con la premessa di gen 11 rovesciata:
-      «§5.4 alla lettera» era la lettera letta su un campo sbagliato.
-      **La ragione nel doc e' stata scritta male due volte nello stesso task**,
-      ed e' la sesta del goal: la corsia ha chiuso il bullet di `docs/view.md`
-      affermando che *tre* superfici ora concordano, mentre la sua stessa misura
-      diceva che `FIGURE_CELLS.cost` rende solo `.text` e butta `.title` (e che
-      `App.tsx:771` non passa `columns`, quindi in stampa non c'e' nessuna cella
-      di costo — gia' registrato in `docs/file-format.md`). L'hub ha riscritto
-      **avendo in mano quella misura** e l'overclaim e' sopravvissuto in forma
-      piu' sottile; l'ha chiuso il critic. Ora il bullet dice quali due
-      superfici rendono il `title`, e che la terza non rende ragioni.
-      Misurato dal critic e non dalla corsia (celle che la fixture non componeva
-      e nessuna rotta): foglia davvero senza tariffa → `No rate for Paolo on
-      these days` (il ramo non-summary non e' stato collassato), summary
-      parziale → `≥ 1,200` / `3 d of effort not costed`, summary interamente
-      costato → cifra nuda, milestone e summary a effort zero → cella vuota,
-      riga disabled e ramo chiuso invariati, console pulita.
+- [x] T59 [architect] — Spec del goal costi — spec cancellata alla chiusura
+- [x] T62 [architect] — Delta della spec sulle quattro risposte — stessa spec
+- [x] F7 [impl] — Registro delle colonne, selezione, persistenza, picker — `b70d327`
+- [x] F1 [impl] — Tariffe e `currency` nel modello, nel file e nelle regole — `1fc20d8`
+- [x] F2a [deep] — Il calcolo del costo: `rateIntervals` e `taskCosts` — `5402bb5`
+- [x] F2b [self] — `costs` e `currency` su `SolvedProject` — `fcfb61a`
+- [x] F3a [impl] — Report del file, colonne CSV, `docs/file-format.md` — `39b59ed`
+- [x] F3b [impl] — Parita' di `getTask()`, scrittura di `currency`, help — `9c9e0ac`
+- [x] F4a [impl] — Il totale di progetto nella status bar — `6965482`
+- [x] F4b [impl] — Colonne Rate e Cost nate sul registro, marca del parziale — `56d0ba7`
+- [x] F5a [impl] — La colonna Daily rate nel dialogo People — `3787f43`
+- [x] F5c [impl] — La lista dei periodi di tariffa, generalizzata — `00d7a19`
+- [x] F5b [impl] — Il campo `Currency` nel dialogo People — `bd24e98`
+- [x] F6a [impl] — La regola della cella costo/tariffa, in un posto solo — `2795c7d`
+- [x] F6b [impl] — Il costo nel pannello dettagli — `1362652`
+- [x] F8 [impl] — Colonne e banda di testata in `planFigure` — `fa4fd44`
+- [x] F9 [impl] — La ragione del costo di un summary non nomina un assente — `12e1006`
 - [x] F14 [self] — Nessuna testata di colonna sia tagliata — `7db1229`
-      Aperto dall'utente il 2026-09-16 su richiesta esplicita, **in testa alla
-      coda**: prima di F10.
-      Misurato dall'hub su F13 e da non ripagare: con `currency` `EUR` la
-      testata `Rate (EUR)` **non entra** nei suoi 62px e viene resa
-      `Rate (EUR`, tagliata, senza ellissi e senza `title` che la riveli
-      all'hover. Col `$` dell'utente entra. `gridWidth` oggi: `resource_id` 76,
-      `nominal_days` 62, `start_date` 84, `end_shown` 84, `elapsed_days` 62,
-      `rate` 62, `cost` 84 (`columns.ts`).
-      **Non e' «allargare Rate»: e' un censimento.** Ho misurato *una* cella e
-      una sola valuta — la lezione di F8, F2b e F3b e' che un elenco e'
-      completo o non e' un elenco. Il task deve produrre una **matrice**: ogni
-      testata del registro × la valuta piu' larga che `validateCurrency`
-      ammette (8 caratteri → `Rate (XXXXXXXX)`, 15 caratteri) e una da 3, con
-      la larghezza resa misurata contro il `gridWidth`, piu' un elenco
-      esplicito di cio' che la misura **non** ha guidato. `Duration` a 62px e
-      `Resource` a 76 sono sospette e non misurate.
-      **Vincoli che non si riaprono**: la valuta sta nella testata e mai nella
-      cella (decisione #2 dell'utente), e Rate/Cost restano nascoste per
-      default (#5). Le larghezze **non sono persistite** — `yagni.columns.v1`
-      porta solo i nomi, e il rebuild del picker riporta per nome solo le
-      larghezze trascinate *nella sessione* (F7) — quindi cambiare un
-      `gridWidth` di default non ha migrazione, ma **sposta la griglia di ogni
-      progetto esistente**: il budget dei 706px e' dell'utente, e una somma
-      nuova va riportata a lui prima del commit.
-      Accept: la matrice nel report, nessuna testata tagliata con una valuta da
-      3 caratteri, e per il caso da 8 una decisione dichiarata (allargare, o
-      `title` sulla testata, o taglio accettato) con la misura accanto.
-      **Censito e chiuso con un solo numero: `rate.gridWidth` 62 → 84.**
-      Guidate: le 7 testate del registro piu' `text`, e su Rate/Cost dieci
-      valute — assente, `$`, `₽`, `EUR`, `€€€`, `CHF`, `人民元`, `WWW`,
-      `EUROCENT`, `WWWWWWWW` — in due font. **Non guidate**: le celle delle
-      altre cinque colonne, i `figureWidth` (di Goal G), una larghezza
-      trascinata a mano (ogni colonna e' `resize: true` e la trascinata non
-      persiste), il tema chiaro, le valute da 4 a 7 caratteri, e un'altra
-      macchina. I tre esiti che contano. (a) La testata e' clippata **a
-      qualunque valuta da 3
-      caratteri**, non solo `EUR`: la piu' larga misurata e' `Rate (WWW)`
-      79.22px, la CJK `Rate (人民元)` 78.06, e 84 le tiene tutte con 4.78px di
-      margine (80 ne lascerebbe 0.78, cioe' un secondo `Duration`). `Cost` a
-      84 teneva gia' ogni valuta da 3 (`Cost (WWW)` 81.98, +2.02) e non si e'
-      toccata. (b) `Duration` ha **esattamente 0.00px di margine** (ink 62.00
-      su 62; il `Range` dice 62.66 perche' il letter-spacing si somma anche
-      dopo l'ultimo glifo) — lasciata cosi': il difetto visibile non era
-      `DURATION` ma `DURATIONRATE (EUR`, due testate attaccate perche' `rate`
-      sforava, e allargarla sposterebbe i 706px per nulla che si veda.
-      (c) **`text-overflow: ellipsis` misurata e scartata**, non dedotta:
-      iniettata e fotografata a 4×, il browser riserva la larghezza dei
-      puntini e `DURATION` perde *due* caratteri (`DURATI…`) per 0.66px di
-      sforamento. Il clip e' il renderer migliore qui.
-      Totali misurati: default **706 invariato** (`rate` e `cost` restano
-      `defaultShown: false`, quindi il budget dell'utente non si muove), +Rate
-      790 (era 768), +Rate+Cost 874 (era 852).
-      **Trovato dal censimento e graduato in `docs/dhtmlx.md`**: il font della
-      testata non e' dell'app — `Inter` non compare da nessuna parte in `src/`,
-      lo mette il CSS di dhtmlx sulla head cell (piu' specifico del nostro
-      `font-family: inherit`) con un `@font-face` che lo scarica da
-      `fonts.gstatic.com` in `font-display: swap`. Quindi ogni numero di testata
-      e' di un webfont, e offline resta il fallback: misurati entrambi, 84 tiene
-      in Inter **e** in Helvetica (che sulle etichette piu' larghe e' piu'
-      stretto). Le celle invece ereditano e rendono `system-ui` a 13px.
-      **La ragione nel doc era falsa, ed e' la settima del goal**: la prima
-      stesura diceva che sono «le sole due colonne la cui testata e' la loro
-      stringa piu' larga» — l'ha trovata il critic misurando una cella da
-      109px. Riscritta su cio' che resiste alla misura (la testata ha un
-      massimo legale, `validateCurrency` 8 caratteri; la cella nessuno,
-      `resources.ts:120` vuole solo finito e `>= 0`), con la premessa in **una**
-      casa sola (`columns.ts`) e `docs/view.md` che la indica.
-
-- [x] F15 [self] — La cella di costo di un summary parziale e' tagliata —
-      `a737711`. **`cost.gridWidth` 84 → 98, scelto dall'utente** il 2026-09-18
-      davanti alla misura: content box 86, `≥ 122,250,000` 81.19 → 4.81 di
-      margine (94 ne lasciava 0.81, che F14 aveva gia' scartato come non
-      margine sulla testata). Dieci cifre sfondano ancora, accettato. Misurato
-      nell'app dopo il cambio, con due summary a schermo: nessuna cella
-      tagliata, griglia con Rate e Cost accese **887** (era 874), default 705/706
-      invariato perche' entrambe restano nascoste.
-      **La ragione nel commento era falsa ed e' l'ottava del goal, scritta da
-      me ereditando un numero invece di misurarlo**: «il prefisso `≥ ` costa
-      ~5.5px» veniva dal censimento di F14, che aveva sottratto due stringhe di
-      lunghezza diversa (un totale a 8 cifre col prefisso meno uno a 9 nudo).
-      Il critic l'ha rifatta con due strumenti indipendenti (`Range` e
-      `measureText`): **12.47px**, 8.91 di glifo piu' 3.56 di spazio. Corretta
-      nel commento e qui — gli altri quattro numeri dello stesso commento
-      reggevano alla ri-misura.
-      **Chi taglia non e' la cella**: il `div.gantt_tree_content` interno e'
-      largo esattamente `gridWidth - 12` e ha `overflow: hidden` suo; la cella
-      e' il border box e clipperebbe 6px piu' in la'. Dedotto a tavolino dava
-      l'opposto (il testo sborda a destra *dentro* il padding), e attribuirlo
-      al padding box avrebbe sbagliato la larghezza di 6px.
-      Trovato dal censimento di F14 (misurato, non dedotto) e **lasciato
-      all'utente perche' muove il suo budget**: la cella ha un box contenuto di
-      72px dentro gli 84 della colonna (`padding: 0 6px`, `system-ui` 13px), e
-      `≥ 12,250,000` misura 74.17px — **tagliata di 2.17px**, senza ellissi e
-      senza `title`. Non e' il caso patologico: una cifra nuda ci sta fino a
-      `122,250,000` (68.72px, +3.28), ma il prefisso `≥ ` di un summary
-      parzialmente costato costa **12.47px** (misurato su F15; il ~5.5 scritto
-      qui da F14 nasceva dal sottrarre due stringhe di cifre diverse), quindi
-      **un totale a 8 cifre con del costo mancante basta** — un programma da 12M in una valuta qualunque.
-      Preesistente (F14 non ha toccato `cost.gridWidth`) e **una decisione
-      diversa dalla sua**: allargare `cost` sposta la griglia di chi mostra la
-      colonna (874 → 880+ con Rate), e il tetto non esiste comunque, quindi la
-      scelta e' fra «un caso plausibile in piu' ci sta» e «la cella si taglia
-      in silenzio, dichiarato». Il range tariffa e' sullo stesso filo:
-      `2,400–2,600` misura 68.20px, +3.80.
-      **Riprodotto in app il 2026-09-18 davanti all'utente** (fixture: summary
-      da 13 d, figlio da 10 d a 1.225.000/d, figlio da 3 d senza tariffa,
-      `currency` EUR → `≥ 12,250,000` con `uncostedDays: 3`), e **chi taglia
-      non e' la cella**: il box che clippa e' il `div.gantt_tree_content`
-      interno, `display: block`, largo esattamente i 72px del content box e con
-      `overflow: hidden` suo — la cella e' 84 con `padding: 0 6px` e clipperebbe
-      solo a 78. Verificato perche' la deduzione a tavolino diceva l'opposto
-      (il testo sborda *a destra* dentro il padding, `textRight` 763.17 contro
-      un padding box a 767, quindi sembrava intatto): il taglio e' a 761 e vale
-      i 2.17px registrati da F14. Stringhe misurate nel font vivo della cella
-      (system-ui 13px): `12,250,000` 61.70, `≥ 1,225,000` 67.17, `2,400–2,600`
-      68.20, `122,250,000` 68.72, **`≥ 12,250,000` 74.17**, `≥ 122,250,000`
-      81.19. Quindi 88 (content 76) tiene questo caso con 1.83 di margine e
-      taglia ancora le 9 cifre col prefisso; 94 (content 82) tiene anche quelle
-      con 0.81. La griglia di default resta 706 con qualunque scelta — Rate e
-      Cost sono nascoste — e la somma si muove solo per chi accende Cost:
-      874 → 878 a 88, → 884 a 94.
-      Accept: la larghezza scelta dall'utente con la somma nuova accanto, o il
-      taglio dichiarato in `docs/view.md` con la misura.
-- [x] F10 [self] — `currencyLabel` e il testo dell'effort non costato tornino a
-      una casa sola — `4d27480`. Tre mosse e **nessuna stringa che un utente
-      legge cambiata**: `planCsv.ts` chiama `currencyLabel` invece di
-      ri-scrivere `Cost (${currency})`; `uncostedNote(days)` nasce in
-      `costCells.ts` e la cella di costo parziale e la status bar la chiamano
-      entrambe; il commento di testata di `columns.ts` nomina `FIGURE_CELLS`
-      (`planFigure.ts`), che F8 aveva atterrato lasciando la riga «a figure-side
-      record later» stantia dal suo stesso commit.
-      **La ragione nel doc e' stata riparata rendendola una regola, non un
-      elenco** — e' la lezione del secondo giro di critic su F14: la frase di
-      `docs/view.md` diceva «letta dalla testata di griglia e da questo `dt`»,
-      cioe' un censimento di due voci che il CSV gia' smentiva; ora dice che
-      *ogni* superficie che etichetta una cifra chiama quella funzione e nessuna
-      ri-scrive le parentesi. Stessa mossa nel doc comment di `currencyLabel`,
-      che l'enumerazione l'ha persa.
-      Verificato dal critic (sonnet, 102k, pass al primo giro) **sul percorso,
-      non sulla riga**: cinque siti di etichetta e tutti passano per
-      `currencyLabel` — il registro di `columns.ts` serve testata di griglia,
-      CSV, testata della figura (`entry.label`) e **il picker delle colonne**,
-      superficie che ne' l'accept ne' la vecchia frase nominavano, piu' i due
-      `dt` di `TaskDialog.tsx`; l'unico `Cost (` letterale rimasto in `src/`
-      fuori da un'attesa di test e' dentro `currencyLabel` stessa.
-      `planCsv.test.ts` **ricostruito da `git show HEAD:` e trovato identico**,
-      non creduto. Nel browser, fixture parzialmente costata (`uncostedDays: 5`,
-      `EUR`): status bar e cella di costo rendono lo stesso
-      `title="5 d of effort not costed"`, letto dal DOM vivo — l'unico percorso
-      visibile che questo refactoring tocca e che nessun unit test copre.
-- [x] F11 [self] — README e `agentApi.help.md` dicano che il piano costa —
-      `5d1d953`. Unico MISSING della review. Due paragrafi nuovi nelle Features
-      (cosa costa il piano, e il picker delle colonne), la riga *Reading* che
-      ora descrive la forma che `getResources()` rende davvero, e la voce
-      Rate/Cost del changelog estesa al totale in status bar e alle due colonne
-      CSV — **estensione dichiarata, non contrabbandata**: erano feature
-      visibili di questo goal che nessun bullet nominava, e il changelog e'
-      l'altra superficie che l'utente legge.
-      **La frase sbagliata l'ho intercettata prima del critic, ed era la solita
-      forma**: la prima stesura diceva che una riga non prezzata «resta vuota»,
-      mentre `costCellText` rende `—` con la ragione, e *vuota* e' la riga a
-      effort zero. Due esiti diversi collassati in uno; riscritta prima di
-      consegnare, e il critic ha poi letto l'`innerHTML` di entrambe le celle
-      per confermare che restano distinte.
-      Campagna del critic (sonnet, 162k, pass al primo giro), **ogni clausola
-      falsificata nell'app, non letta dal sorgente**: due periodi tariffa
-      annidati → vince il dichiarato per ultimo (300, non 200 ne' una media);
-      task a cavallo → `dailyRates: [100, 200]`; summary → `cost 1500`,
-      `uncostedDays 3`, cella `≥ 1,500`; status bar `Cost ≥ 1,500 EUR · 3 d not
-      costed`; foglia senza tariffa → `—` + `No rate for Bob on these days`
-      contro milestone → cella davvero vuota; **persistenza del picker provata
-      su un progetto diverso** (toolbar *New*, non un reload); default a griglia
-      705px con Rate/Cost spente. `getResources()` chiamata viva: persona con
-      tariffa → `{id, name, availability, availabilityOverrides, dailyRate,
-      rateOverrides}`, persona nuda → `{id, name, availability}` — niente
-      promesso che non ci sia. CSV scaricato davvero (Blob intercettato):
-      `...;Disabled;Cost;Uncosted (d)`, e il badge resta `v1.2` senza popup.
-- [x] F12 [impl] — Estrarre `toDraft`/`toResources` e appuntare
-      «absent stays absent» — `73bf870`
-      Azione dichiarata **opzionale** dalla review. Le due funzioni sono pure e
-      dentro `ResourceDialog.tsx`, quindi oggi la regola che salvare il dialogo
-      People intatto non sporchi il file e' guidata solo a mano (il critic di
-      F5a). Estratte in un modulo, le quattro combinazioni assente/presente si
-      pinnano senza jsdom. Nessun harness React da introdurre — e' proprio il
-      punto.
-      Fatto in `src/gantt/resourceDrafts.ts`, e il difetto di T59 e' chiuso:
-      `toResources` scriveva `availability` sempre, quindi salvare il dialogo
-      intatto aggiungeva `"availability":1` a un file che non l'aveva.
-      **Il meccanismo e' `availabilityDeclared` sul draft**, non una soglia sul
-      valore: la chiave si riscrive se la sorgente la dichiarava *oppure* se la
-      percentuale digitata non legge piu' 100. Omettere ogni `availability`
-      pari a 1 avrebbe rotto la regola speculare (presente resta presente) su
-      chi l'ha dichiarata. Il form non cambia aspetto — un'availability assente
-      mostra 100% come prima.
-      18 pin: la matrice delle quattro chiavi opzionali (assente/presente e le
-      modifiche che le fanno comparire o sparire), il round trip di lista, il
-      round trip di **file** (due testi di `serializeProject` confrontati
-      byte a byte) e `blankDraft`.
-      Verificato dal critic nell'app, non dedotto: dialogo aperto e salvato
-      intatto → `isDirty()` resta `false` e `toText()` non guadagna chiavi;
-      percentuale a 50%, tariffa cancellata, persona aggiunta e poi rimossa,
-      currency a `EUR` → il file guadagna e perde **esattamente** le chiavi
-      toccate. Confermata di passaggio la trappola del campo controllato da
-      React: un `fill` nudo sul rate torna indietro al render dopo.
-      **Fuori scopo per decisione dell'hub, e resta aperto**: `applied()` in
-      `resources.ts` ha la stessa forma sul percorso delle patch
-      (`patch.availability ?? resource.availability ?? 1`), quindi una
-      `resourceUpdate` dell'agent API su una persona senza `availability`
-      aggiunge la chiave. Non raggiungibile dal dialogo; chiuderlo e' un task
-      a se', se l'utente lo vuole.
-
-- [x] F16 [self] — `€` come currency preimpostata di un progetto nuovo —
-      `b4e2b41`
-      Richiesta dell'utente il 2026-09-18, a goal aperto: oggi un progetto
-      nasce senza `currency`, quindi la testata dice `Cost` nudo e il totale in
-      status bar non porta unita'.
-      **Il vincolo che decide il task**: il default vale alla *creazione*, mai
-      al caricamento. Un file senza `currency` deve restare senza, o un
-      round-trip apri-e-risalva scriverebbe un campo che nessuno ha digitato —
-      e' la stessa regola «absent stays absent» che F12 sta appuntando sulle
-      risorse, e il gate del formato la attraversa in entrata e in uscita.
-      Quindi si tocca il progetto vuoto, non il parser.
-      Da guardare prima di briefare: dove nasce il progetto vuoto
-      (`project.ts`, `App.tsx`), il campo Currency del dialogo People (che
-      mostrera' `€` invece che vuoto, e da li' si cancella), e cosa scrive
-      `serializeProject` per un progetto nuovo mai toccato — se il campo entra
-      nel testo, entra anche nel confronto che calcola `dirty`.
-      `validateCurrency` accetta `€` (1 carattere sugli 8 massimi, non vuoto,
-      non paddato), quindi nessuna regola si allarga.
-      Accept: progetto nuovo → testata `Cost (€)` e totale in status bar in `€`;
-      un `.gantt` senza `currency` aperto e risalvato **non** guadagna il
-      campo; `npm test` verde.
-      Fatto: tre righe in `emptyProject()` (`project.ts`), piu' il pin
-      `EMPTY_PROJECT_TEXT` di `serialization.test.ts` riscritto — era
-      l'identita' byte a byte col build pre-F1 `1bb6cbe`, ora e' quel testo
-      **piu'** `"currency":"€"`. Il default sta nel progetto vuoto e non
-      accanto a `validateCurrency` in `cost.ts`: un default in `cost.ts`
-      diventerebbe un fallback di caricamento, che e' esattamente il pattern di
-      `DEFAULT_CALENDAR` (precedente verificato dal critic) e scriverebbe il
-      campo in ogni file che si apre senza.
-      Verificato dal critic nell'app: progetto nuovo e dopo **New** →
-      `currency === '€'` e `isDirty()` falso; picker Cost parte **non**
-      spuntato (misurato prima di toccarlo, non dedotto), spuntandolo la
-      testata e' `Cost (€)`; persona a 100 €/g su un task da 2 giorni →
-      `Cost 200 €` in status bar; testo v2 senza `currency` caricato →
-      `currency` nullo, `toText()` senza la chiave, progetto pulito.
-      **Il byte del `€` misurato davvero**: Blob del Save intercettato e letto
-      come `arrayBuffer`, `E2 82 AC` — UTF-8 corretto, non una sostituzione.
-      Nessuna riga in `docs/view.md`: le sue due frasi sulla parola nuda
-      restano vere per i file che la currency non ce l'hanno, e il fatto ha una
-      casa sola, `docs/file-format.md`.
-
-- [x] F13 [self] — I numeri si leggano in colonna — `dbf747e`. Richiesta
-      dell'utente il 2026-09-16 sulla sola Cost; alla domanda di perimetro ha
-      scelto **tutte le numeriche**, quindi `align: 'right'` su `nominal_days`,
-      `elapsed_days`, `rate` e `cost` in `gridColumns.ts`, e `center` solo su
-      date e avatar. Esce dal perimetro di Goal F (Effort e Duration sono di
-      Goal E, chiuso) per scelta sua, coi numeri davanti.
-      **Misurato nell'app, ed e' il motivo per cui la mia accept scritta a
-      tavolino era sbagliata**: le celle seguono `align` (tutte e quattro
-      `right`), **le testate no** — ogni `.gantt_grid_head_cell` resta
-      `center`, e i typings dicono l'opposto (`GridColumn.align` e'
-      documentato come allineamento *del titolo*, e non esiste un secondo
-      campo). Quindi «testata coerente con la colonna» costa una regola CSS
-      nostra piu' un gutter da far combaciare (celle 6px, testate 0), per una
-      leggibilita' che lo screenshot non mostra: testate lasciate centrate,
-      decisione dell'80% dichiarata, non silenziosa. Trap in `docs/dhtmlx.md`.
-      Guidato oltre l'accept: editor inline di Effort (l'unica delle quattro
-      che ne ha uno) apre con `55`, `text-align: start` proprio — non eredita
-      la cella, quindi nessun editor e' toccato; cella `≥ 3,000` allineata col
-      prefisso a sinistra e le cifre in colonna; `—`/`No resource` su summary
-      con risorsa stantia (F9 riconfermato su una riga nuova); collapse ed
-      expand della griglia e il redraw non perdono l'allineamento; console
-      pulita.
-      **Difetto preesistente trovato di passaggio e non toccato**: la testata
-      `Rate (EUR)` **non entra** nei suoi 62px di `gridWidth` e viene tagliata
-      a `Rate (EUR` (misurato con `currency` `EUR`; con `$` dell'utente entra).
-      E' la stessa forma del finding di F8 sulla figura — la stringa piu' larga
-      di una colonna e' una testata, non una cella — ma sulla griglia. Allargare
-      le due colonne cambia il layout di ogni progetto esistente e i 706px:
-      **decisione dell'utente**, da aprire come task a se'.
-
-**Non cancellare `.claude/specs/T59-costs.md` allo sweep degli orfani finche'
-la goal review di F non e' girata**: gli accept dei sottotask stanno nella sua
-§8 e sono meta' del bar della review.
-
-**Seconda goal review, girata il 2026-09-18 sul delta: `fix-first`**
-(fable-5-1 confermato in header; read-only, niente commit, porta rilasciata).
-Nessun MISSING — le quattro azioni della prima review sono chiuse — e nessuno
-SMUGGLED. `src/scheduler/` intatto **su tutto il goal**, verificato con
-`git diff b70d327~1..b4e2b41 -- src/scheduler` vuoto, non sull'intenzione. Le
-quattro decisioni dell'utente reggono nel codice e nell'app. Coerenza delle
-superfici del denaro confermata: l'unita' sta nell'etichetta via
-`currencyLabel` ovunque ci sia una testata e nel suffisso dove testata non ce
-n'e' (status bar), `—` piu' ragione dove si rende un `title`, vuoto nel CSV,
-`null` in API e file, `≥` con `uncostedNote` sui due hover. **Le tre azioni
-sono tutte su commenti e documentazione: il codice spedisce com'e'.**
-
-- [x] F17 [impl] — La frase di `docs/view.md` su dove la testata taglia sia la
-      matrice che e' stata misurata — `9e78b44`. Corsia cambiata da `[self]`:
-      una campagna nel browser in casa dell'hub costa contesto che serve al
-      giro.
-      `docs/view.md:160-161` dice «fino a tre caratteri di currency nessuna
-      testata e' tagliata; da quattro si'». La review l'ha rimisurata nell'app
-      (Inter 600 11px, `letter-spacing` sottratto, controllo incrociato con
-      `scrollWidth`): `Rate (EURO)` 76.25 entra in 84 e `Cost (WWWW)` 94.11
-      entra in 98 — tagliano solo `Rate (WWWW)` 91.34 e le due etichette da
-      cinque caratteri (103.48 e 106.23). La frase e' scaduta perche' **F15 ha
-      allargato Cost senza rimisurarla**, e il censimento di F14 gia'
-      generalizzava oltre le celle guidate.
-      Accept: la frase e' una matrice o una regola che nomina la colonna e il
-      glifo (`tre entrano sempre; Rate taglia a quattro solo sui glifi piu'
-      larghi, Cost a cinque`), con le cifre misurate accanto; nessun numero
-      ereditato. Nessun codice toccato.
-      **La matrice vive in `docs/view.md`, non qui e non in un brief** (la
-      lezione di F14): otto etichette x due colonne, `€` compreso, ognuna con
-      la larghezza misurata e il verdetto, seguita dall'elenco di cio' che il
-      censimento *non* ha guidato. Misurata dalla corsia con due strumenti
-      indipendenti che concordano su ogni cella (`Range` meno un
-      `letter-spacing`, e `scrollWidth > clientWidth`), con Inter 600 11px
-      confermato caricato al momento della misura — e le celle in comune
-      coincidono con quelle della review, quindi tre strumenti su due agenti.
-      Il difetto reso evidente: `EURO`/`WWWW` e `EUROS`/`WWWWW` hanno la stessa
-      lunghezza e cadono su lati opposti del taglio. `Rate (EUROS)` sfora di
-      0.06px — misurato, non arrotondato.
-      Il commento di `columns.ts` e' rimasto: «past three characters the cut is
-      accepted» enuncia una decisione, non una misura. Nessuna larghezza
-      toccata. Critic non convocato: le cifre hanno gia' tre conferme
-      indipendenti e il rischio residuo era la prosa, che l'hub ha letto.
-
-- [x] F18 [self] — Due affermazioni troppo larghe, ristrette a cio' che e' vero
-      — `a37a7b6`
-      1. `docs/file-format.md:33-34` (bullet di `availability`, scritto da F12)
-      dice «a save never adds the key to a resource whose file had none»:
-      **falso** su `resources.ts:48`, dove `applied()` scrive
-      `availability ?? 1` a ogni `resourceUpdate` dell'agent API — il percorso
-      che F12 ha scopato fuori per decisione, ma che il doc dichiara come
-      assoluto. Dire che il dialogo non la aggiunge e che la patch dell'agent
-      API ancora si': l'aperto ha una casa sola.
-      2. `src/gantt/costCells.ts:82-84` dice «One wording for the whole
-      application»: `StatusBar.tsx:115` ne rende una seconda visibile
-      (`· 3 d not costed`) tre righe sotto la chiamata. Restringere alla nota
-      dell'hover.
-      Accept: le due frasi sono vere lette sul percorso che le usa; `npm test`
-      verde. Nessun codice toccato.
-      Fatto: il bullet di file-format.md nomina i due percorsi separatamente
-      (dialogo tramite `resourceDrafts.ts`, patch tramite `applied()`) e dice
-      solo cosa **fanno** — che il secondo sia da chiudere sta qui sul piano,
-      non nel doc. Il commento di `costCells.ts` parla ora delle **due
-      finestre di hover**, e dichiara che la status bar ne rende anche una
-      versione breve visibile, che vive in `StatusBar.tsx`.
-
+- [x] F15 [self] — La cella di costo di un summary parziale e' tagliata — `a737711`
+- [x] F10 [self] — `currencyLabel` e l'effort non costato in un posto solo — `4d27480`
+- [x] F11 [self] — README e `agentApi.help.md` dicano che il piano costa — `5d1d953`
+- [x] F12 [impl] — `toDraft`/`toResources` estratte in `resourceDrafts.ts` — `73bf870`
+- [x] F16 [self] — `€` come currency preimpostata di un progetto nuovo — `b4e2b41`
+- [x] F13 [self] — I numeri si leggano in colonna — `dbf747e`
+- [x] F17 [impl] — La matrice misurata di dove la testata taglia — `9e78b44`
+- [x] F18 [self] — Due affermazioni troppo larghe, ristrette al vero — `a37a7b6`
 - [x] F19 [self] — I due adiacenti della review — `442a005`
-      1. `agentApi.help.md:291`: `newProject()` non dice che un progetto nuovo
-      dichiara `€`, quindi il `toText()` di uno script lo porta senza
-      preavviso. Una riga.
-      2. `CHANGELOG.md` non ha un bullet per l'allineamento a destra di Effort
-      e Duration (F13), che **ogni progetto esistente vede**. Raccomandazione
-      dell'hub: aggiungerlo sotto `## Unreleased`; e' un cambiamento visibile,
-      non plumbing. Il `€` di F16 non ne chiede uno — e' il default di una
-      feature gia' annunciata.
-      Accept: `yagni.help()` e `/llms.txt` restano lo stesso file; il badge
-      resta sull'ultima release e nessun popup scatta (`## Unreleased` resta in
-      testa).
-      Fatto: la riga di `newProject()` dice anche che un file aperto con
-      `loadText` **non** guadagna il campo. Il bullet del changelog e' quello
-      dell'allineamento; il `€` e' una clausola in coda al bullet della
-      currency, non un bullet nuovo. Il badge non si muove per costruzione,
-      non per fortuna: `parseChangelog` raccoglie i bullet solo dopo una
-      testata con prefisso `v`, e `## Unreleased` non ne ha una.
+- [x] F20 [self] — Le due COHERENCE della terza review — `db8b50c`
+
+Cio' che il goal ha deciso e che non va riproposto: la **tabella costi a se'**
+con breakdown per persona e per periodo resta in giacenza (si compra dopo aver
+lavorato con le colonne); **nessuna tariffa di default di progetto** (nasconde
+chi gira su una stima); **nascosto = non costruito**, mai `hide: true`, che nei
+typings e' PRO e non e' stato sondato; la selezione delle colonne e' **view
+state** in `localStorage['yagni.columns.v1']` — niente undo, niente dirty,
+nessuna op agent; e `rate`/`cost` sono marcate `clientSafe: false`, quindi
+fuori da un export cliente per default. Il campo tariffa e' `type="text"` con
+`inputMode="decimal"` per scelta: la regola vive in `validateResources` e
+**sola**, e un input `number` ci metterebbe una seconda regola muta.
+
+Resta aperto, e ognuno e' una decisione dell'utente, non un difetto:
+- **`applied()` (`resources.ts:48`) scrive `availability ?? 1` a ogni
+  `updateResource` dell'agent API** — il gemello della regola che F12 ha
+  appuntato sul dialogo People, scopato fuori da F12 per decisione. Offerto
+  due volte, rimandato due volte; `docs/file-format.md` lo dichiara onestamente
+  nominando i due percorsi separati. **Da riproporre come task.**
+- Il periodo tariffa seminato a `0` su una persona senza tariffa di default
+  (`RatePeriodList.tsx`): l'**unico** posto dove la UI fabbrica uno zero.
+- Due conseguenze dichiarate del `type="text"`: `6e2` passa come 600 e `0x10`
+  come 16 senza segnalazione, e una tariffa con molti decimali si rivede
+  intera nel campo (`100.567`) e arrotondata in griglia (`100.57`).
+- La testata `Rate`/`Cost` **della figura** ellissa oltre tre e oltre cinque
+  caratteri di currency (`docs/view.md` porta i due numeri): `figureWidth` e'
+  un budget a se', lasciato intatto di proposito da F14, F15 e F17, e lo
+  ridecide il dialogo di export di Goal G. La testata **in griglia** invece
+  entra: la trovata di F13 a 62px l'ha chiusa F14 allargando a 84/98, e la
+  matrice di F17 la misura a 67.14 in 84.
+- Le celle che F3b ha dichiarato non guidate restano non guidate.
+
+**La release e' l'ultima cosa che resta su F**: quattro bullet sono sotto
+`## Unreleased` in `CHANGELOG.md`, e la rinomina a `## v1.3` la conferma
+l'utente, mai l'hub. Finche' non arriva, `## Unreleased` **resta la prima
+testata**: `parseChangelog` raccoglie i bullet solo dopo una testata col
+prefisso `v`, quindi il badge tiene `v1.2` e nessun popup scatta — per
+costruzione, non per fortuna.
 
 ## Goal C — valutazione mobile-friendly                              [aperto]
 Agevolare la visualizzazione da smartphone/tablet nascondendo le azioni
@@ -1662,37 +587,37 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   risalgono; toglierla del tutto non rende economico il task, F8 146k). Una
   correzione via SendMessage costa meno di un fresh spawn (~40k). **Il critic
   e' la voce piu' cara e la piu' redditizia**: 75-95k a tavolino, 102-242k nel
-  browser, 132-191k la goal review; su T58 ha ribaltato una premessa, su F8 il
-  pin da `git show`, su F9 e F14 un overclaim dell'hub.
+  browser, 128-191k la goal review; su T58 ha ribaltato una premessa, su F8 il
+  pin da `git show`, su F9 e F14 un overclaim dell'hub. **Una review a cui si
+  dice che un terzo `fix-first` non e' gratis rende COHERENCE invece di ACTIONS
+  e spedisce** (terza di F, 128k): due difetti veri, sotto il bar, dichiarati
+  tali.
 - **Un elenco enumerato da una sezione di spec e' completo o non e' un elenco.**
-  F2b ha taciuto il filtro `disabledIds` della §5.3 e l'hub ha poi giustificato
-  la scelta da se' senza rileggerla; F3b ha saltato la tabella *Writing —
-  people* da cui dipende la fixture; F8 ha ristretto «the widest string of
-  each» alle stringhe della fixture, e la piu' larga legale era una testata.
-  Vale per chi consegna, per chi implementa e per l'hub che briefa: si rilegge
-  la sezione.
+  F2b ha taciuto un filtro, F3b una tabella da cui dipendeva la fixture, F8 ha
+  ristretto «the widest string of each» alla fixture e la piu' larga legale era
+  una testata. Vale per chi consegna, per chi implementa, per l'hub che briefa.
 - **Le misure piccole le fa l'hub**: probe vitest usa-e-getta (T56), Explore
   non residenti (T57), il censimento di F14 nel browser — un task a testa dove
   una corsia paga 40k di solo ingresso. **Prima di briefare, misurare la
   premessa**: se cade, il brief non serve.
 - **Una citazione copiata non e' verificata**: ne' un `file:line` (T43), ne' un
-  nome di tipo (T48), **ne' un predicato** (F6b). Si ri-localizza dopo l'ultima
-  modifica, e si cita per simbolo.
+  tipo (T48), ne' un predicato (F6b), **ne' il nome di un'op** — F12, F18 e il
+  brief della terza review si sono passati `resourceUpdate` per tre mani, e
+  l'op e' `updateResource` (F20). Si ri-localizza, e si cita per simbolo.
 - Il critic trova cio' che l'accept non chiedeva: e' la regola, non l'eccezione
   — si briefa chiedendogli **la domanda che fa paura**, e su uno spostamento
   **l'hash, non la lettura**.
 - **Cio' che una corsia dichiara impossibile o preesistente va confrontato con
   l'evidenza**: T43 dava il drag reale per non guidabile, T41 e F4b l'hanno
   fatto. Su T48 fatto bene: misurato su HEAD **e** sul tree.
-- **Una ragione registrata male in un doc e' peggio di nessun doc**: undici
-  volte in questo goal (F7, F5c, F5b, F6a, F6b, F9, F14, F15, e le tre azioni
-  della seconda review), quasi sempre dall'hub. Si verifica sul percorso che la
-  usa, non sulla riga che la enuncia, **e riscriverla non la ripara** (F9). Chi
-  enumera superfici dica quale rende il campo (F10); **un numero ereditato non
-  e' misurato** (F15: ~5.5px da F14, 12.47 i veri) e **una misura non si
-  eredita nemmeno da se stessi**: F15 ha allargato Cost senza rimisurare la
-  frase di view.md che dichiara dove la testata taglia.
-- **Dire al critic che un percorso e' fuori scopo gli toglie anche il doc che
-  lo dichiara.** Su F12 l'hub ha scopato fuori `applied()` e detto al critic di
-  non riportarlo: ha verificato l'altra meta' del bullet nuovo di
-  file-format.md, non la sua assolutezza — falsa proprio su `applied()`.
+- **Una ragione registrata male in un doc e' peggio di nessun doc**: tredici
+  volte in Goal F (F7, F5c, F5b, F6a, F6b, F9, F14, F15, le tre azioni della
+  seconda review e le due della terza), quasi sempre dall'hub. Si verifica sul
+  percorso che la usa, non sulla riga che la enuncia, **e riscriverla non la
+  ripara** (F9). Chi enumera superfici dica quale rende il campo (F10); **un
+  numero ereditato non e' misurato** (F15: ~5.5px da F14, 12.47 i veri) e
+  **una misura non si eredita nemmeno da se stessi** (F15 ha allargato Cost
+  senza rimisurare la frase di view.md). **Una soglia misurata su una colonna
+  si generalizza alla vicina**: F8 aveva i due numeri di `figureWidth` e ha
+  scritto solo quello di `rate`, e la frase e' sopravvissuta a F14, F15, F17 e
+  a due review (F20).

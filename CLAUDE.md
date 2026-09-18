@@ -177,6 +177,13 @@ one wrong. The pattern, not the anecdotes:
   away made it the live model too. The reading was correct and the conclusion
   was wrong; it took the hub, a lane and a critic three rounds to notice,
   because each of them re-read the same line. Ask who else holds the reference.
+- **Scoping a code path out of a review scopes out the doc that describes it.**
+  A brief that tells the reviewer not to report `applied()` buys the other half
+  of the doc bullet verified and not its absoluteness — which was false
+  precisely on `applied()`. Scope the code, never the claim. The same slip in
+  reverse: a threshold measured on one column and written down for both. `Rate`
+  and `Cost` have separate width budgets, the sentence carried `Rate`'s number,
+  and it survived three tasks and two reviews.
 - **A probe must not measure its own prompts.** Grepping a string across a
   corpus that contains the briefs quoting that string counts itself. Filter to
   the field that records real invocations before drawing a number.
