@@ -290,7 +290,16 @@ arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 
-- [ ] T64 [utente + hub] — Rinominare il repo in `arrogantt` e ripubblicare Pages
+- [>] T64 [utente + hub] — Rinominare il repo in `arrogantt` e ripubblicare Pages
+      **Non ha un brief e non ne vuole uno**: non e' un task di corsia.
+      Premesse rimisurate dall'hub il 2026-09-18 e tutte confermate: `origin`
+      e' `https://github.com/okon3/yagni.git`, `vite.config.ts:39` ha
+      `base: './'`, `deploy.yml` passa `enablement: true` e gira sul push a
+      `master`. **E `gh` non e' su PATH ne' in Bash ne' in PowerShell**, quindi
+      la rinomina e' manualmente dell'utente per vincolo d'ambiente, non per
+      convenzione: Settings → General → Repository name → `arrogantt`.
+      La meta' dell'hub, dopo: aggiornare `origin`, spingere, e verificare il
+      workflow verde **e** il nuovo URL aperto davvero.
       Va **prima** di T65, cosi' i link che T65 scrive nel README nascono
       vivi. Non lo esegue una corsia: sta fuori dal repo e cambia un URL
       pubblico.
@@ -383,7 +392,9 @@ stessa forma di `RowMenu`, che ha lo stesso comportamento da sempre e che
 nessuno ha segnalato: sotto la regola dell'80% non vale un meccanismo nuovo.
 Se qualcuno lo segnala, si aggiusta **una volta per entrambi**, non due.
 
-- [ ] T63 [impl] — Il popover delle colonne non prende il fuoco
+- [>] T63 [impl] — Il popover delle colonne non prende il fuoco
+      Brief: `.claude/briefs/T63.md`. Preso in parallelo a T64, che e' bloccato
+      sull'utente e disgiunto da questo (nessun file in comune).
       Trovato fuori dal bar dal critic di F7 e **misurato**: aprendo il
       picker il fuoco resta sul bottone della toolbar, e dal bottone alla
       prima checkbox ci sono **14 fermate di Tab** (bottone help, quattro
