@@ -1,61 +1,17 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { countWorkingDaysInRange, type AvailabilityOverride } from '../scheduler';
+import { countWorkingDaysInRange } from '../scheduler';
 import { AvailabilityList } from './AvailabilityList';
-import type { Person, RateOverride } from './cost';
+import type { Person } from './cost';
 import { validateCurrency } from './cost';
 import { Dialog } from './Dialog';
-import { nextResourceId, releasedBy, validateResources } from './resources';
+import { blankDraft, toDraft, toResources, type DraftResource } from './resourceDrafts';
+import { releasedBy, validateResources } from './resources';
 import { RatePeriodList } from './RatePeriodList';
 
 export interface ResourceUsage {
   /** Number of tasks assigned to each resource id. */
   taskCounts: Map<string, number>;
-}
-
-interface DraftResource {
-  id: string;
-  name: string;
-  /** Percentage, 100 = full time. Kept as text so a half-typed value survives. */
-  availability: string;
-  /** Money per working day, as typed. Blank = absent; the rules live in
-      `validateResources`, so an unparseable entry must reach it. */
-  dailyRate: string;
-  periods: AvailabilityOverride[];
-  ratePeriods: RateOverride[];
-}
-
-function toDraft(resources: Person[]): DraftResource[] {
-  return resources.map((resource) => ({
-    id: resource.id,
-    name: resource.name,
-    availability: String(Math.round((resource.availability ?? 1) * 100)),
-    dailyRate: resource.dailyRate === undefined ? '' : String(resource.dailyRate),
-    periods: resource.availabilityOverrides ?? [],
-    ratePeriods: resource.rateOverrides ?? [],
-  }));
-}
-
-/**
- * The drafts as the model would hold them.
- *
- * The percentage is the form's own unit; everything downstream — the rules, the
- * engine, the file — works in fractions of a working day.
- *
- * The default rate and its periods are written only when they carry
- * something (an empty rate is absent text, an empty period list is omitted
- * entirely), so an intact dialog leaves an absent rate absent and a person
- * with no rate periods keeps no `rateOverrides` key.
- */
-function toResources(drafts: DraftResource[]): Person[] {
-  return drafts.map((draft) => ({
-    id: draft.id,
-    name: draft.name.trim(),
-    availability: Number(draft.availability) / 100,
-    ...(draft.periods.length > 0 ? { availabilityOverrides: draft.periods } : {}),
-    ...(draft.dailyRate.trim() !== '' ? { dailyRate: Number(draft.dailyRate) } : {}),
-    ...(draft.ratePeriods.length > 0 ? { rateOverrides: draft.ratePeriods } : {}),
-  }));
 }
 
 /** Mounted only while open, so the drafts initialise from props without an effect. */
@@ -127,17 +83,7 @@ export function ResourceDialog({
   };
 
   const add = () => {
-    setDrafts((current) => [
-      ...current,
-      {
-        id: nextResourceId(toResources(current)),
-        name: '',
-        availability: '100',
-        dailyRate: '',
-        periods: [],
-        ratePeriods: [],
-      },
-    ]);
+    setDrafts((current) => [...current, blankDraft(current)]);
   };
 
   const save = () => {

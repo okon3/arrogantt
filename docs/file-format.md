@@ -29,6 +29,9 @@
   only where it is set: the flag is inherited by the subtree, so a child under a
   disabled group carries nothing of its own.
 - Version 1 still loads: `daysOff` → availability overrides at zero.
+- `resources[].availability?: number`: a person's share of a full working day,
+  `0..1`. Optional, default `1` (full time). Written only when present: a
+  save never adds the key to a resource whose file had none.
 - `resources[].dailyRate?: number` and `resources[].rateOverrides?:
   [{ from, to, dailyRate, label? }]`: a person's default daily rate and the
   periods that replace it (last declared wins on overlap, the mirror of
