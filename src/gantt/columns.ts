@@ -77,16 +77,33 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
   // The first two labels that read `project`: a rate or a cost is meaningless
   // without the currency it is in, and the label is the only place that unit
   // may show (§5.4 — cells stay bare numbers).
-  // And these two are the only columns sized against their *header* rather
-  // than their cells: the header is the one string of theirs with a legal
-  // maximum (`validateCurrency` caps a currency at 8 characters), while a rate
-  // and a cost have none — `dailyRate` is only finite and non-negative — so no
-  // width can promise a cell will fit. A head cell has no padding and clips
-  // without an ellipsis, so an overflowing label abuts its neighbour's and the
-  // two read as one word. 84 holds the widest three-character currency in both
-  // fonts the header can render in (`Rate (WWW)`: 79.22px in dhtmlx's Inter,
-  // 76.61px in its fallback — `docs/dhtmlx.md`); past three the cut is
-  // accepted, since `Rate (WWWWWWWW)` wants 140px of a 706px grid.
+  //
+  // Both widths are measured, and **against different strings** — a figure has
+  // no legal maximum (`dailyRate` is only finite and non-negative, so no width
+  // can promise every cell fits) while a header has one (`validateCurrency`
+  // caps a currency at 8 characters), so which string governs is a judgement
+  // about what is plausible, not a rule.
+  //
+  // `rate` is sized against its **header**: 84 holds the widest
+  // three-character currency in both fonts the header can render in
+  // (`Rate (WWW)`: 79.22px in dhtmlx's Inter, 76.61px in its fallback —
+  // `docs/dhtmlx.md`), and past three characters the cut is accepted, since
+  // `Rate (WWWWWWWW)` wants 140px of a 706px grid. A head cell has no padding
+  // and clips without an ellipsis, so an overflowing label abuts its
+  // neighbour's and the two read as one word.
+  //
+  // `cost` is sized against a **cell**, because its widest plausible string is
+  // one: a partially costed summary prefixes `≥ `, which costs 12.47px on top
+  // of the same figure bare (8.91 of glyph plus a 3.56 space) — measured, not
+  // subtracted from a neighbouring row, which is how the 5.5px this comment
+  // first carried came about (a prefixed 8-digit total against a bare
+  // 9-digit one). Measured in the cell's own font (system-ui 13px, not the
+  // header's): `≥ 122,250,000` is 81.19px and `≥ 12,250,000` 74.17px, against
+  // a content box of `gridWidth - 12` (the cell's 6px padding a side) that is
+  // clipped by the inner `.gantt_tree_content`, not by the cell. 98 leaves the
+  // nine-digit case 4.81px of margin — the same order F14 kept on the header
+  // rather than the 0.81px a 94 would leave, which is not a margin. Ten digits
+  // overflow again and are accepted: that is a plan worth a billion.
   {
     name: 'rate',
     label: (project) => currencyLabel('Rate', project.currency ?? null),
@@ -98,7 +115,7 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
   {
     name: 'cost',
     label: (project) => currencyLabel('Cost', project.currency ?? null),
-    gridWidth: 84,
+    gridWidth: 98,
     figureWidth: 84,
     defaultShown: false,
     clientSafe: false,

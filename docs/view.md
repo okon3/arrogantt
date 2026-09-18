@@ -152,12 +152,14 @@ that isn't there.
   header carries the currency (`Rate (EUR)` / `Cost (EUR)`), the bare word when
   `project.currency` is absent — the unit lives in the header, never in a cell
   (`format.ts`'s `formatMoney`/`formatDays` are unitless by the same rule the
-  status bar total follows). They are also **the only two columns sized against
-  their header instead of their cells**, 84px each — a currency has a legal
-  maximum and a figure has none, and `columns.ts` carries that reason with the
-  measurements that fixed the number. Up to a three-character currency no
-  header is cut; past three it is, and the cut is accepted rather than paid for
-  in grid width. The figure's own header (`figureWidth`) is a separate budget
+  status bar total follows). They are also **the only two columns whose width is
+  measured against a named string**, and not against the same kind of string:
+  `rate` against its header, which has a legal maximum, and `cost` against a
+  cell, whose widest plausible form is a partially costed summary's `≥` in
+  front of a nine-digit total. `columns.ts` carries both reasons and the
+  measurements. Up to a three-character currency no header is cut; past three
+  it is, and the cut is accepted rather than paid for in grid width — as is a
+  ten-digit cost. The figure's own header (`figureWidth`) is a separate budget
   that still cuts past three characters; Goal G's export dialog redecides it.
   Cost cell: empty when the row's own effort
   (`rolled_effort_days`) is zero (a milestone, or an all-zero summary); `—` in
