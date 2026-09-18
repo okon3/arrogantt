@@ -180,8 +180,11 @@ that isn't there.
   width, as is a ten-digit cost. **Not driven**: any currency string outside
   these eight; the fallback font, had Inter failed to load (it was loaded at
   measure time, so the fallback's own metrics are untested here); the
-  figure's own header. That one (`figureWidth`) is a separate budget that
-  still cuts past three characters; Goal G's export dialog redecides it.
+  figure's own header. That one (`figureWidth`) is a separate budget under a
+  different rule: `truncate` (`planFigure.ts`) divides the width by a fixed
+  6.4px per character, glyph-blind, so there the count *is* the criterion —
+  `rate` fits 10 characters, so `Rate (EUR)` holds and four cut; `cost` fits
+  12, so `Cost (EUROS)` holds and six cut. Goal G's export dialog redecides it.
   Cost cell: empty when the row's own effort
   (`rolled_effort_days`) is zero (a milestone, or an all-zero summary); `—` in
   the `gantt-derived` register, titled *No resource* or *No rate for `<name>`

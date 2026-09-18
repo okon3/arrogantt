@@ -32,7 +32,7 @@
 - `resources[].availability?: number`: a person's share of a full working day,
   `0..1`. Optional, default `1` (full time). Written only when present. The
   People dialog never adds it to a resource whose file had none
-  (`resourceDrafts.ts`); the agent API's `resourceUpdate` does, through
+  (`resourceDrafts.ts`); the agent API's `updateResource` does, through
   `applied()` in `resources.ts`.
 - `resources[].dailyRate?: number` and `resources[].rateOverrides?:
   [{ from, to, dailyRate, label? }]`: a person's default daily rate and the
