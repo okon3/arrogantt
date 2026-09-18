@@ -1096,6 +1096,27 @@ decisione sua, non un'azione della review.
       pinnano senza jsdom. Nessun harness React da introdurre — e' proprio il
       punto.
 
+- [ ] F16 [self] — `€` come currency preimpostata di un progetto nuovo
+      Richiesta dell'utente il 2026-09-18, a goal aperto: oggi un progetto
+      nasce senza `currency`, quindi la testata dice `Cost` nudo e il totale in
+      status bar non porta unita'.
+      **Il vincolo che decide il task**: il default vale alla *creazione*, mai
+      al caricamento. Un file senza `currency` deve restare senza, o un
+      round-trip apri-e-risalva scriverebbe un campo che nessuno ha digitato —
+      e' la stessa regola «absent stays absent» che F12 sta appuntando sulle
+      risorse, e il gate del formato la attraversa in entrata e in uscita.
+      Quindi si tocca il progetto vuoto, non il parser.
+      Da guardare prima di briefare: dove nasce il progetto vuoto
+      (`project.ts`, `App.tsx`), il campo Currency del dialogo People (che
+      mostrera' `€` invece che vuoto, e da li' si cancella), e cosa scrive
+      `serializeProject` per un progetto nuovo mai toccato — se il campo entra
+      nel testo, entra anche nel confronto che calcola `dirty`.
+      `validateCurrency` accetta `€` (1 carattere sugli 8 massimi, non vuoto,
+      non paddato), quindi nessuna regola si allarga.
+      Accept: progetto nuovo → testata `Cost (€)` e totale in status bar in `€`;
+      un `.gantt` senza `currency` aperto e risalvato **non** guadagna il
+      campo; `npm test` verde.
+
 - [x] F13 [self] — I numeri si leggano in colonna — `dbf747e`. Richiesta
       dell'utente il 2026-09-16 sulla sola Cost; alla domanda di perimetro ha
       scelto **tutte le numeriche**, quindi `align: 'right'` su `nominal_days`,
