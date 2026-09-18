@@ -1022,15 +1022,33 @@ decisione sua, non un'azione della review.
       `EUR`): status bar e cella di costo rendono lo stesso
       `title="5 d of effort not costed"`, letto dal DOM vivo — l'unico percorso
       visibile che questo refactoring tocca e che nessun unit test copre.
-- [ ] F11 [self] — README e `agentApi.help.md` dicano che il piano costa
-      Unico MISSING della review: il README non nomina tariffe, colonne costo,
-      `currency` ne' il picker, e `CLAUDE.md` dice che il README cambia quando
-      cambia il set di feature — e' cambiato. `agentApi.help.md` da' ancora
-      `getResources()` → `Resource[]`, che ora porta le tariffe; quel file
-      **e'** `yagni.help()` e `/llms.txt`, quindi una modifica sola e mai una
-      seconda copia.
-      Accept: `npm test` (`changelog.test.ts` incluso), e la riga *Reading*
-      dell'help combacia con cio' che `getResources()` ritorna davvero.
+- [x] F11 [self] — README e `agentApi.help.md` dicano che il piano costa —
+      `5d1d953`. Unico MISSING della review. Due paragrafi nuovi nelle Features
+      (cosa costa il piano, e il picker delle colonne), la riga *Reading* che
+      ora descrive la forma che `getResources()` rende davvero, e la voce
+      Rate/Cost del changelog estesa al totale in status bar e alle due colonne
+      CSV — **estensione dichiarata, non contrabbandata**: erano feature
+      visibili di questo goal che nessun bullet nominava, e il changelog e'
+      l'altra superficie che l'utente legge.
+      **La frase sbagliata l'ho intercettata prima del critic, ed era la solita
+      forma**: la prima stesura diceva che una riga non prezzata «resta vuota»,
+      mentre `costCellText` rende `—` con la ragione, e *vuota* e' la riga a
+      effort zero. Due esiti diversi collassati in uno; riscritta prima di
+      consegnare, e il critic ha poi letto l'`innerHTML` di entrambe le celle
+      per confermare che restano distinte.
+      Campagna del critic (sonnet, 162k, pass al primo giro), **ogni clausola
+      falsificata nell'app, non letta dal sorgente**: due periodi tariffa
+      annidati → vince il dichiarato per ultimo (300, non 200 ne' una media);
+      task a cavallo → `dailyRates: [100, 200]`; summary → `cost 1500`,
+      `uncostedDays 3`, cella `≥ 1,500`; status bar `Cost ≥ 1,500 EUR · 3 d not
+      costed`; foglia senza tariffa → `—` + `No rate for Bob on these days`
+      contro milestone → cella davvero vuota; **persistenza del picker provata
+      su un progetto diverso** (toolbar *New*, non un reload); default a griglia
+      705px con Rate/Cost spente. `getResources()` chiamata viva: persona con
+      tariffa → `{id, name, availability, availabilityOverrides, dailyRate,
+      rateOverrides}`, persona nuda → `{id, name, availability}` — niente
+      promesso che non ci sia. CSV scaricato davvero (Blob intercettato):
+      `...;Disabled;Cost;Uncosted (d)`, e il badge resta `v1.2` senza popup.
 - [ ] F12 [impl] — Estrarre `toDraft`/`toResources` e appuntare
       «absent stays absent»
       Azione dichiarata **opzionale** dalla review. Le due funzioni sono pure e
@@ -1158,6 +1176,21 @@ Task che non servono una milestone: difetti puntuali e salute del codice,
 arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
+
+- [ ] T66 [utente] — Gli screenshot del README rappresentano un'altra app
+      `docs/assets/hero.png` e' del 2026-09-04 e **la sua UI e' in italiano**,
+      mentre l'app e' inglese end-to-end (`gantt.i18n.setLocale('en')` cablato,
+      `GanttChart.tsx:699`, e nessun dizionario italiano in `src/`): e' lo
+      scarto piu' netto, e non l'ha introdotto Goal F. Gli altri tre, misurati
+      dal critic di F11 contro lo stato di default di oggi: Effort e Duration
+      centrati nell'immagine e allineati a destra nell'app (F13), i due bottoni
+      nuovi in toolbar (comprimi griglia e scelta colonne, F7) assenti, e il
+      badge di versione assente. `resource-load.png` non e' stato confrontato.
+      **Decisione dell'utente, e il momento naturale e' T65**, che riscrive il
+      README col nome nuovo: rifare le due immagini li' costa una fixture sola.
+      `CLAUDE.md` chiede la ripresa «quando la UI deriva abbastanza da
+      travisarle»; quattro scarti su uno screenshot solo sono la misura, la
+      soglia e' sua.
 
 - [ ] T64 [utente + hub] — Rinominare il repo in `arrogantt` e ripubblicare Pages
       Va **prima** di T65, cosi' i link che T65 scrive nel README nascono
