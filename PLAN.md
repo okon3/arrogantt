@@ -1537,11 +1537,10 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   l'evidenza**: T43 dava il drag reale per non guidabile, T41 e F4b l'hanno
   fatto. Su T48 fatto bene: misurato su HEAD **e** sul tree.
 - **Una ragione registrata male in un doc e' peggio di nessun doc**: otto volte
-  in questo goal (F7, F5c, F5b, F6a, F6b, F9, F14, F15), quasi sempre per mano
-  dell'hub, e quattro l'ha chiuse il critic. Si verifica sul percorso che la
-  usa, non sulla riga che la enuncia, **e riscriverla non la ripara** (F9). Chi
-  enumera superfici dica quale rende il campo, e sappia che un elenco e' un
-  censimento che scade (F10 l'ha riscritto come regola); **chi dice «la
-  stringa piu' larga» dica contro cosa e' limitata**. **E un numero ereditato
-  non e' misurato**: F15 ha ricopiato «il prefisso costa ~5.5px» da F14, che
-  l'aveva ottenuto sottraendo due stringhe di lunghezza diversa — 12.47 i veri.
+  in questo goal (F7, F5c, F5b, F6a, F6b, F9, F14, F15), quasi sempre dall'hub,
+  quattro chiuse dal critic. Si verifica sul percorso che la usa, non sulla riga
+  che la enuncia, **e riscriverla non la ripara** (F9). Chi enumera superfici
+  dica quale rende il campo, e sappia che un elenco e' un censimento che scade
+  (F10); **chi dice «la stringa piu' larga» dica contro cosa e' limitata. E un
+  numero ereditato non e' misurato**: F15 ha ricopiato «il prefisso costa
+  ~5.5px» da F14, sottrazione fra stringhe di lunghezza diversa — 12.47 i veri.
