@@ -197,6 +197,15 @@ one wrong. The pattern, not the anecdotes:
   notify again and resume. With `strictPort` the dev port is a mutex: two
   lanes restarting the server destroy each other's fixtures, silently. Check
   that no other lane is live before touching the origin or the port.
+- **A goal's opening decisions are premises, not facts — and calling one
+  binding does not measure it.** Goal G opened with four decisions agreed
+  with the user and marked *not to be reopened*; the first recon killed three
+  of them. The arrows a collapsed branch would orphan are never drawn, the
+  absences to hide were never in the figure, the button to add was already
+  built. Each was plausible, none was wrong about the product — they were
+  wrong about the code, which nobody had read yet. Analyse before declaring
+  anything binding: a decision taken on an unmeasured premise costs the
+  rewrite of half a goal, and the user agreed to it in good faith.
 - **Write a census as a matrix, never as prose.** A finite measurement
   described in sentences generalises past the cells that were driven, on every
   rewrite — three rounds on the same paragraph produced 8, 8 and 3 findings of

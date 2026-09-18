@@ -188,18 +188,21 @@ gerarchia, **nessun filtro di collapse**.
       **non** cambiano al variare di `collapsedIds`; che `slice` e
       `planFigurePages` paginano le righe filtrate, non quelle originali.
 
-- [ ] G2 [impl] — L'export consuma il registro delle colonne
-      Scope: chiude un difetto vivo, indipendente dal resto del goal. Oggi
-      `handleExportPng` (`App.tsx:406-409`) e la callback di stampa
-      (`App.tsx:771-774`) non passano `columns`, quindi la figura cade
-      sull'outline legacy «Name + Person» (`planFigure.ts:390-397`) col nome
-      **per esteso**, mentre la griglia mostra le **iniziali**
-      (`gridColumns.ts:94-111`). I due chiamanti passano la selezione corrente
-      della griglia.
-      Accept: PNG e print riflettono il picker; verificato nell'app servita
-      (doctrine `docs/verification.md`), non solo nei test. `docs/file-format.md`
-      aggiornato nella sezione PNG/print. Decidere e scrivere se l'outline
-      legacy resta raggiungibile o diventa morto.
+- [x] G2 [impl] — L'export consuma il registro delle colonne — `e55678d`.
+      I due chiamanti passano la selezione della griglia; per la stampa da un
+      ref `printColumns`, perche' `installPrintFigure` sta in un effetto con
+      deps `[]` e una lettura diretta stamperebbe per sempre la selezione del
+      primo render. Verificato nel browser dalla corsia e **rimisurato dal
+      critic sotto StrictMode**: cambiata la selezione dopo il mount, la
+      stampa mostra quella nuova. Critic `pass`, zero finding.
+      **L'hub ha inlinato `[...columns]`** togliendo il modulo
+      `figureColumns.ts` che la corsia aveva estratto (autorizzato dal brief,
+      ma sproporzionato: un file e 12 righe di commento per uno spread). La
+      ragione decisiva non era la sproporzione ma il tipo — il ritorno
+      `PlanColumnName[]` **gia'** garantisce il mai-`undefined`, e la guardia
+      difensiva temuta si scriverebbe *intorno* alla chiamata, quindi
+      estrarla non la previene e il suo test non la vedrebbe. Il fatto resta
+      in una casa sola: `planFigure.ts:296-298`.
 
 - [ ] G3 [deep] — Il dialogo di configurazione dell'export
       Scope: la fetta a giudizio. Guscio `Dialog.tsx` (il modello e'
@@ -799,15 +802,16 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   brief della terza review si sono passati `resourceUpdate` per tre mani, e
   l'op e' `updateResource` (F20). Si ri-localizza, e si cita per simbolo.
 - Il critic trova cio' che l'accept non chiedeva: e' la regola, non l'eccezione
-  — si briefa chiedendogli **la domanda che fa paura**, e su uno spostamento
+  — si briefa chiedendogli **la domanda che fa paura**, e **vietandogli di dare
+  entrambe le mani**: su G2 ha scelto, e ha ribaltato l'esitazione dell'hub con
+  un argomento di *tipo* (la firma garantisce gia' il mai-`undefined`), non di
+  gusto. E su uno spostamento
   **l'hash, non la lettura**.
 - **Una ragione registrata male in un doc e' peggio di nessun doc**: tredici
   volte in Goal F, quasi sempre dall'hub. La regola e' graduata in CLAUDE.md
   (righe 173 e 184); qui resta solo la scala del fenomeno.
-- **Le decisioni di apertura di un goal sono premesse, non fatti.** Tre delle
-  quattro di Goal G sono decadute alla prima misura (T60): le frecce che non
-  esistono, le assenze mai disegnate, il bottone gia' costruito. L'analisi va
-  fatta prima di dichiarare qualcosa vincolante, non dopo.
 - **Dimensionamento, T60**: due Explore (56k + 72k), zero corsie, zero critic —
   un task di sola analisi paga bene la delega se l'hub tiene solo le
   conclusioni e rimisura da se' quelle portanti.
+- **Dimensionamento, G2**: impl 88k, critic 86k, zero correzioni di corsia —
+  l'unica l'ha fatta l'hub in due minuti, che e' piu' economico di un giro.
