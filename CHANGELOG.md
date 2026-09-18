@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.3 — 2026-09-18
 
 - Grid columns are now optional: a toolbar button picks which of Resource,
   Effort, Start, End and Duration show, remembered across a reload.

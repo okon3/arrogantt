@@ -6,12 +6,12 @@
 T51): chart 2228 → 1205. Nessuna release — refactoring, e il changelog non
 prende plumbing.
 
-**Goal F e' chiuso e potato** (terza review `ship`): tariffe per persona che
-variano nel tempo, colonne Rate e Cost, registro delle colonne col picker,
-`currency` e totale in status bar. **Resta la sua release**, e la conferma la
-da' l'utente. Da riproporre appena F e' archiviato: `applied()` che scrive
-`availability` a ogni patch dell'agent API, l'ultimo gemello della regola di
-F12.
+**Goal F e' chiuso, potato e rilasciato `v1.3`** (terza review `ship`):
+tariffe per persona che variano nel tempo, colonne Rate e Cost, registro delle
+colonne col picker, `currency` e totale in status bar. Niente resta da fare su
+di lui. **Da riproporre appena c'e' spazio**: `applied()` che scrive
+`availability` a ogni patch dell'agent API, l'ultimo gemello della regola che
+F12 ha appuntato.
 
 Aperti: **Goal G** (export cliente), il cui primo passo e' ancora analisi (T60)
 e che **eredita** da F il meccanismo delle colonne, gia' costruito; **T16**,
@@ -199,12 +199,11 @@ Resta aperto, e ognuno e' una decisione dell'utente, non un difetto:
   matrice di F17 la misura a 67.14 in 84.
 - Le celle che F3b ha dichiarato non guidate restano non guidate.
 
-**La release e' l'ultima cosa che resta su F**: quattro bullet sono sotto
-`## Unreleased` in `CHANGELOG.md`, e la rinomina a `## v1.3` la conferma
-l'utente, mai l'hub. Finche' non arriva, `## Unreleased` **resta la prima
-testata**: `parseChangelog` raccoglie i bullet solo dopo una testata col
-prefisso `v`, quindi il badge tiene `v1.2` e nessun popup scatta — per
-costruzione, non per fortuna.
+**Rilasciato `v1.3` il 2026-09-18**, confermato dall'utente: la rinomina
+dell'heading e nient'altro. Misurato passando le due regex di `parseChangelog`
+sul file vero invece di dedurlo: la testata in cima e' `v1.3 — 2026-09-18` coi
+suoi quattro bullet, quindi il badge si muove e il changelog si riapre una
+volta per tutti.
 
 ## Goal C — valutazione mobile-friendly                              [aperto]
 Agevolare la visualizzazione da smartphone/tablet nascondendo le azioni
