@@ -171,7 +171,14 @@ gerarchia, **nessun filtro di collapse**.
       chiuse e i task G1-G4. Le frecce e le assenze sono decadute per misura,
       non per scelta.
 
-- [ ] G1 [impl] — La figura rispetta i rami chiusi
+- [x] G1 [impl] — La figura rispetta i rami chiusi — `d22dcce`.
+      `visibleTasks` filtra fra `buildPlan` e `rows` in un passo solo (l'ordine
+      pre-order di `buildPlan` e' stato verificato dal critic su `plan.ts`, non
+      ereditato), e `planFigurePages` conta le righe filtrate. Nessun chiamante
+      lo passa ancora. Critic `pass`, zero finding: ha controllato che i test
+      dell'asse **fallirebbero** se l'invariante si rompesse (la barra di S1
+      parte alle 08:00, quindi un `pxPerDay` diverso la sposterebbe), non solo
+      che passano.
       Scope: `FigureOptions.collapsedIds?: ReadonlySet<string>`
       (`planFigure.ts:36-46`); le righe sotto un ramo chiuso non sono
       disegnate, **ricorsivamente** (un nipote sparisce anche se il suo padre
@@ -218,6 +225,12 @@ gerarchia, **nessun filtro di collapse**.
       vincolo ereditato da F dice che **sono due clienti dello stesso registro
       che scelgono diverso nello stesso momento**, quindi separata — ma la
       persistenza e' una scelta nuova.
+      **Lasciato da G1 (critic, fuori scope allora):** `collapsedBranches()`
+      (`GanttChart.tsx:69-75`) marca chiuso **ogni** task con `$open === false`,
+      foglie mai toccate incluse. Innocuo finche' l'insieme torna dentro
+      `planFigure` (una foglia non ha figli da nascondere); da guardare se il
+      dialogo ne legge la cardinalita' o il contenuto — «2 rami chiusi» sarebbe
+      un numero falso.
       Accept: il dialogo governa PNG e print; nessuna seconda lista di colonne
       esiste nel codice; verificato nell'app servita; `docs/view.md` porta la
       ragione del preset.
@@ -813,5 +826,9 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 - **Dimensionamento, T60**: due Explore (56k + 72k), zero corsie, zero critic —
   un task di sola analisi paga bene la delega se l'hub tiene solo le
   conclusioni e rimisura da se' quelle portanti.
-- **Dimensionamento, G2**: impl 88k, critic 86k, zero correzioni di corsia —
-  l'unica l'ha fatta l'hub in due minuti, che e' piu' economico di un giro.
+- **Dimensionamento, G2 e G1**: G2 impl 88k / critic 86k, G1 impl 82k /
+  critic 94k, zero correzioni di corsia in entrambi (l'unica di G2 l'ha fatta
+  l'hub in due minuti, piu' economico di un giro). **Un brief che porta gia'
+  la fixture da usare e i sei casi dell'accept si paga**: la corsia non ne ha
+  inventata una. E **al critic si danno le domande in ordine di paura**: le
+  quattro di G1 hanno prodotto quattro verifiche, non un giro di lode.
