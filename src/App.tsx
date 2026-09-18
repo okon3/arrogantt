@@ -305,7 +305,7 @@ export default function App() {
    * One snapshot per change, taken wherever the chart says the model moved.
    *
    * `onChange` is the single funnel: a dialog save, a bar dragged, an inline
-   * edit, a link drawn and every write on `window.yagni` all reach it through
+   * edit, a link drawn and every write on `window.arrogantt` all reach it through
    * `applySolution`. Recording here rather than at each call site is what makes
    * the coverage a property of the code instead of a list to keep up to date.
    */
@@ -777,7 +777,7 @@ export default function App() {
   );
 
   useEffect(() => {
-    window.yagni = createAgentApi({
+    window.arrogantt = createAgentApi({
       handle: () => chart.current,
       filename: () => agentState.current.filename,
       dirty: () => agentState.current.dirty,
@@ -786,7 +786,7 @@ export default function App() {
       newProject: () => agentState.current.reset(),
     });
     console.info(
-      'YAGNI: window.yagni drives the plan from a script. yagni.help() for the full surface.',
+      'ARROGANTT: window.arrogantt drives the plan from a script. arrogantt.help() for the full surface.',
     );
   }, []);
 
@@ -855,8 +855,8 @@ export default function App() {
           {/* One SVG for the header and the favicon, so the mark cannot drift. */}
           <img className="app__mark" src={markUrl} alt="" width={20} height={20} />
           <span className="app__brand">
-            YAGNI
-            <span className="app__expansion">Yet Another Gantt, Now Improved</span>
+            ARROGANTT
+            <span className="app__expansion">Automatic Resource Resolution &amp; Optimization</span>
           </span>
           {CHANGELOG_ENTRIES.length > 0 && (
             <button

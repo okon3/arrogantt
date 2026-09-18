@@ -99,11 +99,11 @@ library.** Fastest biters:
 
 ## Agent API
 
-`window.yagni` (`src/gantt/agentApi.ts`) is an **adapter, not a feature**: every
+`window.arrogantt` (`src/gantt/agentApi.ts`) is an **adapter, not a feature**: every
 op delegates to the same `GanttHandle` the buttons use — a rule must never exist
 in both. Three deliberate departures: nothing confirmed, errors throw, patches
 partial. Expose an op only when a script can't compose it from what exists.
-`agentApi.help.md` **is** `yagni.help()` and `/llms.txt` (one file, `?raw` import
+`agentApi.help.md` **is** `arrogantt.help()` and `/llms.txt` (one file, `?raw` import
 + Vite plugin) — never a second copy; update it in the same commit that moves the
 surface.
 
@@ -240,7 +240,7 @@ about how much of a rule to honour.
 | `docs/file-format.md` | `.gantt` v2, strict parsing, CSV/PNG/print. |
 | `docs/dhtmlx.md` | Library traps — add every new one. |
 | `docs/verification.md` | Embedded-browser quirks, verifying UI from an agent. |
-| `src/gantt/agentApi.help.md` | Agent surface. **Is** `yagni.help()` and `/llms.txt`. |
+| `src/gantt/agentApi.help.md` | Agent surface. **Is** `arrogantt.help()` and `/llms.txt`. |
 | `CHANGELOG.md` | Releases a user cares about. Newest first; the header badge shows the top entry. |
 
 **A commit that changes behaviour described in `docs/` updates the affected file

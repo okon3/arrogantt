@@ -62,7 +62,7 @@ describe('the autosaved draft', () => {
       JSON.stringify({ ...draft, filename: 42 }),
       JSON.stringify({ ...draft, savedAt: 'ieri' }),
     ]) {
-      storage.entries.set('yagni.draft.v1', stored);
+      storage.entries.set('arrogantt.draft.v1', stored);
       expect(readDraft(storage)).toBeNull();
     }
   });

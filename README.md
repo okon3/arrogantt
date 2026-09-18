@@ -1,17 +1,17 @@
 <div align="center">
 
-# YAGNI
+# ARROGANTT
 
-**Yet Another Gantt, Now Improved**
+**Automatic Resource Resolution & Optimization**
 
 *The Gantt chart that knows people can't do two things at once.*
 
-[![Deploy](https://github.com/okon3/yagni/actions/workflows/deploy.yml/badge.svg)](https://github.com/okon3/yagni/actions/workflows/deploy.yml)
+[![Deploy](https://github.com/okon3/arrogantt/actions/workflows/deploy.yml/badge.svg)](https://github.com/okon3/arrogantt/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**[Try it live](https://okon3.github.io/yagni/)** — no install, no account, no backend.
+**[Try it live](https://okon3.github.io/arrogantt/)** — no install, no account, no backend.
 
-![YAGNI — effort-based Gantt planning](docs/assets/hero.png)
+![ARROGANTT — effort-based Gantt planning](docs/assets/hero.png)
 
 </div>
 
@@ -21,11 +21,11 @@ In every other Gantt tool, *you* type the end dates and the tool draws rectangle
 Assign two tasks to the same person, and it happily shows them both full speed,
 in parallel, finishing on time. Reality disagrees.
 
-YAGNI flips the model: **effort and start date are inputs; the end date is always
-computed.** A discrete-event scheduler simulates your team. When two tasks overlap
-on the same person, each runs at 50% and stretches accordingly — three tasks, 33%
-each. Move one task and everything sharing its people re-flows. You cannot draw a
-plan that your team can't actually execute.
+ARROGANTT flips the model: **effort and start date are inputs; the end date is
+always computed.** A discrete-event scheduler simulates your team. When two tasks
+overlap on the same person, each runs at 50% and stretches accordingly — three
+tasks, 33% each. Move one task and everything sharing its people re-flows. You
+cannot draw a plan that your team can't actually execute.
 
 ## Features
 
@@ -37,7 +37,7 @@ whether to *reassign the task* or *change the person*.
 
 **A critical chain that is measured, not assumed** — classic CPM is wrong here,
 not approximate: a task can set the end date with no dependency on it at all,
-just by sharing a person with something that does. So YAGNI perturbs the plan and
+just by sharing a person with something that does. So ARROGANTT perturbs the plan and
 re-solves it, task by task, and reports real float and real criticality — with
 the person that causes the contention named on the tooltip.
 
@@ -79,16 +79,16 @@ browser downloads and reads back. Strict parsing: a malformed file is refused, i
 never corrupts the open plan. Export the solved schedule as CSV, a self-scaling
 PNG, or print/PDF with proper pagination.
 
-**Built for AI agents** — the whole app is scriptable through `window.yagni`, in
+**Built for AI agents** — the whole app is scriptable through `window.arrogantt`, in
 production too. Every button has an API equivalent, errors throw, and the docs
-are served at [`/llms.txt`](https://okon3.github.io/yagni/llms.txt):
+are served at [`/llms.txt`](https://okon3.github.io/arrogantt/llms.txt):
 
 ```js
-yagni.help();                                    // the whole surface, as Markdown
-const id = yagni.addTask({ name: 'Analisi', nominalDays: 5, resourceId: 'r1' });
-yagni.getPlan().tasks;                           // the solved schedule, tree order
-yagni.getCriticalChain();                        // measured float per task
-yagni.getResourceLoad();                         // the same plan, per person
+arrogantt.help();                                    // the whole surface, as Markdown
+const id = arrogantt.addTask({ name: 'Analisi', nominalDays: 5, resourceId: 'r1' });
+arrogantt.getPlan().tasks;                           // the solved schedule, tree order
+arrogantt.getCriticalChain();                        // measured float per task
+arrogantt.getResourceLoad();                         // the same plan, per person
 ```
 
 The `.gantt` file itself is agent-friendly: alongside the inputs it embeds a
@@ -97,11 +97,11 @@ reading the file without the app still sees the schedule.
 
 ## Quick start
 
-Use the [live version](https://okon3.github.io/yagni/), or run it yourself:
+Use the [live version](https://okon3.github.io/arrogantt/), or run it yourself:
 
 ```bash
-git clone https://github.com/okon3/yagni.git
-cd yagni
+git clone https://github.com/okon3/arrogantt.git
+cd arrogantt
 npm install
 npm run dev        # http://localhost:5173
 ```
@@ -116,7 +116,7 @@ app in one artifact you can email, drop on a share, or open from disk.
 | [docs/scheduling.md](docs/scheduling.md) | The scheduling model: the simulation, measured float, availability, milestones |
 | [docs/view.md](docs/view.md) | The UI and the reasoning behind it |
 | [docs/file-format.md](docs/file-format.md) | The `.gantt` format, CSV/PNG/print export |
-| [src/gantt/agentApi.help.md](src/gantt/agentApi.help.md) | The agent API reference (`yagni.help()` / `/llms.txt`) |
+| [src/gantt/agentApi.help.md](src/gantt/agentApi.help.md) | The agent API reference (`arrogantt.help()` / `/llms.txt`) |
 
 The engine (`src/scheduler`) is framework-free, fully unit-tested TypeScript with
 no UI imports; the view wraps [dhtmlx-gantt](https://dhtmlx.com/docs/products/dhtmlxGantt/)

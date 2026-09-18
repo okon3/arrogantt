@@ -1,4 +1,4 @@
-# YAGNI — Yet Another Gantt, Now Improved
+# ARROGANTT — Automatic Resource Resolution & Optimization
 
 A single-user Gantt planner with an effort-splitting scheduler. Everything lives
 in the page: no backend, no accounts, no storage. A project is a `.gantt` file
@@ -13,8 +13,8 @@ weekends and company shutdowns never appear in a duration.
 
 ## Driving it from a script
 
-`window.yagni` is the whole surface, in both dev and production builds.
-`yagni.help()` returns this text. Every call is synchronous: `getPlan()` right
+`window.arrogantt` is the whole surface, in both dev and production builds.
+`arrogantt.help()` returns this text. Every call is synchronous: `getPlan()` right
 after a write already reflects the new schedule.
 
 Three differences from clicking the buttons:
@@ -32,10 +32,10 @@ snapshot is checked against the parser as it is taken, like Save: `toText()`
 throws rather than hand you a text `loadText()` would reject.
 
 ```js
-const before = yagni.toText();
-const id = yagni.addTask({ name: 'Analysis', nominalDays: 5, resourceId: 'r1' });
-yagni.getPlan().tasks.find((t) => t.id === id);
-yagni.loadText(before); // changed my mind
+const before = arrogantt.toText();
+const id = arrogantt.addTask({ name: 'Analysis', nominalDays: 5, resourceId: 'r1' });
+arrogantt.getPlan().tasks.find((t) => t.id === id);
+arrogantt.loadText(before); // changed my mind
 ```
 
 ## Reading

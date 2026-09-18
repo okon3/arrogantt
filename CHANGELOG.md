@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Renamed to ARROGANTT: the repo, the agent API (`window.arrogantt`) and the
+  `localStorage` keys all carry the new name. No migration — an unsaved
+  draft, the seen-changelog marker and the column picker's choice all reset
+  once.
+
 ## v1.3 — 2026-09-18
 
 - Grid columns are now optional: a toolbar button picks which of Resource,
@@ -42,5 +49,5 @@
 
 ## v1.0 — 2026-09-04
 
-- First public release: effort-based scheduling engine, critical chain, undo, .gantt save, CSV/PNG/print export, agent API (window.yagni).
+- First public release: effort-based scheduling engine, critical chain, undo, .gantt save, CSV/PNG/print export, agent API (window.arrogantt).
 - A row or a group can be disabled: it stays marked on the plan as a placeholder but does not weigh on dates, load or the critical chain.

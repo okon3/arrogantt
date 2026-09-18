@@ -56,23 +56,23 @@ describe('reading the stored column selection', () => {
 
   it('falls back to the defaults when the stored value is not a JSON array of strings', () => {
     const storage = fakeStorage();
-    storage.entries.set('yagni.columns.v1', '{');
+    storage.entries.set('arrogantt.columns.v1', '{');
     expect(readColumnSelection(storage)).toEqual(defaultColumnSelection());
-    storage.entries.set('yagni.columns.v1', '"x"');
+    storage.entries.set('arrogantt.columns.v1', '"x"');
     expect(readColumnSelection(storage)).toEqual(defaultColumnSelection());
-    storage.entries.set('yagni.columns.v1', JSON.stringify({ resource_id: true }));
+    storage.entries.set('arrogantt.columns.v1', JSON.stringify({ resource_id: true }));
     expect(readColumnSelection(storage)).toEqual(defaultColumnSelection());
   });
 
   it('drops a name that is not in the registry, silently', () => {
     const storage = fakeStorage();
-    storage.entries.set('yagni.columns.v1', JSON.stringify(['bogus', 'elapsed_days']));
+    storage.entries.set('arrogantt.columns.v1', JSON.stringify(['bogus', 'elapsed_days']));
     expect(readColumnSelection(storage)).toEqual(new Set(['elapsed_days']));
   });
 
   it('hides a registry name absent from the stored array', () => {
     const storage = fakeStorage();
-    storage.entries.set('yagni.columns.v1', JSON.stringify(['resource_id']));
+    storage.entries.set('arrogantt.columns.v1', JSON.stringify(['resource_id']));
     expect(readColumnSelection(storage)).toEqual(new Set(['resource_id']));
   });
 
@@ -87,7 +87,7 @@ describe('writing the column selection', () => {
   it('writes only the shown names, in registry order', () => {
     const storage = fakeStorage();
     writeColumnSelection(storage, new Set(['elapsed_days', 'resource_id']));
-    expect(JSON.parse(storage.entries.get('yagni.columns.v1') ?? '[]')).toEqual([
+    expect(JSON.parse(storage.entries.get('arrogantt.columns.v1') ?? '[]')).toEqual([
       'resource_id',
       'elapsed_days',
     ]);

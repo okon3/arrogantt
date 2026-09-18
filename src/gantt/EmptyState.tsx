@@ -24,7 +24,7 @@ export function EmptyState({
   return (
     <div className="empty">
       <div className="empty__card">
-        <h2>YAGNI</h2>
+        <h2>ARROGANTT</h2>
         <p className="empty__lead">
           A Gantt tool built on <strong>effort</strong>: dates are computed by the engine.
         </p>

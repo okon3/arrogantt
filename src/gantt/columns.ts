@@ -124,7 +124,7 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
 
 const REGISTRY_NAMES: ReadonlySet<string> = new Set(PLAN_COLUMNS.map((entry) => entry.name));
 
-const COLUMNS_KEY = 'yagni.columns.v1';
+const COLUMNS_KEY = 'arrogantt.columns.v1';
 
 export function defaultColumnSelection(): ReadonlySet<PlanColumnName> {
   return new Set(PLAN_COLUMNS.filter((entry) => entry.defaultShown).map((entry) => entry.name));

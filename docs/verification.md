@@ -41,7 +41,7 @@ shared one; never verify in it.
   person.
 - **Reloading with fixtures on screen raises the browser's own "Reload site?"**
   — `App.tsx` arms a `beforeunload` guard while the project is dirty, and
-  building fixtures with `window.yagni` makes it dirty, so every reload asks.
+  building fixtures with `window.arrogantt` makes it dirty, so every reload asks.
   It is a native dialog, not ours: nothing in the page can dismiss it. Under
   chrome-devtools MCP call `handle_dialog`; otherwise build the fixtures once
   and drive the page in place instead of reloading. A reload left unanswered
@@ -92,9 +92,9 @@ Clearing needs either the injected setter or a real select-all + Backspace;
 verify the model (`getResources()`, `getPlan()`), never the DOM value, that
 an overwrite landed.
 
-## Which `yagni` reads lag a write
+## Which `arrogantt` reads lag a write
 
-A write through `window.yagni` and a read of its effect in the **same
+A write through `window.arrogantt` and a read of its effect in the **same
 evaluation** do not see the same instant, and which side of the line a getter
 falls on decides whether a measurement means anything:
 
@@ -104,7 +104,7 @@ falls on decides whether a measurement means anything:
 | `isDirty()`, `getFilename()` | the last **rendered** state: `agentState.current` is refreshed in an effect (`App.tsx:737-741`), so it still answers the pre-write value |
 | Undo / Redo button `title` | React state, same lag |
 
-So `yagni.setCurrency('EUR'); yagni.isDirty()` in one eval answers `false` on a
+So `arrogantt.setCurrency('EUR'); arrogantt.isDirty()` in one eval answers `false` on a
 clean project, and the change is real. Read the lagging ones in a **separate**
 evaluation — a turn later, or after two `requestAnimationFrame`s — and never
 conclude "the write did not land" from them. Measured on F3b, where the undo
@@ -242,7 +242,7 @@ reports — the gap is the first rule.
 
 - **An `eval` chained straight onto `open` races the app's first render.**
   `open` returns when the page is loaded, not when React has mounted and
-  `window.yagni` exists: a fixture-building eval fired immediately throws
+  `window.arrogantt` exists: a fixture-building eval fired immediately throws
   inside its own callback (`at Array.forEach`), and with `&&` the rest of the
   chain never runs. A read taken that early reports zero elements and looks
   like a missing feature. Wait for a selector the app itself renders, or run

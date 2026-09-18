@@ -70,7 +70,7 @@ export interface NewTaskInput extends TaskInput {
 
 declare global {
   interface Window {
-    yagni: AgentApi;
+    arrogantt: AgentApi;
   }
 }
 

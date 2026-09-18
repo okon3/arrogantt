@@ -9,7 +9,7 @@ const HELP = fileURLToPath(new URL('./src/gantt/agentApi.help.md', import.meta.u
 /**
  * Serves the agent API's own documentation at /llms.txt.
  *
- * Generated from the file `yagni.help()` returns rather than kept as a second
+ * Generated from the file `arrogantt.help()` returns rather than kept as a second
  * copy in public/: they say the same thing to two kinds of caller — one that
  * renders the page and one that only fetches it — and a copy drifts the first
  * time somebody forgets to mirror an edit.
@@ -17,7 +17,7 @@ const HELP = fileURLToPath(new URL('./src/gantt/agentApi.help.md', import.meta.u
 function llmsTxt(): Plugin {
   const read = () => readFileSync(HELP, 'utf8')
   return {
-    name: 'yagni-llms-txt',
+    name: 'arrogantt-llms-txt',
     configureServer(server) {
       server.middlewares.use('/llms.txt', (_request, response) => {
         response.setHeader('Content-Type', 'text/plain; charset=utf-8')

@@ -13,7 +13,7 @@
 /** How long the plan has to sit still before the draft is written. */
 export const DRAFT_DELAY = 1000;
 
-const DRAFT_KEY = 'yagni.draft.v1';
+const DRAFT_KEY = 'arrogantt.draft.v1';
 
 export interface Draft {
   filename: string;

@@ -182,7 +182,7 @@ describe('planFigure', () => {
  * T5, T6 } }`, `M1` a top-level sibling of `S1`. Marta's raise starts on the
  * third working day of T3, computed from a first solve, so T3 straddles it
  * (2 d at 600 + 4 d at 650 = 3800) — the same two-pass build the spec's
- * `yagni` script does through `getCalendar()`/`getPlan()`.
+ * `arrogantt` script does through `getCalendar()`/`getPlan()`.
  */
 const fixtureCCalendar = {
   workingDays: [1, 2, 3, 4, 5],

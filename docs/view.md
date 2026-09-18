@@ -214,7 +214,7 @@ that isn't there.
   Escape alone returns focus to the toolbar button (an outside click leaves
   focus where the click put it).
 - **Persisted, but as a preference, not plan data**: `localStorage` key
-  `yagni.columns.v1`, a JSON array of the *shown* names in registry order —
+  `arrogantt.columns.v1`, a JSON array of the *shown* names in registry order —
   written only by a picker change, read once at first render
   (`readColumnSelection`). Absent key, a value that is not a JSON array of
   strings, or a JSON parse failure all fall back to the defaults; a name the
@@ -222,7 +222,7 @@ that isn't there.
   from the array is hidden. Not the `.gantt` file: a client's copy must not
   carry the author's grid layout, and the file gate never sees this key.
 - **View state like the grid collapse, except this one survives a reload**: no
-  undo entry, no dirty flag, nothing reaches `toText()`, no `window.yagni` op
+  undo entry, no dirty flag, nothing reaches `toText()`, no `window.arrogantt` op
   (`agentApi.ts` is an adapter over the same handle ops the buttons use, and
   there is no op for this one either).
 - **One rebuild path, `rebuildColumns()` in `GanttChart`**, called from
@@ -590,7 +590,7 @@ that isn't there.
   5-step explainer stood between the user and their first task.
 - Header version badge: the top `CHANGELOG.md` entry, clickable to open the
   changelog dialog. The last version seen lives in `localStorage`
-  (`yagni.seenVersion`); on startup, if the top entry differs from it, the
+  (`arrogantt.seenVersion`); on startup, if the top entry differs from it, the
   dialog opens on its own, once, and closing it (however opened) records the
   current version. First-ever visit (nothing stored) records silently instead
   of greeting a new user with release notes. Waits for the unsaved-draft

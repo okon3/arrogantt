@@ -212,7 +212,7 @@ export function StatusBar({
       {/* An agent reads the page text and the accessibility tree before it reads
           anything else, so the scripting surface has to be named there. */}
       <span className="statusbar__agent">
-        For agents: <code>window.yagni.help()</code>
+        For agents: <code>window.arrogantt.help()</code>
       </span>
       <span className="statusbar__spacer" />
       <button type="button" onClick={onToday}>

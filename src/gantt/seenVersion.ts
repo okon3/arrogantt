@@ -5,7 +5,7 @@
 
 import type { DraftStorage } from './draft';
 
-const SEEN_VERSION_KEY = 'yagni.seenVersion';
+const SEEN_VERSION_KEY = 'arrogantt.seenVersion';
 
 export function readSeenVersion(storage: DraftStorage | undefined): string | null {
   try {
