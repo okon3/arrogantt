@@ -31,6 +31,19 @@ export function ColumnPicker({
   onClose(): void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  // The toolbar button that opened this popover, so Escape can hand focus
+  // back to it. Captured here rather than passed as a prop: whoever opens the
+  // picker already has focus on the right element, and reading it beats
+  // threading a new prop through `App.tsx` for one keystroke's benefit.
+  //
+  // Read during render, not in a `useEffect([])`: StrictMode mounts effects
+  // twice (mount, cleanup, mount again) and the first pass's own focus-moving
+  // effect below runs in between, so an effect-based read would capture the
+  // popover's own checkbox instead of the button — measured on this file.
+  // Nothing shifts focus between two render-phase calls, so this is safe to
+  // (and, under StrictMode, does) run twice.
+  const opener = useRef<Element | null>(null);
+  if (opener.current === null) opener.current = document.activeElement;
 
   useEffect(() => {
     const node = dialog.current;
@@ -46,13 +59,32 @@ export function ColumnPicker({
         : anchor.bottom + 4;
     node.style.left = `${Math.max(8, left)}px`;
     node.style.top = `${top}px`;
+    // `RowMenu.tsx`'s precedent: an explicit `.focus()` here, not
+    // `setAutofocus` — that attribute is only honoured by `showModal()`, and
+    // this dialog, like `RowMenu`'s, is deliberately never made modal.
+    node.querySelector<HTMLInputElement>('input[type="checkbox"]')?.focus();
   }, [anchor]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
+        // Only Escape returns focus: an outside click already moved it where
+        // the user aimed, and pulling it back to the button would be a new
+        // defect, not a fix of this one.
+        (opener.current as HTMLElement | null)?.focus?.();
         onClose();
+        return;
+      }
+      if (event.key === 'Tab') {
+        const boxes = [
+          ...(dialog.current?.querySelectorAll<HTMLInputElement>('input[type="checkbox"]') ?? []),
+        ];
+        const from = boxes.indexOf(document.activeElement as HTMLInputElement);
+        if (from === -1) return;
+        event.preventDefault();
+        const next = boxes[(from + (event.shiftKey ? -1 : 1) + boxes.length) % boxes.length];
+        next.focus();
       }
     };
     // Dismissing is the whole of that gesture, same reasoning as `RowMenu`: a

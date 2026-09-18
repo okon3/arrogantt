@@ -19,11 +19,11 @@ unico task di Goal C, che lo porterebbe alla sua review. **O4** in giacenza. Su
 T60 leggere prima il fatto accertato in testa a Goal G: l'export non fotografa
 il DOM.
 
-In manutenzione: **T63** (il picker non prende il fuoco) e il rename a
-**ARROGANTT**, in due pezzi e in quest'ordine — **T64** fuori dal repo
-(GitHub + Pages, lo fa l'utente, non una corsia) e **T65** dentro. Nessuno dei
-due aspetta piu' una risposta: nome, tagline e sorte delle chiavi di storage
-sono decisi dentro T65.
+In manutenzione resta **T65**: il rename ad ARROGANTT dentro il repo, ora il
+task piu' grosso sul tavolo. T64 (GitHub + Pages) e T63 (il fuoco del picker)
+sono chiusi. T65 non aspetta piu' nessuna risposta — nome, tagline, sorte delle
+chiavi di storage e screenshot sono decisi sulla sua riga — e **Pages non
+redirige**, quindi il README ha sei link morti finche' non gira.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
@@ -395,20 +395,33 @@ larghezza resta a left 475 / right 645, cioe' fuori dal viewport). E' la
 stessa forma di `RowMenu`, che ha lo stesso comportamento da sempre e che
 nessuno ha segnalato: sotto la regola dell'80% non vale un meccanismo nuovo.
 Se qualcuno lo segnala, si aggiusta **una volta per entrambi**, non due.
-
-- [>] T63 [impl] — Il popover delle colonne non prende il fuoco
-      Brief: `.claude/briefs/T63.md`. Preso in parallelo a T64, che e' bloccato
-      sull'utente e disgiunto da questo (nessun file in comune).
-      Trovato fuori dal bar dal critic di F7 e **misurato**: aprendo il
-      picker il fuoco resta sul bottone della toolbar, e dal bottone alla
-      prima checkbox ci sono **14 fermate di Tab** (bottone help, quattro
-      bottoni dello stato vuoto, la ricerca e tutta la status bar in mezzo).
-      `RowMenu` invece mette il fuoco sulla prima voce quando si apre: il
-      precedente esiste, il picker non lo segue.
-      Accept: aprendo il picker da tastiera il fuoco e' sulla prima checkbox
-      (misurato come `document.activeElement`), Escape lo chiude e **riporta
-      il fuoco sul bottone** che l'ha aperto, e Tab dentro il popover cicla
-      solo fra le sue checkbox. Nessuna modifica a `RowMenu`.
+- [x] T63 [impl] — Il popover delle colonne non prende il fuoco — `SHA`.
+      Difetto misurato dal critic di F7: dal bottone alla prima checkbox
+      c'erano **14 fermate di Tab**. Ora il fuoco va sulla prima checkbox
+      all'apertura (`.focus()` esplicito nell'effect di posizionamento, il
+      precedente di `RowMenu.tsx:73` — `setAutofocus` non serve, quell'attributo
+      lo onora `showModal()` e questo `<dialog open>` non ci passa mai), Escape
+      chiude e **restituisce il fuoco al bottone**, Tab/Shift+Tab ciclano solo
+      le checkbox avvolgendosi ai due estremi.
+      **La trappola vera era un'altra, e l'ha trovata la corsia misurando**:
+      catturare il bottone in un `useEffect([])` non funziona. StrictMode monta
+      gli effect due volte e l'effect che sposta il fuoco gira **in mezzo**,
+      quindi la ref finiva per tenere la checkbox e Escape lasciava il fuoco su
+      `<body>`. La lettura in fase di render e' l'unica corretta: niente sposta
+      il fuoco fra le due chiamate di render. La ragione sta nel commento del
+      file, **una volta sola** — non e' stata duplicata nei docs.
+      Guidato nel browser (hub: checks verdi sul tree; corsia e critic in due
+      sessioni browser separate, `activeElement` misurato cella per cella):
+      apertura da tastiera con Enter **e** con Space, apertura col mouse,
+      Escape, click fuori (fuoco su `BODY`, **non** sul bottone), Tab su tutte
+      e 7 le voci del registro coi due wrap, riapertura dopo Escape (opener
+      ricatturato, nuovo mount), toggle della terza **e** della settima
+      checkbox col fuoco che resta, la colonna che compare/scompare in griglia,
+      console pulita. **Accertato prima di misurare l'accept**: l'harness muove
+      il fuoco nativamente su Tab (New → Open a picker chiuso), quindi la
+      trappola e' provata su un Tab vero e non solo sul proprio handler.
+      **Non guidato**: il resize della finestra (fuori scopo) e la build di
+      produzione. `RowMenu`, `columns.ts` e il chiamante in `App.tsx` intatti.
 
 - [x] T57 [impl, chiuso dall'hub] — Il changelog leggeva un CRLF e buttava i
       bullet — `4a804ba`. La premessa del task era sbagliata e la misura l'ha

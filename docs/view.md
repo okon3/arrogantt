@@ -207,7 +207,12 @@ that isn't there.
   popover, one checkbox per registry entry in registry order, `text` never
   offered. Closes on Escape and on a capture-phase outside click
   (`ColumnPicker.tsx`, same shape as `RowMenu`), and that click opens no
-  inline editor under the pointer.
+  inline editor under the pointer. Focus moves to the first checkbox on open
+  (an explicit `.focus()` in the positioning effect, `RowMenu`'s precedent —
+  `setAutofocus` only fires through `showModal()`, which this dialog never
+  calls), Tab/Shift+Tab cycle the checkboxes only, wrapping at both ends, and
+  Escape alone returns focus to the toolbar button (an outside click leaves
+  focus where the click put it).
 - **Persisted, but as a preference, not plan data**: `localStorage` key
   `yagni.columns.v1`, a JSON array of the *shown* names in registry order —
   written only by a picker change, read once at first render
