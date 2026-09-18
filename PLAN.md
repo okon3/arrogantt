@@ -1208,8 +1208,10 @@ n'e' (status bar), `—` piu' ragione dove si rende un `title`, vuoto nel CSV,
 `null` in API e file, `≥` con `uncostedNote` sui due hover. **Le tre azioni
 sono tutte su commenti e documentazione: il codice spedisce com'e'.**
 
-- [ ] F17 [self] — La frase di `docs/view.md` su dove la testata taglia sia la
-      matrice che e' stata misurata
+- [x] F17 [impl] — La frase di `docs/view.md` su dove la testata taglia sia la
+      matrice che e' stata misurata — `9e78b44`. Corsia cambiata da `[self]`:
+      una campagna nel browser in casa dell'hub costa contesto che serve al
+      giro.
       `docs/view.md:160-161` dice «fino a tre caratteri di currency nessuna
       testata e' tagliata; da quattro si'». La review l'ha rimisurata nell'app
       (Inter 600 11px, `letter-spacing` sottratto, controllo incrociato con
@@ -1222,6 +1224,21 @@ sono tutte su commenti e documentazione: il codice spedisce com'e'.**
       glifo (`tre entrano sempre; Rate taglia a quattro solo sui glifi piu'
       larghi, Cost a cinque`), con le cifre misurate accanto; nessun numero
       ereditato. Nessun codice toccato.
+      **La matrice vive in `docs/view.md`, non qui e non in un brief** (la
+      lezione di F14): otto etichette x due colonne, `€` compreso, ognuna con
+      la larghezza misurata e il verdetto, seguita dall'elenco di cio' che il
+      censimento *non* ha guidato. Misurata dalla corsia con due strumenti
+      indipendenti che concordano su ogni cella (`Range` meno un
+      `letter-spacing`, e `scrollWidth > clientWidth`), con Inter 600 11px
+      confermato caricato al momento della misura — e le celle in comune
+      coincidono con quelle della review, quindi tre strumenti su due agenti.
+      Il difetto reso evidente: `EURO`/`WWWW` e `EUROS`/`WWWWW` hanno la stessa
+      lunghezza e cadono su lati opposti del taglio. `Rate (EUROS)` sfora di
+      0.06px — misurato, non arrotondato.
+      Il commento di `columns.ts` e' rimasto: «past three characters the cut is
+      accepted» enuncia una decisione, non una misura. Nessuna larghezza
+      toccata. Critic non convocato: le cifre hanno gia' tre conferme
+      indipendenti e il rischio residuo era la prosa, che l'hub ha letto.
 
 - [ ] F18 [self] — Due affermazioni troppo larghe, ristrette a cio' che e' vero
       1. `docs/file-format.md:33-34` (bullet di `availability`, scritto da F12)
