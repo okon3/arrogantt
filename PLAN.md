@@ -1121,7 +1121,8 @@ decisione sua, non un'azione della review.
       aggiunge la chiave. Non raggiungibile dal dialogo; chiuderlo e' un task
       a se', se l'utente lo vuole.
 
-- [ ] F16 [self] — `€` come currency preimpostata di un progetto nuovo
+- [x] F16 [self] — `€` come currency preimpostata di un progetto nuovo —
+      `b4e2b41`
       Richiesta dell'utente il 2026-09-18, a goal aperto: oggi un progetto
       nasce senza `currency`, quindi la testata dice `Cost` nudo e il totale in
       status bar non porta unita'.
@@ -1141,6 +1142,25 @@ decisione sua, non un'azione della review.
       Accept: progetto nuovo → testata `Cost (€)` e totale in status bar in `€`;
       un `.gantt` senza `currency` aperto e risalvato **non** guadagna il
       campo; `npm test` verde.
+      Fatto: tre righe in `emptyProject()` (`project.ts`), piu' il pin
+      `EMPTY_PROJECT_TEXT` di `serialization.test.ts` riscritto — era
+      l'identita' byte a byte col build pre-F1 `1bb6cbe`, ora e' quel testo
+      **piu'** `"currency":"€"`. Il default sta nel progetto vuoto e non
+      accanto a `validateCurrency` in `cost.ts`: un default in `cost.ts`
+      diventerebbe un fallback di caricamento, che e' esattamente il pattern di
+      `DEFAULT_CALENDAR` (precedente verificato dal critic) e scriverebbe il
+      campo in ogni file che si apre senza.
+      Verificato dal critic nell'app: progetto nuovo e dopo **New** →
+      `currency === '€'` e `isDirty()` falso; picker Cost parte **non**
+      spuntato (misurato prima di toccarlo, non dedotto), spuntandolo la
+      testata e' `Cost (€)`; persona a 100 €/g su un task da 2 giorni →
+      `Cost 200 €` in status bar; testo v2 senza `currency` caricato →
+      `currency` nullo, `toText()` senza la chiave, progetto pulito.
+      **Il byte del `€` misurato davvero**: Blob del Save intercettato e letto
+      come `arrayBuffer`, `E2 82 AC` — UTF-8 corretto, non una sostituzione.
+      Nessuna riga in `docs/view.md`: le sue due frasi sulla parola nuda
+      restano vere per i file che la currency non ce l'hanno, e il fatto ha una
+      casa sola, `docs/file-format.md`.
 
 - [x] F13 [self] — I numeri si leggano in colonna — `dbf747e`. Richiesta
       dell'utente il 2026-09-16 sulla sola Cost; alla domanda di perimetro ha
