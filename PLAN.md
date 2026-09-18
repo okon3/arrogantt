@@ -233,7 +233,17 @@ Deciso con l'utente il 2026-09-18, prima di briefare G3 (non riaprire):
   browser — e la misura costa, perche' un `preventDefault` che non prende apre
   la modale nativa, che blocca il pannello (`docs/verification.md:37-41`).
 
-- [ ] G3a [impl] — Le impostazioni di export come stato, senza UI
+- [x] G3a [impl] — Le impostazioni di export come stato, senza UI — `00b7b11`.
+      `exportSettings.ts`: tipo, chiave `arrogantt.export.v1`, read/write
+      difensive e `resolveExportSettings`, che tiene in un posto solo la
+      regola del default. Le impostazioni risolte sono **derivate a ogni
+      render**, non congelate al mount: finche' nulla e' memorizzato devono
+      seguire la selezione di griglia viva, o la continuita' si romperebbe al
+      primo cambio di colonne. Critic `pass`. Un rilievo suo, chiuso qui e non
+      da riaprire: il test di `columns` non-array passerebbe anche senza la
+      guardia `Array.isArray`, perche' `.every` su un non-array lancia e cade
+      nello stesso `catch` — quella guardia **non e' provabile dal
+      comportamento**, sta li' per leggibilita'.
       Scope: modulo nuovo `src/gantt/exportSettings.ts` con il tipo
       (`scope: 'all' | 'visible'`, `columns: ReadonlySet<PlanColumnName>`) e la
       coppia read/write su `DraftStorage`, modellata **riga per riga** su
