@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { PLAN_COLUMNS, type PlanColumnName } from './columns';
+import { ColumnChecklist } from './ColumnChecklist';
+import type { PlanColumnName } from './columns';
 import type { Project } from './project';
 
 /** Where the button that opened the popover sits, so it can anchor under it. */
@@ -9,8 +10,8 @@ export interface ColumnPickerAnchor {
 }
 
 /**
- * One checkbox per registry entry — the whole of the mechanism, since the
- * registry is the metadata and `onChange` is the only thing a tick does.
+ * The grid's own client of `ColumnChecklist`: this file owns the popover, not
+ * the list of columns.
  *
  * A non-modal `<dialog>`, modelled on `RowMenu`: it must not dim the plan
  * behind it, and closing on an outside click must not also open an inline
@@ -104,29 +105,9 @@ export function ColumnPicker({
     };
   }, [onClose]);
 
-  const toggle = (name: PlanColumnName) => {
-    const next = new Set(shown);
-    if (next.has(name)) next.delete(name);
-    else next.add(name);
-    onChange(next);
-  };
-
   return (
     <dialog ref={dialog} open className="columnpicker" aria-label="Choose columns">
-      <ul className="columnpicker__items">
-        {PLAN_COLUMNS.map((entry) => (
-          <li key={entry.name}>
-            <label>
-              <input
-                type="checkbox"
-                checked={shown.has(entry.name)}
-                onChange={() => toggle(entry.name)}
-              />
-              {entry.label(project)}
-            </label>
-          </li>
-        ))}
-      </ul>
+      <ColumnChecklist shown={shown} project={project} onChange={onChange} />
     </dialog>
   );
 }

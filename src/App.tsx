@@ -20,6 +20,7 @@ import { ChangelogDialog } from './gantt/ChangelogDialog';
 import { CHANGELOG_ENTRIES } from './gantt/changelogEntries';
 import { ConfirmDialog } from './gantt/ConfirmDialog';
 import { EmptyState } from './gantt/EmptyState';
+import { ExportDialog } from './gantt/ExportDialog';
 import { HelpDialog } from './gantt/HelpDialog';
 import { ResourceDialog } from './gantt/ResourceDialog';
 import { TaskDialog } from './gantt/TaskDialog';
@@ -47,6 +48,7 @@ import { readColumnSelection, writeColumnSelection, type PlanColumnName } from '
 import {
   readExportSettings,
   resolveExportSettings,
+  writeExportSettings,
   type ExportSettings,
 } from './gantt/exportSettings';
 import {
@@ -133,16 +135,31 @@ export default function App() {
   const [columns, setColumns] = useState<ReadonlySet<PlanColumnName>>(() =>
     readColumnSelection(draftStore),
   );
-  // Read once too: nothing writes this key before the export dialog (G3b)
-  // exists, so `stored` is null in practice and `exportSettings` below tracks
-  // the live grid selection — which is exactly today's PNG/print behaviour.
-  const [storedExportSettings] = useState<ExportSettings | null>(() =>
+  // Read once at first render, like the grid's own selection: a preference
+  // that outlives the project. Null until the export dialog is confirmed for
+  // the first time, and while it is null the resolved settings below follow
+  // the live grid selection — which is exactly the PNG/print behaviour that
+  // predates the dialog.
+  const [storedExportSettings, setStoredExportSettings] = useState<ExportSettings | null>(() =>
     readExportSettings(draftStore),
   );
   // Resolved on every render rather than cached, because a null `stored`
   // means "follow the grid" and the grid's own selection (`columns`) can
   // change after mount.
   const exportSettings = resolveExportSettings(storedExportSettings, columns);
+  // One state carrying the action, not a flag per button: two flags would
+  // make "open for both" representable. The project is snapshotted on open
+  // for the reason the column picker's is, below.
+  const [exportDialog, setExportDialog] = useState<{
+    action: 'png' | 'print';
+    project: Project;
+  } | null>(null);
+  // A confirmed print waits for the render that closes the dialog, because
+  // `window.print()` blocks until the sheet is dismissed: called from the
+  // confirm itself it would hold the dialog on screen for the whole of it,
+  // React never getting a turn to unmount it. The request carries the settings
+  // it was confirmed with rather than reading them back off state.
+  const [pendingPrint, setPendingPrint] = useState<ExportSettings | null>(null);
   // Snapshotted on open, like the other dialogs: the chart owns the live
   // project, and reading it during render would fight the imperative handle.
   const [columnPicker, setColumnPicker] = useState<{
@@ -413,29 +430,50 @@ export default function App() {
    * from the chart: only the rows in view are in the DOM, so a screenshot of it
    * would be a screenful.
    */
-  const handleExportPng = useCallback(async () => {
-    const solved = chart.current?.getSolved();
+  const exportPng = useCallback(
+    async (settings: ExportSettings) => {
+      const solved = chart.current?.getSolved();
+      const project = chart.current?.getProject();
+      if (!solved || !project) return;
+      try {
+        await downloadSvgAsPng(
+          exportFilename(filename, 'png'),
+          planFigure(project, solved, {
+            title: filename,
+            today: new Date(),
+            // Unconditional on purpose: an emptied selection is `[]`, and only an
+            // absent list means the legacy outline (`planFigure.ts`, `selected`).
+            columns: [...settings.columns],
+            // Only 'visible' passes the closed branches: 'all' must draw every
+            // row even under a chart that currently has some collapsed.
+            collapsedIds:
+              settings.scope === 'visible' ? chart.current?.collapsedBranches() : undefined,
+          }),
+        );
+      } catch (cause) {
+        setError(`Could not create the plan image: ${String(cause)}`);
+      }
+    },
+    [filename],
+  );
+
+  const openExportDialog = useCallback((action: 'png' | 'print') => {
     const project = chart.current?.getProject();
-    if (!solved || !project) return;
-    try {
-      await downloadSvgAsPng(
-        exportFilename(filename, 'png'),
-        planFigure(project, solved, {
-          title: filename,
-          today: new Date(),
-          // Unconditional on purpose: an emptied selection is `[]`, and only an
-          // absent list means the legacy outline (`planFigure.ts`, `selected`).
-          columns: [...exportSettings.columns],
-          // Only 'visible' passes the closed branches: 'all' must draw every
-          // row even under a chart that currently has some collapsed.
-          collapsedIds:
-            exportSettings.scope === 'visible' ? chart.current?.collapsedBranches() : undefined,
-        }),
-      );
-    } catch (cause) {
-      setError(`Could not create the plan image: ${String(cause)}`);
-    }
-  }, [exportSettings, filename]);
+    if (!project) return;
+    setExportDialog({ action, project });
+  }, []);
+
+  const confirmExport = useCallback(
+    (action: 'png' | 'print', settings: ExportSettings) => {
+      setStoredExportSettings(settings);
+      writeExportSettings(draftStore, settings);
+      setExportDialog(null);
+      // A PNG blocks nothing, so it needs none of the wait a print does.
+      if (action === 'png') void exportPng(settings);
+      else setPendingPrint(settings);
+    },
+    [exportPng],
+  );
 
   const handleAddTask = useCallback(() => {
     chart.current?.addTask();
@@ -789,6 +827,20 @@ export default function App() {
     printExportSettings.current = exportSettings;
   }, [adopt, dirty, exportSettings, filename, reset]);
 
+  // Latched on the request rather than cleared with a `setState` here: the
+  // request outlives the renders the print itself causes, and clearing it
+  // from inside the effect would be a cascading render for nothing.
+  const printed = useRef<ExportSettings | null>(null);
+  useEffect(() => {
+    if (pendingPrint === null || printed.current === pendingPrint) return;
+    printed.current = pendingPrint;
+    // `installPrintFigure` reads its settings through the ref above, and the
+    // effect that refreshes it is not this one: writing it here is what makes
+    // this print draw what was just confirmed rather than what it replaced.
+    printExportSettings.current = pendingPrint;
+    window.print();
+  }, [pendingPrint]);
+
   // Printing draws the same figure the PNG does, paged: the chart itself prints
   // as the screenful the viewport holds, whatever the plan's height. The pages
   // are built when the browser asks for them, never held in state — nothing here
@@ -916,8 +968,8 @@ export default function App() {
           onOpen={() => void handleOpen()}
           onSave={handleSave}
           onExportCsv={handleExportCsv}
-          onExportPng={() => void handleExportPng()}
-          onPrint={() => window.print()}
+          onExportPng={() => openExportDialog('png')}
+          onPrint={() => openExportDialog('print')}
           onUndo={() => travel(undone)}
           onRedo={() => travel(redone)}
           onAddTask={handleAddTask}
@@ -1029,6 +1081,16 @@ export default function App() {
           anchor={columnPicker.anchor}
           onChange={changeColumns}
           onClose={() => setColumnPicker(null)}
+        />
+      )}
+
+      {exportDialog && (
+        <ExportDialog
+          action={exportDialog.action}
+          settings={exportSettings}
+          project={exportDialog.project}
+          onCancel={() => setExportDialog(null)}
+          onConfirm={(settings) => confirmExport(exportDialog.action, settings)}
         />
       )}
 

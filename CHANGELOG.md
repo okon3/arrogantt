@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- PNG and Print now ask first: a dialog picks whether the picture holds the
+  whole plan or the tree as you see it — collapsed branches drawn as their
+  summary — and which columns come with it. A *For the client* button drops
+  Rate and Cost in one click. The choices are remembered for the next
+  export, Ctrl+P included; until you make one, the export looks exactly as
+  it did before.
+
 ## v1.4 — 2026-09-18
 
 - Renamed to ARROGANTT: the repo, the agent API (`window.arrogantt`) and the

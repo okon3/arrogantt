@@ -1203,13 +1203,18 @@
   color: var(--ink);
 }
 
-.columnpicker__items {
+/* The checkbox list itself, shared by the popover above and the export dialog
+   — one home for the rule, one for its look. The row padding is what the
+   hover pill needs to read as a row rather than as a stripe; inside a dialog
+   body it insets the list under its subhead, which is what a list of options
+   under a heading looks like. */
+.columnlist {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.columnpicker__items label {
+.columnlist label {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1219,8 +1224,46 @@
   cursor: pointer;
 }
 
-.columnpicker__items label:hover,
-.columnpicker__items label:has(:focus-visible) {
+.columnlist label:hover,
+.columnlist label:has(:focus-visible) {
+  background: var(--accent-soft);
+}
+
+/* The heading and its preset on one line: the preset changes the columns
+   under it and nothing else, so it belongs to that section, not to the
+   footer where it would read as a second way to confirm. */
+.export__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* Ties at (0,1,0) with `.dialog__btn` and wins by source order — the
+   sanctioned per-dialog override (docs/view.md § Dialogs). Smaller than a
+   footer button because it sits on a subhead's line, not on the action row. */
+.export__preset {
+  padding: var(--space-1) var(--space-2);
+  font-size: 12px;
+}
+
+.export__scope {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Same row grammar as a column checkbox, so the two lists read as one dialog. */
+.export__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.export__option:hover,
+.export__option:has(:focus-visible) {
   background: var(--accent-soft);
 }
 

@@ -130,6 +130,11 @@ export function defaultColumnSelection(): ReadonlySet<PlanColumnName> {
   return new Set(PLAN_COLUMNS.filter((entry) => entry.defaultShown).map((entry) => entry.name));
 }
 
+/** The columns fit for a client's eyes — `clientSafe` in the registry. */
+export function clientSafeColumns(): ReadonlySet<PlanColumnName> {
+  return new Set(PLAN_COLUMNS.filter((entry) => entry.clientSafe).map((entry) => entry.name));
+}
+
 /**
  * The shown set, from whatever the user last picked.
  *

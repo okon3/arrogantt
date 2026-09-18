@@ -204,8 +204,10 @@ that isn't there.
   `config.columns` cannot be tabbed into, edited or measured, which is what
   keeps the picker's per-column checks simple.
 - **The picker**: a toolbar icon (`Columns3`) opens a non-modal `<dialog>`
-  popover, one checkbox per registry entry in registry order, `text` never
-  offered. Closes on Escape and on a capture-phase outside click
+  popover around `ColumnChecklist` — one checkbox per registry entry in
+  registry order, a rule this file's *Export dialog* section shares and
+  neither owns — `text` never offered. Closes on Escape and on a
+  capture-phase outside click
   (`ColumnPicker.tsx`, same shape as `RowMenu`), and that click opens no
   inline editor under the pointer. Focus moves to the first checkbox on open
   (an explicit `.focus()` in the positioning effect, `RowMenu`'s precedent —
@@ -626,6 +628,12 @@ that isn't there.
   for that same literal attribute to decide whether to focus the dialog itself
   instead. TaskDialog's name field carries it the same way, through
   `setAutofocus` (`src/gantt/TaskDialog.tsx`).
+  **`ExportDialog` is the one deviation, and the premise is what fails, not
+  the rule**: an export is neither destructive nor irreversible — it writes a
+  file beside the plan and changes nothing in it — so its *confirm* button
+  carries the attribute and Enter exports, while Escape cancels like
+  everywhere else. Measured: focus on open reads the `Export` button, and a
+  synthetic Enter with no further click downloaded `project.png`.
 - CSS: `src/dialog.css`, imported in `App.tsx` before `App.css` — an
   equal-specificity per-dialog override in App.css then wins by source order,
   which is how later migrations drop `!important` without a specificity war.
@@ -730,6 +738,60 @@ that isn't there.
   above. `ConfirmDialog`'s `.confirm__body` is the case in hand — it trims the
   body's bottom padding to `--space-2` so the message-to-buttons gap is 24px
   (8 + the footer's 16) instead of the primitive's 40.
+
+## Export dialog
+
+One dialog (`src/gantt/ExportDialog.tsx`) on both the PNG and the Print
+button; `action` decides the title and the confirm label, nothing else. CSV
+still starts at the click — `planToCsv(plan, resources)` takes neither a
+scope nor a column list, so it has nothing to ask.
+
+- **Rows and columns, no third question.** Rows: *The whole plan*, or *As I
+  see it* — the grid's collapsed branches, passed as `collapsedIds`. Columns:
+  `ColumnChecklist` over the registry. The **dates always span the whole
+  plan** whatever the rows, because `options.slice` selects rows and never
+  dates, so every page of a figure shares one scale (`planFigure.ts`).
+- **The preset is a button, never a mode.** *For the client* sets the columns
+  to the registry's `clientSafe` entries — it drops Rate and Cost — and
+  **leaves the scope where it is**. The scope mirrors the tree the user has
+  already arranged on screen; a preset that closed it under them would make
+  what they see and what they get diverge, which is the one thing the
+  WYSIWYG scope exists to prevent.
+- **The default is continuity, and `resolveExportSettings`
+  (`exportSettings.ts`) is its only home.** Nothing stored: *The whole plan*,
+  and the grid's live column selection — what PNG and print did before this
+  dialog existed, so an update changes nothing under anyone's feet and the
+  client preset stays one click away. The component writes no fallback of
+  its own; it drafts at mount from the settings it is handed.
+- **One checkbox list, two clients.** `ColumnChecklist.tsx` holds the rule
+  "one checkbox per registry entry"; the grid's popover and this dialog each
+  render it inside their own shell. Generalising `ColumnPicker` instead would
+  have carried its popover behaviour — non-modal, dismissed by a
+  capture-phase outside click, focus handed back to the opener — into a modal
+  that must have none of it.
+- **A confirmed print waits one render; a confirmed PNG does not.**
+  `window.print()` blocks until the sheet is dismissed, so a call in the
+  confirm callback would hold the dialog on screen for the whole of it —
+  React gets no turn to unmount in between. The request goes into state, an
+  effect makes the call, and that effect writes the confirmed settings into
+  the ref `installPrintFigure` reads, because the effect that normally
+  refreshes that ref is not this one. A PNG blocks nothing and runs straight
+  from the callback. **Measured on the PNG path, which shares every write**:
+  branch collapsed, *As I see it* + *For the client* confirmed, then a
+  `beforeprint` — the figure drew `Design` and `Launch`, not
+  `Wireframes`/`Mockups`, under Resource · Effort · Start · End · Duration.
+  The grid at that moment was showing Rate and hiding Duration, so a ref left
+  behind would have read the other way round on both counts.
+- **Ctrl+P opens nothing** and prints with the settings as they stand, which
+  is what that key promises: `installPrintFigure` hangs off `beforeprint`, by
+  which time the browser's print is already arriving and no modal can
+  interpose.
+- **Its own `localStorage` key** (`arrogantt.export.v1`), written only by a
+  confirm, read once at first render. The grid and an export are two clients
+  of one registry picking differently at the same moment, so neither key may
+  stand in for the other — and once the export key exists it wins, measured
+  across a reload: grid `[…, rate]` on screen, dialog reopening on the
+  stored `clientSafe` set.
 
 ## The chart's model is the caller's object until a file replaces it
 

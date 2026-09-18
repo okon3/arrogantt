@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { DraftStorage } from './draft';
 import {
   PLAN_COLUMNS,
+  clientSafeColumns,
   defaultColumnSelection,
   readColumnSelection,
   writeColumnSelection,
@@ -35,6 +36,25 @@ describe('the default column selection', () => {
     const hidden = PLAN_COLUMNS.filter((entry) => !entry.defaultShown).map((entry) => entry.name);
     expect(hidden.length).toBeGreaterThan(0);
     for (const name of hidden) expect(defaultColumnSelection().has(name)).toBe(false);
+  });
+});
+
+describe('the client-safe column selection', () => {
+  it('is every registry entry whose clientSafe is true', () => {
+    const safe = PLAN_COLUMNS.filter((entry) => entry.clientSafe).map((entry) => entry.name);
+    expect([...clientSafeColumns()].sort()).toEqual([...safe].sort());
+  });
+
+  it('leaves out what a client must not read — the money columns', () => {
+    expect(clientSafeColumns().has('rate')).toBe(false);
+    expect(clientSafeColumns().has('cost')).toBe(false);
+  });
+
+  it('is a fresh set each call, so a caller holding one cannot rewrite the registry', () => {
+    const first = new Set(clientSafeColumns());
+    const second = clientSafeColumns() as Set<PlanColumnName>;
+    second.delete('resource_id');
+    expect(clientSafeColumns()).toEqual(first);
   });
 });
 
