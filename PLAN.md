@@ -19,11 +19,13 @@ unico task di Goal C, che lo porterebbe alla sua review. **O4** in giacenza. Su
 T60 leggere prima il fatto accertato in testa a Goal G: l'export non fotografa
 il DOM.
 
-In manutenzione resta **T65b**: rifare i due screenshot di `docs/assets/`, che
-ora mostrano un'app che non esiste piu' (nome vecchio, e `hero.png` ha la UI in
-italiano). Composizione e fixture le decide l'utente prima dello scatto: e' la
-vetrina, non una prova. T63, T64 e T65a sono chiusi — il README punta a link
-vivi e `grep -i yagni` trova solo `PLAN.md` e il favicon.
+**`## Maintenance — no goal` e' vuota**: T63, T64, T65a e T65b sono chiusi. Il
+README punta a link vivi, `grep -i yagni` trova solo `PLAN.md` e il favicon, e
+i due screenshot mostrano l'app come e' oggi. La manutenzione non riceve goal
+review per scelta, quindi alla chiusura di T65b non scatta niente — ma
+**`## Unreleased` del changelog e' il punto di ripresa**: il rename ci ha
+lasciato un bullet, e la release (`## v1.4 — <data>`) e' da proporre
+all'utente, che conferma sempre prima della rinomina.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
@@ -380,20 +382,50 @@ resize: sotto la regola dell'80% non vale un meccanismo, e se qualcuno segnala
 il layout sotto gli 800px si guarda **tutta** la status bar in una volta, non
 un bottone.
 
-- [ ] T65b [self + utente] — Rifare i due screenshot di `docs/assets/`
-      **Va dopo T65a**: devono mostrare il nome nuovo. Deciso dall'utente il
-      2026-09-18, che ha anche confermato che la UI nel frattempo e' cambiata.
-      Non e' solo il nome: `hero.png` e' del 2026-09-04 e **la sua UI e' in
-      italiano**, mentre l'app e' inglese end-to-end (`setLocale('en')` cablato
-      in `GanttChart.tsx:699`, nessun dizionario italiano in `src/`) — lo
-      scarto piu' netto dei quattro che il critic di F11 ha misurato contro lo
-      stato di default di oggi; gli altri tre sono Effort e Duration centrati
-      invece che allineati a destra (F13), i due bottoni nuovi in toolbar
-      (comprimi griglia, scelta colonne) assenti, e il badge di versione
-      assente. `resource-load.png` non e' stato confrontato: va guardata prima
-      di rifarla o di tenerla.
-      **La composizione e la fixture sono dell'utente** — e' la vetrina, non
-      una prova: si chiedono prima di scattare, non dopo.
+- [x] T65b [self + utente] — Rifatti i due screenshot di `docs/assets/` —
+      `bc38226`. Scuri, inglesi, ARROGANTT, badge `v1.3`, i due bottoni nuovi
+      in toolbar, Effort/Duration a destra, Rate e Cost accese e il totale
+      `Cost 22.280 €` in status bar. 3600x1224 e 3600x1410 (DPR 2 su 1800x612
+      e 1800x705).
+      Decisioni dell'utente prima dello scatto: **lo stesso piano tradotto in
+      inglese** (13 righe, tre summary, milestone, tre persone di cui una al
+      50%, l'assenza di Marco che stira REST API da 7 a 10 giorni); **schema
+      scuro**, contro la raccomandazione dell'hub, che proponeva il chiaro per
+      continuita' con un README letto in tema chiaro; **le due colonne dei
+      costi in vetrina**, chieste a scatto gia' fatto e rifatto per quello.
+      **`resource-load.png` non era mai stata confrontata, e il confronto
+      l'ha ribaltata**: era lo stesso schermo di `hero.png` piu' il pannello,
+      quindi portava tutti e quattro gli scarti, non zero.
+      **Due scarti che il censimento del critic di F11 non aveva**: un'icona in
+      piu' per riga (il *disabled*) e la **palette** — i colori della fixture
+      vecchia, campionati dal PNG (`#7c3aed`, `#0284c7`, `#d97706`), non sono
+      fra le 14 tinte che `colors.ts` offre oggi. Uno screenshot invecchia
+      anche per un registro di colori che non esiste piu'.
+      **La fixture non esisteva su disco** — `rollout-crm.gantt` non e' mai
+      stato tracciato: ricostruita via agent API, con le tariffe passate ad
+      `addResource` e **non** a `updateResource`, che e' il punto dove
+      `applied()` riscriverebbe `availability ?? 1` su Giulia al 50%.
+      Misurato e non dedotto: Mesi e' l'unica scala che contiene il piano (una
+      in dentro chiede 3150px contro 877 di pannello), quindi la coda di
+      settimane vuote e' inerente e sotto la regola dell'80%; con otto colonne
+      la griglia cresce di 182px e a 1600px di viewport compare una scrollbar
+      orizzontale che taglia l'ultima riga — da cui i 1800; ultima riga a 567
+      contro area dati 576 e status bar 577; pannello del carico 93px su 3
+      corsie, col viewport cresciuto della stessa quantita' come aveva fatto
+      l'autore dei PNG del 2026-09-04 (740 → 810). Il totale in status bar
+      torna a mano: 3640+8880+4160+2080+3520 = 22.280.
+      **Un difetto dello scatto e non dell'app**: dopo il click sul toggle il
+      puntatore era rimasto sull'avatar della riga REST API e l'hover finiva
+      nell'immagine. Trovato leggendo `:hover`, non guardando.
+      Graduato in `docs/verification.md` e non lasciato qui: `set viewport <w>
+      <h> [scale]` (non esiste `resize`, e gen 18 aveva concluso che una
+      misura di viewport non avesse via d'ingresso), il non-ASCII che passa in
+      un return top-level e non in uno strutturato, l'`EOF` del daemon che
+      arriva **dopo** che lo script ha lavorato, e il puntatore che un
+      `set viewport` non sposta.
+      **Non guidato**: come rendono due immagini scure in un README letto in
+      tema chiaro (sono scure per decisione dell'utente, non per misura), e il
+      peso delle PNG sul caricamento della pagina.
 
 **Notato dal critic di F7 e deliberatamente non aperto come task**: il
 popover del picker si posiziona una volta dall'ancora catturata all'apertura
@@ -625,7 +657,8 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   pin da `git show`, su F9 e F14 un overclaim dell'hub. **Una review a cui si
   dice che un terzo `fix-first` non e' gratis rende COHERENCE invece di ACTIONS
   e spedisce** (terza di F, 128k): due difetti veri, sotto il bar, dichiarati
-  tali.
+  tali. **Un `[self]` guidato nel browser costa una generazione dell'hub**:
+  T65b, zero deleghe, l'ha portato oltre i 176k da solo.
 - **Un elenco enumerato da una sezione di spec e' completo o non e' un elenco.**
   F2b ha taciuto un filtro, F3b una tabella da cui dipendeva la fixture, F8 ha
   ristretto «the widest string of each» alla fixture e la piu' larga legale era
@@ -641,9 +674,6 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 - Il critic trova cio' che l'accept non chiedeva: e' la regola, non l'eccezione
   — si briefa chiedendogli **la domanda che fa paura**, e su uno spostamento
   **l'hash, non la lettura**.
-- **Cio' che una corsia dichiara impossibile o preesistente va confrontato con
-  l'evidenza**: T43 dava il drag reale per non guidabile, T41 e F4b l'hanno
-  fatto. Su T48 fatto bene: misurato su HEAD **e** sul tree.
 - **Una ragione registrata male in un doc e' peggio di nessun doc**: tredici
   volte in Goal F (F7, F5c, F5b, F6a, F6b, F9, F14, F15, le tre azioni della
   seconda review e le due della terza), quasi sempre dall'hub. Si verifica sul
