@@ -993,6 +993,23 @@ decisione sua, non un'azione della review.
       scelta e' fra «un caso plausibile in piu' ci sta» e «la cella si taglia
       in silenzio, dichiarato». Il range tariffa e' sullo stesso filo:
       `2,400–2,600` misura 68.20px, +3.80.
+      **Riprodotto in app il 2026-09-18 davanti all'utente** (fixture: summary
+      da 13 d, figlio da 10 d a 1.225.000/d, figlio da 3 d senza tariffa,
+      `currency` EUR → `≥ 12,250,000` con `uncostedDays: 3`), e **chi taglia
+      non e' la cella**: il box che clippa e' il `div.gantt_tree_content`
+      interno, `display: block`, largo esattamente i 72px del content box e con
+      `overflow: hidden` suo — la cella e' 84 con `padding: 0 6px` e clipperebbe
+      solo a 78. Verificato perche' la deduzione a tavolino diceva l'opposto
+      (il testo sborda *a destra* dentro il padding, `textRight` 763.17 contro
+      un padding box a 767, quindi sembrava intatto): il taglio e' a 761 e vale
+      i 2.17px registrati da F14. Stringhe misurate nel font vivo della cella
+      (system-ui 13px): `12,250,000` 61.70, `≥ 1,225,000` 67.17, `2,400–2,600`
+      68.20, `122,250,000` 68.72, **`≥ 12,250,000` 74.17**, `≥ 122,250,000`
+      81.19. Quindi 88 (content 76) tiene questo caso con 1.83 di margine e
+      taglia ancora le 9 cifre col prefisso; 94 (content 82) tiene anche quelle
+      con 0.81. La griglia di default resta 706 con qualunque scelta — Rate e
+      Cost sono nascoste — e la somma si muove solo per chi accende Cost:
+      874 → 878 a 88, → 884 a 94.
       Accept: la larghezza scelta dall'utente con la somma nuova accanto, o il
       taglio dichiarato in `docs/view.md` con la misura.
 - [x] F10 [self] — `currencyLabel` e il testo dell'effort non costato tornino a
