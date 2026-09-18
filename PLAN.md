@@ -820,9 +820,6 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   un argomento di *tipo* (la firma garantisce gia' il mai-`undefined`), non di
   gusto. E su uno spostamento
   **l'hash, non la lettura**.
-- **Una ragione registrata male in un doc e' peggio di nessun doc**: tredici
-  volte in Goal F, quasi sempre dall'hub. La regola e' graduata in CLAUDE.md
-  (righe 173 e 184); qui resta solo la scala del fenomeno.
 - **Dimensionamento, T60**: due Explore (56k + 72k), zero corsie, zero critic —
   un task di sola analisi paga bene la delega se l'hub tiene solo le
   conclusioni e rimisura da se' quelle portanti.
