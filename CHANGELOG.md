@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.4 — 2026-09-18
 
 - Renamed to ARROGANTT: the repo, the agent API (`window.arrogantt`) and the
   `localStorage` keys all carry the new name. No migration — an unsaved
