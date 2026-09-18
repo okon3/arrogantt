@@ -316,6 +316,14 @@ questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       nell'istante in cui qualcuno rioccupa il vecchio nome.
 
 - [ ] T65 [impl] — ARROGANTT dentro il repo: nome, agent API, docs, README
+      **Sbloccato: T64 e' chiuso, e questo alza la priorita' del task.** Il
+      README punta a sei URL che ora sono morti — il badge di `deploy.yml`
+      (`README.md:9`), *Try it live* (`:12`), il link a `/llms.txt` (`:84`),
+      *live version* (`:100`), l'URL di clone (`:103`) e il `cd yagni` (`:104`)
+      — perche' Pages non redirige e il vecchio sito risponde 404. Non sono
+      stringhe stantie: sono link rotti in vetrina. I link nuovi nascono vivi
+      e sono verificati (`https://okon3.github.io/arrogantt/` apre l'app, badge
+      `v1.3`).
       Rename del nome visibile e della superficie agenti. **Nessun alias
       `window.yagni`**: taglio netto, non esistono script fuori da qui.
       **Nome deciso dall'utente, si scrive cosi' e non si reinterpreta**:
