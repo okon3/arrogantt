@@ -1196,6 +1196,61 @@ decisione sua, non un'azione della review.
 la goal review di F non e' girata**: gli accept dei sottotask stanno nella sua
 §8 e sono meta' del bar della review.
 
+**Seconda goal review, girata il 2026-09-18 sul delta: `fix-first`**
+(fable-5-1 confermato in header; read-only, niente commit, porta rilasciata).
+Nessun MISSING — le quattro azioni della prima review sono chiuse — e nessuno
+SMUGGLED. `src/scheduler/` intatto **su tutto il goal**, verificato con
+`git diff b70d327~1..b4e2b41 -- src/scheduler` vuoto, non sull'intenzione. Le
+quattro decisioni dell'utente reggono nel codice e nell'app. Coerenza delle
+superfici del denaro confermata: l'unita' sta nell'etichetta via
+`currencyLabel` ovunque ci sia una testata e nel suffisso dove testata non ce
+n'e' (status bar), `—` piu' ragione dove si rende un `title`, vuoto nel CSV,
+`null` in API e file, `≥` con `uncostedNote` sui due hover. **Le tre azioni
+sono tutte su commenti e documentazione: il codice spedisce com'e'.**
+
+- [ ] F17 [self] — La frase di `docs/view.md` su dove la testata taglia sia la
+      matrice che e' stata misurata
+      `docs/view.md:160-161` dice «fino a tre caratteri di currency nessuna
+      testata e' tagliata; da quattro si'». La review l'ha rimisurata nell'app
+      (Inter 600 11px, `letter-spacing` sottratto, controllo incrociato con
+      `scrollWidth`): `Rate (EURO)` 76.25 entra in 84 e `Cost (WWWW)` 94.11
+      entra in 98 — tagliano solo `Rate (WWWW)` 91.34 e le due etichette da
+      cinque caratteri (103.48 e 106.23). La frase e' scaduta perche' **F15 ha
+      allargato Cost senza rimisurarla**, e il censimento di F14 gia'
+      generalizzava oltre le celle guidate.
+      Accept: la frase e' una matrice o una regola che nomina la colonna e il
+      glifo (`tre entrano sempre; Rate taglia a quattro solo sui glifi piu'
+      larghi, Cost a cinque`), con le cifre misurate accanto; nessun numero
+      ereditato. Nessun codice toccato.
+
+- [ ] F18 [self] — Due affermazioni troppo larghe, ristrette a cio' che e' vero
+      1. `docs/file-format.md:33-34` (bullet di `availability`, scritto da F12)
+      dice «a save never adds the key to a resource whose file had none»:
+      **falso** su `resources.ts:48`, dove `applied()` scrive
+      `availability ?? 1` a ogni `resourceUpdate` dell'agent API — il percorso
+      che F12 ha scopato fuori per decisione, ma che il doc dichiara come
+      assoluto. Dire che il dialogo non la aggiunge e che la patch dell'agent
+      API ancora si': l'aperto ha una casa sola.
+      2. `src/gantt/costCells.ts:82-84` dice «One wording for the whole
+      application»: `StatusBar.tsx:115` ne rende una seconda visibile
+      (`· 3 d not costed`) tre righe sotto la chiamata. Restringere alla nota
+      dell'hover.
+      Accept: le due frasi sono vere lette sul percorso che le usa; `npm test`
+      verde. Nessun codice toccato.
+
+- [ ] F19 [self] — I due adiacenti della review
+      1. `agentApi.help.md:291`: `newProject()` non dice che un progetto nuovo
+      dichiara `€`, quindi il `toText()` di uno script lo porta senza
+      preavviso. Una riga.
+      2. `CHANGELOG.md` non ha un bullet per l'allineamento a destra di Effort
+      e Duration (F13), che **ogni progetto esistente vede**. Raccomandazione
+      dell'hub: aggiungerlo sotto `## Unreleased`; e' un cambiamento visibile,
+      non plumbing. Il `€` di F16 non ne chiede uno — e' il default di una
+      feature gia' annunciata.
+      Accept: `yagni.help()` e `/llms.txt` restano lo stesso file; il badge
+      resta sull'ultima release e nessun popup scatta (`## Unreleased` resta in
+      testa).
+
 ## Goal C — valutazione mobile-friendly                              [aperto]
 Agevolare la visualizzazione da smartphone/tablet nascondendo le azioni
 superflue; non tutto deve funzionare da mobile.
@@ -1572,41 +1627,42 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 
 ## Log
 - **Dimensionamento**: impl oltre ~200k = task da splittare (T35, F7 257k, F1
-  222k, F4b 228k); splittato rende 120-170k a meta'. **Si taglia la campagna di
-  verifica, non il codice**: F5a e F5c, ri-splittate sul codice, sono risalite a
-  215k e 242k; se la campagna non si taglia si detta il codice (F6b 181k), e
-  **toglierla del tutto non rende economico il task** (F8, 157k/146k). Una
-  correzione via SendMessage costa meno di un fresh spawn (~40k), ma non oltre
-  ~190k. **Il critic e' la voce piu' cara e la piu' redditizia**: 75-95k a
-  tavolino, 102-242k nel browser, 191k la goal review; su T58 ha ribaltato una
-  premessa, su F8 il pin da `git show`, su F9 e F14 un overclaim dell'hub.
+  222k, F4b 228k); splittato rende 80-170k a meta'. **Si taglia la campagna di
+  verifica, non il codice** (F5a 215k e F5c 242k ri-splittate sul codice
+  risalgono; toglierla del tutto non rende economico il task, F8 146k). Una
+  correzione via SendMessage costa meno di un fresh spawn (~40k). **Il critic
+  e' la voce piu' cara e la piu' redditizia**: 75-95k a tavolino, 102-242k nel
+  browser, 132-191k la goal review; su T58 ha ribaltato una premessa, su F8 il
+  pin da `git show`, su F9 e F14 un overclaim dell'hub.
 - **Un elenco enumerato da una sezione di spec e' completo o non e' un elenco.**
-  F2b: la consegna dava due regole del null su tre e taceva il filtro
-  `disabledIds` della §5.3, e l'hub ha poi giustificato la scelta da se' senza
-  rileggerla. F3b: il brief ha enumerato le superfici della §5.6 saltando la
-  tabella *Writing — people*, da cui dipende la fixture del goal. F8: il brief
-  ha ristretto «the widest string of each» alle stringhe della fixture, e la
-  piu' larga legale era una testata — l'ha trovata il critic. Vale per chi
-  consegna, per chi implementa e per l'hub che briefa: si rilegge la sezione.
-- **Le misure piccole le fa l'hub**: due probe vitest usa-e-getta (T56), due
-  Explore non residenti (T57) e il censimento di F14 nel browser hanno chiuso
-  un task a testa dove una corsia paga 40k di solo ingresso. **Prima di
-  briefare, misurare la premessa**: se cade, il brief non serve.
+  F2b ha taciuto il filtro `disabledIds` della §5.3 e l'hub ha poi giustificato
+  la scelta da se' senza rileggerla; F3b ha saltato la tabella *Writing —
+  people* da cui dipende la fixture; F8 ha ristretto «the widest string of
+  each» alle stringhe della fixture, e la piu' larga legale era una testata.
+  Vale per chi consegna, per chi implementa e per l'hub che briefa: si rilegge
+  la sezione.
+- **Le misure piccole le fa l'hub**: probe vitest usa-e-getta (T56), Explore
+  non residenti (T57), il censimento di F14 nel browser — un task a testa dove
+  una corsia paga 40k di solo ingresso. **Prima di briefare, misurare la
+  premessa**: se cade, il brief non serve.
 - **Una citazione copiata non e' verificata**: ne' un `file:line` (T43), ne' un
-  nome di tipo (T48), **ne' un predicato** (F6b: il `isMilestone` del dialogo
-  legge il campo in edit, non `effortDays` come diceva la consegna). Si
-  ri-localizza dopo l'ultima modifica, e si cita per simbolo.
+  nome di tipo (T48), **ne' un predicato** (F6b). Si ri-localizza dopo l'ultima
+  modifica, e si cita per simbolo.
 - Il critic trova cio' che l'accept non chiedeva: e' la regola, non l'eccezione
   — si briefa chiedendogli **la domanda che fa paura**, e su uno spostamento
-  **l'hash, non la lettura**. Misurata, e' cio' che rende il pass non speranza.
+  **l'hash, non la lettura**.
 - **Cio' che una corsia dichiara impossibile o preesistente va confrontato con
   l'evidenza**: T43 dava il drag reale per non guidabile, T41 e F4b l'hanno
   fatto. Su T48 fatto bene: misurato su HEAD **e** sul tree.
-- **Una ragione registrata male in un doc e' peggio di nessun doc**: otto volte
-  in questo goal (F7, F5c, F5b, F6a, F6b, F9, F14, F15), quasi sempre dall'hub,
-  quattro chiuse dal critic. Si verifica sul percorso che la usa, non sulla riga
-  che la enuncia, **e riscriverla non la ripara** (F9). Chi enumera superfici
-  dica quale rende il campo, e sappia che un elenco e' un censimento che scade
-  (F10); **chi dice «la stringa piu' larga» dica contro cosa e' limitata. E un
-  numero ereditato non e' misurato**: F15 ha ricopiato «il prefisso costa
-  ~5.5px» da F14, sottrazione fra stringhe di lunghezza diversa — 12.47 i veri.
+- **Una ragione registrata male in un doc e' peggio di nessun doc**: undici
+  volte in questo goal (F7, F5c, F5b, F6a, F6b, F9, F14, F15, e le tre azioni
+  della seconda review), quasi sempre dall'hub. Si verifica sul percorso che la
+  usa, non sulla riga che la enuncia, **e riscriverla non la ripara** (F9). Chi
+  enumera superfici dica quale rende il campo (F10); **un numero ereditato non
+  e' misurato** (F15: ~5.5px da F14, 12.47 i veri) e **una misura non si
+  eredita nemmeno da se stessi**: F15 ha allargato Cost senza rimisurare la
+  frase di view.md che dichiara dove la testata taglia.
+- **Dire al critic che un percorso e' fuori scopo gli toglie anche il doc che
+  lo dichiara.** Su F12 l'hub ha scopato fuori `applied()` e detto al critic di
+  non riportarlo: ha verificato l'altra meta' del bullet nuovo di
+  file-format.md, non la sua assolutezza — falsa proprio su `applied()`.
