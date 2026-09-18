@@ -45,6 +45,11 @@ import { RowMenu, type RowMenuAction, type RowMenuTarget } from './gantt/RowMenu
 import { ColumnPicker, type ColumnPickerAnchor } from './gantt/ColumnPicker';
 import { readColumnSelection, writeColumnSelection, type PlanColumnName } from './gantt/columns';
 import {
+  readExportSettings,
+  resolveExportSettings,
+  type ExportSettings,
+} from './gantt/exportSettings';
+import {
   ProjectFileError,
   deserializeProject,
   serializeForFile,
@@ -128,6 +133,16 @@ export default function App() {
   const [columns, setColumns] = useState<ReadonlySet<PlanColumnName>>(() =>
     readColumnSelection(draftStore),
   );
+  // Read once too: nothing writes this key before the export dialog (G3b)
+  // exists, so `stored` is null in practice and `exportSettings` below tracks
+  // the live grid selection — which is exactly today's PNG/print behaviour.
+  const [storedExportSettings] = useState<ExportSettings | null>(() =>
+    readExportSettings(draftStore),
+  );
+  // Resolved on every render rather than cached, because a null `stored`
+  // means "follow the grid" and the grid's own selection (`columns`) can
+  // change after mount.
+  const exportSettings = resolveExportSettings(storedExportSettings, columns);
   // Snapshotted on open, like the other dialogs: the chart owns the live
   // project, and reading it during render would fight the imperative handle.
   const [columnPicker, setColumnPicker] = useState<{
@@ -410,13 +425,17 @@ export default function App() {
           today: new Date(),
           // Unconditional on purpose: an emptied selection is `[]`, and only an
           // absent list means the legacy outline (`planFigure.ts`, `selected`).
-          columns: [...columns],
+          columns: [...exportSettings.columns],
+          // Only 'visible' passes the closed branches: 'all' must draw every
+          // row even under a chart that currently has some collapsed.
+          collapsedIds:
+            exportSettings.scope === 'visible' ? chart.current?.collapsedBranches() : undefined,
         }),
       );
     } catch (cause) {
       setError(`Could not create the plan image: ${String(cause)}`);
     }
-  }, [columns, filename]);
+  }, [exportSettings, filename]);
 
   const handleAddTask = useCallback(() => {
     chart.current?.addTask();
@@ -760,14 +779,15 @@ export default function App() {
   // the printed title behind.
   const printTitle = useRef(filename);
   // Same reason as `printTitle`: the install effect below has empty deps, so
-  // its callback closes over whatever `columns` was at first render unless it
-  // reads a ref that this effect keeps current instead.
-  const printColumns = useRef(columns);
+  // its callback closes over whatever the resolved export settings were at
+  // first render unless it reads a ref that this effect keeps current
+  // instead.
+  const printExportSettings = useRef(exportSettings);
   useEffect(() => {
     agentState.current = { filename, dirty, adopt, reset };
     printTitle.current = filename;
-    printColumns.current = columns;
-  }, [adopt, columns, dirty, filename, reset]);
+    printExportSettings.current = exportSettings;
+  }, [adopt, dirty, exportSettings, filename, reset]);
 
   // Printing draws the same figure the PNG does, paged: the chart itself prints
   // as the screenful the viewport holds, whatever the plan's height. The pages
@@ -779,10 +799,12 @@ export default function App() {
         const solved = chart.current?.getSolved();
         const project = chart.current?.getProject();
         if (!solved || !project) return [];
+        const settings = printExportSettings.current;
         return planFigurePages(project, solved, {
           title: printTitle.current,
           today: new Date(),
-          columns: [...printColumns.current],
+          columns: [...settings.columns],
+          collapsedIds: settings.scope === 'visible' ? chart.current?.collapsedBranches() : undefined,
         });
       }),
     [],
