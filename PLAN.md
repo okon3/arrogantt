@@ -395,7 +395,7 @@ larghezza resta a left 475 / right 645, cioe' fuori dal viewport). E' la
 stessa forma di `RowMenu`, che ha lo stesso comportamento da sempre e che
 nessuno ha segnalato: sotto la regola dell'80% non vale un meccanismo nuovo.
 Se qualcuno lo segnala, si aggiusta **una volta per entrambi**, non due.
-- [x] T63 [impl] — Il popover delle colonne non prende il fuoco — `SHA`.
+- [x] T63 [impl] — Il popover delle colonne non prende il fuoco — `8c93dd9`.
       Difetto misurato dal critic di F7: dal bottone alla prima checkbox
       c'erano **14 fermate di Tab**. Ora il fuoco va sulla prima checkbox
       all'apertura (`.focus()` esplicito nell'effect di posizionamento, il
