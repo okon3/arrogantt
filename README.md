@@ -45,6 +45,19 @@ the person that causes the contention named on the tooltip.
 availability periods, absences, and company shutdowns. The time axis is working
 minutes: nights and weekends simply don't exist, so durations never lie.
 
+**What the plan costs, not only when it ends** — give a person a daily rate,
+with periods that layer over time by the same rules as their availability, and
+every row reads back what its effort costs: a task straddling a rate change is
+priced on both sides of it, a summary rolls its children up, and the project
+total sits in the status bar, in the currency you labelled the money with.
+**Unpriced is not free** — a row nobody priced shows a dash and the reason,
+never a `0`, and a figure missing part of its price says `≥` with the uncosted
+effort declared beside it.
+
+**A grid you choose** — a toolbar button picks which columns are on screen, and
+the choice follows you from project to project. Rate and Cost ship switched
+off, so a plan that never mentions money looks exactly as it always did.
+
 **Resource load lanes** — one lane per person under the chart, on the same time
 axis: a dashed ceiling for what they have, a solid band for what the plan booked,
 and the gap between them is your free capacity. Over-allocation can't happen by
