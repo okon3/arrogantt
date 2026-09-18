@@ -22,10 +22,12 @@ il DOM.
 **`## Maintenance — no goal` e' vuota**: T63, T64, T65a e T65b sono chiusi. Il
 README punta a link vivi, `grep -i yagni` trova solo `PLAN.md` e il favicon, e
 i due screenshot mostrano l'app come e' oggi. La manutenzione non riceve goal
-review per scelta, quindi alla chiusura di T65b non scatta niente — ma
-**`## Unreleased` del changelog e' il punto di ripresa**: il rename ci ha
-lasciato un bullet, e la release (`## v1.4 — <data>`) e' da proporre
-all'utente, che conferma sempre prima della rinomina.
+review per scelta, quindi alla chiusura di T65b non e' scattato niente, e la
+**release `v1.4` e' fatta** (`94caf0d`, confermata dall'utente): un bullet
+solo, il rename. Verificata nell'app servita e non solo nel file — badge
+`v1.4` letto dal DOM, e con `seenVersion` seminato a `v1.3` il dialogo si
+riapre con `v1.4 — 2026-09-18` in testa. `## Unreleased` non c'e' piu': il
+prossimo bullet lo ricrea in testa al file.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
