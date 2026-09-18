@@ -13,11 +13,13 @@ di lui. **Da riproporre appena c'e' spazio**: `applied()` che scrive
 `availability` a ogni patch dell'agent API, l'ultimo gemello della regola che
 F12 ha appuntato.
 
-Aperti: **Goal G** (export cliente), il cui primo passo e' ancora analisi (T60)
-e che **eredita** da F il meccanismo delle colonne, gia' costruito; **T16**,
-unico task di Goal C, che lo porterebbe alla sua review. **O4** in giacenza. Su
-T60 leggere prima il fatto accertato in testa a Goal G: l'export non fotografa
-il DOM.
+Aperti: **Goal G** (export cliente), **analizzato e scopato** — T60 chiuso, i
+task sono G1-G4 e la lettura obbligatoria prima di briefarne uno e' il blocco
+_Misurato da T60_ in testa al goal: l'export non fotografa il DOM, non disegna
+frecce, non sa niente del collapse e non passa le colonne. Le due questioni che
+erano aperte sono chiuse (una per misura, una dall'utente) e l'asse
+riservatezza e' decaduto. **T16**, unico task di Goal C, che lo porterebbe alla
+sua review. **O4** in giacenza.
 
 **`## Maintenance — no goal` e' vuota**: T63, T64, T65a e T65b sono chiusi. Il
 README punta a link vivi, `grep -i yagni` trova solo `PLAN.md` e il favicon, e
@@ -77,13 +79,12 @@ diverso nello stesso momento); e `rate`/`cost` sono marcate non sicure per un
 cliente, quindi **fuori da un export cliente per default**. Anche l'etichetta
 `currency` arriva da F, nel file.
 
-Da decidere nell'analisi, non adesso — e la risposta e' semantica, non estetica:
-- **Un link che parte da un figlio nascosto.** Se un sottotask collassato ha
-  una dipendenza verso l'esterno del suo ramo, l'export la ridisegna sul
-  summary, la omette, o rifiuta? Un gantt cliente con frecce che nascono dal
-  nulla e' peggio di uno senza frecce. Ricordare che le dipendenze sono
-  spinte sulle foglie su entrambi i capi (invariante), quindi a livello di
-  summary il link *non esiste* nel modello: va sintetizzato o taciuto.
+Chiuse da T60 — erano le due questioni aperte, la risposta e' misurata:
+- **Un link che parte da un figlio nascosto: non si pone.** `planFigure` non
+  disegna nessuna freccia di dipendenza (`PlanTask.predecessors` esiste,
+  `plan.ts:43`, e la figura non lo legge mai). Non c'e' niente da sintetizzare
+  ne' da tacere. La questione tornerebbe solo dando le frecce all'export —
+  fuori da questo goal.
 **Fatto accertato dal critic di T58, e riguarda la decisione WYSIWYG:** print
 e PNG **non fotografano il DOM del chart**. Passano dall'SVG costruito a mano
 da `planFigure` (`printPlan.ts`, `files.ts:53`), quindi il separatore di gruppo
@@ -94,25 +95,135 @@ campi nel file, il collapse e' il controllo), ma **T60 deve misurare cosa
 `planFigure` sa gia' della gerarchia** prima che si scopino le fette — e la
 trappola delle barre fuori schermo vale per il DOM, non per lui.
 
-- **Cosa significa «solo quello che sto vedendo».** Due letture diverse: lo
-  stato dell'albero (rami chiusi = figli fuori dall'export) oppure il viewport
-  (l'intervallo di date a schermo, con fuori ciò che sta a destra). La risposta
-  dipende da come l'export rasterizza oggi, e c'e' una trappola nota:
-  «le barre fuori schermo non hanno nodo DOM» (CLAUDE.md). Possono anche
-  essere due opzioni distinte, se costano poco.
+### Misurato da T60 — la figura e' molto piu' povera dello schermo
 
-- [ ] T60 [self] — Ricognizione dell'export attuale e scomposizione del goal
-      Scope: capire come l'export immagine/print funziona oggi prima di
-      scoporre qualunque fetta — chi rasterizza, se fotografa il DOM visibile
-      o ridisegna, cosa fa dell'area fuori viewport (CLAUDE.md: «le barre fuori
-      schermo non hanno nodo DOM», che su un export a piano intero e' il fatto
-      centrale), e dove sta il dialogo/percorso di export. Poi decidere le due
-      questioni aperte qui sopra e scrivere i task implementativi con la loro
-      lane e il loro accept, dialogo di configurazione incluso.
-      Accept: le questioni aperte sono chiuse con una risposta motivata (o
-      portate all'utente con i numeri, se la scelta e' sua), il vincolo
-      incrociato sulle colonne e' deciso e scritto anche in Goal F, e il goal
-      ha i suoi task scopati. Nessuna implementazione.
+Ogni riga verificata dall'hub sul codice, non ereditata. `planFigure`
+(`planFigure.ts:284`) riceve `(project, solved, options)` e deriva le righe da
+`buildPlan(solved)` (`planFigure.ts:290`, `plan.ts:95-120`): cammina l'intera
+gerarchia, **nessun filtro di collapse**.
+
+- **Il collapse non arriva alla figura.** Vive solo come `task.open` dentro
+  dhtmlx (`GanttChart.tsx:69,340,360`); `SolvedProject` non ha alcun campo che
+  lo porti (`project.ts:61-81`). Oggi PNG e print disegnano **sempre tutte le
+  righe**, comunque sia l'albero a schermo. WYSIWYG costa quindi un input
+  nuovo in `FigureOptions` piu' un getter sull'handle — non e' gratis, ma e'
+  l'unico pezzo del goal che costa.
+- **`collapseAll`/`expandAll` esistono gia'** end-to-end: handle
+  (`ganttHandle.ts:98-99`), UI (`App.tsx:957-958`), agent API
+  (`agentApi.ts:147-148,443-444`). Il «bottone chiudi tutto» che la decisione
+  WYSIWYG dava per necessario **e' gia' costruito**.
+- **`clientSafe` esiste gia' sul registro colonne** (`columns.ts:31-33`), marca
+  esattamente `rate` e `cost` (`columns.ts:113,121`) ed e' **consumato da
+  nessuno** tranne un test (`planFigure.test.ts:334`). Era stato piantato per
+  questo dialogo.
+- **Nessuno dei due export passa `columns`.** `FigureOptions.columns` esiste
+  (`planFigure.ts:41-46`) ma `handleExportPng` (`App.tsx:406-409`) e la
+  callback di stampa (`App.tsx:771-774`) passano solo `{title, today}`: la
+  figura cade sull'outline legacy «Name + Person» (`planFigure.ts:390-397`).
+  Conseguenza **oggi, senza toccare niente**: la griglia a schermo mostra le
+  **iniziali** (`gridColumns.ts:94-111`), l'export stampa il **nome per
+  esteso**. Chi si fida di cio' che vede sottovaluta cosa esce. Il meccanismo
+  ereditato da F non e' mai arrivato all'export.
+- **La figura non disegna nessuna freccia di dipendenza.** Nessun elemento di
+  link in `planFigure.ts` (censito: l'unico `<...>` non-rect/text e' estraneo);
+  `PlanTask.predecessors` esiste (`plan.ts:43`) e `planFigure` non lo legge mai.
+  **La questione aperta del «link che parte da un figlio nascosto» decade**: non
+  c'e' nulla da ridisegnare, omettere o rifiutare. Tornerebbe solo se qualcuno
+  decidesse di aggiungere le frecce all'export — fuori da questo goal.
+- **Bande: solo lo sfondo dei non-lavorativi entra nella figura**
+  (`planFigure.ts:352-362`), ridisegnato da `solved.calendar.isWorkingDate`.
+  Quel predicato **include le chiusure aziendali** (`calendar.ts:255-262`:
+  weekend, settimane lavorative e shutdown in un posto solo), quindi una
+  chiusura **si vede**, indistinguibile da un weekend. Le **assenze per
+  risorsa** (`availabilityOverrides`, `timelineOverlays.ts:212-231`) sono
+  invece **solo-DOM: non sono mai state nella figura**. Cioe' «il cliente non
+  deve leggere chi e' in ferie» **e' gia' vero oggi nell'export**.
+- **L'asse e' sempre l'intero piano** (`planFigure.ts:311-316`), per decisione
+  documentata: `options.slice` seleziona *righe*, mai date, «so every page of
+  the same figure shares one time scale» (`planFigure.ts:37-39`). Il viewport
+  non entra da nessuna parte, e nemmeno lo zoom del chart
+  (`tickUnit` ricalcola da `pxPerDay`, `planFigure.ts:118-122`).
+- **Nessun dialogo prima di un export**: PNG, print e CSV partono al click.
+  Guscio modale del progetto: `Dialog.tsx`; `ColumnPicker.tsx` e' un popover
+  non modale **legato staticamente a `PLAN_COLUMNS`** (`ColumnPicker.tsx:117`),
+  quindi riusabile in un dialogo solo generalizzandolo sull'elenco.
+
+- **«Solo quello che sto vedendo» = lo stato dell'albero, mai le date**
+  (confermato dall'utente, 2026-09-18). Il dialogo offre due voci di ambito:
+  «tutto il piano» (il comportamento di oggi) e «come lo vedo» (rispetta i
+  rami chiusi). Il viewport **non** entra: l'asse resta l'intero piano, che e'
+  una decisione documentata da cui dipende `planFigurePages`
+  (`planFigure.ts:37-39`). Scartato un intervallo «da...a»: ri-scopa
+  `geometryOf`, rompe la scala condivisa fra le pagine e apre la semantica di
+  una barra a cavallo del bordo.
+- **La riservatezza si riduce alla scelta delle colonne** (confermato
+  dall'utente, 2026-09-18). L'opzione «nascondi chiusure e assenze» della
+  decisione di apertura **cade**: era motivata da «il cliente non deve leggere
+  chi e' in ferie», e le assenze per risorsa non sono mai state nella figura.
+  Cio' che resta e' lo sfondo non-lavorativo, in cui una chiusura e'
+  indistinguibile da un weekend: nessuna informazione attribuibile a nessuno.
+  Scartati un interruttore sullo sfondo (non puo' colpire le chiusure senza i
+  weekend, e mostrerebbe barre ferme su giorni disegnati lavorativi) e
+  l'introdurre una distinzione shutdown/weekend per poi sopprimerla.
+
+- [x] T60 [self] — Ricognizione dell'export e scomposizione del goal — nessun
+      commit di codice: consegna i fatti misurati qui sopra, le due questioni
+      chiuse e i task G1-G4. Le frecce e le assenze sono decadute per misura,
+      non per scelta.
+
+- [ ] G1 [impl] — La figura rispetta i rami chiusi
+      Scope: `FigureOptions.collapsedIds?: ReadonlySet<string>`
+      (`planFigure.ts:36-46`); le righe sotto un ramo chiuso non sono
+      disegnate, **ricorsivamente** (un nipote sparisce anche se il suo padre
+      intermedio e' aperto). Il filtro sta fra `buildPlan(solved)` e `rows`
+      (`planFigure.ts:290-294`), non dentro `buildPlan`: `plan.ts` serve anche
+      CSV e agent API, che non devono cambiare. Getter sull'handle che esponga
+      `collapsedBranches()` (gia' scritta, `GanttChart.tsx:69`) —
+      `ganttHandle.ts`. Nessun chiamante lo passa ancora: lo fara' G3.
+      Invariante a favore: un summary porta gia' date, effort e costo rollati
+      dalle foglie, quindi disegnarlo da solo e' corretto per costruzione — ma
+      **non ricalcolarli** dal sottoinsieme di righe.
+      Accept: test che un ramo chiuso disegna il summary e non i figli; che un
+      discendente a due livelli sparisce; che l'asse (`geometryOf`) e i totali
+      **non** cambiano al variare di `collapsedIds`; che `slice` e
+      `planFigurePages` paginano le righe filtrate, non quelle originali.
+
+- [ ] G2 [impl] — L'export consuma il registro delle colonne
+      Scope: chiude un difetto vivo, indipendente dal resto del goal. Oggi
+      `handleExportPng` (`App.tsx:406-409`) e la callback di stampa
+      (`App.tsx:771-774`) non passano `columns`, quindi la figura cade
+      sull'outline legacy «Name + Person» (`planFigure.ts:390-397`) col nome
+      **per esteso**, mentre la griglia mostra le **iniziali**
+      (`gridColumns.ts:94-111`). I due chiamanti passano la selezione corrente
+      della griglia.
+      Accept: PNG e print riflettono il picker; verificato nell'app servita
+      (doctrine `docs/verification.md`), non solo nei test. `docs/file-format.md`
+      aggiornato nella sezione PNG/print. Decidere e scrivere se l'outline
+      legacy resta raggiungibile o diventa morto.
+
+- [ ] G3 [deep] — Il dialogo di configurazione dell'export
+      Scope: la fetta a giudizio. Guscio `Dialog.tsx` (il modello e'
+      `ConfirmDialog`, non il popover `ColumnPicker` che e' legato
+      staticamente a `PLAN_COLUMNS`, `ColumnPicker.tsx:117`). Si interpone su
+      PNG e print — l'agent API non espone alcuna op di export, quindi non c'e'
+      parita' da mantenere (verificato). Contenuto: ambito («tutto il piano» /
+      «come lo vedo», che consuma G1), scelta colonne dal registro, e un preset
+      «per il cliente» che parte da `clientSafe` (`columns.ts:31-33`, oggi
+      consumato dal solo `planFigure.test.ts:334`).
+      Da decidere dentro il task, e scrivere: se la scelta del dialogo e'
+      effimera o persistita, e se e' separata da quella della griglia. Il
+      vincolo ereditato da F dice che **sono due clienti dello stesso registro
+      che scelgono diverso nello stesso momento**, quindi separata — ma la
+      persistenza e' una scelta nuova.
+      Accept: il dialogo governa PNG e print; nessuna seconda lista di colonne
+      esiste nel codice; verificato nell'app servita; `docs/view.md` porta la
+      ragione del preset.
+
+- [ ] G4 [self] — Docs e changelog dell'export cliente
+      Scope: bullet in `CHANGELOG.md` sotto `## Unreleased` (ricreandola in
+      testa), `docs/view.md` e `docs/file-format.md` allineati, e
+      `agentApi.help.md` **solo se** G3 finisce per esporre qualcosa.
+      Accept: la mappa dei docs di CLAUDE.md e' coerente col codice.
 
 ## Goal F — quanto costa il piano, non solo quanto dura              [chiuso]
 Una tariffa giornaliera per persona che varia nel tempo come la disponibilita',
@@ -143,6 +254,20 @@ e la coerenza delle superfici del denaro (unita' nell'etichetta dove c'e' una
 testata, nel suffisso dove non ce n'e', `—` piu' ragione nel `title`, vuoto nel
 CSV, `null` in API e file). Le due COHERENCE che ha dichiarato **sotto** il bar
 erano vere lette sul codice, e sono chiuse in F20.
+
+**Vincolo incrociato con Goal G, chiuso da T60 (2026-09-18) — l'eredita' e'
+piu' magra di quanto F credesse.** Il registro delle colonne va a Goal G come
+previsto, e **nessuna seconda lista di colonne nascera'**: il dialogo di export
+consuma `PLAN_COLUMNS`. Ma due cose misurate in T60 correggono cio' che F
+dava per fatto. Primo: `FigureOptions.columns` esiste (`planFigure.ts:41-46`)
+e **nessun chiamante lo passa** — PNG e print cadono sull'outline legacy, cioe'
+il meccanismo comprato in F **non e' mai arrivato all'export** e la figura
+stampa il nome per esteso dove la griglia mostra le iniziali. E' un difetto
+vivo, non un pezzo mancante di G: lo chiude G2. Secondo: `clientSafe`
+(`columns.ts:31-33`), piantato in F «for a later export dialog's default», e'
+tuttora consumato dal solo `planFigure.test.ts:334` — lo raccoglie G3. La
+previsione di F che «`rate`/`cost` sono fuori da un export cliente per
+default» regge, ma come *marcatura senza lettore* finche' G3 non spedisce.
 
 - [x] T59 [architect] — Spec del goal costi — spec cancellata alla chiusura
 - [x] T62 [architect] — Delta della spec sulle quattro risposte — stessa spec
@@ -677,13 +802,12 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
   — si briefa chiedendogli **la domanda che fa paura**, e su uno spostamento
   **l'hash, non la lettura**.
 - **Una ragione registrata male in un doc e' peggio di nessun doc**: tredici
-  volte in Goal F (F7, F5c, F5b, F6a, F6b, F9, F14, F15, le tre azioni della
-  seconda review e le due della terza), quasi sempre dall'hub. Si verifica sul
-  percorso che la usa, non sulla riga che la enuncia, **e riscriverla non la
-  ripara** (F9). Chi enumera superfici dica quale rende il campo (F10); **un
-  numero ereditato non e' misurato** (F15: ~5.5px da F14, 12.47 i veri) e
-  **una misura non si eredita nemmeno da se stessi** (F15 ha allargato Cost
-  senza rimisurare la frase di view.md). **Una soglia misurata su una colonna
-  si generalizza alla vicina**: F8 aveva i due numeri di `figureWidth` e ha
-  scritto solo quello di `rate`, e la frase e' sopravvissuta a F14, F15, F17 e
-  a due review (F20).
+  volte in Goal F, quasi sempre dall'hub. La regola e' graduata in CLAUDE.md
+  (righe 173 e 184); qui resta solo la scala del fenomeno.
+- **Le decisioni di apertura di un goal sono premesse, non fatti.** Tre delle
+  quattro di Goal G sono decadute alla prima misura (T60): le frecce che non
+  esistono, le assenze mai disegnate, il bottone gia' costruito. L'analisi va
+  fatta prima di dichiarare qualcosa vincolante, non dopo.
+- **Dimensionamento, T60**: due Explore (56k + 72k), zero corsie, zero critic —
+  un task di sola analisi paga bene la delega se l'hub tiene solo le
+  conclusioni e rimisura da se' quelle portanti.
