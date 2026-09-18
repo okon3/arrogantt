@@ -12,7 +12,10 @@
   `Uncosted (d)` columns after `Disabled`.
 - A `Currency` field in the People dialog, next to the rates it labels: sets
   the unit shown in the Rate and Cost column headers, and travels with a rate
-  change in the same Save so undo takes back both in one step.
+  change in the same Save so undo takes back both in one step. A new plan
+  starts in `€`; a plan you open keeps whatever it was saved with.
+- Numbers in the grid line up: Effort, Duration, Rate and Cost are right
+  aligned, so a column of figures reads as a column.
 
 ## v1.2 — 2026-09-08
 

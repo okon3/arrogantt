@@ -288,7 +288,7 @@ between "we do not know" and "it is free".
 | --- | --- |
 | `setCalendar(spec)` | The whole `CalendarSpec`. `windows` are whole **minutes from midnight** (`{ from: 480, to: 720 }` is 08:00-12:00), must not overlap, and `workingDays` are weekday indices `0..6`, 0 = Sunday. Holidays are company-wide shutdowns, removed from the axis like weekends. |
 | `setCurrency(label \| null)` | A free label, at most 8 characters (`EUR`, `k€`, ...). `null` clears it. Blank, padded (`" EUR "`) and over-8-character labels are refused, and nothing is written when they are. Nothing converts and nothing formats by locale — it is printed exactly as given. |
-| `newProject()` | No discard question. Clears the undo history, as the button does. |
+| `newProject()` | No discard question. Clears the undo history, as the button does. The new project declares `€` as its currency — `setCurrency(null)` clears it. A file opened with `loadText` never gains the field. |
 | `loadText(text, filename?)` | Parses first: a malformed file leaves the open project untouched and throws `ProjectFileError`. Replaces the document, so the undo history goes with it. |
 | `setFilename(name)` | |
 
