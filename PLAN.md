@@ -978,15 +978,36 @@ decisione sua, non un'azione della review.
       `resources.ts:120` vuole solo finito e `>= 0`), con la premessa in **una**
       casa sola (`columns.ts`) e `docs/view.md` che la indica.
 
-- [ ] F15 [self] — La cella di costo di un summary parziale e' tagliata
+- [x] F15 [self] — La cella di costo di un summary parziale e' tagliata —
+      `a737711`. **`cost.gridWidth` 84 → 98, scelto dall'utente** il 2026-09-18
+      davanti alla misura: content box 86, `≥ 122,250,000` 81.19 → 4.81 di
+      margine (94 ne lasciava 0.81, che F14 aveva gia' scartato come non
+      margine sulla testata). Dieci cifre sfondano ancora, accettato. Misurato
+      nell'app dopo il cambio, con due summary a schermo: nessuna cella
+      tagliata, griglia con Rate e Cost accese **887** (era 874), default 705/706
+      invariato perche' entrambe restano nascoste.
+      **La ragione nel commento era falsa ed e' l'ottava del goal, scritta da
+      me ereditando un numero invece di misurarlo**: «il prefisso `≥ ` costa
+      ~5.5px» veniva dal censimento di F14, che aveva sottratto due stringhe di
+      lunghezza diversa (un totale a 8 cifre col prefisso meno uno a 9 nudo).
+      Il critic l'ha rifatta con due strumenti indipendenti (`Range` e
+      `measureText`): **12.47px**, 8.91 di glifo piu' 3.56 di spazio. Corretta
+      nel commento e qui — gli altri quattro numeri dello stesso commento
+      reggevano alla ri-misura.
+      **Chi taglia non e' la cella**: il `div.gantt_tree_content` interno e'
+      largo esattamente `gridWidth - 12` e ha `overflow: hidden` suo; la cella
+      e' il border box e clipperebbe 6px piu' in la'. Dedotto a tavolino dava
+      l'opposto (il testo sborda a destra *dentro* il padding), e attribuirlo
+      al padding box avrebbe sbagliato la larghezza di 6px.
       Trovato dal censimento di F14 (misurato, non dedotto) e **lasciato
       all'utente perche' muove il suo budget**: la cella ha un box contenuto di
       72px dentro gli 84 della colonna (`padding: 0 6px`, `system-ui` 13px), e
       `≥ 12,250,000` misura 74.17px — **tagliata di 2.17px**, senza ellissi e
       senza `title`. Non e' il caso patologico: una cifra nuda ci sta fino a
       `122,250,000` (68.72px, +3.28), ma il prefisso `≥ ` di un summary
-      parzialmente costato costa ~5.5px, quindi **un totale a 8 cifre con del
-      costo mancante basta** — un programma da 12M in una valuta qualunque.
+      parzialmente costato costa **12.47px** (misurato su F15; il ~5.5 scritto
+      qui da F14 nasceva dal sottrarre due stringhe di cifre diverse), quindi
+      **un totale a 8 cifre con del costo mancante basta** — un programma da 12M in una valuta qualunque.
       Preesistente (F14 non ha toccato `cost.gridWidth`) e **una decisione
       diversa dalla sua**: allargare `cost` sposta la griglia di chi mostra la
       colonna (874 → 880+ con Rate), e il tetto non esiste comunque, quindi la
@@ -1515,11 +1536,12 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 - **Cio' che una corsia dichiara impossibile o preesistente va confrontato con
   l'evidenza**: T43 dava il drag reale per non guidabile, T41 e F4b l'hanno
   fatto. Su T48 fatto bene: misurato su HEAD **e** sul tree.
-- **Una ragione registrata male in un doc e' peggio di nessun doc**: sette
-  volte in questo goal (F7, F5c, F5b, F6a, il `currencyLabel` di F6b, F9,
-  F14), quasi sempre per mano dell'hub, e tre volte l'ha chiusa il critic. Si
-  verifica sul percorso che la usa, non sulla riga che la enuncia, **e
-  riscriverla non la ripara** (F9). Chi enumera superfici dica quale rende il
-  campo; **chi dice «la stringa piu' larga» dica contro cosa e' limitata** —
-  la testata di F14 ha un massimo legale, la sua cella nessuno. **E un elenco di
-  superfici e' un censimento che scade: F10 l'ha riscritto come regola.**
+- **Una ragione registrata male in un doc e' peggio di nessun doc**: otto volte
+  in questo goal (F7, F5c, F5b, F6a, F6b, F9, F14, F15), quasi sempre per mano
+  dell'hub, e quattro l'ha chiuse il critic. Si verifica sul percorso che la
+  usa, non sulla riga che la enuncia, **e riscriverla non la ripara** (F9). Chi
+  enumera superfici dica quale rende il campo, e sappia che un elenco e' un
+  censimento che scade (F10 l'ha riscritto come regola); **chi dice «la
+  stringa piu' larga» dica contro cosa e' limitata**. **E un numero ereditato
+  non e' misurato**: F15 ha ricopiato «il prefisso costa ~5.5px» da F14, che
+  l'aveva ottenuto sottraendo due stringhe di lunghezza diversa — 12.47 i veri.
