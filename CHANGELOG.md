@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.5 — 2026-09-21
 
 - PNG and Print now ask first: a dialog picks whether the picture holds the
   whole plan or the tree as you see it — collapsed branches drawn as their

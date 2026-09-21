@@ -15,8 +15,13 @@ F12 ha appuntato.
 
 **Goal G e' chiuso e potato** (review `ship` al primo giro, Fable 5.1):
 l'export chiede prima — ambito, colonne, preset «per il cliente» — e la
-figura non porta piu' nomi di persone per nessuna strada. **Non ancora
-rilasciato**: `## Unreleased` ha il suo bullet e aspetta il rename.
+figura non porta piu' nomi di persone per nessuna strada. **Rilasciato
+`v1.5`** (confermato dall'utente), verificato nell'app servita: badge `v1.5`
+letto dal DOM e, con `seenVersion` seminato a `v1.4`, il dialogo si riapre
+con `v1.5 — 2026-09-21` in testa. `## Unreleased` non c'e' piu'.
+**Trappola costata un falso negativo qui**: `ChangelogDialog` rende
+`className="help"` (`ChangelogDialog.tsx:10`), quindi cercare un dialogo
+"changelog" nel DOM non lo trova — si misura sul contenuto, non sul nome.
 
 **`## Maintenance — no goal`**: T63, T64, T65a e T65b chiusi (ultima release
 da li', `v1.4`, `94caf0d`). Resta **M1**, una casa sola per la mappa
