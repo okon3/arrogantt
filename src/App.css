@@ -1214,18 +1214,28 @@
   list-style: none;
 }
 
-.columnlist label {
+/* One home for the row grammar, two lists wearing it: the export dialog's
+   scope radios are the same kind of row as a column checkbox and must stay
+   that way through any ritocco of the padding. `font-size` is not shared —
+   the scope rows take the body's. */
+.columnlist label,
+.export__option {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 7px 10px;
   border-radius: 6px;
-  font-size: 13px;
   cursor: pointer;
 }
 
+.columnlist label {
+  font-size: 13px;
+}
+
 .columnlist label:hover,
-.columnlist label:has(:focus-visible) {
+.columnlist label:has(:focus-visible),
+.export__option:hover,
+.export__option:has(:focus-visible) {
   background: var(--accent-soft);
 }
 
@@ -1250,21 +1260,6 @@
 .export__scope {
   display: flex;
   flex-direction: column;
-}
-
-/* Same row grammar as a column checkbox, so the two lists read as one dialog. */
-.export__option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.export__option:hover,
-.export__option:has(:focus-visible) {
-  background: var(--accent-soft);
 }
 
 .confirm__body {

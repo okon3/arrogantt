@@ -829,7 +829,10 @@ export default function App() {
 
   // Latched on the request rather than cleared with a `setState` here: the
   // request outlives the renders the print itself causes, and clearing it
-  // from inside the effect would be a cascading render for nothing.
+  // from inside the effect would be a cascading render for nothing. Identity
+  // is a safe latch because the one caller builds the object at the click
+  // (`ExportDialog.tsx`, `onConfirm({ scope, columns })`); a caller that
+  // reused one would print once and never again.
   const printed = useRef<ExportSettings | null>(null);
   useEffect(() => {
     if (pendingPrint === null || printed.current === pendingPrint) return;

@@ -721,12 +721,13 @@ that isn't there.
   dialog body** (12px/600/uppercase/`letter-spacing: 0.06em`/`--ink-faint`) —
   Calendar's "Working days"/"Shutdowns", Task info's "Computed" and People's
   expanded panel ("Availability periods"/"Rate periods") share it; one that
-  opens a body — or a padded panel — straight under its hint adds
-  `.dialog__subhead--flush` (the hint's own bottom margin already spaces it;
-  inside `.people__offPanel` it is the panel's own top padding that would
-  otherwise stack with the primitive's margin and read as a gap the panel
-  does not own) rather than forking the grammar or reaching for a descendant
-  selector.
+  **opens** a body or a padded panel adds `.dialog__subhead--flush` rather
+  than forking the grammar or reaching for a descendant selector, because
+  whatever sits above it already spaces it: a hint's own bottom margin, the
+  body's top padding when there is no hint (Export's "Rows", the body's first
+  child), or inside `.people__offPanel` the panel's own top padding, which
+  would otherwise stack with the primitive's margin and read as a gap the
+  panel does not own.
 - **`.dialog__hint` caps its measure at 58ch**, which keeps a caption from
   outrunning the fields below it. A hint that is the dialog's whole prose adds
   `.dialog__hint--wide` (`max-width: none`) — Help's opening paragraph, whose

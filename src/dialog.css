@@ -108,9 +108,10 @@
   color: var(--ink-faint);
 }
 
-/* A subhead that opens a dialog body straight under its hint: the hint's own
-   bottom margin already spaces it. Ties at (0,1,0) with the primitive and wins
-   by source order, per the sanctioned override in docs/view.md § Dialogs. */
+/* A subhead that opens a dialog body or a padded panel: whatever is above it
+   already does the spacing — a hint's bottom margin, or the body's own top
+   padding when there is no hint at all. Ties at (0,1,0) with the primitive and
+   wins by source order, per the sanctioned override in docs/view.md § Dialogs. */
 .dialog__subhead--flush {
   margin-top: 0;
 }
