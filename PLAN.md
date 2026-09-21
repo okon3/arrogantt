@@ -92,7 +92,7 @@ opzione a se', spuntabile fuori dal preset. Aperto dall'utente il 2026-09-21.
       e nessun task disattivato; togliendo la spunta lo stesso probe li
       rilegge. Stampa e PNG danno lo stesso risultato.
 
-- [ ] H3 [self] — Docs, changelog, e il `clientSafe` morto.
+- [x] H3 [self] — Docs, changelog, e il `clientSafe` morto.
       `docs/file-format.md` (export); il bullet sotto `## Unreleased` — che
       oggi **non esiste** e va creato in cima, sopra `## v1.5`; e la rimozione
       di `clientSafe` + `clientSafeColumns()` da `columns.ts` coi loro test in

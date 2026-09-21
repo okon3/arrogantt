@@ -139,3 +139,13 @@ beside a non-zero `Uncosted (d)` it is a lower bound.
   header band and the resource cell too. An empty selection draws no band at
   all — a strip with no labels in it is nobody's choice — but is still not the
   legacy `Name + Person` outline that `columns` omitted answers.
+- **`excludeDisabled` drops a disabled row from the figure**, and with it the
+  whole branch under a disabled summary: `disabled` is inherited down the tree
+  (`disabledByTask`), so every descendant already carries it and one flat
+  filter takes the lot. It lives in `visibleTasks`, the one home the row filter
+  has, so the figure and the page count can never disagree. Stored in
+  `arrogantt.export.v1` beside the scope and the column list; an absent key
+  reads as `false`, a non-boolean one drops the whole stored settings.
+- The dialog's **For the client** preset writes the column list and
+  `excludeDisabled` from one click: no registry columns, no disabled tasks —
+  names and bars.

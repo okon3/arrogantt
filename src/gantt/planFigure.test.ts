@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import type { Resource } from '../scheduler';
-import { PLAN_COLUMNS } from './columns';
 import { parseWallClock, serializeDate } from './dates';
 import { planFigure, planFigurePages, tickUnit } from './planFigure';
 import { buildPlan } from './plan';
@@ -357,13 +356,7 @@ describe('planFigure columns', () => {
     expect(explicitUndefined.svg).toBe(omitted.svg);
   });
 
-  it('PLAN_COLUMNS marks resource, rate and cost as client-unsafe, and the figure draws whatever it is given', () => {
-    // A name is an internal of the organisation, so it leaves with the money.
-    const unsafe = PLAN_COLUMNS.filter((entry) => !entry.clientSafe)
-      .map((entry) => entry.name)
-      .sort();
-    expect(unsafe).toEqual(['cost', 'rate', 'resource_id']);
-
+  it('draws whatever column it is given, money included — the figure judges nothing', () => {
     const { project, solved } = buildFixtureC();
     const { svg } = planFigure(project, solved, { width: 1050, columns: ['cost'] });
     expect(svg).toContain('Cost (EUR)');

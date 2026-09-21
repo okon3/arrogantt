@@ -28,12 +28,6 @@ export interface PlanColumn {
   figureWidth: number;
   /** On screen before the user ever opens the picker. */
   defaultShown: boolean;
-  /**
-   * Fit for a client's eyes, and the export dialog's *For the client* preset.
-   * A person's name is an internal of the organisation, so `resource_id` is
-   * not safe however useful it is on screen.
-   */
-  clientSafe: boolean;
 }
 
 /** Registry order = column order, in the grid and in the figure. */
@@ -44,7 +38,6 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
     gridWidth: 76,
     figureWidth: 110,
     defaultShown: true,
-    clientSafe: false,
   },
   {
     name: 'nominal_days',
@@ -52,7 +45,6 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
     gridWidth: 62,
     figureWidth: 52,
     defaultShown: true,
-    clientSafe: true,
   },
   {
     name: 'start_date',
@@ -60,7 +52,6 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
     gridWidth: 84,
     figureWidth: 76,
     defaultShown: true,
-    clientSafe: true,
   },
   {
     name: 'end_shown',
@@ -68,7 +59,6 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
     gridWidth: 84,
     figureWidth: 76,
     defaultShown: true,
-    clientSafe: true,
   },
   {
     name: 'elapsed_days',
@@ -76,7 +66,6 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
     gridWidth: 62,
     figureWidth: 60,
     defaultShown: true,
-    clientSafe: true,
   },
   // The first two labels that read `project`: a rate or a cost is meaningless
   // without the currency it is in, and the label is the only place that unit
@@ -114,7 +103,6 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
     gridWidth: 84,
     figureWidth: 70,
     defaultShown: false,
-    clientSafe: false,
   },
   {
     name: 'cost',
@@ -122,7 +110,6 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
     gridWidth: 98,
     figureWidth: 84,
     defaultShown: false,
-    clientSafe: false,
   },
 ];
 
@@ -132,11 +119,6 @@ const COLUMNS_KEY = 'arrogantt.columns.v1';
 
 export function defaultColumnSelection(): ReadonlySet<PlanColumnName> {
   return new Set(PLAN_COLUMNS.filter((entry) => entry.defaultShown).map((entry) => entry.name));
-}
-
-/** The columns fit for a client's eyes — `clientSafe` in the registry. */
-export function clientSafeColumns(): ReadonlySet<PlanColumnName> {
-  return new Set(PLAN_COLUMNS.filter((entry) => entry.clientSafe).map((entry) => entry.name));
 }
 
 /**

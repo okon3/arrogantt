@@ -753,8 +753,8 @@ scope nor a column list, so it has nothing to ask.
   plan** whatever the rows, because `options.slice` selects rows and never
   dates, so every page of a figure shares one scale (`planFigure.ts`).
 - **The preset is a button, never a mode.** *For the client* empties the
-  column selection — no registry column at all, not even a `clientSafe` one —
-  and checks *Leave out disabled tasks*, because a client's figure has no
+  column selection — no registry column at all — and checks
+  *Leave out disabled tasks*, because a client's figure has no
   business showing what the organisation privately disabled either. It
   **leaves the scope where it is**: the scope mirrors the tree the user has
   already arranged on screen, and a preset that closed it under them would

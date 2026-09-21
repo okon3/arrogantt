@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Leave the disabled tasks out of an exported or printed picture, so what you
+  hand over is the work someone has committed to.
+- "For the client" now gives just the names and the bars: no columns at all,
+  and no disabled tasks.
+
 ## v1.5 — 2026-09-21
 
 - Choose what an exported or printed picture shows: the whole plan or the tree
