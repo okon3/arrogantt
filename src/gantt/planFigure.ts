@@ -336,8 +336,12 @@ export function planFigure(
     ? selected.reduce((total, entry) => total + entry.figureWidth, 0)
     : PERSON_WIDTH;
 
-  const chartTop =
-    PADDING + (options.title ? TITLE_HEIGHT : 0) + (options.columns ? HEADER_BAND : 0);
+  // An empty `columns` list is still "some columns were chosen", just none of
+  // them — a band with no labels in it is nobody's choice. Extracted once so
+  // the height and the drawing below can never gate on it separately (H2).
+  const hasColumnHeader = options.columns !== undefined && options.columns.length > 0;
+
+  const chartTop = PADDING + (options.title ? TITLE_HEIGHT : 0) + (hasColumnHeader ? HEADER_BAND : 0);
   const rowsTop = chartTop + MONTH_BAND + TICK_BAND;
   const rowsBottom = rowsTop + rows.length * ROW_HEIGHT;
   const height = rowsBottom + PADDING;
@@ -365,9 +369,9 @@ export function planFigure(
     );
   }
 
-  // The topmost band, above the month band — drawn whenever `columns` is
-  // given, `columns: []` included, which is a band with no labels in it.
-  if (options.columns) {
+  // The topmost band, above the month band — drawn only when there is at
+  // least one column to label in it (`hasColumnHeader`).
+  if (hasColumnHeader) {
     const headerTop = PADDING + (options.title ? TITLE_HEIGHT : 0);
     let left = PADDING + NAME_WIDTH;
     for (const entry of selected!) {

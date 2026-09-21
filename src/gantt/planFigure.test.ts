@@ -321,14 +321,40 @@ describe('planFigure columns', () => {
     expect(costCells).toHaveLength(8);
   });
 
-  it('columns: [] gives a header band with no labels, left edge 16 + 250', () => {
+  it('columns: [] draws no header band at all: height matches the no-columns option exactly', () => {
     const { project, solved } = buildFixtureC();
-    const base = planFigure(project, solved, { width: 1050 });
-    const { svg, height } = planFigure(project, solved, { width: 1050, columns: [] });
+    const withoutOption = planFigure(project, solved, { width: 1050 });
+    const { height } = planFigure(project, solved, { width: 1050, columns: [] });
+    // No magic number: neither option holds a band, so nothing tells them apart.
+    expect(height).toBe(withoutOption.height);
+  });
 
-    expect(height - base.height).toBe(18);
-    expect(svg).not.toMatch(/font-weight="600" fill="#6b7280"/);
-    expect(svg).toMatch(/<line x1="266" y1="[\d.]+" x2="266" y2="[\d.]+" stroke="#dfe2e8" \/>/);
+  it('a non-empty columns list is taller than columns: [] by exactly one header band', () => {
+    const { project, solved } = buildFixtureC();
+    const empty = planFigure(project, solved, { width: 1050, columns: [] });
+    const { height } = planFigure(project, solved, { width: 1050, columns: ['nominal_days'] });
+    expect(height - empty.height).toBe(18);
+  });
+
+  it('columns: [] draws no registry column label; a chosen column still draws its own', () => {
+    const { project, solved } = buildFixtureC();
+    const empty = planFigure(project, solved, { width: 1050, columns: [] });
+    const withOne = planFigure(project, solved, { width: 1050, columns: ['nominal_days'] });
+    expect(empty.svg).not.toContain('>Effort<');
+    expect(withOne.svg).toContain('>Effort<');
+    // The label column width is unaffected by the band fix: still 16 + 250 + 0.
+    expect(empty.svg).toMatch(/<line x1="266" y1="[\d.]+" x2="266" y2="[\d.]+" stroke="#dfe2e8" \/>/);
+  });
+
+  it('columns: undefined given explicitly is byte-identical to omitting the option, so the two-gate extraction leaves the legacy path alone', () => {
+    const { project, solved } = buildFixtureC();
+    const omitted = planFigure(project, solved, { width: 1050, title: 'plan.gantt' });
+    const explicitUndefined = planFigure(project, solved, {
+      width: 1050,
+      title: 'plan.gantt',
+      columns: undefined,
+    });
+    expect(explicitUndefined.svg).toBe(omitted.svg);
   });
 
   it('PLAN_COLUMNS marks resource, rate and cost as client-unsafe, and the figure draws whatever it is given', () => {

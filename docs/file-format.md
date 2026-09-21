@@ -136,6 +136,6 @@ beside a non-zero `Uncosted (d)` it is a lower bound.
   dialog. Decisions and their reasons: [view.md](view.md).
 - The figure takes that `columns` list (`FigureOptions.columns`, drawn as a
   header band above the month band), so a deselected column drops out of the
-  header band and the resource cell too, and an empty selection still draws
-  the band, empty — never the legacy `Name + Person` outline that `columns`
-  omitted answers.
+  header band and the resource cell too. An empty selection draws no band at
+  all — a strip with no labels in it is nobody's choice — but is still not the
+  legacy `Name + Person` outline that `columns` omitted answers.

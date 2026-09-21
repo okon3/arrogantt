@@ -83,7 +83,7 @@ opzione a se', spuntabile fuori dal preset. Aperto dall'utente il 2026-09-21.
       ramo; il conteggio pagine e la figura filtrano identico; impostazioni
       vecchie in storage restano leggibili; check verdi.
 
-- [ ] H2 [impl] — Il dialogo: la casella, il preset, la banda. Una casella
+- [x] H2 [impl] — Il dialogo: la casella, il preset, la banda. Una casella
       «Leave out disabled tasks» accanto allo scope; «For the client» azzera
       le colonne **e** la spunta; la banda di testata non si disegna a zero
       colonne.
@@ -92,9 +92,19 @@ opzione a se', spuntabile fuori dal preset. Aperto dall'utente il 2026-09-21.
       e nessun task disattivato; togliendo la spunta lo stesso probe li
       rilegge. Stampa e PNG danno lo stesso risultato.
 
-- [ ] H3 [self] — Docs e changelog. `docs/file-format.md` (export), e il
-      bullet sotto `## Unreleased` — che oggi **non esiste** e va creato in
-      cima, sopra `## v1.5`.
+- [ ] H3 [self] — Docs, changelog, e il `clientSafe` morto.
+      `docs/file-format.md` (export); il bullet sotto `## Unreleased` — che
+      oggi **non esiste** e va creato in cima, sopra `## v1.5`; e la rimozione
+      di `clientSafe` + `clientSafeColumns()` da `columns.ts` coi loro test in
+      `columns.test.ts` — dopo H2 `docs/` non nomina piu' `clientSafe` da
+      nessuna parte, quindi la rimozione non ha coda documentale.
+      Decisione dell'hub il 2026-09-21: si toglie, non si
+      giustifica — dopo H2 nessuno li chiama, e la proprieta' non e' solo
+      inutilizzata ma **superata** (la risposta a «quali colonne puo' vedere un
+      cliente» e' ora «nessuna»). Un campo del registro che nessuno legge
+      invita il prossimo lettore a fidarsene. `docs/view.md` lo tocca gia' H2;
+      `planFigure.test.ts:336` legge `clientSafe` per un'asserzione sulla
+      figura e va riscritto, non cancellato.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
@@ -252,10 +262,16 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   ingresso. **Prima di briefare, misurare la premessa**: se cade, il brief non
   serve. Un task di sola analisi paga bene la delega se l'hub tiene solo le
   conclusioni e rimisura da se' quelle portanti (T60: due Explore, 56k + 72k).
-- **Goal H**: H1 100k/90k, zero correzioni di corsia. Il critic ha dato `pass`
-  pieno e ha mancato due difetti sotto il bar che l'hub ha visto nel suo
-  report: fixture in italiano, e un commento reso stale dal diff stesso. Un
-  `pass` non esime dal leggere il diff.
+- **Goal H**: H1 100k/90k, H2 134k/127k, zero correzioni di corsia. Il critic
+  di H1 ha dato `pass` pieno mancando due difetti sotto il bar che l'hub ha
+  visto **nel suo stesso report**: un `pass` non esime dal leggere il diff.
+- **Un brief che scopa fuori un file di `docs/` non scopa fuori la docs
+  duty.** H2 rimandava `docs/file-format.md` a H3; il diff rendeva falsa una
+  sua frase, e la regola di `CLAUDE.md` («stesso commit») supera il brief. Il
+  critic l'ha resa come OUT-OF-SCOPE perche' il brief gliel'aveva tolta — e
+  aveva ragione a segnalarla comunque. **Scopa il codice, mai la claim.**
+  Stessa forma nel finding vero: la corsia ha giudicato «vecchia misura» una
+  frase che nominava il bottone appena ricablato.
 - **Una citazione copiata non e' verificata**: ne' un `file:line`, ne' un tipo,
   ne' un predicato, **ne' il nome di un'op** — `resourceUpdate` e' passato per
   tre mani e l'op e' `updateResource`. Si ri-localizza, e si cita per simbolo.

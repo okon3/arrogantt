@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ColumnChecklist } from './ColumnChecklist';
 import { Dialog } from './Dialog';
-import { clientSafeColumns, type PlanColumnName } from './columns';
+import type { PlanColumnName } from './columns';
 import { setAutofocus } from './autofocus';
 import type { ExportSettings } from './exportSettings';
 import type { Project } from './project';
@@ -30,6 +30,7 @@ export function ExportDialog({
 }) {
   const [scope, setScope] = useState<ExportSettings['scope']>(settings.scope);
   const [columns, setColumns] = useState<ReadonlySet<PlanColumnName>>(settings.columns);
+  const [excludeDisabled, setExcludeDisabled] = useState(settings.excludeDisabled);
 
   return (
     <Dialog
@@ -49,7 +50,7 @@ export function ExportDialog({
             type="button"
             className="dialog__btn dialog__btn--primary"
             ref={setAutofocus}
-            onClick={() => onConfirm({ scope, columns, excludeDisabled: settings.excludeDisabled })}
+            onClick={() => onConfirm({ scope, columns, excludeDisabled })}
           >
             {action === 'png' ? 'Export' : 'Print'}
           </button>
@@ -81,13 +82,24 @@ export function ExportDialog({
         “As I see it” draws a collapsed branch as its summary row and leaves its children out.
         The dates always span the whole plan.
       </p>
+      <label className="export__option">
+        <input
+          type="checkbox"
+          checked={excludeDisabled}
+          onChange={(event) => setExcludeDisabled(event.target.checked)}
+        />
+        Leave out disabled tasks
+      </label>
       <div className="export__head">
         <h3 className="dialog__subhead">Columns</h3>
         <button
           type="button"
           className="dialog__btn export__preset"
-          title="Only the columns fit for a client's eyes"
-          onClick={() => setColumns(clientSafeColumns())}
+          title="No registry columns and no disabled tasks"
+          onClick={() => {
+            setColumns(new Set());
+            setExcludeDisabled(true);
+          }}
         >
           For the client
         </button>

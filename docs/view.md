@@ -752,12 +752,13 @@ scope nor a column list, so it has nothing to ask.
   `ColumnChecklist` over the registry. The **dates always span the whole
   plan** whatever the rows, because `options.slice` selects rows and never
   dates, so every page of a figure shares one scale (`planFigure.ts`).
-- **The preset is a button, never a mode.** *For the client* sets the columns
-  to the registry's `clientSafe` entries — it drops Resource, Rate and Cost,
-  because a person's name is an internal of the organisation and not merely
-  a figure — and **leaves the scope where it is**. The scope mirrors the tree the user has
-  already arranged on screen; a preset that closed it under them would make
-  what they see and what they get diverge, which is the one thing the
+- **The preset is a button, never a mode.** *For the client* empties the
+  column selection — no registry column at all, not even a `clientSafe` one —
+  and checks *Leave out disabled tasks*, because a client's figure has no
+  business showing what the organisation privately disabled either. It
+  **leaves the scope where it is**: the scope mirrors the tree the user has
+  already arranged on screen, and a preset that closed it under them would
+  make what they see and what they get diverge, which is the one thing the
   WYSIWYG scope exists to prevent.
 - **The default is continuity, and `resolveExportSettings`
   (`exportSettings.ts`) is its only home.** Nothing stored: *The whole plan*,
@@ -778,11 +779,10 @@ scope nor a column list, so it has nothing to ask.
   effect makes the call. A PNG blocks nothing and runs straight from the
   callback. Why that effect also writes the ref `installPrintFigure` reads is
   in the comment there, and only there. **Measured on the PNG path**:
-  branch collapsed, *As I see it* + *For the client* confirmed, then a
-  `beforeprint` — the figure drew `Design` and `Launch`, not
-  `Wireframes`/`Mockups`, under Resource · Effort · Start · End · Duration.
-  The grid at that moment was showing Rate and hiding Duration, so a ref left
-  behind would have read the other way round on both counts.
+  branch collapsed, *As I see it* confirmed, then a `beforeprint` — the figure
+  drew `Design` and `Launch`, not `Wireframes`/`Mockups`. The grid's own
+  selection differed at that moment, so a ref left behind would have read the
+  other way round.
 - **Ctrl+P opens nothing** and prints with the settings as they stand, which
   is what that key promises: `installPrintFigure` hangs off `beforeprint`, by
   which time the browser's print is already arriving and no modal can
@@ -792,7 +792,7 @@ scope nor a column list, so it has nothing to ask.
   of one registry picking differently at the same moment, so neither key may
   stand in for the other — and once the export key exists it wins, measured
   across a reload: grid `[…, rate]` on screen, dialog reopening on the
-  stored `clientSafe` set.
+  stored empty column set with *Leave out disabled tasks* checked.
 
 ## The chart's model is the caller's object until a file replaces it
 
