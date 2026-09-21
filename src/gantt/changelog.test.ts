@@ -66,6 +66,52 @@ describe('parseChangelog', () => {
     ]);
   });
 
+  // The file wraps its bullets at the margin. Reading only the first line cut
+  // every note of every release short, mid-sentence, and no fixture here wrapped.
+  it('joins the indented lines a wrapped bullet continues on', () => {
+    const text = `## v1.0 — 2026-09-04
+
+- Una nota che va a capo
+  perche' la riga era piena,
+  e poi ancora.
+- Nota corta.
+`;
+    expect(parseChangelog(text)[0].notes).toEqual([
+      "Una nota che va a capo perche' la riga era piena, e poi ancora.",
+      'Nota corta.',
+    ]);
+  });
+
+  it('wraps bullets in a CRLF document too', () => {
+    const text = ['## v1.0 — 2026-09-04', '', '- Una nota', '  che va a capo.', ''].join('\r\n');
+    expect(parseChangelog(text)[0].notes).toEqual(['Una nota che va a capo.']);
+  });
+
+  // Otherwise any indented line later in the section would glue itself onto the
+  // last note it happened to follow.
+  it('a blank line ends a bullet', () => {
+    const text = `## v1.0 — 2026-09-04
+
+- Una nota.
+
+  Un blocco rientrato che non le appartiene.
+`;
+    expect(parseChangelog(text)[0].notes).toEqual(['Una nota.']);
+  });
+
+  it('drops the continuation of a bullet that has no entry to hang on', () => {
+    const text = `- Nota orfana
+  e la sua continuazione.
+
+## v1.0 — 2026-09-04
+
+- Nota vera.
+`;
+    expect(parseChangelog(text)).toEqual([
+      { version: 'v1.0', date: '2026-09-04', notes: ['Nota vera.'] },
+    ]);
+  });
+
   it('returns an empty array for empty or garbage text', () => {
     expect(parseChangelog('')).toEqual([]);
     expect(parseChangelog('just some\nrandom text\nwith no headings')).toEqual([]);
