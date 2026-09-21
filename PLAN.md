@@ -130,7 +130,7 @@ stretto.
       assente resta assente; 2000 caratteri passano e 2001 lanciano
       `ProjectFileError`; un tipo sbagliato lancia; `serializeForFile`
       ri-apre un file con 2000 caratteri e newline dentro. `FILE_VERSION`
-      resta 2. Tre check verdi. — commit 412de12
+      resta 2. Tre check verdi. — commit 3eaa6bf
 - [ ] I2 [impl] — La textarea nel `TaskDialog`, summary inclusi, col giro
       completo edit → modello → `applySolution`; oltre 2000 `save()` rifiuta
       con `error`, nessun `maxLength`. Verifica nel browser.
