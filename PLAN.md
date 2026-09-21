@@ -11,7 +11,10 @@ resta a v1.5 e il rilascio si fa quando serve distribuire una build.
 chiuse, suddivisione rivista sulla ricognizione del 2026-09-21, I1 committato.
 Restano I2 (textarea), I3 (CSV e agent API) e I4 (docs e changelog).
 `## Maintenance` porta T16 (audit mobile) e T17 (nome del task in hover);
-Goal C aspetta quel report prima di ricevere task veri.
+Goal C aspetta quel report prima di ricevere task veri. **Goal J** (task
+completato come misura della stima) e' aperto ma in sola analisi: tocca il
+motore e un invariante dichiarato assoluto, e non riceve task finche' le sue
+domande aperte non sono chiuse.
 
 **Trappola di misura, costata un falso negativo**: `ChangelogDialog` rende
 `className="help"` (`ChangelogDialog.tsx:10`) — un dialogo "changelog" nel DOM
@@ -179,6 +182,73 @@ stretto.
 la mappa riga) e' in giacenza «finche' un goal non aggiunge campi di riga»
 — Goal I ne aggiunge uno. Diventa proponibile alla chiusura del goal, non
 prima, e resta corsia deep.
+
+## Goal J — un task completato misura la stima            [aperto, in analisi]
+Un task si puo' marcare **completato**, e quello e' l'unico caso in cui la
+**fine la dichiara l'utente** invece di derivarla. Il task resta un peso sul
+passato (occupa capacita', i successori ne dipendono) e diventa il materiale
+per confrontare la stima iniziale con il consuntivo. Aperto dall'utente il
+2026-09-21.
+
+**Il punto che riconcilia la proposta con l'invariante.** La fine dichiarata
+non e' un input «data di fine»: e' **una misura dell'effort effettivo espressa
+nell'unita' che l'utente conosce**, il giorno in cui ha finito. Per un task
+completato si **inverte la freccia** — la fine e' l'input, l'effort e' il
+derivato — e si usa la stessa legge di conservazione del motore
+(`Σ rate × durata = effort`) letta al contrario. Un task completato **smette
+di essere un problema di scheduling e diventa un record**: non si schedula, si
+rigioca, occupando capacita' come blocco fisso mentre il simulatore schedula
+il resto attorno. E' la stessa forma di «un summary non si schedula mai».
+
+**Il confronto e' effort contro effort, mai effort contro elapsed.** Domanda
+esplicita dell'utente all'apertura: confrontare 5gg stimati con 7gg effettivi?
+**No** — sono unita' diverse (giorni-persona contro giorni lavorativi di
+calendario) e il loro rapporto non significa niente. Nell'esempio, 7 giorni al
+50% di disponibilita' sono **3,5 giorni-persona** spesi contro 5 stimati.
+
+**Misurato il 2026-09-21, prima di scrivere qualunque cosa.**
+- **Lo scheduler non legge mai `progress`**: zero occorrenze in
+  `src/scheduler/` (le tre che un grep trova sono la parola dentro commenti).
+  Nel modello `progress?: number` esiste (`project.ts:44`) e una fixture porta
+  gia' `progress: 1`. **«Completato al 100%» e' quindi gia' scrivibile oggi ed
+  e' gia' inerte**: un boolean `completed` accanto sarebbe una seconda grafia
+  dello stesso stato, contro la regola che il repo applica a `disabled` e a
+  `description`.
+- Nel modello **non esiste nessun campo `end`**: la fine e' solo un'uscita
+  dello scheduler.
+
+**Due conseguenze che non sono gratis.**
+- **Completare pinna anche l'inizio.** Lo start e' derivato salvo vincolo; un
+  task completato il cui predecessore si sposta slitterebbe trascinandosi
+  dietro una fine *registrata*. Il flag fa due cose, non una — implica un
+  `constraintStart`.
+- **`Σ(rate × duration) = effort` va riscritta.** Per un task completato il
+  membro destro e' l'effort **effettivo**, non la stima. CLAUDE.md la dichiara
+  assoluta: cambiarla e' un atto deliberato da scrivere in chiaro, non un
+  effetto collaterale da scoprire.
+
+**Domande aperte — nessuna e' decisa, nessuna e' binding.**
+- **Come si scrive lo stato**: `progress === 1` che finalmente significa
+  qualcosa, un flag nuovo, o **nessuno dei due** — il task e' completato
+  **se e solo se** porta una fine effettiva, e il campo che porta
+  l'informazione *e'* lo stato. Da chiedere all'utente.
+- **Con quale disponibilita' si converte l'elapsed in effort effettivo**:
+  quella dichiarata **oggi** o quella in vigore **allora**? Ricalcolare sempre
+  e' semplice ma fa **riscrivere la storia** (aggiungi un'assenza retroattiva
+  e il consuntivo di un task chiuso cambia da solo); congelare il numero al
+  momento del completamento e' stabile ma introduce un secondo dato che puo'
+  divergere dal modello. Non ha una risposta ovvia.
+- **Dove si legge il confronto**: colonna, dialogo, CSV, figura? Prodotto,
+  dell'utente, e prematura finche' le due sopra non sono chiuse.
+- **Cosa succede a un task completato senza risorsa** (tasso pieno) e **a una
+  milestone completata** (effort zero: la fine e' tutto cio' che c'e').
+- **Il giorno dichiarato e' un giorno lavorativo?** Vale la regola del
+  confine di giornata; una fine su un giorno chiuso va normalizzata o
+  rifiutata, come gia' fa lo start dichiarato.
+
+**Nessun task ancora**, e nessuna suddivisione: il goal non riceve fette
+finche' la prima domanda aperta non e' chiusa con l'utente. Serve poi una
+spec `architect`, perche' tocca il motore.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
