@@ -46,6 +46,17 @@ assenze non ci arrivano affatto — `timelineOverlays` e' importato solo da
 - [x] G3c [self] — Le tre pulci del critic — `5987c42`
 - [x] G4 [self] — Docs, changelog e vetrina — `440538c`
 
+**Dopo la review, su decisione dell'utente**: il preset «For the client»
+toglie anche **Resource** (`3a6e21b`) — un nome e' un interno
+dell'organizzazione, non una cifra. Era l'unica incoerenza che la review
+avesse lasciato aperta. Misurato nell'app servita, **col probe provato in
+negativo**: col preset la figura stampata non porta nomi ne' iniziali ne'
+id; spuntando Resource lo stesso probe legge «Zebediah Quill» — senza quella
+contro-prova l'assenza non valeva niente. Da questo giro: **`window.print()`
+stubbato non fa scattare `beforeprint`**, quindi il contenitore `.plan-print`
+non viene mai costruito e chi lo legge misura gli SVG delle icone; l'evento
+va dispatchato a mano.
+
 **L'opzione «nascondi chiusure e assenze» e' stata ritirata, con conferma
 dell'utente (2026-09-18)** — era una delle quattro decisioni di apertura. Le
 assenze non sono mai state nella figura; nasconderne le chiusure mostrerebbe
