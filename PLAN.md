@@ -4,8 +4,8 @@
 
 Goal D, E, F e G sono **chiusi, recensiti e potati**; le loro Accept lines
 sono cadute dopo la review, come vuole la regola. Ultima release **`v1.5`**
-(export configurabile), verificata nell'app servita. `## Maintenance` porta
-un solo task aperto: **T16**, l'audit mobile.
+(export configurabile), verificata nell'app servita. **Goal H** e' aperto
+(export per il cliente, tre task); `## Maintenance` porta T16, l'audit mobile.
 
 **Trappola di misura, costata un falso negativo**: `ChangelogDialog` rende
 `className="help"` (`ChangelogDialog.tsx:10`) — un dialogo "changelog" nel DOM
@@ -35,6 +35,63 @@ documento gia' a 768px di viewport (bordo destro 955px su 768 di
 `clientWidth`), in empty state. Non e' un difetto del rename e sotto la regola
 dell'80% non vale un meccanismo da solo — ma e' il primo indizio che il goal
 raccogliera'.
+
+## Goal H — la figura per il cliente non dice piu' del necessario   [aperto]
+Il preset «For the client» di PNG e stampa consegna **nessuna colonna** e
+**nessun task disattivato**; l'esclusione dei disattivati esiste anche come
+opzione a se', spuntabile fuori dal preset. Aperto dall'utente il 2026-09-21.
+
+**Decisioni gia' prese con l'utente — non riaprirle.**
+- **Un summary disattivato porta via tutto il suo ramo**, figli attivi
+  inclusi: coerente con «disabilitato = non fa parte del piano» e col
+  collapse, e il cliente non vede un lavoro orfano senza la fase che lo
+  contiene.
+- «Nessuna colonna» vuol dire **nessuna colonna del registro**. La colonna dei
+  nomi non e' nel registro (`PLAN_COLUMNS` ha solo le sette opzionali), quindi
+  resta: la figura per il cliente e' nomi piu' barre.
+- CSV **fuori scopo**: la richiesta e' esportazione immagine e stampa.
+
+**Fatti stabiliti, misurati il 2026-09-21 — non ri-esplorare.**
+- `columns: []` e' **gia' rappresentabile** e distinto da «assente»:
+  `figureOptionsFrom` (`exportSettings.ts`) lo passa incondizionatamente, e
+  solo una lista assente significa l'outline legacy.
+- Ma `columns: []` **disegna comunque la banda di testata, vuota**
+  (`planFigure.ts:359-361`, il commento lo dichiara). A zero colonne la banda
+  va tolta: una striscia senza etichette non e' una scelta.
+- Il filtro delle righe ha **una casa sola**, `visibleTasks`
+  (`planFigure.ts:168`), chiamata da `planFigure` (`:315`) e dal conteggio
+  pagine (`:471`). L'esclusione va li' dentro, o stampa e paginazione
+  divergono in silenzio.
+- Il preset oggi e' `setColumns(clientSafeColumns())`
+  (`ExportDialog.tsx`), cioe' scrive **un solo** pezzo di stato; dovra'
+  scriverne due.
+- `clientSafe` (`columns.ts`) resta **senza lettori** se il preset non lo usa
+  piu': esiste solo per lui. Da togliere o da giustificare, non da ignorare.
+- Da verificare prima di briefare H1: se `PlanTask` porti gia' `disabled`
+  fino a `planFigure`. Non misurato.
+
+- [ ] H1 [impl] — `excludeDisabled` nelle impostazioni, e il filtro in una
+      casa sola. Il campo in `ExportSettings`, la sua persistenza in
+      `arrogantt.export.v1` (parsing strict come il resto: un valore non
+      booleano fa cadere l'intero stored, non il singolo campo), il default
+      che non cambia cio' che esce oggi, e l'esclusione dentro `visibleTasks`
+      col ramo intero.
+      Accept: un summary disattivato con figli attivi sparisce con tutto il
+      ramo; il conteggio pagine e la figura filtrano identico; impostazioni
+      vecchie in storage restano leggibili; check verdi.
+
+- [ ] H2 [impl] — Il dialogo: la casella, il preset, la banda. Una casella
+      «Leave out disabled tasks» accanto allo scope; «For the client» azzera
+      le colonne **e** la spunta; la banda di testata non si disegna a zero
+      colonne.
+      Accept: misurato nell'app servita, col probe provato **nei due versi**
+      (come G3c) — col preset la figura non porta nessuna testata di colonna
+      e nessun task disattivato; togliendo la spunta lo stesso probe li
+      rilegge. Stampa e PNG danno lo stesso risultato.
+
+- [ ] H3 [self] — Docs e changelog. `docs/file-format.md` (export), e il
+      bullet sotto `## Unreleased` — che oggi **non esiste** e va creato in
+      cima, sopra `## v1.5`.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
