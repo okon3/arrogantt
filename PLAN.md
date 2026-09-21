@@ -134,7 +134,16 @@ fatta**, e va rifatta se qualcuno riapre la questione.
   oggi sono appuntate solo dalla misura nel browser, al prezzo di un mock di
   `gantt`.
 - Gli screenshot di `docs/assets/` portano il badge `v1.3` e **non mostrano il
-  dialogo di export**: invecchieranno al prossimo cambio di superficie.
+  dialogo di export** — cioe' la novita' che il README descrive tre paragrafi
+  piu' sotto. Sono la prima cosa che si vede in una **vetrina pubblica**, non
+  interna: l'argomento del costo (T65b e' costato una generazione dell'hub) e
+  quello del pubblico tirano in direzioni opposte, e l'utente ha scelto di
+  rimandare il 2026-09-21 sapendolo.
+- **Un estraneo non ha una strada per segnalare un bug**: nessun
+  `CONTRIBUTING.md`, nessuna riga sulle issue, nessun accenno al fatto che sia
+  uno strumento interno rilasciato MIT senza promesse di supporto. E' il buco
+  piu' evidente del repo pubblico e il piu' economico da chiudere. Offerto e
+  rimandato il 2026-09-21.
 
 ## Analisi in giacenza — non e' un task, e' materiale per decidere
 
