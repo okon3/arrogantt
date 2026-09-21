@@ -200,11 +200,27 @@ di essere un problema di scheduling e diventa un record**: non si schedula, si
 rigioca, occupando capacita' come blocco fisso mentre il simulatore schedula
 il resto attorno. E' la stessa forma di «un summary non si schedula mai».
 
-**Il confronto e' effort contro effort, mai effort contro elapsed.** Domanda
-esplicita dell'utente all'apertura: confrontare 5gg stimati con 7gg effettivi?
-**No** — sono unita' diverse (giorni-persona contro giorni lavorativi di
-calendario) e il loro rapporto non significa niente. Nell'esempio, 7 giorni al
-50% di disponibilita' sono **3,5 giorni-persona** spesi contro 5 stimati.
+**Risposte dell'utente, 2026-09-21 — chiuse.**
+- **Lo stato e' la data, non un flag.** Un task e' completato **se e solo se**
+  porta una fine effettiva: il campo che porta l'informazione *e'* lo stato.
+  Niente `completed` boolean, niente `progress === 1` portante — nessuna
+  doppia grafia e nessuna combinazione impossibile da rifiutare nel parsing.
+  Scompletare = cancellare la data.
+- **Il confronto e' elapsed previsto contro elapsed effettivo**, non effort
+  contro effort. «Il piano diceva 10 giorni lavorativi, ne sono serviti 7»:
+  una sola unita', nessuna inversione. La domanda iniziale dell'utente
+  (confrontare i 5gg stimati) e' **rientrata** per la ragione sotto.
+
+**Perche' l'inversione a effort e' stata scartata, e va ricordato.** La fine
+da' l'*elapsed*; per risalire all'effort si divide per il tasso, che e'
+esattamente la grandezza incerta. «Previsti 10, effettivi 7» puo' voler dire
+che il task era da 3,5 giorni-persona invece di 5, **oppure** che la persona
+era al 70% invece che al 50%: stesso numero, lezione opposta, e dalla sola
+data le due non si separano. L'inversione sarebbe esatta solo sui task non
+condivisi — e lo scheduler gia' lo sa (`scheduler/types.ts:85`:
+`elapsedWorkingMinutes` «exceeds `effort` whenever the task was shared»,
+e `planCsv.ts:35` ha gia' la colonna `Contended`). Se un giorno si volesse
+riaprire, e' li' che si guarda.
 
 **Misurato il 2026-09-21, prima di scrivere qualunque cosa.**
 - **Lo scheduler non legge mai `progress`**: zero occorrenze in
@@ -227,19 +243,18 @@ calendario) e il loro rapporto non significa niente. Nell'esempio, 7 giorni al
   assoluta: cambiarla e' un atto deliberato da scrivere in chiaro, non un
   effetto collaterale da scoprire.
 
-**Domande aperte — nessuna e' decisa, nessuna e' binding.**
-- **Come si scrive lo stato**: `progress === 1` che finalmente significa
-  qualcosa, un flag nuovo, o **nessuno dei due** — il task e' completato
-  **se e solo se** porta una fine effettiva, e il campo che porta
-  l'informazione *e'* lo stato. Da chiedere all'utente.
-- **Con quale disponibilita' si converte l'elapsed in effort effettivo**:
-  quella dichiarata **oggi** o quella in vigore **allora**? Ricalcolare sempre
-  e' semplice ma fa **riscrivere la storia** (aggiungi un'assenza retroattiva
-  e il consuntivo di un task chiuso cambia da solo); congelare il numero al
-  momento del completamento e' stabile ma introduce un secondo dato che puo'
-  divergere dal modello. Non ha una risposta ovvia.
+**Domande ancora aperte — nessuna e' decisa, nessuna e' binding.**
+- **Il termine di paragone si ricalcola o si congela?** Un task completato
+  non viene piu' schedulato, quindi la sua previsione **sparisce** nel
+  momento in cui diventa un fatto: il «10 giorni» con cui confrontare i 7 va
+  ricavato di nuovo. Ricalcolarlo sempre e' coerente con la dottrina del repo
+  (il blocco `solved` nel file e' **ignorato in lettura**: un derivato non si
+  conserva mai come input), ma rende il confronto **retroattivo** — aggiungi
+  un'assenza passata e la varianza di un task chiuso cambia da sola.
+  Congelarlo al completamento e' un record storico stabile, al prezzo di un
+  derivato conservato. Visibile all'utente: **da chiedere**.
 - **Dove si legge il confronto**: colonna, dialogo, CSV, figura? Prodotto,
-  dell'utente, e prematura finche' le due sopra non sono chiuse.
+  dell'utente, e prematura finche' quella sopra non e' chiusa.
 - **Cosa succede a un task completato senza risorsa** (tasso pieno) e **a una
   milestone completata** (effort zero: la fine e' tutto cio' che c'e').
 - **Il giorno dichiarato e' un giorno lavorativo?** Vale la regola del
