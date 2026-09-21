@@ -2,62 +2,36 @@
 
 ## v1.5 — 2026-09-21
 
-- PNG and Print now ask first: a dialog picks whether the picture holds the
-  whole plan or the tree as you see it — collapsed branches drawn as their
-  summary — and which columns come with it. A *For the client* button drops
-  who, what they cost and what they charge in one click — Resource, Rate and
-  Cost — leaving a figure with no names in it. The choices are remembered for the next
-  export, Ctrl+P included; until you make one, the export looks exactly as
-  it did before.
+- Choose what an exported or printed picture shows: the whole plan or the tree
+  as you see it, and which columns come with it.
+- One "For the client" button leaves out who is on the plan and what they cost.
 
 ## v1.4 — 2026-09-18
 
-- Renamed to ARROGANTT: the repo, the agent API (`window.arrogantt`) and the
-  `localStorage` keys all carry the new name. No migration — an unsaved
-  draft, the seen-changelog marker and the column picker's choice all reset
-  once.
+- Renamed to ARROGANTT. An unsaved draft and your column choices reset once.
 
 ## v1.3 — 2026-09-18
 
-- Grid columns are now optional: a toolbar button picks which of Resource,
-  Effort, Start, End and Duration show, remembered across a reload.
-- Rate and Cost columns, off by default and turned on from the same column
-  button: a task's daily rate and what it costs, rolled up on a summary and
-  shown as a lower bound when part of its effort has no rate — and the same
-  two figures in the task details dialog. The status bar carries the project
-  total beside the task count, and the CSV export gains `Cost` and
-  `Uncosted (d)` columns after `Disabled`.
-- A `Currency` field in the People dialog, next to the rates it labels: sets
-  the unit shown in the Rate and Cost column headers, and travels with a rate
-  change in the same Save so undo takes back both in one step. A new plan
-  starts in `€`; a plan you open keeps whatever it was saved with.
-- Numbers in the grid line up: Effort, Duration, Rate and Cost are right
-  aligned, so a column of figures reads as a column.
+- Pick which columns the grid shows, remembered across a reload.
+- See what the plan costs: a daily rate per person, rolled up on every summary
+  and totalled in the status bar. Rates can change over time, and the CSV
+  export carries them.
+- Set the plan's currency in the People dialog.
 
 ## v1.2 — 2026-09-08
 
-- The name of the last task on the plan is no longer cut off after an edit: the
-  timeline now keeps room for it past the last bar, whether the plan was opened
-  from a file or edited into shape.
-- People and Calendar dialogs restyled: columns that stay put whatever the
-  content, period rows aligned across both dialogs, weekday checkboxes on a
-  regular grid.
-- Task details dialog restyled: rows that hold their height while you type or
-  switch tasks, a computed section that lines up in four steady columns, and a
-  colour row that no longer stretches its preview swatch.
-- Task colour picker widened from 7 to 14 tints, in English, chosen to stay
-  distinguishable from each other and from a person's avatar at a glance.
-- Task bars now outlined in a darker tint of their own colour.
-- Toolbar button to collapse the task grid to give the chart the whole window,
-  and restore it to the exact width it had — even after dragging the divider.
+- 14 task colours to pick from instead of 7.
+- Collapse the task grid to give the chart the whole window, and bring it back
+  to the width it had.
 
 ## v1.1 — 2026-09-05
 
-- Per-row toggle button in the grid to enable/disable a task without opening the row menu or the details dialog.
-- Every icon in the app now comes from lucide, replacing the hand-drawn glyphs in the toolbar, status bar, row menu, empty state, help button and grid buttons.
-- Dark mode, following the system theme: the whole app including the chart, with task colours and printed plans left as they are.
+- Dark mode, following the system theme.
+- Enable or disable a task straight from its row, without opening a dialog.
 
 ## v1.0 — 2026-09-04
 
-- First public release: effort-based scheduling engine, critical chain, undo, .gantt save, CSV/PNG/print export, agent API (window.arrogantt).
-- A row or a group can be disabled: it stays marked on the plan as a placeholder but does not weigh on dates, load or the critical chain.
+- First public release: effort-based scheduling, critical chain, undo, .gantt
+  files, CSV/PNG/print export and an agent API.
+- Disable a row or a whole group: it stays on the plan as a placeholder but
+  stops weighing on dates, load and the critical chain.

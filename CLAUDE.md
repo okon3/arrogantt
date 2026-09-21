@@ -259,7 +259,11 @@ no prose. README changes only when the feature set changes; retake
 
 **Changelog and versioning.** A significant feature adds a bullet to
 `CHANGELOG.md` in the same commit — features a user would notice, never fixes
-or plumbing. During development, bullets accumulate under a `## Unreleased`
+or plumbing. **A bullet says what the reader can now do, not how it was
+built**: no internals (repo, `localStorage`, library names), and **no markdown
+markup** — the dialog renders a note as plain text, so `*emphasis*` and
+backticks reach the user as punctuation. A bullet may wrap onto indented
+lines. During development, bullets accumulate under a `## Unreleased`
 heading at the **top** of the file: the parser skips headings without a `v`
 prefix, so the badge keeps showing the last released version, no popup fires,
 and the bullets stay out of the dialog until released. It must stay first —
