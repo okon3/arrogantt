@@ -263,12 +263,21 @@ arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 
-- [>] M1 [self] — Una sola casa per la mappa `ExportSettings` → `FigureOptions`
+- [x] M1 [self] — Una sola casa per la mappa `ExportSettings` → `FigureOptions` — `2c53267`
       Lasciato dalla goal review di G, sotto il bar e quindi non un'azione sua.
       `src/App.tsx:446-450` e `:862-863` scrivono due volte la stessa
       traduzione (`[...settings.columns]`, `scope === 'visible' ?
       collapsedBranches() : undefined`): una regola, due case, e un terzo
       chiamante la copierebbe una terza volta.
+      `figureOptionsFrom` in `exportSettings.ts`, che prende i rami chiusi
+      come thunk — cosi' il modulo delle impostazioni non tocca mai il chart
+      — e sotto `scope: 'all'` non lo chiama affatto (test che conta le
+      chiamate). Rimisurato nell'app servita su **entrambi** i bottoni, con
+      un ramo chiuso e il preset: stampa e PNG danno le stesse righe
+      (`Design`, `Launch`), le stesse testate e nessun nome. Il PNG si legge
+      intercettando `URL.createObjectURL` sul blob `image/svg+xml` prima
+      della rasterizzazione (`files.ts:58`). **Probe provato nei due versi**:
+      espandendo, lo stesso probe rilegge `Wireframes`/`Mockups`.
       Accept: una funzione sola, i due chiamanti la usano, check verdi e il
       dialogo rimisurato nell'app servita su entrambi i bottoni.
 
