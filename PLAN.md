@@ -2,10 +2,13 @@
 
 ## Cosa resta sul tavolo
 
-Goal D, E, F e G sono **chiusi, recensiti e potati**; le loro Accept lines
-sono cadute dopo la review, come vuole la regola. Ultima release **`v1.5`**
-(export configurabile), verificata nell'app servita. **Goal H** e' aperto
-(export per il cliente, tre task); `## Maintenance` porta T16, l'audit mobile.
+Goal D, E, F, G e H sono **chiusi, recensiti e potati**; le loro Accept lines
+sono cadute dopo la review, come vuole la regola. Ultima release **`v1.5`**;
+i bullet di H (figura per il cliente: nessuna colonna, nessun task
+disattivato) aspettano sotto `## Unreleased` — scelta dell'utente, il badge
+resta a v1.5 e il rilascio si fa quando serve distribuire una build.
+Nessun goal aperto con task: `## Maintenance` porta T16, l'audit mobile, e
+Goal C aspetta il suo report.
 
 **Trappola di misura, costata un falso negativo**: `ChangelogDialog` rende
 `className="help"` (`ChangelogDialog.tsx:10`) — un dialogo "changelog" nel DOM
@@ -35,97 +38,6 @@ documento gia' a 768px di viewport (bordo destro 955px su 768 di
 `clientWidth`), in empty state. Non e' un difetto del rename e sotto la regola
 dell'80% non vale un meccanismo da solo — ma e' il primo indizio che il goal
 raccogliera'.
-
-## Goal H — la figura per il cliente non dice piu' del necessario   [aperto]
-Il preset «For the client» di PNG e stampa consegna **nessuna colonna** e
-**nessun task disattivato**; l'esclusione dei disattivati esiste anche come
-opzione a se', spuntabile fuori dal preset. Aperto dall'utente il 2026-09-21.
-
-**Decisioni gia' prese con l'utente — non riaprirle.**
-- **Un summary disattivato porta via tutto il suo ramo**, figli attivi
-  inclusi: coerente con «disabilitato = non fa parte del piano» e col
-  collapse, e il cliente non vede un lavoro orfano senza la fase che lo
-  contiene.
-- «Nessuna colonna» vuol dire **nessuna colonna del registro**. La colonna dei
-  nomi non e' nel registro (`PLAN_COLUMNS` ha solo le sette opzionali), quindi
-  resta: la figura per il cliente e' nomi piu' barre.
-- CSV **fuori scopo**: la richiesta e' esportazione immagine e stampa.
-
-**Fatti stabiliti, misurati il 2026-09-21 — non ri-esplorare.**
-- `columns: []` e' **gia' rappresentabile** e distinto da «assente»:
-  `figureOptionsFrom` (`exportSettings.ts`) lo passa incondizionatamente, e
-  solo una lista assente significa l'outline legacy.
-- Ma `columns: []` **disegna comunque la banda di testata, vuota**
-  (`planFigure.ts:359-361`, il commento lo dichiara). A zero colonne la banda
-  va tolta: una striscia senza etichette non e' una scelta.
-- Il filtro delle righe ha **una casa sola**, `visibleTasks`
-  (`planFigure.ts:168`), chiamata da `planFigure` (`:315`) e dal conteggio
-  pagine (`:471`). L'esclusione va li' dentro, o stampa e paginazione
-  divergono in silenzio.
-- Il preset oggi e' `setColumns(clientSafeColumns())`
-  (`ExportDialog.tsx`), cioe' scrive **un solo** pezzo di stato; dovra'
-  scriverne due.
-- `clientSafe` (`columns.ts`) resta **senza lettori** se il preset non lo usa
-  piu': esiste solo per lui. Da togliere o da giustificare, non da ignorare.
-- `disabled` e' **ereditato lungo l'albero** (`disabledByTask`,
-  `project.ts:254-268`), quindi ogni discendente di un summary disattivato
-  arriva a `planFigure` gia' con `PlanTask.disabled === true`: il ramo intero
-  cade con un filtro piatto, senza risalita agli antenati. La sonda di H2 deve
-  aspettarsi il ramo intero sparito, non il solo summary.
-
-- [x] H1 [impl] — `excludeDisabled` nelle impostazioni, e il filtro in una
-      casa sola. Il campo in `ExportSettings`, la sua persistenza in
-      `arrogantt.export.v1` (parsing strict come il resto: un valore non
-      booleano fa cadere l'intero stored, non il singolo campo), il default
-      che non cambia cio' che esce oggi, e l'esclusione dentro `visibleTasks`
-      col ramo intero.
-      Accept: un summary disattivato con figli attivi sparisce con tutto il
-      ramo; il conteggio pagine e la figura filtrano identico; impostazioni
-      vecchie in storage restano leggibili; check verdi.
-
-- [x] H2 [impl] — Il dialogo: la casella, il preset, la banda. Una casella
-      «Leave out disabled tasks» accanto allo scope; «For the client» azzera
-      le colonne **e** la spunta; la banda di testata non si disegna a zero
-      colonne.
-      Accept: misurato nell'app servita, col probe provato **nei due versi**
-      (come G3c) — col preset la figura non porta nessuna testata di colonna
-      e nessun task disattivato; togliendo la spunta lo stesso probe li
-      rilegge. Stampa e PNG danno lo stesso risultato.
-
-- [x] H3 [self] — Docs, changelog, e il `clientSafe` morto.
-      `docs/file-format.md` (export); il bullet sotto `## Unreleased` — che
-      oggi **non esiste** e va creato in cima, sopra `## v1.5`; e la rimozione
-      di `clientSafe` + `clientSafeColumns()` da `columns.ts` coi loro test in
-      `columns.test.ts` — dopo H2 `docs/` non nomina piu' `clientSafe` da
-      nessuna parte, quindi la rimozione non ha coda documentale.
-      Decisione dell'hub il 2026-09-21: si toglie, non si
-      giustifica — dopo H2 nessuno li chiama, e la proprieta' non e' solo
-      inutilizzata ma **superata** (la risposta a «quali colonne puo' vedere un
-      cliente» e' ora «nessuna»). Un campo del registro che nessuno legge
-      invita il prossimo lettore a fidarsene. `docs/view.md` lo tocca gia' H2;
-      `planFigure.test.ts:336` legge `clientSafe` per un'asserzione sulla
-      figura e va riscritto, non cancellato.
-
-- [x] H4 [self] — Le cinque ACTIONS della goal review, tutte prosa.
-      `README.md` (il preset non lascia piu' indietro «nomi, tariffe e costi»:
-      da' nomi e barre); `docs/view.md` «no third question» (ora sono tre) e
-      «client-safety» fra i metadati del registro (la forma col trattino era
-      sfuggita al grep); i due commenti in `planFigure.ts` che dicevano il
-      contrario di `hasColumnHeader`; e la seconda casa del preset in
-      `docs/file-format.md`, tolta — `view.md` la tiene. Piu' il tooltip del
-      preset, che il reviewer dava sotto il bar ma diceva «registry columns»
-      all'utente.
-
-**Stato del goal — per chi riprende.** La goal review (Fable 5.1) ha reso
-**`fix-first`, esplicitamente «docs only; the code delivers the goal»**:
-MISSING nessuno, SMUGGLED nessuno, la rimozione di `clientSafe` giudicata
-legittima. Le cinque ACTIONS sono scaricate da H4. **Non ho rilanciato una
-seconda review**: le ACTIONS erano prescrittive e le ho eseguite alla lettera,
-e una seconda passata Fable costerebbe ~100k senza giudizio nuovo da dare.
-Se si preferisce rilanciarla, e' una scelta legittima e va fatta **prima**
-della potatura, perche' le Accept lines qui sopra sono meta' del bar.
-Alla chiusura: potare Goal H, poi proporre il rilascio (rinominare
-`## Unreleased` in `## v1.6 — <oggi>` in `CHANGELOG.md`, conferma utente).
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
@@ -160,7 +72,7 @@ periodo (si compra dopo aver lavorato con le colonne); **nessuna tariffa di
 default di progetto** (nasconderebbe chi gira su una stima); **nascosto = non
 costruito**, mai `hide: true` (nei typings e' PRO, mai sondato); la selezione
 delle colonne e' **view state** in `localStorage['yagni.columns.v1']` — niente
-undo, niente dirty, nessuna op agent; `rate`/`cost` sono `clientSafe: false`.
+undo, niente dirty, nessuna op agent.
 Il campo tariffa e' `type="text"` con `inputMode="decimal"` per scelta: la
 regola vive in `validateResources` e **sola**, un input `number` ne metterebbe
 una seconda e muta.
@@ -168,8 +80,14 @@ una seconda e muta.
 **Export (Goal G).** L'opzione «nascondi chiusure e assenze» e' **ritirata**
 (conferma utente, 2026-09-18): le assenze non sono mai state nella figura, e
 nascondere le chiusure mostrerebbe barre ferme su giorni disegnati come
-lavorativi. Il preset «For the client» toglie anche **Resource**: un nome e'
-un interno dell'organizzazione, non una cifra.
+lavorativi.
+
+**Figura per il cliente (Goal H).** Il preset non e' piu' una selezione di
+colonne: da' **nomi e barre**, niente registro e niente task disattivati. Il
+flag `clientSafe` del registro e' stato **rimosso** — la domanda «quali
+colonne puo' vedere un cliente» non esiste piu', la risposta e' «nessuna».
+Un summary disattivato porta via **tutto il ramo**: `disabled` e' ereditato in
+`disabledByTask`, quindi un filtro piatto basta. CSV resta fuori scopo.
 
 **Refactoring della vista (Goal E).** S5b, S6 e S7 restano fuori. S5b unifica
 la mappa riga — l'unica fetta che cambia forma, in giacenza finche' un goal non
@@ -285,13 +203,12 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   conclusioni e rimisura da se' quelle portanti (T60: due Explore, 56k + 72k).
 - **Un `pass` del critic non esime dal leggere il diff**: quello di H1 era
   pieno e mancava due difetti sotto il bar visibili **nel suo stesso report**.
-- **Un brief che scopa fuori un file di `docs/` non scopa fuori la docs
-  duty.** H2 rimandava `docs/file-format.md` a H3; il diff rendeva falsa una
-  sua frase, e la regola di `CLAUDE.md` («stesso commit») supera il brief. Il
-  critic l'ha resa come OUT-OF-SCOPE perche' il brief gliel'aveva tolta — e
-  aveva ragione a segnalarla comunque. **Scopa il codice, mai la claim.**
-  Stessa forma nel finding vero: la corsia ha giudicato «vecchia misura» una
-  frase che nominava il bottone appena ricablato.
+- **La prosa e' cio' che resta indietro.** Su tutto Goal H, zero difetti di
+  codice sopra il bar e **sette** frasi rese false dal diff: in `docs/`, nel
+  README che vendeva il preset vecchio, e in due commenti che dicevano il
+  contrario della riga sotto. Le trova il critic o la goal review, mai i test.
+  Un grep non basta: `clientSafe` e `client-safety` sono la stessa nozione e
+  solo uno dei due matcha.
 - **Una citazione copiata non e' verificata**: ne' un `file:line`, ne' un tipo,
   ne' un predicato, **ne' il nome di un'op** — `resourceUpdate` e' passato per
   tre mani e l'op e' `updateResource`. Si ri-localizza, e si cita per simbolo.
