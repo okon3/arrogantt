@@ -285,7 +285,7 @@ Deciso con l'utente il 2026-09-18, prima di briefare G3 (non riaprire):
       verificato nell'app servita; `docs/view.md` porta la ragione del preset e
       quella del default di continuita'.
 
-- [ ] G3c [self] — Le tre pulci lasciate fuori scope dal critic di G3b
+- [x] G3c [self] — Le tre pulci lasciate fuori scope dal critic di G3b — `5987c42`
       Tutte minori, nessuna visibile all'utente. (1) `src/App.css:1256-1268`:
       `.export__option` ri-scrive la grammatica di riga di `.columnlist label`
       invece di condividerla — due liste che driftano al primo ritocco del
@@ -296,12 +296,28 @@ Deciso con l'utente il 2026-09-18, prima di briefare G3 (non riaprire):
       togliere il modifier. (3) `src/App.tsx:833-842`: `pendingPrint` non
       viene mai azzerato ed e' guardato da un latch di identita'; innocuo
       oggi, ma rende irrappresentabile «ristampa con lo stesso oggetto».
+      Chiuse tutte e tre. (1) e (2) risolte; (3) **archiviata con la sua
+      ragione misurata**: `onConfirm({ scope, columns })`
+      (`ExportDialog.tsx:52`) costruisce un oggetto nuovo a ogni click, quindi
+      il latch di identita' non puo' inghiottire una ristampa dall'unico
+      chiamante — la ragione ora e' nel commento, non piu' implicita.
+      La fusione dei selettori e' **misurata nell'app servita**, non dedotta
+      dal foglio: le sei dichiarazioni identiche nei due clienti, `font-size`
+      13px ereditato da `.dialog__body` e non dalla fusione, il pennello di
+      hover `--accent-soft` su entrambe le liste, e **solo** le due regole
+      nuove che colpiscono `.export__option` — nessun ordine di sorgente da
+      temere. Popover ancora `open` e non-modale.
       Accept: le tre chiuse o archiviate con una ragione; check verdi.
 
-- [ ] G4 [self] — Docs e changelog dell'export cliente
+- [x] G4 [self] — Docs e changelog dell'export cliente — `440538c`
       Scope: bullet in `CHANGELOG.md` sotto `## Unreleased` (ricreandola in
       testa), `docs/view.md` e `docs/file-format.md` allineati, e
       `agentApi.help.md` **solo se** G3 finisce per esporre qualcosa.
+      Quasi tutto era gia' fatto da G3b (bullet `## Unreleased`, `docs/view.md`)
+      e da `084bae5` (`docs/file-format.md`). Restava il **README**, che
+      vendeva ancora l'export pre-dialogo: il set di feature e' cambiato,
+      quindi cambia anche la vetrina. `agentApi.help.md` non si tocca —
+      l'agent API non espone alcuna op di export, riverificato.
       Accept: la mappa dei docs di CLAUDE.md e' coerente col codice.
 
 ## Goal F — quanto costa il piano, non solo quanto dura              [chiuso]
