@@ -83,3 +83,23 @@ export function resolveExportSettings(
 ): ExportSettings {
   return stored ?? { scope: 'all', columns: gridColumns };
 }
+
+/**
+ * The settings as `planFigure`/`planFigurePages` want them. One home: PNG and
+ * print translate identically, and a third caller would have copied it again.
+ *
+ * `collapsedBranches` is a thunk so this module never reaches for the chart —
+ * and it is not called at all under `scope: 'all'`, which must draw every row
+ * however the grid is currently folded.
+ */
+export function figureOptionsFrom(
+  settings: ExportSettings,
+  collapsedBranches: () => ReadonlySet<string> | undefined,
+): { columns: PlanColumnName[]; collapsedIds: ReadonlySet<string> | undefined } {
+  return {
+    // Unconditional on purpose: an emptied selection is `[]`, and only an
+    // absent list means the legacy outline (`planFigure.ts`, `selected`).
+    columns: [...settings.columns],
+    collapsedIds: settings.scope === 'visible' ? collapsedBranches() : undefined,
+  };
+}

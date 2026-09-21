@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { PLAN_COLUMNS, type PlanColumnName } from './columns';
 import type { DraftStorage } from './draft';
 import {
+  figureOptionsFrom,
   readExportSettings,
   resolveExportSettings,
   writeExportSettings,
@@ -122,5 +123,30 @@ describe('the registry names used by these tests', () => {
   it('actually exist', () => {
     expect(PLAN_COLUMNS.some((entry) => entry.name === 'elapsed_days')).toBe(true);
     expect(PLAN_COLUMNS.some((entry) => entry.name === 'cost')).toBe(true);
+  });
+});
+
+describe('mapping export settings onto figure options', () => {
+  const collapsed: ReadonlySet<string> = new Set(['t1']);
+
+  it('passes the closed branches only under scope "visible"', () => {
+    const settings: ExportSettings = { scope: 'visible', columns: new Set(['cost']) };
+    expect(figureOptionsFrom(settings, () => collapsed).collapsedIds).toBe(collapsed);
+  });
+
+  it('never asks for them under scope "all", however the grid is folded', () => {
+    let asked = 0;
+    const settings: ExportSettings = { scope: 'all', columns: new Set(['cost']) };
+    const options = figureOptionsFrom(settings, () => {
+      asked += 1;
+      return collapsed;
+    });
+    expect(options.collapsedIds).toBeUndefined();
+    expect(asked).toBe(0);
+  });
+
+  it('gives an array, empty rather than absent, so an emptied selection is not the legacy outline', () => {
+    const settings: ExportSettings = { scope: 'all', columns: new Set() };
+    expect(figureOptionsFrom(settings, () => undefined).columns).toEqual([]);
   });
 });

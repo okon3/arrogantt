@@ -263,7 +263,7 @@ arrivati come richieste singole. **Non ricevono la goal review**, ed e' il
 prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno di
 questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 
-- [ ] M1 [self] — Una sola casa per la mappa `ExportSettings` → `FigureOptions`
+- [>] M1 [self] — Una sola casa per la mappa `ExportSettings` → `FigureOptions`
       Lasciato dalla goal review di G, sotto il bar e quindi non un'azione sua.
       `src/App.tsx:446-450` e `:862-863` scrivono due volte la stessa
       traduzione (`[...settings.columns]`, `scope === 'visible' ?

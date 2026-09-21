@@ -46,6 +46,7 @@ import { RowMenu, type RowMenuAction, type RowMenuTarget } from './gantt/RowMenu
 import { ColumnPicker, type ColumnPickerAnchor } from './gantt/ColumnPicker';
 import { readColumnSelection, writeColumnSelection, type PlanColumnName } from './gantt/columns';
 import {
+  figureOptionsFrom,
   readExportSettings,
   resolveExportSettings,
   writeExportSettings,
@@ -441,13 +442,7 @@ export default function App() {
           planFigure(project, solved, {
             title: filename,
             today: new Date(),
-            // Unconditional on purpose: an emptied selection is `[]`, and only an
-            // absent list means the legacy outline (`planFigure.ts`, `selected`).
-            columns: [...settings.columns],
-            // Only 'visible' passes the closed branches: 'all' must draw every
-            // row even under a chart that currently has some collapsed.
-            collapsedIds:
-              settings.scope === 'visible' ? chart.current?.collapsedBranches() : undefined,
+            ...figureOptionsFrom(settings, () => chart.current?.collapsedBranches()),
           }),
         );
       } catch (cause) {
@@ -859,8 +854,7 @@ export default function App() {
         return planFigurePages(project, solved, {
           title: printTitle.current,
           today: new Date(),
-          columns: [...settings.columns],
-          collapsedIds: settings.scope === 'visible' ? chart.current?.collapsedBranches() : undefined,
+          ...figureOptionsFrom(settings, () => chart.current?.collapsedBranches()),
         });
       }),
     [],
