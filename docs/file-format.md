@@ -28,6 +28,10 @@
   [scheduling.md](scheduling.md)). Optional and additive — v2 stays v2. Written
   only where it is set: the flag is inherited by the subtree, so a child under a
   disabled group carries nothing of its own.
+- `tasks[].description?: string`: free text about the task, multi-line, up to
+  2000 characters. Optional and additive — v2 stays v2. Written only when
+  present: an empty description is normalized to absent, the same bargain
+  `disabled: false` makes below.
 - Version 1 still loads: `daysOff` → availability overrides at zero.
 - `resources[].availability?: number`: a person's share of a full working day,
   `0..1`. Optional, default `1` (full time). Written only when present. The
@@ -53,7 +57,8 @@
 
 Refuses rather than repairs: unknown resources, duplicate ids, dangling
 predecessors, circular hierarchy, availability outside 0..1, colour not
-`#rrggbb`, `disabled` not a boolean, a calendar the engine cannot serve, future
+`#rrggbb`, `disabled` not a boolean, a `description` that is not a string or
+runs past 2000 characters, a calendar the engine cannot serve, future
 versions, a negative or non-numeric daily rate, a rate period with no numeric
 `dailyRate`, a rate period with a malformed `YYYY-MM-DD` day, a `currency` that
 is blank, padded, not a string, or over 8 characters. Parse before load — a bad

@@ -7,10 +7,11 @@ sono cadute dopo la review, come vuole la regola. Ultima release **`v1.5`**;
 i bullet di H (figura per il cliente: nessuna colonna, nessun task
 disattivato) aspettano sotto `## Unreleased` — scelta dell'utente, il badge
 resta a v1.5 e il rilascio si fa quando serve distribuire una build.
-**Goal I** e' aperto (descrizione per task) ma non ancora avviato: ha domande
-di prodotto da chiudere con l'utente e una suddivisione dichiarata
-provvisoria. `## Maintenance` porta T16 (audit mobile) e T17 (nome del task
-in hover); Goal C aspetta quel report prima di ricevere task veri.
+**Goal I** (descrizione per task) e' **avviato**: domande di prodotto tutte
+chiuse, suddivisione rivista sulla ricognizione del 2026-09-21, I1 committato.
+Restano I2 (textarea), I3 (CSV e agent API) e I4 (docs e changelog).
+`## Maintenance` porta T16 (audit mobile) e T17 (nome del task in hover);
+Goal C aspetta quel report prima di ricevere task veri.
 
 **Trappola di misura, costata un falso negativo**: `ChangelogDialog` rende
 `className="help"` (`ChangelogDialog.tsx:10`) — un dialogo "changelog" nel DOM
@@ -65,15 +66,38 @@ da solo non regge. Aperto dall'utente il 2026-09-21.
   di questo goal, a differenza di Goal H.)
 - **Limite 2000 caratteri**, in una **textarea**, testo senza formattazione.
 
-**Da misurare prima di briefare, non da supporre.**
-- Una descrizione di 2000 caratteri con a capo dentro, dentro una cella CSV:
-  `planCsv.ts` gia' quota e fa l'escape dei newline? Da leggere, non da dare
-  per scontato — e' l'unica superficie di questo goal che porta il testo
-  fuori dall'app.
-- Se il limite di 2000 si imponga nella textarea (`maxLength`), nel parsing,
-  o in entrambi. Il gate di `serializeForFile` rifiuta e non ripara: un file
-  scritto a mano con 5000 caratteri va **rifiutato**, non troncato in
-  silenzio.
+**Misurato il 2026-09-21 (due Explore), non piu' da supporre.**
+- **Il CSV gia' regge i newline**: `escape` (`planCsv.ts:59-62`) quota su
+  `/[;"
+]/` e raddoppia le virgolette — RFC4180, nessuna sostituzione del
+  newline. La superficie CSV e' quindi una voce in `HEADERS`
+  (`planCsv.ts:25-40`) e una in `row()` (`planCsv.ts:64-85`), non un task.
+  **Trappola nei test, non nel codice**: l'helper `csvOf`
+  (`planCsv.test.ts:14`) splitta le righe con `.split('
+')` ignorando il
+  quoting — una fixture con descrizione multi-riga lo rompe. `columns()`
+  (righe 25-39) invece lo stato quoted lo tiene gia'.
+- **Il limite di 2000 vive in due posti, con due comportamenti diversi.**
+  Nel parsing **rifiuta** (dottrina del formato: rifiuta, non ripara), con il
+  precedente esatto di `validateCurrency` (`cost.ts:64-79`, `length > 8`).
+  Nella textarea **non tronca**: scelta dell'utente del 2026-09-21, niente
+  `maxLength`, e' `save()` a rifiutare con un messaggio nello stato `error`
+  che `TaskDialog` gia' possiede (`TaskDialog.tsx:47`, `save()` 49-82) —
+  nessun testo incollato sparisce in silenzio.
+- **Il pattern «vuoto = assente» esiste gia' e va copiato, non inventato**:
+  `if (typeof record.x === 'string' && record.x.length > 0) task.x = record.x`
+  (`serialization.ts:288`, `parentId`). E il file lo scrive da solo:
+  `serializeProject` spande `...task` (`serialization.ts:91`), quindi il
+  parser e' **l'unico** punto di difesa — esattamente come per `disabled`.
+- **Il campo non si ferma al modello.** `getTask` spande `...rest` da
+  `details(id)` (`agentApi.ts:240-243`): compare da solo nella risposta, ma
+  solo se sta su `TaskDetails` (`ganttHandle.ts:114-147`). Il giro completo
+  passa quindi per `TaskDetails`, `TaskPatch` (`ganttHandle.ts:148-160`) e
+  `NewTask` (`ganttHandle.ts:10-25`) — la mappa riga del chart.
+- **Nel repo non esiste nessuna `<textarea>`** (solo `HTMLTextAreaElement` in
+  `shortcuts.ts:18`, che gia' spegne le scorciatoie sul focus). Il primo
+  controllo del genere porta CSS strutturale: riavviare il dev server prima
+  di credere a un verdetto negativo.
 
 **Fatto verificato il 2026-09-21, che risparmia un round.** `ProjectTask`
 (`project.ts:30-48`) tiene `disabled?: boolean` con una regola scritta nel
@@ -85,25 +109,76 @@ sola, o salvare-riaprire sporca il progetto senza che nessuno abbia toccato
 niente. Vale per il parsing strict, per `serializeProject` e per il gate di
 `serializeForFile`.
 
-**Versione del formato**: un campo opzionale non rompe i file esistenti —
-bump **minore**, non maggiore (`CLAUDE.md`: il maggiore e' solo per una
-rottura del formato `.gantt`).
+**Versione del formato: nessun bump, e la riga precedente era un equivoco.**
+`FILE_VERSION = 2` (`serialization.ts:16`) e' un intero controllato **solo
+come tetto** in lettura (righe 175-182): alzarlo a 3 non segnalerebbe un
+campo in piu', farebbe **rifiutare il file alle build precedenti**. Il «bump
+minore» di `CLAUDE.md` e' la versione **dell'app** nel changelog (v1.5 →
+v1.6), non quella del formato. Il file resta v2.
 
-**Suddivisione provvisoria — nessuno ha ancora letto il codice.** Le fette
-qui sotto sono un'ipotesi di dimensionamento, non un impegno: valgono finche'
-una ricognizione non le smentisce, ed e' la forma di errore che Goal G ha
-pagato con mezzo goal riscritto. Da rivedere all'apertura dei lavori.
-- [ ] I1 [impl] — Il campo nel modello e nel formato: `description?: string`
-      su `ProjectTask`, parsing strict, serializzazione, la regola
-      «vuoto = assente» sopra, e la tenuta di undo/draft/`dirty`.
+**Suddivisione rivista sulla ricognizione del 2026-09-21.** La provvisoria
+diceva cinque fette `[impl]`; la misura ne ha cambiate due. I3 e I4 si
+fondono (due superfici additive non valgono due ingressi da 40k), e I1 passa
+a **deep**: tocca il gate strict di `serializeForFile` e la derivazione di
+`dirty`, ed e' la forma esatta dell'errore di F1 registrato nel binding — una
+corsia che copia la forma di un predicato vicino invece del predicato piu'
+stretto.
+- [x] I1 [deep] — Il campo nel modello, nel formato e nella mappa riga.
+      **Accept**: round-trip di una descrizione multi-riga identico;
+      `"description": ""` in ingresso da' un task con `'description' in task`
+      falso e un round-trip che non contiene la stringa `description`;
+      assente resta assente; 2000 caratteri passano e 2001 lanciano
+      `ProjectFileError`; un tipo sbagliato lancia; `serializeForFile`
+      ri-apre un file con 2000 caratteri e newline dentro. `FILE_VERSION`
+      resta 2. Tre check verdi. — commit 412de12
 - [ ] I2 [impl] — La textarea nel `TaskDialog`, summary inclusi, col giro
-      completo edit → modello → `applySolution`, e il limite di 2000.
-- [ ] I3 [impl] — La descrizione in CSV (`planCsv.ts`). **No** figura,
-      **no** stampa.
-- [ ] I4 [impl] — L'agent API: `getTask` la rende, `updateTask` la scrive,
-      e `agentApi.help.md` nello stesso commit.
-- [ ] I5 [self] — `docs/file-format.md`, `docs/view.md`, e il bullet di
-      changelog.
+      completo edit → modello → `applySolution`; oltre 2000 `save()` rifiuta
+      con `error`, nessun `maxLength`. Verifica nel browser.
+      **Quattro vincoli misurati dal critic di I1, da mettere nel brief.**
+      (a) Senza il rifiuto in `save()` l'app costruisce un progetto che non
+      sa salvare: misurato, 2001 caratteri nel modello passano
+      `serializeProject` (undo e draft intatti) e fanno lanciare
+      `serializeForFile` — Save rifiuta, non scrive niente e resta dirty,
+      con l'unico rimedio di accorciare a mano un testo che la UI aveva
+      accettato. E' il motivo per cui il rifiuto e' **al salvataggio** e non
+      al parsing soltanto.
+      (b) `DESCRIPTION_LIMIT` (`serialization.ts:163`) **non e' esportato**:
+      I2 lo esporta e lo importa, non riscrive un secondo 2000.
+      (c) Il limite conta unita' **UTF-16** (`.length`): 1001 emoji fanno
+      2002 e vengono rifiutate. Il conteggio di I2 deve usare `.length` come
+      il parser, o il limite diventa due numeri diversi.
+      (d) `history.ts:99` — `OWN_FIELDS` non include `description`: senza
+      quella riga una modifica alla sola descrizione e' annullabile
+      (lo snapshot e' il testo intero) ma il bottone dice «Undo last change»
+      invece di «Undo edited "X"».
+- [ ] I3 [impl] — Il campo esce dall'app: colonna CSV (`planCsv.ts`) e agent
+      API (`getTask`, `updateTask`, `TaskInput`), con `agentApi.help.md`
+      nello stesso commit. **No** figura, **no** stampa.
+      **Gia' fatto da I1, da non rifare**: `getTask()` restituisce gia' la
+      descrizione — `TaskInfo` deriva da `TaskDetails` e lo spread `...rest`
+      la porta fuori da solo (`agentApi.ts:241-242`). Manca **solo** la
+      scrittura (`TaskInput` + `updateTask`) e la documentazione. `help.md`
+      non era dovuto in I1: la riga 46 descrive `getTask(id)` come «one task
+      in full» senza elencare i campi, quindi il diff non ha reso falsa
+      nessuna frase.
+      **Da fissare con un test in I3**: che `getTask()` **ometta la chiave**
+      su un task senza descrizione, invece di renderla `undefined`. E' la
+      correzione che I1 ha applicato dopo il critic e che nessun test morde
+      oggi — `agentApi.test.ts` non passa per `GanttChart.getTaskDetails`.
+      **Trappola nei test del CSV**: `csvOf` (`planCsv.test.ts:14`) splitta
+      le righe con `.split('
+')` ignorando il quoting — una fixture con
+      descrizione multi-riga lo rompe. `escape` (`planCsv.ts:59-62`) invece
+      il newline lo regge gia'.
+- [ ] I4 [self] — `docs/view.md` e il bullet di changelog.
+      `docs/file-format.md` **e' gia' fatto**: il campo e i due rifiuti del
+      parsing strict sono entrati nel commit di I1, perche' e' quello che ha
+      cambiato il formato.
+
+**Conseguenza da proporre, non da fare dentro questo goal**: S5b (unificare
+la mappa riga) e' in giacenza «finche' un goal non aggiunge campi di riga»
+— Goal I ne aggiunge uno. Diventa proponibile alla chiusura del goal, non
+prima, e resta corsia deep.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
@@ -262,35 +337,37 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   toglierla del tutto non rende economico il task (F8 146k).
 - **Un brief che porta gia' la fixture e i casi dell'accept si paga**: zero
   correzioni di corsia su tutti e sei i task di G e H (impl 82-197k, critic
-  81-185k).
-- Una correzione via SendMessage costa meno di un fresh spawn (~40k). Un
-  `[self]` guidato nel browser costa **una generazione dell'hub** (T65b, zero
-  deleghe, oltre 176k da solo).
+  81-185k), e su I1 (deep 110k, critic 105k, 0 round; due Explore di
+  ricognizione 56k+57k prima del brief).
+- **Un critic a cui si chiede «questi test mordono?» lo misura mutando il
+  codice**: su I1 quattro mutazioni in un worktree usa-e-getta
+  (`git worktree add --detach` + `git apply` del diff non committato), ognuna
+  col fallimento atteso. E' la domanda che trasforma una suite verde in una
+  prova; costa poco e va chiesta esplicitamente.
+- Un `[self]` guidato nel browser costa **una generazione dell'hub** (T65b,
+  zero deleghe, oltre 176k da solo).
 - **Il critic e' la voce piu' cara e la piu' redditizia**: 75-95k a tavolino,
   102-242k nel browser, 128-191k la goal review. Trova cio' che l'accept non
   chiedeva: e' la regola, non l'eccezione.
 - Si briefa il critic dandogli **le domande in ordine di paura**, e
   **vietandogli di dare entrambe le mani**: su G2 ha scelto, ribaltando
   l'esitazione dell'hub con un argomento di *tipo*, non di gusto.
-- **Una review a cui si dice che un terzo `fix-first` non e' gratis rende
-  COHERENCE invece di ACTIONS e spedisce** (terza di F, 128k): due difetti
-  veri, sotto il bar, dichiarati tali.
+- Dire a una goal review che un terzo `fix-first` non e' gratis le fa rendere
+  COHERENCE invece di ACTIONS (terza di F, 128k: due difetti veri sotto il bar).
 - **Un elenco enumerato da una sezione di spec e' completo o non e' un
   elenco.** F2b ha taciuto un filtro, F3b una tabella da cui dipendeva la
   fixture, F8 ha ristretto «the widest string of each» alla fixture.
 - **Le misure piccole le fa l'hub**: probe vitest usa-e-getta, Explore non
-  residenti, un censimento nel browser — dove una corsia paga 40k di solo
-  ingresso. **Prima di briefare, misurare la premessa**: se cade, il brief non
-  serve. Un task di sola analisi paga bene la delega se l'hub tiene solo le
-  conclusioni e rimisura da se' quelle portanti (T60: due Explore, 56k + 72k).
-- **Un `pass` del critic non esime dal leggere il diff**: quello di H1 era
-  pieno e mancava due difetti sotto il bar visibili **nel suo stesso report**.
-- **La prosa e' cio' che resta indietro.** Su tutto Goal H, zero difetti di
-  codice sopra il bar e **sette** frasi rese false dal diff: in `docs/`, nel
-  README che vendeva il preset vecchio, e in due commenti che dicevano il
-  contrario della riga sotto. Le trova il critic o la goal review, mai i test.
-  Un grep non basta: `clientSafe` e `client-safety` sono la stessa nozione e
-  solo uno dei due matcha.
+  residenti, un censimento nel browser — dove una corsia paga 40k di ingresso.
+  **Prima di briefare, misurare la premessa**: se cade, il brief non serve.
+  Un task di sola analisi paga la delega se l'hub tiene solo le conclusioni e
+  rimisura da se' quelle portanti (T60: due Explore, 56k + 72k).
+- **Un `pass` del critic non esime dal leggere il diff**: quello di H1 mancava due difetti sotto il bar visibili **nel suo stesso report**.
+- **La prosa e' cio' che resta indietro.** Goal H: zero difetti di codice
+  sopra il bar e **sette** frasi rese false dal diff (`docs/`, il README che
+  vendeva il preset vecchio, due commenti che contraddicevano la riga sotto).
+  Le trova il critic o la goal review, mai i test; e un grep non basta —
+  `clientSafe` e `client-safety` sono la stessa nozione, ne matcha uno solo.
 - **Una citazione copiata non e' verificata**: ne' un `file:line`, ne' un tipo,
   ne' un predicato, **ne' il nome di un'op** — `resourceUpdate` e' passato per
   tre mani e l'op e' `updateResource`. Si ri-localizza, e si cita per simbolo.

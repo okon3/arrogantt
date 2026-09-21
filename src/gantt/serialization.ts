@@ -160,6 +160,20 @@ function requireNumber(value: unknown, context: string): number {
   return value;
 }
 
+const DESCRIPTION_LIMIT = 2000;
+
+function requireDescription(value: unknown, context: string): string {
+  if (typeof value !== 'string') {
+    throw new ProjectFileError(`${context}: expected a string`);
+  }
+  if (value.length > DESCRIPTION_LIMIT) {
+    throw new ProjectFileError(
+      `${context}: ${value.length} characters, the limit is ${DESCRIPTION_LIMIT}`,
+    );
+  }
+  return value;
+}
+
 export function deserializeProject(text: string): Project {
   let raw: unknown;
   try {
@@ -274,6 +288,15 @@ export function deserializeProject(text: string): Project {
       // flag only when it is set, so the same project cannot serialize two ways
       // and read as dirty on load.
       if (requireBoolean(record.disabled, `tasks[${index}].disabled`)) task.disabled = true;
+    }
+    if (record.description !== undefined) {
+      // An empty description is no description, kept out of the model for the
+      // same reason as the written `false` above.
+      const description = requireDescription(
+        record.description,
+        `tasks[${index}].description`,
+      );
+      if (description.length > 0) task.description = description;
     }
     if (record.color !== undefined) {
       // Now that the colour comes from a free picker rather than a fixed list,

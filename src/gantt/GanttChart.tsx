@@ -392,6 +392,7 @@ export function GanttChart({
         return {
           id,
           name: task.name,
+          ...(task.description === undefined ? {} : { description: task.description }),
           nominalDays: task.nominalDays,
           start: scheduled.start,
           end: scheduled.end,
@@ -475,6 +476,10 @@ export function GanttChart({
         if (patch.disabled !== undefined) {
           if (patch.disabled) task.disabled = true;
           else delete task.disabled;
+        }
+        if (patch.description !== undefined) {
+          if (patch.description) task.description = patch.description;
+          else delete task.description;
         }
         applyingRef.current = true;
         const ganttTask = gantt.getTask(id);

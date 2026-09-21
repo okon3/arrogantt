@@ -418,6 +418,32 @@ describe('rejects broken files', () => {
       }),
     ],
     [
+      'a description that is not a string',
+      JSON.stringify({
+        format: 'gantt-effort-split',
+        version: 2,
+        tasks: [{ id: '1', nominalDays: 1, start: '2026-01-05T08:00', description: 42 }],
+      }),
+    ],
+    [
+      'a description written as null',
+      JSON.stringify({
+        format: 'gantt-effort-split',
+        version: 2,
+        tasks: [{ id: '1', nominalDays: 1, start: '2026-01-05T08:00', description: null }],
+      }),
+    ],
+    [
+      'a description written as an object',
+      JSON.stringify({
+        format: 'gantt-effort-split',
+        version: 2,
+        tasks: [
+          { id: '1', nominalDays: 1, start: '2026-01-05T08:00', description: { text: 'A' } },
+        ],
+      }),
+    ],
+    [
       'a dangling predecessor',
       JSON.stringify({
         format: 'gantt-effort-split',
@@ -644,5 +670,65 @@ describe('rates and currency (F1)', () => {
         expect((error as Error).message).toBe('Currency: a short label of up to 8 characters');
       }
     });
+  });
+});
+
+describe('task descriptions (I1)', () => {
+  const fileWith = (description: unknown): string =>
+    JSON.stringify({
+      format: 'gantt-effort-split',
+      version: 2,
+      tasks: [{ id: '1', name: 'A', nominalDays: 1, start: '2026-01-05T08:00', description }],
+    });
+
+  const described = (description: string): Project => ({
+    calendar: DEFAULT_CALENDAR,
+    resources: [],
+    tasks: [
+      { id: '1', name: 'A', nominalDays: 2, start: new Date(2026, 0, 5, 8, 0), description },
+    ],
+  });
+
+  it('round-trips a multi-line description unchanged', () => {
+    const text = 'First line\n\nThird line, with "quotes" and a \\ backslash';
+    const restored = deserializeProject(serializeProject(described(text)));
+    expect(restored.tasks[0].description).toBe(text);
+  });
+
+  it('reads a written empty description as no description at all', () => {
+    // Two spellings of "none" would make the same project serialize two ways,
+    // and the dirty comparison is a text comparison.
+    const restored = deserializeProject(fileWith(''));
+    expect('description' in restored.tasks[0]).toBe(false);
+    expect(serializeProject(restored)).not.toContain('description');
+  });
+
+  it('gives a task that declares none no description of its own', () => {
+    const restored = deserializeProject(
+      JSON.stringify({
+        format: 'gantt-effort-split',
+        version: 2,
+        tasks: [{ id: '1', name: 'A', nominalDays: 1, start: '2026-01-05T08:00' }],
+      }),
+    );
+    expect('description' in restored.tasks[0]).toBe(false);
+    expect(serializeProject(restored)).not.toContain('description');
+  });
+
+  it('takes 2000 characters and refuses 2001, saying how long it was', () => {
+    const atLimit = 'x'.repeat(2000);
+    expect(deserializeProject(fileWith(atLimit)).tasks[0].description).toBe(atLimit);
+    expect(() => deserializeProject(fileWith(`${atLimit}x`))).toThrow(ProjectFileError);
+    expect(() => deserializeProject(fileWith(`${atLimit}x`))).toThrow(
+      /tasks\[0\]\.description: 2001 characters, the limit is 2000/,
+    );
+  });
+
+  it('hands a 2000-character description with newlines through the file gate', () => {
+    const text = `${'a'.repeat(999)}\n${'b'.repeat(1000)}`;
+    expect(text).toHaveLength(2000);
+    const project = described(text);
+    const file = serializeForFile(project, solve(project));
+    expect(deserializeProject(file).tasks[0].description).toBe(text);
   });
 });

@@ -114,6 +114,8 @@ export interface GanttHandle {
 export interface TaskDetails {
   id: string;
   name: string;
+  /** The task's free text, absent when it has none: the model's own spelling. */
+  description?: string;
   nominalDays: number;
   start: Date;
   end: Date;
@@ -157,4 +159,9 @@ export interface TaskPatch {
    * stored flag rather than writing it — see `GanttChart.updateTask`.
    */
   disabled?: boolean;
+  /**
+   * Optional: absent means the caller left it alone. `''` deletes the stored
+   * text rather than writing it — see `GanttChart.updateTask`.
+   */
+  description?: string;
 }

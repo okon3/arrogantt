@@ -30,6 +30,13 @@ import { taskCosts, type Person, type TaskCost } from './cost';
 export interface ProjectTask {
   id: string;
   name: string;
+  /**
+   * Free text about the task: multi-line, up to 2000 characters.
+   *
+   * Absent when empty, for the reason `disabled` below gives — one state, one
+   * spelling, or the dirty comparison has two texts to disagree about.
+   */
+  description?: string;
   nominalDays: number;
   start: Date;
   resourceId?: string;
