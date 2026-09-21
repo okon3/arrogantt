@@ -235,13 +235,13 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
 
 ## Log
 
-- **Dimensionamento**: impl oltre ~200k = task da splittare (F7 257k, F1 222k,
-  F4b 228k); splittato rende 80-170k a meta'. Si taglia la **campagna di
-  verifica**, non il codice (F5a 215k e F5c 242k ri-splittate sul codice
-  risalgono; toglierla del tutto non rende economico il task, F8 146k).
-- **Goal G**: G2 88k/86k, G1 82k/94k, G3a 92k/81k, G3b 197k/185k
-  (impl/critic), **zero correzioni di corsia in tutti e quattro** — un brief
-  che porta gia' la fixture e i casi dell'accept si paga.
+- **Dimensionamento**: impl oltre ~200k = task da splittare (F7 257k, F1 e
+  F4b ~225k); splittato rende 80-170k a meta'. Si taglia la **campagna di
+  verifica**, non il codice — ri-splittare sul codice li fa risalire, e
+  toglierla del tutto non rende economico il task (F8 146k).
+- **Un brief che porta gia' la fixture e i casi dell'accept si paga**: zero
+  correzioni di corsia su tutti e sei i task di G e H (impl 82-197k, critic
+  81-185k).
 - Una correzione via SendMessage costa meno di un fresh spawn (~40k). Un
   `[self]` guidato nel browser costa **una generazione dell'hub** (T65b, zero
   deleghe, oltre 176k da solo).
@@ -262,9 +262,8 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   ingresso. **Prima di briefare, misurare la premessa**: se cade, il brief non
   serve. Un task di sola analisi paga bene la delega se l'hub tiene solo le
   conclusioni e rimisura da se' quelle portanti (T60: due Explore, 56k + 72k).
-- **Goal H**: H1 100k/90k, H2 134k/127k, zero correzioni di corsia. Il critic
-  di H1 ha dato `pass` pieno mancando due difetti sotto il bar che l'hub ha
-  visto **nel suo stesso report**: un `pass` non esime dal leggere il diff.
+- **Un `pass` del critic non esime dal leggere il diff**: quello di H1 era
+  pieno e mancava due difetti sotto il bar visibili **nel suo stesso report**.
 - **Un brief che scopa fuori un file di `docs/` non scopa fuori la docs
   duty.** H2 rimandava `docs/file-format.md` a H3; il diff rendeva falsa una
   sua frase, e la regola di `CLAUDE.md` («stesso commit») supera il brief. Il
