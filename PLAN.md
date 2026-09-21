@@ -339,14 +339,15 @@ corregge il difetto.**
   richieste che non si puo' ancorare a tavolino: va prodotto un censimento di
   cio' che si vede, o il goal costruisce il gusto di chi implementa.
 
-**Collisione da sciogliere prima di qualunque fetta: T16 e questo goal sono
-lo stesso censimento chiesto due volte.** T16 (`## Maintenance`, corsia
-`architect`) e' un audit dell'UI a 375px e 768px con «censimento
-azioni/controlli e proposta di cosa nascondere o adattare». Riorganizzare i
-menu **e'** la stessa domanda posta a viewport desktop. Se si riorganizza
-prima, T16 audita un'UI che sta per cambiare; se si audita prima, il suo
-censimento e' esattamente l'input della riorganizzazione. **Da decidere con
-l'utente, non da subire.**
+**Collisione con T16, sciolta dall'utente il 2026-09-21.** T16 e questo goal
+sono lo stesso censimento a viewport diverse. Ordine deciso: **prima** il
+difetto gia' misurato sui task disattivati, **poi** l'audit del desktop
+attuale (menu, polish, crispness, microinteractions), **poi** la passata
+mobile come task separato. Il desktop e' la superficie primaria; mobile e'
+sola visualizzazione e viene dopo.
+**Conseguenza da non perdere**: T16 auditera' un'UI che questo goal avra'
+appena cambiato — la sua vecchia riga «l'audit gira sull'UI finale» e' da
+considerarsi **decaduta**, ed e' stata corretta sul posto.
 
 **Guardia, scritta prima di partire** (e' la stessa di Goal C, che l'ha
 pagata): questo goal **non deve avere un'analisi come unico task**. Il
@@ -355,7 +356,38 @@ nessuna goal review deve scattare, perche' scatterebbe su un diff inesistente
 — il buco in cui e' caduta la review di Goal B. Il goal riceve fette **solo
 dopo** che l'utente ha comprato dal censimento.
 
-**Nessun task ancora.** Ne servono dopo che la collisione con T16 e' sciolta.
+- [ ] K1 [impl] — **I task disattivati si distinguono davvero.** Oggi la
+      barra ha due trattamenti (`opacity: 0.45` + `saturate(0.3)`,
+      `gantt.css:346-349`) e la riga in griglia **uno solo su una sola
+      colonna** (`color: var(--ink-muted)` su `.gantt-name`,
+      `gantt.css:692-694`): effort, date e persona si leggono come su una
+      riga attiva. Estendere una scelta gia' presa, non inventarne una.
+      Verifica **nel browser**, con `getComputedStyle` su celle di righe
+      attive e disattivate a confronto — non a occhio e non dal foglio di
+      stile. Vale la regola dell'80%: si corregge la mancanza che si vede.
+      Rischio dichiarato: K2 potrebbe rimettere mano a questa scelta dentro
+      un sistema piu' ampio; l'utente ha scelto di farlo prima sapendolo.
+
+- [ ] K2 [architect] — **Audit del desktop attuale: censimento + proposta.**
+      Scope: guardare l'app a viewport desktop e censire cosa la fa sembrare
+      un prototipo. Quattro aree, volute dall'utente: **organizzazione dei
+      menu** (i comandi vivono su quattro superfici — `Toolbar.tsx` 216
+      righe, `RowMenu.tsx` 151, `StatusBar.tsx` 241, piu' bottoni in
+      `App.tsx`; la toolbar **e' gia' raggruppata ed etichettata**, quindi la
+      lamentela va localizzata, non assunta), **polish e crispness**
+      (l'unica delle richieste senza nessun difetto ancora attaccato: va
+      prodotto il censimento, o il goal costruisce il gusto di chi
+      implementa), **microinteractions**, e la coerenza generale.
+      Output: report in `.claude/specs/K2-report.md` con opzioni e
+      raccomandazione — **nessuna implementazione**; le fette si scopano
+      dopo, col confronto utente.
+      Il censimento si consegna come **matrice di celle guidate** piu' una
+      lista esplicita di cio' che non e' stato guidato — mai in prosa (la
+      regola sta in `CLAUDE.md`, ed e' costata tre round sullo stesso
+      paragrafo).
+      Materiale gia' misurato, da non ri-supporre: l'asimmetria dei
+      disattivati sopra (che K1 avra' gia' chiuso) e i due fatti annotati
+      sotto Goal C (dialogo People, bottone «Fit» che trabocca a 768px).
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
@@ -390,8 +422,11 @@ di questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       Goal C (dialogo People e bottone «Fit»).
       Il censimento si consegna come **matrice di celle guidate** piu' una
       lista esplicita di cio' che non e' stato guidato — mai in prosa.
-      Depends: soddisfatta (T13-T15 e T18 chiusi: l'audit gira sull'UI finale,
-      collapse della griglia incluso).
+      **Depends: NON piu' soddisfatta.** La vecchia riga diceva «l'audit gira
+      sull'UI finale» — resa falsa dall'apertura di Goal K, che cambiera'
+      menu e resa desktop. Ordine deciso dall'utente il 2026-09-21: T16 va
+      **dopo** K1 e K2 e dopo le fette che K2 fara' comprare, o auditerebbe
+      un'UI in movimento.
 
 ## Decisioni chiuse — non riproporre
 
