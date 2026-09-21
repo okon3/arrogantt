@@ -9,8 +9,8 @@ disattivato) aspettano sotto `## Unreleased` — scelta dell'utente, il badge
 resta a v1.5 e il rilascio si fa quando serve distribuire una build.
 **Goal I** e' aperto (descrizione per task) ma non ancora avviato: ha domande
 di prodotto da chiudere con l'utente e una suddivisione dichiarata
-provvisoria. `## Maintenance` porta T16, l'audit mobile; Goal C aspetta quel
-report prima di ricevere task veri.
+provvisoria. `## Maintenance` porta T16 (audit mobile) e T17 (nome del task
+in hover); Goal C aspetta quel report prima di ricevere task veri.
 
 **Trappola di misura, costata un falso negativo**: `ChangelogDialog` rende
 `className="help"` (`ChangelogDialog.tsx:10`) — un dialogo "changelog" nel DOM
@@ -51,11 +51,13 @@ da solo non regge. Aperto dall'utente il 2026-09-21.
 - Vale **anche per i raggruppamenti** (summary), non solo per le foglie.
 
 **Risposte dell'utente, 2026-09-21 — chiuse.**
-- **Nessun indicatore di riga**: si accetta che una descrizione non si veda
-  dalla griglia. Il rimedio scelto e' il tooltip qui sotto, non un'icona.
-- **Tooltip in griglia sul nome del task**: in hover la riga mostra il testo
-  per esteso. **Un `title` HTML nativo basta** — niente componente tooltip
-  nuovo.
+- **La descrizione non ha nessuna superficie nel grafico**, e va bene cosi'.
+  Niente icona di riga, niente tooltip: si legge aprendo il modal, oppure
+  da CSV e dall'agent API. Chiesto due volte e confermato due volte — **una
+  goal review che lo segnala come MISSING sta segnalando una scelta**, non
+  una dimenticanza.
+  (Il tooltip che l'utente ha chiesto nella stessa conversazione riguarda il
+  **nome** del task, non la descrizione: e' in `## Maintenance`, T17.)
 - **Agent API: si'** — «potrebbe dare informazioni utili all'agente». Quindi
   `agentApi.help.md` va aggiornato **nello stesso commit**: e' anche
   `arrogantt.help()` e `/llms.txt`, e non se ne fa una seconda copia.
@@ -63,24 +65,15 @@ da solo non regge. Aperto dall'utente il 2026-09-21.
   di questo goal, a differenza di Goal H.)
 - **Limite 2000 caratteri**, in una **textarea**, testo senza formattazione.
 
-**Fatto verificato il 2026-09-21 — il tooltip ha gia' la sua regola, e
-l'istinto dell'utente la rispetta.** `gridColumns.ts:130-132` registra una
-decisione deliberata: **il tooltip ricco dell'app sta solo sulle barre**
-(`barTooltip.ts` via `gantt.ext.tooltips`), e la griglia usa `title` nativi —
-riportare quello dell'app su una cella sarebbe «un secondo tooltip nella
-stessa colonna». Il `title` nativo non e' quindi un ripiego: e' la
-convenzione in vigore, e vale la pena scriverlo nel brief perche' una corsia
-che vede `barTooltip.ts` sara' tentata di riusarlo.
-
 **Da misurare prima di briefare, non da supporre.**
-- Se `lo mostra per esteso` (parole dell'utente) sia la **descrizione** o il
-  **nome del task troncato**: le due letture danno due feature diverse, e la
-  piu' utile potrebbe essere un `title` solo che porti entrambi. **Domanda
-  posta all'utente, in attesa.**
 - Una descrizione di 2000 caratteri con a capo dentro, dentro una cella CSV:
-  `planCsv.ts` gia' quota? Da leggere, non da dare per scontato.
-- Un `title` nativo da 2000 caratteri e' illeggibile: va troncato nel
-  tooltip, e serve decidere a quanto.
+  `planCsv.ts` gia' quota e fa l'escape dei newline? Da leggere, non da dare
+  per scontato — e' l'unica superficie di questo goal che porta il testo
+  fuori dall'app.
+- Se il limite di 2000 si imponga nella textarea (`maxLength`), nel parsing,
+  o in entrambi. Il gate di `serializeForFile` rifiuta e non ripara: un file
+  scritto a mano con 5000 caratteri va **rifiutato**, non troncato in
+  silenzio.
 
 **Fatto verificato il 2026-09-21, che risparmia un round.** `ProjectTask`
 (`project.ts:30-48`) tiene `disabled?: boolean` con una regola scritta nel
@@ -105,8 +98,8 @@ pagato con mezzo goal riscritto. Da rivedere all'apertura dei lavori.
       «vuoto = assente» sopra, e la tenuta di undo/draft/`dirty`.
 - [ ] I2 [impl] — La textarea nel `TaskDialog`, summary inclusi, col giro
       completo edit → modello → `applySolution`, e il limite di 2000.
-- [ ] I3 [impl] — Il `title` nativo in griglia sulla colonna dei nomi, e la
-      descrizione in CSV (`planCsv.ts`). **No** figura, **no** stampa.
+- [ ] I3 [impl] — La descrizione in CSV (`planCsv.ts`). **No** figura,
+      **no** stampa.
 - [ ] I4 [impl] — L'agent API: `getTask` la rende, `updateTask` la scrive,
       e `agentApi.help.md` nello stesso commit.
 - [ ] I5 [self] — `docs/file-format.md`, `docs/view.md`, e il bullet di
@@ -117,6 +110,22 @@ Task che non servono una milestone: difetti puntuali, salute del codice e
 analisi, arrivati come richieste singole. **Non ricevono la goal review**, ed
 e' il prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno
 di questi cresce fino a meritarne una, si apre un goal e lo si sposta.
+
+- [ ] T17 [impl] — Il nome del task per esteso in hover sulla griglia.
+      Chiesto dall'utente il 2026-09-21 insieme a Goal I, ma indipendente da
+      esso: riguarda il **nome troncato**, non la descrizione, e sotto
+      l'enunciato di Goal I sarebbe contrabbando.
+      **Un `title` HTML nativo, nessun componente nuovo** — e' la convenzione
+      gia' in vigore e c'e' una ragione scritta: `gridColumns.ts:130-132`
+      registra che **il tooltip ricco dell'app sta solo sulle barre**
+      (`barTooltip.ts` via `gantt.ext.tooltips`) e che la griglia usa `title`
+      nativi, perche' riportarlo su una cella sarebbe «un secondo tooltip
+      nella stessa colonna». Una corsia che vede `barTooltip.ts` sara'
+      tentata di riusarlo: vietarlo nel brief.
+      Da misurare prima: **se il nome tronchi davvero**, e a quale larghezza
+      di colonna — un tooltip che ripete cio' che si legge gia' e' rumore.
+      Se dopo la misura il difetto non si vede, va riportato all'utente coi
+      numeri, non costruito lo stesso.
 
 - [ ] T16 [architect] — Valutazione mobile: audit + proposta
       Scope: audit dell'app a viewport smartphone (375px) e tablet (768px),
