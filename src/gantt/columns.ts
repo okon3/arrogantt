@@ -28,7 +28,11 @@ export interface PlanColumn {
   figureWidth: number;
   /** On screen before the user ever opens the picker. */
   defaultShown: boolean;
-  /** Fit for a client's eyes — a later export dialog's default. */
+  /**
+   * Fit for a client's eyes, and the export dialog's *For the client* preset.
+   * A person's name is an internal of the organisation, so `resource_id` is
+   * not safe however useful it is on screen.
+   */
   clientSafe: boolean;
 }
 
@@ -40,7 +44,7 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
     gridWidth: 76,
     figureWidth: 110,
     defaultShown: true,
-    clientSafe: true,
+    clientSafe: false,
   },
   {
     name: 'nominal_days',

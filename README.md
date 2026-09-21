@@ -79,7 +79,7 @@ browser downloads and reads back. Strict parsing: a malformed file is refused, i
 never corrupts the open plan. Export the solved schedule as CSV, a self-scaling
 PNG, or print/PDF with proper pagination — and the picture asks first: the whole
 plan or the tree as you see it, which columns come with it, and a *For the
-client* preset that leaves rates and costs behind.
+client* preset that leaves names, rates and costs behind.
 
 **Built for AI agents** — the whole app is scriptable through `window.arrogantt`, in
 production too. Every button has an API equivalent, errors throw, and the docs

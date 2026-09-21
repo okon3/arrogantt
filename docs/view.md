@@ -753,8 +753,9 @@ scope nor a column list, so it has nothing to ask.
   plan** whatever the rows, because `options.slice` selects rows and never
   dates, so every page of a figure shares one scale (`planFigure.ts`).
 - **The preset is a button, never a mode.** *For the client* sets the columns
-  to the registry's `clientSafe` entries — it drops Rate and Cost — and
-  **leaves the scope where it is**. The scope mirrors the tree the user has
+  to the registry's `clientSafe` entries — it drops Resource, Rate and Cost,
+  because a person's name is an internal of the organisation and not merely
+  a figure — and **leaves the scope where it is**. The scope mirrors the tree the user has
   already arranged on screen; a preset that closed it under them would make
   what they see and what they get diverge, which is the one thing the
   WYSIWYG scope exists to prevent.

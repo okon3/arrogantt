@@ -48,6 +48,8 @@ describe('the client-safe column selection', () => {
   it('leaves out what a client must not read — the money columns', () => {
     expect(clientSafeColumns().has('rate')).toBe(false);
     expect(clientSafeColumns().has('cost')).toBe(false);
+    // A name is an internal of the organisation, not merely a cost.
+    expect(clientSafeColumns().has('resource_id')).toBe(false);
   });
 
   it('is a fresh set each call, so a caller holding one cannot rewrite the registry', () => {

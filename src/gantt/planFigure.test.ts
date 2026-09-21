@@ -331,11 +331,12 @@ describe('planFigure columns', () => {
     expect(svg).toMatch(/<line x1="266" y1="[\d.]+" x2="266" y2="[\d.]+" stroke="#dfe2e8" \/>/);
   });
 
-  it('PLAN_COLUMNS marks exactly rate and cost as client-unsafe, and the figure draws whatever it is given', () => {
+  it('PLAN_COLUMNS marks resource, rate and cost as client-unsafe, and the figure draws whatever it is given', () => {
+    // A name is an internal of the organisation, so it leaves with the money.
     const unsafe = PLAN_COLUMNS.filter((entry) => !entry.clientSafe)
       .map((entry) => entry.name)
       .sort();
-    expect(unsafe).toEqual(['cost', 'rate']);
+    expect(unsafe).toEqual(['cost', 'rate', 'resource_id']);
 
     const { project, solved } = buildFixtureC();
     const { svg } = planFigure(project, solved, { width: 1050, columns: ['cost'] });
