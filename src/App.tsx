@@ -834,9 +834,10 @@ export default function App() {
   useEffect(() => {
     if (pendingPrint === null || printed.current === pendingPrint) return;
     printed.current = pendingPrint;
-    // `installPrintFigure` reads its settings through the ref above, and the
-    // effect that refreshes it is not this one: writing it here is what makes
-    // this print draw what was just confirmed rather than what it replaced.
+    // Belt and braces, not the write that makes this work: `confirmExport`
+    // batches both state changes, so the effect above — declared first — has
+    // already refreshed the ref in this same commit. Written again here so the
+    // print does not silently depend on that declaration order.
     printExportSettings.current = pendingPrint;
     window.print();
   }, [pendingPrint]);

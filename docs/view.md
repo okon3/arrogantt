@@ -773,10 +773,9 @@ scope nor a column list, so it has nothing to ask.
   `window.print()` blocks until the sheet is dismissed, so a call in the
   confirm callback would hold the dialog on screen for the whole of it —
   React gets no turn to unmount in between. The request goes into state, an
-  effect makes the call, and that effect writes the confirmed settings into
-  the ref `installPrintFigure` reads, because the effect that normally
-  refreshes that ref is not this one. A PNG blocks nothing and runs straight
-  from the callback. **Measured on the PNG path, which shares every write**:
+  effect makes the call. A PNG blocks nothing and runs straight from the
+  callback. Why that effect also writes the ref `installPrintFigure` reads is
+  in the comment there, and only there. **Measured on the PNG path**:
   branch collapsed, *As I see it* + *For the client* confirmed, then a
   `beforeprint` — the figure drew `Design` and `Launch`, not
   `Wireframes`/`Mockups`, under Resource · Effort · Start · End · Duration.

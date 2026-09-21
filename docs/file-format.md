@@ -127,9 +127,15 @@ beside a non-zero `Uncosted (d)` it is a lower bound.
   and axis repeated, one shared time scale (browsers won't break an image across
   pages — unpaged = cropped). *Save as PDF* in the print dialog **is** the PDF
   export.
-- The figure takes a `columns` list (`FigureOptions.columns`, drawn as a
-  header band above the month band); PNG and print both pass the grid's
-  current column selection, so a deselected column drops out of the header
-  band and the resource cell too, and an empty selection still draws the band,
-  empty — never the legacy `Name + Person` outline that `columns` omitted
-  answers.
+- Both buttons open the **export dialog** first, and the figure is drawn from
+  what it confirms: the row scope (the whole plan, or the tree as the grid
+  currently shows it — a closed branch exports its summary and not its
+  children) and the column list. Ctrl+P interposes nothing and prints with the
+  settings as they stand. Until a confirm stores its own, the settings follow
+  the grid's live selection, which is what PNG and print did before the
+  dialog. Decisions and their reasons: [view.md](view.md).
+- The figure takes that `columns` list (`FigureOptions.columns`, drawn as a
+  header band above the month band), so a deselected column drops out of the
+  header band and the resource cell too, and an empty selection still draws
+  the band, empty — never the legacy `Name + Person` outline that `columns`
+  omitted answers.
