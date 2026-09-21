@@ -24,11 +24,10 @@ con `v1.5 — 2026-09-21` in testa. `## Unreleased` non c'e' piu'.
 "changelog" nel DOM non lo trova — si misura sul contenuto, non sul nome.
 
 **`## Maintenance — no goal`**: T63, T64, T65a e T65b chiusi (ultima release
-da li', `v1.4`, `94caf0d`). Resta **M1**, una casa sola per la mappa
-`ExportSettings` → `FigureOptions`, lasciata sotto il bar dalla review di G.
-La manutenzione non riceve goal review per scelta: chiudere M1 non fa
-scattare niente. I due screenshot mostrano ancora l'app come e' — il dialogo
-di export non entra in nessuno dei due.
+da li', `v1.4`, `94caf0d`), e M1 con loro (`2c53267`): **la sezione e'
+di nuovo vuota**. La manutenzione non riceve goal review per scelta, quindi
+alla chiusura di M1 non e' scattato niente. I due screenshot mostrano ancora
+l'app come e' — il dialogo di export non entra in nessuno dei due.
 
 **Se si scegliesse T16, la guardia di T32 va scritta anche su Goal C prima di
 partire**: T16 e' il suo unico task e consegna un report, quindi alla sua
