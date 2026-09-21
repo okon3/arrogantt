@@ -48,6 +48,8 @@ export interface FigureOptions {
    * depth; the summary itself is. Absent = every row, as before.
    */
   collapsedIds?: ReadonlySet<string>;
+  /** Disabled rows are not drawn. Absent = every row, as before. */
+  excludeDisabled?: boolean;
 }
 
 export interface Figure {
@@ -165,13 +167,20 @@ function geometryOf(from: Date, to: Date, width: number, labelWidth: number): Ge
  * already found hidden, with no need to walk back up the chain of ancestors
  * for every row.
  */
-function visibleTasks(tasks: PlanTask[], collapsedIds: ReadonlySet<string> | undefined): PlanTask[] {
-  if (!collapsedIds) return tasks;
+function visibleTasks(
+  tasks: PlanTask[],
+  collapsedIds: ReadonlySet<string> | undefined,
+  excludeDisabled: boolean | undefined,
+): PlanTask[] {
+  if (!collapsedIds && !excludeDisabled) return tasks;
   const hidden = new Set<string>();
   return tasks.filter((task) => {
-    const parentHidden = task.parentId !== null && (collapsedIds.has(task.parentId) || hidden.has(task.parentId));
-    if (parentHidden) hidden.add(task.id);
-    return !parentHidden;
+    // `disabled` is already inherited down the whole branch (`plan.ts`), so a
+    // flat check is enough — no ancestor walk needed, unlike `collapsedIds`.
+    const parentHidden = task.parentId !== null && (collapsedIds?.has(task.parentId) || hidden.has(task.parentId));
+    const hide = parentHidden || (excludeDisabled === true && task.disabled);
+    if (hide) hidden.add(task.id);
+    return !hide;
   });
 }
 
@@ -312,7 +321,7 @@ export function planFigure(
   const width = options.width ?? 1400;
   const plan = buildPlan(solved);
   const names = new Map(project.resources.map((resource) => [resource.id, resource.name]));
-  const filteredTasks = visibleTasks(plan.tasks, options.collapsedIds);
+  const filteredTasks = visibleTasks(plan.tasks, options.collapsedIds, options.excludeDisabled);
   const rows = options.slice
     ? filteredTasks.slice(options.slice.from, options.slice.from + options.slice.count)
     : filteredTasks;
@@ -468,7 +477,7 @@ export function planFigurePages(
   solved: SolvedProject,
   options: Omit<FigureOptions, 'slice'> & { rowsPerPage?: number } = {},
 ): Figure[] {
-  const total = visibleTasks(buildPlan(solved).tasks, options.collapsedIds).length;
+  const total = visibleTasks(buildPlan(solved).tasks, options.collapsedIds, options.excludeDisabled).length;
   const perPage = Math.max(1, options.rowsPerPage ?? PAGE_ROWS);
   const pages = Math.max(1, Math.ceil(total / perPage));
   return Array.from({ length: pages }, (_, index) =>

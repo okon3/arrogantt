@@ -67,10 +67,13 @@ opzione a se', spuntabile fuori dal preset. Aperto dall'utente il 2026-09-21.
   scriverne due.
 - `clientSafe` (`columns.ts`) resta **senza lettori** se il preset non lo usa
   piu': esiste solo per lui. Da togliere o da giustificare, non da ignorare.
-- Da verificare prima di briefare H1: se `PlanTask` porti gia' `disabled`
-  fino a `planFigure`. Non misurato.
+- `disabled` e' **ereditato lungo l'albero** (`disabledByTask`,
+  `project.ts:254-268`), quindi ogni discendente di un summary disattivato
+  arriva a `planFigure` gia' con `PlanTask.disabled === true`: il ramo intero
+  cade con un filtro piatto, senza risalita agli antenati. La sonda di H2 deve
+  aspettarsi il ramo intero sparito, non il solo summary.
 
-- [ ] H1 [impl] — `excludeDisabled` nelle impostazioni, e il filtro in una
+- [x] H1 [impl] — `excludeDisabled` nelle impostazioni, e il filtro in una
       casa sola. Il campo in `ExportSettings`, la sua persistenza in
       `arrogantt.export.v1` (parsing strict come il resto: un valore non
       booleano fa cadere l'intero stored, non il singolo campo), il default
@@ -249,6 +252,10 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   ingresso. **Prima di briefare, misurare la premessa**: se cade, il brief non
   serve. Un task di sola analisi paga bene la delega se l'hub tiene solo le
   conclusioni e rimisura da se' quelle portanti (T60: due Explore, 56k + 72k).
+- **Goal H**: H1 100k/90k, zero correzioni di corsia. Il critic ha dato `pass`
+  pieno e ha mancato due difetti sotto il bar che l'hub ha visto nel suo
+  report: fixture in italiano, e un commento reso stale dal diff stesso. Un
+  `pass` non esime dal leggere il diff.
 - **Una citazione copiata non e' verificata**: ne' un `file:line`, ne' un tipo,
   ne' un predicato, **ne' il nome di un'op** — `resourceUpdate` e' passato per
   tre mani e l'op e' `updateResource`. Si ri-localizza, e si cita per simbolo.

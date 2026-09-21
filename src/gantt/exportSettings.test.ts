@@ -30,11 +30,28 @@ describe('reading the stored export settings', () => {
     const settings: ExportSettings = {
       scope: 'visible',
       columns: new Set<PlanColumnName>(['elapsed_days', 'resource_id']),
+      excludeDisabled: false,
     };
     writeExportSettings(storage, settings);
     expect(readExportSettings(storage)).toEqual({
       scope: 'visible',
       columns: new Set(['resource_id', 'elapsed_days']),
+      excludeDisabled: false,
+    });
+  });
+
+  it('round-trips excludeDisabled: true', () => {
+    const storage = fakeStorage();
+    const settings: ExportSettings = {
+      scope: 'all',
+      columns: new Set(),
+      excludeDisabled: true,
+    };
+    writeExportSettings(storage, settings);
+    expect(readExportSettings(storage)).toEqual({
+      scope: 'all',
+      columns: new Set(),
+      excludeDisabled: true,
     });
   });
 
@@ -50,7 +67,7 @@ describe('reading the stored export settings', () => {
     const storage = fakeStorage(true);
     expect(readExportSettings(storage)).toBeNull();
     expect(() =>
-      writeExportSettings(storage, { scope: 'all', columns: new Set() }),
+      writeExportSettings(storage, { scope: 'all', columns: new Set(), excludeDisabled: false }),
     ).not.toThrow();
   });
 
@@ -84,8 +101,31 @@ describe('reading the stored export settings', () => {
     expect(readExportSettings(storage)).toEqual({
       scope: 'all',
       columns: new Set(['elapsed_days']),
+      excludeDisabled: false,
     });
   });
+
+  it('reads excludeDisabled: false on a stored value written before the field existed', () => {
+    const storage = fakeStorage();
+    storage.entries.set(KEY, JSON.stringify({ scope: 'all', columns: ['elapsed_days'] }));
+    expect(readExportSettings(storage)).toEqual({
+      scope: 'all',
+      columns: new Set(['elapsed_days']),
+      excludeDisabled: false,
+    });
+  });
+
+  it.each([['true'], [1], [null]])(
+    'is null when excludeDisabled is %j rather than a boolean',
+    (bogus) => {
+      const storage = fakeStorage();
+      storage.entries.set(
+        KEY,
+        JSON.stringify({ scope: 'all', columns: ['elapsed_days'], excludeDisabled: bogus }),
+      );
+      expect(readExportSettings(storage)).toBeNull();
+    },
+  );
 });
 
 describe('writing the export settings', () => {
@@ -94,6 +134,7 @@ describe('writing the export settings', () => {
     writeExportSettings(storage, {
       scope: 'all',
       columns: new Set<PlanColumnName>(['cost', 'resource_id']),
+      excludeDisabled: false,
     });
     const parsed = JSON.parse(storage.entries.get(KEY) ?? '{}');
     expect(parsed.columns).toEqual(['resource_id', 'cost']);
@@ -101,7 +142,7 @@ describe('writing the export settings', () => {
 
   it('is a no-op, without throwing, when there is no storage', () => {
     expect(() =>
-      writeExportSettings(undefined, { scope: 'all', columns: new Set() }),
+      writeExportSettings(undefined, { scope: 'all', columns: new Set(), excludeDisabled: false }),
     ).not.toThrow();
   });
 });
@@ -109,12 +150,20 @@ describe('writing the export settings', () => {
 describe('resolving export settings', () => {
   const grid: ReadonlySet<PlanColumnName> = new Set(['resource_id', 'start_date']);
 
-  it('falls back to scope "all" and the grid columns when nothing was stored', () => {
-    expect(resolveExportSettings(null, grid)).toEqual({ scope: 'all', columns: grid });
+  it('falls back to scope "all", the grid columns and excludeDisabled: false when nothing was stored', () => {
+    expect(resolveExportSettings(null, grid)).toEqual({
+      scope: 'all',
+      columns: grid,
+      excludeDisabled: false,
+    });
   });
 
   it('returns the stored settings unchanged, ignoring the grid', () => {
-    const stored: ExportSettings = { scope: 'visible', columns: new Set(['cost']) };
+    const stored: ExportSettings = {
+      scope: 'visible',
+      columns: new Set(['cost']),
+      excludeDisabled: true,
+    };
     expect(resolveExportSettings(stored, grid)).toBe(stored);
   });
 });
@@ -130,13 +179,21 @@ describe('mapping export settings onto figure options', () => {
   const collapsed: ReadonlySet<string> = new Set(['t1']);
 
   it('passes the closed branches only under scope "visible"', () => {
-    const settings: ExportSettings = { scope: 'visible', columns: new Set(['cost']) };
+    const settings: ExportSettings = {
+      scope: 'visible',
+      columns: new Set(['cost']),
+      excludeDisabled: false,
+    };
     expect(figureOptionsFrom(settings, () => collapsed).collapsedIds).toBe(collapsed);
   });
 
   it('never asks for them under scope "all", however the grid is folded', () => {
     let asked = 0;
-    const settings: ExportSettings = { scope: 'all', columns: new Set(['cost']) };
+    const settings: ExportSettings = {
+      scope: 'all',
+      columns: new Set(['cost']),
+      excludeDisabled: false,
+    };
     const options = figureOptionsFrom(settings, () => {
       asked += 1;
       return collapsed;
@@ -146,7 +203,17 @@ describe('mapping export settings onto figure options', () => {
   });
 
   it('gives an array, empty rather than absent, so an emptied selection is not the legacy outline', () => {
-    const settings: ExportSettings = { scope: 'all', columns: new Set() };
+    const settings: ExportSettings = { scope: 'all', columns: new Set(), excludeDisabled: false };
     expect(figureOptionsFrom(settings, () => undefined).columns).toEqual([]);
+  });
+
+  it('carries excludeDisabled through unchanged, in both values', () => {
+    const base = { scope: 'all' as const, columns: new Set<PlanColumnName>() };
+    expect(figureOptionsFrom({ ...base, excludeDisabled: true }, () => undefined).excludeDisabled).toBe(
+      true,
+    );
+    expect(
+      figureOptionsFrom({ ...base, excludeDisabled: false }, () => undefined).excludeDisabled,
+    ).toBe(false);
   });
 });

@@ -15,6 +15,8 @@ export interface ExportSettings {
   /** 'visible' respects the closed branches of the grid; 'all' draws every row. */
   scope: 'all' | 'visible';
   columns: ReadonlySet<PlanColumnName>;
+  /** A disabled task — and the branch inheriting from it — stays out of the figure. */
+  excludeDisabled: boolean;
 }
 
 const REGISTRY_NAMES: ReadonlySet<string> = new Set(PLAN_COLUMNS.map((entry) => entry.name));
@@ -44,13 +46,22 @@ export function readExportSettings(storage: DraftStorage | undefined): ExportSet
     ) {
       return null;
     }
+    // Absent is a pre-existing stored value, read as the default; anything
+    // present but not boolean is corrupt, and takes the whole stored down —
+    // unlike `columns`, where an unknown name is just an innocuous absence.
+    const rawExclude = (parsed as { excludeDisabled?: unknown }).excludeDisabled;
+    if (rawExclude !== undefined && typeof rawExclude !== 'boolean') return null;
     const rawColumns = (parsed as { columns: unknown[] }).columns;
     if (!rawColumns.every((entry) => typeof entry === 'string')) return null;
     const columns = new Set<PlanColumnName>();
     for (const name of rawColumns) {
       if (REGISTRY_NAMES.has(name)) columns.add(name as PlanColumnName);
     }
-    return { scope: (parsed as { scope: ExportSettings['scope'] }).scope, columns };
+    return {
+      scope: (parsed as { scope: ExportSettings['scope'] }).scope,
+      columns,
+      excludeDisabled: rawExclude ?? false,
+    };
   } catch {
     return null;
   }
@@ -66,7 +77,11 @@ export function writeExportSettings(
     );
     storage?.setItem(
       EXPORT_SETTINGS_KEY,
-      JSON.stringify({ scope: settings.scope, columns: ordered }),
+      JSON.stringify({
+        scope: settings.scope,
+        columns: ordered,
+        excludeDisabled: settings.excludeDisabled,
+      }),
     );
   } catch {
     // Worst case the next confirm or reload falls back to the resolved default.
@@ -81,7 +96,7 @@ export function resolveExportSettings(
   stored: ExportSettings | null,
   gridColumns: ReadonlySet<PlanColumnName>,
 ): ExportSettings {
-  return stored ?? { scope: 'all', columns: gridColumns };
+  return stored ?? { scope: 'all', columns: gridColumns, excludeDisabled: false };
 }
 
 /**
@@ -95,11 +110,16 @@ export function resolveExportSettings(
 export function figureOptionsFrom(
   settings: ExportSettings,
   collapsedBranches: () => ReadonlySet<string> | undefined,
-): { columns: PlanColumnName[]; collapsedIds: ReadonlySet<string> | undefined } {
+): {
+  columns: PlanColumnName[];
+  collapsedIds: ReadonlySet<string> | undefined;
+  excludeDisabled: boolean;
+} {
   return {
     // Unconditional on purpose: an emptied selection is `[]`, and only an
     // absent list means the legacy outline (`planFigure.ts`, `selected`).
     columns: [...settings.columns],
     collapsedIds: settings.scope === 'visible' ? collapsedBranches() : undefined,
+    excludeDisabled: settings.excludeDisabled,
   };
 }

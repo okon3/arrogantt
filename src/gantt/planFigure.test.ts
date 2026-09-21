@@ -461,6 +461,69 @@ describe('planFigure collapsedIds', () => {
   });
 });
 
+describe('planFigure excludeDisabled', () => {
+  // A disabled summary with a child that carries no flag of its own (disabled
+  // is inherited down the whole branch, plan.ts/project.ts), plus a second,
+  // fully active branch that must survive the filter untouched.
+  function excludeFixture(): Project['tasks'] {
+    return [
+      { id: 'sdis', name: 'Off summary', nominalDays: 0, start: monday, disabled: true },
+      { id: 'cdis', name: 'Off child', nominalDays: 2, start: monday, parentId: 'sdis' },
+      { id: 'sok', name: 'Live summary', nominalDays: 0, start: monday },
+      { id: 'cok', name: 'Live child', nominalDays: 2, start: monday, parentId: 'sok' },
+    ];
+  }
+
+  it('draws neither the disabled summary nor its unflagged child, and keeps the active branch', () => {
+    const { svg } = figureOf(excludeFixture(), { width: 1050, excludeDisabled: true });
+    expect(svg).not.toContain('>Off summary<');
+    expect(svg).not.toContain('>Off child<');
+    expect(svg).toContain('>Live summary<');
+    expect(svg).toContain('>Live child<');
+  });
+
+  it('draws every row when excludeDisabled is false', () => {
+    const { svg } = figureOf(excludeFixture(), { width: 1050, excludeDisabled: false });
+    expect(svg).toContain('>Off summary<');
+    expect(svg).toContain('>Off child<');
+    expect(svg).toContain('>Live summary<');
+    expect(svg).toContain('>Live child<');
+  });
+
+  it('is byte-identical whether the option is absent or explicitly false', () => {
+    const project: Project = { calendar, resources: people, tasks: excludeFixture() };
+    const solved = solve(project);
+    const absent = planFigure(project, solved, { width: 1050 });
+    const explicitFalse = planFigure(project, solved, { width: 1050, excludeDisabled: false });
+    expect(explicitFalse.svg).toBe(absent.svg);
+  });
+
+  it('keeps figure and pages in parity: the page count follows the filtered total, not the raw one', () => {
+    const project: Project = { calendar, resources: people, tasks: excludeFixture() };
+    const solved = solve(project);
+    const figureRowNames = (svg: string) =>
+      [...svg.matchAll(/<text x="\d+" y="[^"]+" font-size="12"[^>]*>([^<]+)<\/text>/g)].map(
+        (match) => match[1],
+      );
+
+    // Filtered down to 2 rows (Live summary, Live child) out of 4 raw ones. At one
+    // row per page that is exactly 2 pages — if the total the page count is
+    // based on forgot the filter, this would be 4, with the last two empty.
+    const whole = planFigure(project, solved, { width: 1050, excludeDisabled: true });
+    const pages = planFigurePages(project, solved, {
+      width: 1050,
+      excludeDisabled: true,
+      rowsPerPage: 1,
+    });
+    expect(pages).toHaveLength(2);
+    const pagedNames = pages.flatMap((page) => figureRowNames(page.svg));
+    expect(pagedNames).toEqual(figureRowNames(whole.svg));
+    expect(pagedNames).toEqual(['Live summary', 'Live child']);
+    // No trailing page is silently empty.
+    for (const page of pages) expect(page.svg).not.toContain('no tasks');
+  });
+});
+
 describe('tickUnit', () => {
   it('climbs from days to weeks to months as the columns narrow', () => {
     expect(tickUnit(20)).toBe('day');

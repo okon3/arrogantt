@@ -49,7 +49,7 @@ export function ExportDialog({
             type="button"
             className="dialog__btn dialog__btn--primary"
             ref={setAutofocus}
-            onClick={() => onConfirm({ scope, columns })}
+            onClick={() => onConfirm({ scope, columns, excludeDisabled: settings.excludeDisabled })}
           >
             {action === 'png' ? 'Export' : 'Print'}
           </button>

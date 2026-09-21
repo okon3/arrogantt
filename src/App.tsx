@@ -826,7 +826,7 @@ export default function App() {
   // request outlives the renders the print itself causes, and clearing it
   // from inside the effect would be a cascading render for nothing. Identity
   // is a safe latch because the one caller builds the object at the click
-  // (`ExportDialog.tsx`, `onConfirm({ scope, columns })`); a caller that
+  // (`ExportDialog.tsx`, the `onConfirm` on the button); a caller that
   // reused one would print once and never again.
   const printed = useRef<ExportSettings | null>(null);
   useEffect(() => {
