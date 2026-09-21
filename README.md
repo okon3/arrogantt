@@ -77,7 +77,9 @@ from under you.
 **Your files, your machine** — projects are plain-JSON `.gantt` files that the
 browser downloads and reads back. Strict parsing: a malformed file is refused, it
 never corrupts the open plan. Export the solved schedule as CSV, a self-scaling
-PNG, or print/PDF with proper pagination.
+PNG, or print/PDF with proper pagination — and the picture asks first: the whole
+plan or the tree as you see it, which columns come with it, and a *For the
+client* preset that leaves rates and costs behind.
 
 **Built for AI agents** — the whole app is scriptable through `window.arrogantt`, in
 production too. Every button has an API equivalent, errors throw, and the docs
