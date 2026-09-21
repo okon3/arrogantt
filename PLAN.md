@@ -12,9 +12,10 @@ chiuse, suddivisione rivista sulla ricognizione del 2026-09-21, I1 committato.
 Restano I2 (textarea), I3 (CSV e agent API) e I4 (docs e changelog).
 `## Maintenance` porta T16 (audit mobile) e T17 (nome del task in hover);
 Goal C aspetta quel report prima di ricevere task veri. **Goal J** (task
-completato come misura della stima) e' aperto ma in sola analisi: tocca il
-motore e un invariante dichiarato assoluto, e non riceve task finche' le sue
-domande aperte non sono chiuse.
+completato come misura della stima) ha le domande di prodotto chiuse ma e'
+**sospeso dall'utente**: materiale pronto per un'analisi di dettaglio piu'
+avanti, non lavoro in corso. **Goal K** (polish di UI/UX) e' aperto e aspetta
+che si sciolga la sua collisione con T16.
 
 **Trappola di misura, costata un falso negativo**: `ChangelogDialog` rende
 `className="help"` (`ChangelogDialog.tsx:10`) — un dialogo "changelog" nel DOM
@@ -183,7 +184,7 @@ la mappa riga) e' in giacenza «finche' un goal non aggiunge campi di riga»
 — Goal I ne aggiunge uno. Diventa proponibile alla chiusura del goal, non
 prima, e resta corsia deep.
 
-## Goal J — un task completato misura la stima        [aperto, pronto per spec]
+## Goal J — un task completato misura la stima         [sospeso dall'utente]
 Un task si puo' marcare **completato**, e quello e' l'unico caso in cui la
 **fine la dichiara l'utente** invece di derivarla. Il task resta un peso sul
 passato (occupa capacita', i successori ne dipendono) e diventa il materiale
@@ -282,13 +283,79 @@ fine e' tutto cio' che c'e'), e una fine dichiarata su un **giorno non
 lavorativo** — vale la regola del confine di giornata, e la si normalizza o
 la si rifiuta come gia' fa lo start dichiarato.
 
-**Nessun task ancora, e nessuna suddivisione: le scrive la spec.** Le domande
+**Sospeso dall'utente il 2026-09-21**, subito dopo averne chiuso le domande:
+«la gestione della chiusura di un'attivita' e' piu' complessa del previsto»,
+l'analisi di dettaglio si fa in un secondo momento. Quanto sta scritto qui
+sopra e' **materiale pronto**, non lavoro in corso: nessun task, nessuna
+corsia, e **niente parte da qui senza che l'utente lo riapra**.
+
+**Quando si riaprira': nessuna suddivisione, le scrive la spec.** Le domande
 di prodotto sono **chiuse**; il goal e' pronto per una spec `architect`,
 obbligatoria perche' tocca il motore e riscrive un invariante che CLAUDE.md
 dichiara assoluto. La spec deve sciogliere, in quest'ordine: la seconda
 passata che produce il termine di paragone, l'occupazione fissa nel
 simulatore, la riscrittura dell'invariante di conservazione, e solo dopo
 proporre le fette.
+
+## Goal K — sembrare uno strumento, non un prototipo            [aperto]
+Una passata di miglioramento e polish su UI e UX: far sembrare l'app
+**professionale**, organizzare le voci dei menu invece di lasciarle sparse,
+rendere la visualizzazione piu' **crisp**, e distinguere meglio i task
+disattivati dagli altri. Aperto dall'utente il 2026-09-21.
+
+**Le tre richieste sono dell'utente, alla lettera. Nessuna e' ancora un
+difetto misurato**, ed e' la distinzione che decide come si apre questo goal:
+un goal visivo che parte da aggettivi costruisce il gusto di chi implementa,
+non la mancanza che l'utente vede.
+
+**La regola che governa tutto il goal, e che qui vale piu' che altrove.**
+`CLAUDE.md`, *How good is good enough*: su qualunque cosa visiva il bersaglio
+e' **~80% della precisione ottenibile**; l'ultimo 20% ha bisogno di una
+ragione propria, e «la soglia esiste» non lo e'. Il precedente e' T22: si
+chiese WCAG AA su iniziali da 24px e il difetto vero era un velo al 55% che
+le lavava via — alzarlo a 85% costo' un carattere e recupero' quasi tutta la
+leggibilita'. **Quando un numero e il difetto visibile non concordano, si
+corregge il difetto.**
+
+**Misurato il 2026-09-21, a tavolino, prima di aprire qualunque fetta.**
+- **Task disattivati — c'e' un'asimmetria concreta, non solo un'impressione.**
+  La *barra* ha due trattamenti: `opacity: 0.45` **piu'** `filter:
+  saturate(0.3)` (`gantt.css:346-349`, col commento che spiega perche' la sola
+  opacita' non bastava). La *riga in griglia* ne ha **uno solo, e su una sola
+  colonna**: `color: var(--ink-muted)` applicato a `.gantt-name`
+  (`gantt.css:692-694`). Effort, date, persona e le altre celle di una riga
+  disattivata si leggono **identiche a una riga attiva**. E' il candidato
+  numero uno e non richiede di inventare niente: richiede di estendere una
+  scelta gia' presa.
+- **I menu non sono «buttati a caso» ovunque: la toolbar e' gia' raggruppata
+  e etichettata.** `Toolbar.tsx` porta gruppi con `label="Export"` (riga 94) e
+  `label="Highlight"` (161), e i bottoni hanno `title` descrittivi. I comandi
+  pero' vivono su **quattro superfici distinte** — `Toolbar.tsx` (216 righe),
+  `RowMenu.tsx` (151), `StatusBar.tsx` (241) e bottoni in `App.tsx`. La
+  lamentela va **localizzata**: quale di queste quattro legge come casuale, o
+  e' la ripartizione *fra* le quattro il problema? Da guardare nell'app, non
+  da dedurre dai file.
+- **«Crisp» non ha ancora nessun difetto attaccato.** E' l'unica delle tre
+  richieste che non si puo' ancorare a tavolino: va prodotto un censimento di
+  cio' che si vede, o il goal costruisce il gusto di chi implementa.
+
+**Collisione da sciogliere prima di qualunque fetta: T16 e questo goal sono
+lo stesso censimento chiesto due volte.** T16 (`## Maintenance`, corsia
+`architect`) e' un audit dell'UI a 375px e 768px con «censimento
+azioni/controlli e proposta di cosa nascondere o adattare». Riorganizzare i
+menu **e'** la stessa domanda posta a viewport desktop. Se si riorganizza
+prima, T16 audita un'UI che sta per cambiare; se si audita prima, il suo
+censimento e' esattamente l'input della riorganizzazione. **Da decidere con
+l'utente, non da subire.**
+
+**Guardia, scritta prima di partire** (e' la stessa di Goal C, che l'ha
+pagata): questo goal **non deve avere un'analisi come unico task**. Il
+censimento vive sotto `## Maintenance` e consegna un report; alla sua chiusura
+nessuna goal review deve scattare, perche' scatterebbe su un diff inesistente
+— il buco in cui e' caduta la review di Goal B. Il goal riceve fette **solo
+dopo** che l'utente ha comprato dal censimento.
+
+**Nessun task ancora.** Ne servono dopo che la collisione con T16 e' sciolta.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
