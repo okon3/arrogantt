@@ -50,18 +50,37 @@ da solo non regge. Aperto dall'utente il 2026-09-21.
   tanto basta: non e' richiesta nessun'altra superficie.
 - Vale **anche per i raggruppamenti** (summary), non solo per le foglie.
 
-**Domande di prodotto ancora aperte — da chiudere con l'utente prima di
-briefare, non da decidere in corsia.**
-- Una descrizione aperta solo dal modal e' **invisibile dal grafico**: niente
-  dice quali righe ne hanno una. Serve un indicatore (icona in griglia,
-  tooltip sulla barra), o si accetta che sia informazione da cercare?
-- Entra nell'**agent API** (`getTask` la rende? `updateTask` la scrive?) o
-  resta solo umana? Se entra, `agentApi.help.md` va aggiornato nello stesso
-  commit — e' anche `arrogantt.help()` e `/llms.txt`.
-- Entra in **export CSV / figura / stampa**? Il default sensato e' no — la
-  figura per il cliente ha appena smesso di dire piu' del necessario (Goal H)
-  — ma va detto, non sottinteso.
-- Limite di lunghezza, e cosa succede a una descrizione multi-riga.
+**Risposte dell'utente, 2026-09-21 — chiuse.**
+- **Nessun indicatore di riga**: si accetta che una descrizione non si veda
+  dalla griglia. Il rimedio scelto e' il tooltip qui sotto, non un'icona.
+- **Tooltip in griglia sul nome del task**: in hover la riga mostra il testo
+  per esteso. **Un `title` HTML nativo basta** — niente componente tooltip
+  nuovo.
+- **Agent API: si'** — «potrebbe dare informazioni utili all'agente». Quindi
+  `agentApi.help.md` va aggiornato **nello stesso commit**: e' anche
+  `arrogantt.help()` e `/llms.txt`, e non se ne fa una seconda copia.
+- **CSV: si'. Figura e stampa: no.** (`planCsv.ts` rientra quindi nello scope
+  di questo goal, a differenza di Goal H.)
+- **Limite 2000 caratteri**, in una **textarea**, testo senza formattazione.
+
+**Fatto verificato il 2026-09-21 — il tooltip ha gia' la sua regola, e
+l'istinto dell'utente la rispetta.** `gridColumns.ts:130-132` registra una
+decisione deliberata: **il tooltip ricco dell'app sta solo sulle barre**
+(`barTooltip.ts` via `gantt.ext.tooltips`), e la griglia usa `title` nativi —
+riportare quello dell'app su una cella sarebbe «un secondo tooltip nella
+stessa colonna». Il `title` nativo non e' quindi un ripiego: e' la
+convenzione in vigore, e vale la pena scriverlo nel brief perche' una corsia
+che vede `barTooltip.ts` sara' tentata di riusarlo.
+
+**Da misurare prima di briefare, non da supporre.**
+- Se `lo mostra per esteso` (parole dell'utente) sia la **descrizione** o il
+  **nome del task troncato**: le due letture danno due feature diverse, e la
+  piu' utile potrebbe essere un `title` solo che porti entrambi. **Domanda
+  posta all'utente, in attesa.**
+- Una descrizione di 2000 caratteri con a capo dentro, dentro una cella CSV:
+  `planCsv.ts` gia' quota? Da leggere, non da dare per scontato.
+- Un `title` nativo da 2000 caratteri e' illeggibile: va troncato nel
+  tooltip, e serve decidere a quanto.
 
 **Fatto verificato il 2026-09-21, che risparmia un round.** `ProjectTask`
 (`project.ts:30-48`) tiene `disabled?: boolean` con una regola scritta nel
@@ -84,9 +103,13 @@ pagato con mezzo goal riscritto. Da rivedere all'apertura dei lavori.
 - [ ] I1 [impl] — Il campo nel modello e nel formato: `description?: string`
       su `ProjectTask`, parsing strict, serializzazione, la regola
       «vuoto = assente» sopra, e la tenuta di undo/draft/`dirty`.
-- [ ] I2 [impl] — Il campo nel `TaskDialog`, summary inclusi, col giro
-      completo edit → modello → `applySolution`.
-- [ ] I3 [self] — `docs/file-format.md`, `docs/view.md`, e il bullet di
+- [ ] I2 [impl] — La textarea nel `TaskDialog`, summary inclusi, col giro
+      completo edit → modello → `applySolution`, e il limite di 2000.
+- [ ] I3 [impl] — Il `title` nativo in griglia sulla colonna dei nomi, e la
+      descrizione in CSV (`planCsv.ts`). **No** figura, **no** stampa.
+- [ ] I4 [impl] — L'agent API: `getTask` la rende, `updateTask` la scrive,
+      e `agentApi.help.md` nello stesso commit.
+- [ ] I5 [self] — `docs/file-format.md`, `docs/view.md`, e il bullet di
       changelog.
 
 ## Maintenance — no goal
