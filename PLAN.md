@@ -7,8 +7,10 @@ sono cadute dopo la review, come vuole la regola. Ultima release **`v1.5`**;
 i bullet di H (figura per il cliente: nessuna colonna, nessun task
 disattivato) aspettano sotto `## Unreleased` — scelta dell'utente, il badge
 resta a v1.5 e il rilascio si fa quando serve distribuire una build.
-Nessun goal aperto con task: `## Maintenance` porta T16, l'audit mobile, e
-Goal C aspetta il suo report.
+**Goal I** e' aperto (descrizione per task) ma non ancora avviato: ha domande
+di prodotto da chiudere con l'utente e una suddivisione dichiarata
+provvisoria. `## Maintenance` porta T16, l'audit mobile; Goal C aspetta quel
+report prima di ricevere task veri.
 
 **Trappola di misura, costata un falso negativo**: `ChangelogDialog` rende
 `className="help"` (`ChangelogDialog.tsx:10`) — un dialogo "changelog" nel DOM
@@ -38,6 +40,54 @@ documento gia' a 768px di viewport (bordo destro 955px su 768 di
 `clientWidth`), in empty state. Non e' un difetto del rename e sotto la regola
 dell'80% non vale un meccanismo da solo — ma e' il primo indizio che il goal
 raccogliera'.
+
+## Goal I — un task puo' dire piu' del suo titolo                   [aperto]
+Ogni task porta una **descrizione** libera, per veicolare quello che il titolo
+da solo non regge. Aperto dall'utente il 2026-09-21.
+
+**Deciso dall'utente, non da riaprire.**
+- Il campo vive nel **modal di dettaglio** del task (`TaskDialog.tsx`), e
+  tanto basta: non e' richiesta nessun'altra superficie.
+- Vale **anche per i raggruppamenti** (summary), non solo per le foglie.
+
+**Domande di prodotto ancora aperte — da chiudere con l'utente prima di
+briefare, non da decidere in corsia.**
+- Una descrizione aperta solo dal modal e' **invisibile dal grafico**: niente
+  dice quali righe ne hanno una. Serve un indicatore (icona in griglia,
+  tooltip sulla barra), o si accetta che sia informazione da cercare?
+- Entra nell'**agent API** (`getTask` la rende? `updateTask` la scrive?) o
+  resta solo umana? Se entra, `agentApi.help.md` va aggiornato nello stesso
+  commit — e' anche `arrogantt.help()` e `/llms.txt`.
+- Entra in **export CSV / figura / stampa**? Il default sensato e' no — la
+  figura per il cliente ha appena smesso di dire piu' del necessario (Goal H)
+  — ma va detto, non sottinteso.
+- Limite di lunghezza, e cosa succede a una descrizione multi-riga.
+
+**Fatto verificato il 2026-09-21, che risparmia un round.** `ProjectTask`
+(`project.ts:30-48`) tiene `disabled?: boolean` con una regola scritta nel
+commento: **si conserva solo `true`**, perche' l'assenza e' lo stato di
+default e un `false` scritto in un file o in uno snapshot sarebbe una seconda
+grafia su cui il confronto di `dirty` litigherebbe. Una `description?: string`
+ha **esattamente** la stessa trappola: `''` e assente devono essere una cosa
+sola, o salvare-riaprire sporca il progetto senza che nessuno abbia toccato
+niente. Vale per il parsing strict, per `serializeProject` e per il gate di
+`serializeForFile`.
+
+**Versione del formato**: un campo opzionale non rompe i file esistenti —
+bump **minore**, non maggiore (`CLAUDE.md`: il maggiore e' solo per una
+rottura del formato `.gantt`).
+
+**Suddivisione provvisoria — nessuno ha ancora letto il codice.** Le fette
+qui sotto sono un'ipotesi di dimensionamento, non un impegno: valgono finche'
+una ricognizione non le smentisce, ed e' la forma di errore che Goal G ha
+pagato con mezzo goal riscritto. Da rivedere all'apertura dei lavori.
+- [ ] I1 [impl] — Il campo nel modello e nel formato: `description?: string`
+      su `ProjectTask`, parsing strict, serializzazione, la regola
+      «vuoto = assente» sopra, e la tenuta di undo/draft/`dirty`.
+- [ ] I2 [impl] — Il campo nel `TaskDialog`, summary inclusi, col giro
+      completo edit → modello → `applySolution`.
+- [ ] I3 [self] — `docs/file-format.md`, `docs/view.md`, e il bullet di
+      changelog.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
