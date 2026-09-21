@@ -13,9 +13,10 @@ di lui. **Da riproporre appena c'e' spazio**: `applied()` che scrive
 `availability` a ogni patch dell'agent API, l'ultimo gemello della regola che
 F12 ha appuntato.
 
-Aperti: **Goal G** (export cliente), **analizzato e scopato** — T60 chiuso, i
-task sono G1-G4 e la lettura obbligatoria prima di briefarne uno e' il blocco
-_Misurato da T60_ in testa al goal: l'export non fotografa il DOM, non disegna
+Aperti: **Goal G** (export cliente), quasi in fondo — G1, G2, G3a e G3b sono
+chiusi, **restano G3c** (tre pulci fuori scope) **e G4** (docs e changelog,
+gia' meta' fatti da G3b), poi scatta la goal review. La lettura obbligatoria
+prima di briefare un task resta il blocco _Misurato da T60_ in testa al goal: l'export non fotografa il DOM, non disegna
 frecce, non sa niente del collapse e non passa le colonne. Le due questioni che
 erano aperte sono chiuse (una per misura, una dall'utente) e l'asse
 riservatezza e' decaduto. **T16**, unico task di Goal C, che lo porterebbe alla
@@ -262,57 +263,40 @@ Deciso con l'utente il 2026-09-18, prima di briefare G3 (non riaprire):
       storage che lancia); test che con `scope: 'visible'` e un ramo chiuso la
       figura perde i figli.
 
-- [>] G3b [deep] — Il dialogo di configurazione dell'export
-      **STATO, 2026-09-19: implementato e committato (`df64444`), critic NON
-      ancora girato.** Non ripartire dal brief e non stashare niente —
-      l'albero e' pulito perche' il lavoro e' dentro quel commit, non perche'
-      il task non e' cominciato. La prossima sessione riprende **da qui**:
-      spawna il critic (default opus/xhigh: dialogo verificato nel browser) su
-      `df64444` col brief `.claude/briefs/G3b.md`, arbitra, poi chiude il task
-      e valuta la goal review — sotto Goal G resterebbe il solo G4.
-      Costo finora: impl 197k, zero correzioni; il task era al limite del
-      dimensionamento, e la campagna di verifica ne e' stata meta'.
-      Cosa ha consegnato, dal suo report (**da verificare, non ereditare**):
-      `ExportDialog.tsx` nuovo; la lista di checkbox **estratta** in
-      `ColumnChecklist.tsx` e consumata anche dal popover di griglia, invece
-      di generalizzare `ColumnPicker` — che avrebbe trascinato in un modale il
-      comportamento non-modale del popover; la trappola del tempo risolta in
-      modo **asimmetrico** (PNG parte dalla callback, la stampa passa da uno
-      stato `pendingPrint` e un effetto che scrive il ref esplicitamente),
-      perche' un lanciatore simmetrico faceva scattare
-      `react(set-state-in-effect)` su oxlint e questo repo non ha disable;
-      `clientSafeColumns()` in `columns.ts`; `docs/view.md` con la nuova
-      sezione e la deroga sul fuoco; `## Unreleased` ricreata in
-      `CHANGELOG.md`.
-      **Due cose che il critic deve guardare per prime**: che il ramo chiuso
-      sparisca davvero dalla figura stampata dopo una conferma (la corsia
-      dice di averlo misurato con griglia e dialogo in disaccordo su
-      entrambi gli assi — righe `Design`/`Launch`, sette testate contro
-      cinque in griglia), e la regressione del popover dopo l'estrazione.
-      **G4 non rifa' il bullet di changelog ne' `docs/view.md`**: fatti qui.
-      Scope: la fetta a giudizio, sopra lo stato di G3a. Guscio `Dialog.tsx`
-      (il modello e' `ConfirmDialog`, non il popover `ColumnPicker` che e'
-      legato staticamente a `PLAN_COLUMNS`, `ColumnPicker.tsx:117`). Si
-      interpone sul bottone PNG e sul bottone Print — l'agent API non espone
-      alcuna op di export, quindi non c'e' parita' da mantenere (verificato).
-      Contenuto: ambito («tutto il piano» / «come lo vedo»), colonne dal
-      registro, e un preset «per il cliente» che parte da `clientSafe`
-      (`columns.ts:31-33`, oggi consumato dal solo `planFigure.test.ts:334`).
-      Conferma = scrive le impostazioni e lancia l'export.
-      Da decidere dentro il task: se la lista di checkbox si ottiene
-      generalizzando `ColumnPicker` sull'elenco o scrivendola nel dialogo —
-      **nessuna seconda lista di colonne deve esistere nel codice**, e la
-      risposta e' quella che lascia un solo posto dove la regola vive.
-      **Lasciato da G1 (critic, fuori scope allora):** `collapsedBranches()`
-      (`GanttChart.tsx:69-75`) marca chiuso **ogni** task con `$open === false`,
-      foglie mai toccate incluse. Innocuo finche' l'insieme torna dentro
-      `planFigure` (una foglia non ha figli da nascondere); da guardare se il
-      dialogo ne legge la cardinalita' o il contenuto — «2 rami chiusi» sarebbe
-      un numero falso.
+- [x] G3b [deep] — Il dialogo di configurazione dell'export  `df64444`, `084bae5`
+      Critic (opus/xhigh) girato sull'app servita: **ogni Accept verde**,
+      misurato, non ereditato. Il ramo chiuso sparisce davvero dalla figura
+      stampata con griglia e dialogo in disaccordo su entrambi gli assi; il
+      popover non ha regressioni dopo l'estrazione di `ColumnChecklist.tsx`;
+      Ctrl+P non apre nulla; le scelte sopravvivono al reload (la chiave
+      export vince su quella della griglia). Due findings, entrambe di
+      registrazione e chiuse da `084bae5`: `docs/file-format.md` descriveva
+      ancora la regola pre-dialogo, e la ragione della scrittura extra del ref
+      di stampa era **falsa e scritta due volte** (la forma T58). Verificato
+      dall'hub sul percorso: `confirmExport` (`App.tsx:466-476`) batcha i due
+      `setState` e l'effetto che rinfresca il ref e' dichiarato per primo —
+      quindi quella scrittura compra indipendenza dall'ordine di
+      dichiarazione, non correttezza. La meccanica ora vive **solo** nel
+      commento del codice.
+      **G4 non rifa' il bullet di changelog, `docs/view.md` ne'
+      `docs/file-format.md`**: fatti qui.
       Accept: il dialogo governa i due bottoni; le scelte sopravvivono a un
       reload; Ctrl+P stampa con le impostazioni correnti senza aprire nulla;
       verificato nell'app servita; `docs/view.md` porta la ragione del preset e
       quella del default di continuita'.
+
+- [ ] G3c [self] — Le tre pulci lasciate fuori scope dal critic di G3b
+      Tutte minori, nessuna visibile all'utente. (1) `src/App.css:1256-1268`:
+      `.export__option` ri-scrive la grammatica di riga di `.columnlist label`
+      invece di condividerla — due liste che driftano al primo ritocco del
+      padding. (2) `docs/view.md:724-729`: la regola di
+      `.dialog__subhead--flush` documenta solo il caso «dritto sotto il suo
+      hint», ma `ExportDialog.tsx:59` la usa come primo figlio del body senza
+      hint (gap misurato 8px, visivamente a posto) — estendere la frase o
+      togliere il modifier. (3) `src/App.tsx:833-842`: `pendingPrint` non
+      viene mai azzerato ed e' guardato da un latch di identita'; innocuo
+      oggi, ma rende irrappresentabile «ristampa con lo stesso oggetto».
+      Accept: le tre chiuse o archiviate con una ragione; check verdi.
 
 - [ ] G4 [self] — Docs e changelog dell'export cliente
       Scope: bullet in `CHANGELOG.md` sotto `## Unreleased` (ricreandola in
@@ -896,14 +880,15 @@ ha scopate, e vanno riproposte solo se qualcuno le vuole):
 - Il critic trova cio' che l'accept non chiedeva: e' la regola, non l'eccezione
   — si briefa chiedendogli **la domanda che fa paura**, e **vietandogli di dare
   entrambe le mani**: su G2 ha scelto, e ha ribaltato l'esitazione dell'hub con
-  un argomento di *tipo* (la firma garantisce gia' il mai-`undefined`), non di
-  gusto. E su uno spostamento
-  **l'hash, non la lettura**.
+  un argomento di *tipo*, non di gusto. Su uno spostamento, l'hash non la
+  lettura.
 - **Dimensionamento, T60**: due Explore (56k + 72k), zero corsie, zero critic —
   un task di sola analisi paga bene la delega se l'hub tiene solo le
   conclusioni e rimisura da se' quelle portanti.
-- **Dimensionamento, Goal G**: G2 88k/86k, G1 82k/94k, G3a 92k/81k
-  (impl/critic), zero correzioni di corsia in tutti e tre. **Un brief che
+- **Dimensionamento, Goal G**: G2 88k/86k, G1 82k/94k, G3a 92k/81k, G3b
+  197k/185k (impl/critic), zero correzioni di corsia in tutti e quattro. Il
+  critic piu' caro del goal e' l'unico che abbia trovato qualcosa: **due
+  ragioni registrate false**, invisibili a 582 test e a un build verde. **Un brief che
   porta gia' la fixture e i casi dell'accept si paga**: nessuna corsia ne ha
   inventata una. E **al critic si danno le domande in ordine di paura**: le
   quattro di G1 e di G3a hanno prodotto otto verifiche, non due giri di lode
