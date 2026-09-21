@@ -244,15 +244,12 @@ riaprire, e' li' che si guarda.
   effetto collaterale da scoprire.
 
 **Domande ancora aperte — nessuna e' decisa, nessuna e' binding.**
-- **Il termine di paragone si ricalcola o si congela?** Un task completato
-  non viene piu' schedulato, quindi la sua previsione **sparisce** nel
-  momento in cui diventa un fatto: il «10 giorni» con cui confrontare i 7 va
-  ricavato di nuovo. Ricalcolarlo sempre e' coerente con la dottrina del repo
-  (il blocco `solved` nel file e' **ignorato in lettura**: un derivato non si
-  conserva mai come input), ma rende il confronto **retroattivo** — aggiungi
-  un'assenza passata e la varianza di un task chiuso cambia da sola.
-  Congelarlo al completamento e' un record storico stabile, al prezzo di un
-  derivato conservato. Visibile all'utente: **da chiedere**.
+- **Il termine di paragone si ricalcola sempre** (utente, 2026-09-21).
+  Nessun derivato conservato, come vuole la dottrina del repo — il blocco
+  `solved` nel file e' ignorato in lettura. Conseguenza **accettata
+  sapendola**: il confronto e' retroattivo, e correggere il passato cambia da
+  sola la varianza di un task gia' chiuso («con quello che so oggi ne
+  sarebbero serviti 12; ne hai impiegati 7»).
 - **Dove si legge il confronto**: colonna, dialogo, CSV, figura? Prodotto,
   dell'utente, e prematura finche' quella sopra non e' chiusa.
 - **Cosa succede a un task completato senza risorsa** (tasso pieno) e **a una
@@ -261,9 +258,27 @@ riaprire, e' li' che si guarda.
   confine di giornata; una fine su un giorno chiuso va normalizzata o
   rifiutata, come gia' fa lo start dichiarato.
 
-**Nessun task ancora**, e nessuna suddivisione: il goal non riceve fette
-finche' la prima domanda aperta non e' chiusa con l'utente. Serve poi una
-spec `architect`, perche' tocca il motore.
+**Dove costa davvero, e non e' dove sembra.** Il modello guadagna **un solo
+campo**: una fine effettiva opzionale. Tutto il resto e' motore, ed e' li' il
+prezzo:
+- il simulatore deve trattare un task completato come **occupazione fissa**
+  sull'asse dei minuti lavorativi — non lo schedula, ci schedula attorno;
+- «ricalcola sempre» vuol dire che la previsione da confrontare va prodotta
+  da una **seconda passata**, che schedula il task *come se non fosse
+  completato* per ottenere il 10 da mettere accanto al 7. Non e' un numero
+  gratis e non e' `effort / tasso`: il tasso dipende dalla concorrenza, che
+  dipende dalla schedulazione. E' il primo nodo che la spec deve sciogliere.
+
+**Restano tecniche, non di prodotto** (le decide la spec): un task completato
+**senza risorsa** (tasso pieno), una **milestone completata** (effort zero: la
+fine e' tutto cio' che c'e'), e una fine dichiarata su un **giorno non
+lavorativo** — vale la regola del confine di giornata, e la si normalizza o
+la si rifiuta come gia' fa lo start dichiarato.
+
+**Nessun task ancora, e nessuna suddivisione.** Manca una sola domanda di
+prodotto (dove si legge il confronto), poi il goal e' pronto per una spec
+`architect` — obbligatoria, perche' tocca il motore e riscrive un invariante
+che CLAUDE.md dichiara assoluto.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
