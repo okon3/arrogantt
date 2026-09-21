@@ -183,7 +183,7 @@ la mappa riga) e' in giacenza «finche' un goal non aggiunge campi di riga»
 — Goal I ne aggiunge uno. Diventa proponibile alla chiusura del goal, non
 prima, e resta corsia deep.
 
-## Goal J — un task completato misura la stima            [aperto, in analisi]
+## Goal J — un task completato misura la stima        [aperto, pronto per spec]
 Un task si puo' marcare **completato**, e quello e' l'unico caso in cui la
 **fine la dichiara l'utente** invece di derivarla. Il task resta un peso sul
 passato (occupa capacita', i successori ne dipendono) e diventa il materiale
@@ -250,8 +250,15 @@ riaprire, e' li' che si guarda.
   sapendola**: il confronto e' retroattivo, e correggere il passato cambia da
   sola la varianza di un task gia' chiuso («con quello che so oggi ne
   sarebbero serviti 12; ne hai impiegati 7»).
-- **Dove si legge il confronto**: colonna, dialogo, CSV, figura? Prodotto,
-  dell'utente, e prematura finche' quella sopra non e' chiusa.
+- **Il confronto si legge nel modal del task, e in nessun altro posto**
+  (utente, 2026-09-21). E' dove si inserisce la fine effettiva, quindi la
+  varianza sta accanto al campo che la produce. **Colonna in griglia, CSV,
+  figura e stampa: offerti e rifiutati**, la colonna anche contro la
+  raccomandazione dell'hub (il registro di Goal F l'avrebbe resa economica).
+  **Una goal review che li segnala come MISSING sta segnalando una scelta.**
+  Se un giorno servisse vedere la varianza di tutti i task insieme — l'unico
+  modo di accorgersi di una sottostima **sistematica** — la colonna e' il
+  candidato, e si riapre con l'utente, non dentro questo goal.
 - **Cosa succede a un task completato senza risorsa** (tasso pieno) e **a una
   milestone completata** (effort zero: la fine e' tutto cio' che c'e').
 - **Il giorno dichiarato e' un giorno lavorativo?** Vale la regola del
@@ -275,10 +282,13 @@ fine e' tutto cio' che c'e'), e una fine dichiarata su un **giorno non
 lavorativo** — vale la regola del confine di giornata, e la si normalizza o
 la si rifiuta come gia' fa lo start dichiarato.
 
-**Nessun task ancora, e nessuna suddivisione.** Manca una sola domanda di
-prodotto (dove si legge il confronto), poi il goal e' pronto per una spec
-`architect` — obbligatoria, perche' tocca il motore e riscrive un invariante
-che CLAUDE.md dichiara assoluto.
+**Nessun task ancora, e nessuna suddivisione: le scrive la spec.** Le domande
+di prodotto sono **chiuse**; il goal e' pronto per una spec `architect`,
+obbligatoria perche' tocca il motore e riscrive un invariante che CLAUDE.md
+dichiara assoluto. La spec deve sciogliere, in quest'ordine: la seconda
+passata che produce il termine di paragone, l'occupazione fissa nel
+simulatore, la riscrittura dell'invariante di conservazione, e solo dopo
+proporre le fette.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
