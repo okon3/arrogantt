@@ -146,6 +146,3 @@ beside a non-zero `Uncosted (d)` it is a lower bound.
   has, so the figure and the page count can never disagree. Stored in
   `arrogantt.export.v1` beside the scope and the column list; an absent key
   reads as `false`, a non-boolean one drops the whole stored settings.
-- The dialog's **For the client** preset writes the column list and
-  `excludeDisabled` from one click: no registry columns, no disabled tasks —
-  names and bars.

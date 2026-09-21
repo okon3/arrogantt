@@ -78,8 +78,9 @@ from under you.
 browser downloads and reads back. Strict parsing: a malformed file is refused, it
 never corrupts the open plan. Export the solved schedule as CSV, a self-scaling
 PNG, or print/PDF with proper pagination — and the picture asks first: the whole
-plan or the tree as you see it, which columns come with it, and a *For the
-client* preset that leaves names, rates and costs behind.
+plan or the tree as you see it, which columns come with it, whether to leave
+the disabled tasks out — and a *For the client* preset that hands over names
+and bars, nothing else.
 
 **Built for AI agents** — the whole app is scriptable through `window.arrogantt`, in
 production too. Every button has an API equivalent, errors throw, and the docs

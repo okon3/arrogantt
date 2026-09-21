@@ -62,7 +62,7 @@ const PADDING = 16;
 const TITLE_HEIGHT = 26;
 const MONTH_BAND = 18;
 const TICK_BAND = 18;
-/** The band of column labels above the month band, drawn only when `columns` is given. */
+/** The band of column labels above the month band, drawn only when a column is chosen. */
 const HEADER_BAND = 18;
 const ROW_HEIGHT = 24;
 const NAME_WIDTH = 250;
@@ -327,8 +327,8 @@ export function planFigure(
     : filteredTasks;
 
   // Absent `columns` is the legacy Name + Person outline, kept byte-identical:
-  // `selected` stays null rather than `[]`, which is itself a valid (empty)
-  // selection that still draws the header band.
+  // `selected` stays null rather than `[]`, which is itself a valid selection
+  // — of nothing — and keeps the name column's own width.
   const selected = options.columns
     ? PLAN_COLUMNS.filter((entry) => new Set(options.columns).has(entry.name))
     : null;
@@ -336,9 +336,9 @@ export function planFigure(
     ? selected.reduce((total, entry) => total + entry.figureWidth, 0)
     : PERSON_WIDTH;
 
-  // An empty `columns` list is still "some columns were chosen", just none of
-  // them — a band with no labels in it is nobody's choice. Extracted once so
-  // the height and the drawing below can never gate on it separately (H2).
+  // A band with no labels in it is nobody's choice, so an empty list draws
+  // none. Extracted once: the height and the drawing below gated separately
+  // would leave an empty 18px strip no probe reading labels would catch.
   const hasColumnHeader = options.columns !== undefined && options.columns.length > 0;
 
   const chartTop = PADDING + (options.title ? TITLE_HEIGHT : 0) + (hasColumnHeader ? HEADER_BAND : 0);

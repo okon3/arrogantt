@@ -95,7 +95,7 @@ export function ExportDialog({
         <button
           type="button"
           className="dialog__btn export__preset"
-          title="No registry columns and no disabled tasks"
+          title="Names and bars only: no columns, no disabled tasks"
           onClick={() => {
             setColumns(new Set());
             setExcludeDisabled(true);

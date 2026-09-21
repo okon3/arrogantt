@@ -130,7 +130,7 @@ that isn't there.
 - **Columns are a registry (`src/gantt/columns.ts`), the grid a filter over
   it.** `PLAN_COLUMNS` holds `resource_id`, `nominal_days`, `start_date`,
   `end_shown`, `elapsed_days`, `rate`, `cost` — metadata only (label, grid
-  width, figure width, default visibility, client-safety); `gridColumns.ts`'s
+  width, figure width, default visibility); `gridColumns.ts`'s
   `GRID_CELLS` is the one place a column's cell (`template`/`editor`/`align`)
   is decided, keyed exhaustively so a registry entry with no renderer is a
   compile error. `text`, `info`, `toggle`, `add` are structural and never
@@ -747,9 +747,11 @@ button; `action` decides the title and the confirm label, nothing else. CSV
 still starts at the click — `planToCsv(plan, resources)` takes neither a
 scope nor a column list, so it has nothing to ask.
 
-- **Rows and columns, no third question.** Rows: *The whole plan*, or *As I
+- **Three questions, and no fourth.** Rows: *The whole plan*, or *As I
   see it* — the grid's collapsed branches, passed as `collapsedIds`. Columns:
-  `ColumnChecklist` over the registry. The **dates always span the whole
+  `ColumnChecklist` over the registry. And *Leave out disabled tasks*, which
+  is a row filter but not a scope: it cuts what the plan does not commit to,
+  whatever the grid is showing. The **dates always span the whole
   plan** whatever the rows, because `options.slice` selects rows and never
   dates, so every page of a figure shares one scale (`planFigure.ts`).
 - **The preset is a button, never a mode.** *For the client* empties the

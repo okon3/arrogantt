@@ -106,6 +106,27 @@ opzione a se', spuntabile fuori dal preset. Aperto dall'utente il 2026-09-21.
       `planFigure.test.ts:336` legge `clientSafe` per un'asserzione sulla
       figura e va riscritto, non cancellato.
 
+- [x] H4 [self] — Le cinque ACTIONS della goal review, tutte prosa.
+      `README.md` (il preset non lascia piu' indietro «nomi, tariffe e costi»:
+      da' nomi e barre); `docs/view.md` «no third question» (ora sono tre) e
+      «client-safety» fra i metadati del registro (la forma col trattino era
+      sfuggita al grep); i due commenti in `planFigure.ts` che dicevano il
+      contrario di `hasColumnHeader`; e la seconda casa del preset in
+      `docs/file-format.md`, tolta — `view.md` la tiene. Piu' il tooltip del
+      preset, che il reviewer dava sotto il bar ma diceva «registry columns»
+      all'utente.
+
+**Stato del goal — per chi riprende.** La goal review (Fable 5.1) ha reso
+**`fix-first`, esplicitamente «docs only; the code delivers the goal»**:
+MISSING nessuno, SMUGGLED nessuno, la rimozione di `clientSafe` giudicata
+legittima. Le cinque ACTIONS sono scaricate da H4. **Non ho rilanciato una
+seconda review**: le ACTIONS erano prescrittive e le ho eseguite alla lettera,
+e una seconda passata Fable costerebbe ~100k senza giudizio nuovo da dare.
+Se si preferisce rilanciarla, e' una scelta legittima e va fatta **prima**
+della potatura, perche' le Accept lines qui sopra sono meta' del bar.
+Alla chiusura: potare Goal H, poi proporre il rilascio (rinominare
+`## Unreleased` in `## v1.6 — <oggi>` in `CHANGELOG.md`, conferma utente).
+
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
 analisi, arrivati come richieste singole. **Non ricevono la goal review**, ed
