@@ -87,7 +87,7 @@ are served at [`/llms.txt`](https://okon3.github.io/arrogantt/llms.txt):
 
 ```js
 arrogantt.help();                                    // the whole surface, as Markdown
-const id = arrogantt.addTask({ name: 'Analisi', nominalDays: 5, resourceId: 'r1' });
+const id = arrogantt.addTask({ name: 'Analysis', nominalDays: 5, resourceId: 'r1' });
 arrogantt.getPlan().tasks;                           // the solved schedule, tree order
 arrogantt.getCriticalChain();                        // measured float per task
 arrogantt.getResourceLoad();                         // the same plan, per person
