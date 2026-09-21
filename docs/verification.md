@@ -219,6 +219,25 @@ latches `gantt.skin` and removing it later yields `terrace` on a light page —
 a value the app never sets. Load with the scheme already set, or measure only
 what the attribute selects for. Mechanism in [dhtmlx.md](dhtmlx.md).
 
+## Verifying a print
+
+The figure is built by `installPrintFigure` off `beforeprint`, so **stubbing
+`window.print()` builds nothing**: the browser never fires the event, and a
+probe reading the DOM at that moment finds the container still empty — or,
+worse, matches `<svg>` anywhere in `document.body` and measures the toolbar's
+lucide icons instead (9046 characters, zero `<text>` nodes, and an absence
+that means nothing). Confirm the export, then `dispatchEvent(new
+Event('beforeprint'))` by hand and read `.plan-print` (`PRINT_CONTAINER_CLASS`)
+— its `<text>` nodes are the figure's words.
+
+Stub `window.print` anyway, or the native sheet blocks the pane; it is the
+call counter, not the builder.
+
+**An absence in that figure needs its negative control.** "No name in the
+export" is worth nothing until the same probe, on the same page, has been
+shown to *find* the name: tick Resource, print again, read it back. Both
+halves or neither.
+
 ## Driving the CLI
 
 Measured over 1179 real `agent-browser` invocations in this project's

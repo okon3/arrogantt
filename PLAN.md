@@ -52,10 +52,8 @@ dell'organizzazione, non una cifra. Era l'unica incoerenza che la review
 avesse lasciato aperta. Misurato nell'app servita, **col probe provato in
 negativo**: col preset la figura stampata non porta nomi ne' iniziali ne'
 id; spuntando Resource lo stesso probe legge «Zebediah Quill» — senza quella
-contro-prova l'assenza non valeva niente. Da questo giro: **`window.print()`
-stubbato non fa scattare `beforeprint`**, quindi il contenitore `.plan-print`
-non viene mai costruito e chi lo legge misura gli SVG delle icone; l'evento
-va dispatchato a mano.
+contro-prova l'assenza non valeva niente. Le due trappole che il giro ha
+scoperto sono graduate in `docs/verification.md` § _Verifying a print_.
 
 **L'opzione «nascondi chiusure e assenze» e' stata ritirata, con conferma
 dell'utente (2026-09-18)** — era una delle quattro decisioni di apertura. Le
