@@ -480,8 +480,17 @@ that isn't there.
   dimmed with its own checkbox still unticked, since the group is what carries
   the flag.
 - Bar dimmed (opacity + desaturating filter, so a coloured bar fades too — bar
-  colours are inline, see [dhtmlx.md](dhtmlx.md)); grid name in the existing
-  muted ink. Milestones share `task_class`, so the diamond dims for free.
+  colours are inline, see [dhtmlx.md](dhtmlx.md)). The grid row reuses both:
+  most cells' ink goes to the existing muted ink; the derived cells (End,
+  Duration) are left out of that and keep their own fainter ink instead
+  (reason in the `gantt.css` comment); the task dot, the person avatar and its
+  part-time badge — each a saturated colour of their own, not plain ink — take
+  the bar's own opacity + desaturating filter. The name additionally carries a
+  line through it, on top of the muted ink; the dot is a sibling span, so the
+  line does not cross it.
+  The row's action buttons (info, toggle, add) are never selected by any of
+  this and stay at full strength, since the toggle is how the row is turned
+  back on. Milestones share `task_class`, so the diamond dims for free.
 - Never coexists with critical or shared (the engine guarantees it), so the
   three classes are independent — no ordering rules needed between them.
 

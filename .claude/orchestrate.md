@@ -112,6 +112,21 @@ this file binds it to this repo.
   corsia ha implementato la lettera del brief, correttamente. L'ha trovato il
   critic, non i 473 test. Quando un brief riusa la forma di una regola vicina,
   verificare **perche'** quella vicina puo' essere piu' debole.
+- **Come si briefa il critic qui** (promosso dal Log il 2026-09-22, pratica
+  stabilita su G2, I1 e K1). Le domande si danno **in ordine di paura**, e gli
+  si **vieta di dare entrambe le mani**: su G2 ha scelto, ribaltando
+  l'esitazione dell'hub con un argomento di *tipo*, non di gusto. Se la posta
+  sono i test, si chiede esplicitamente **«questi test mordono?»** e li misura
+  mutando il codice — su I1, quattro mutazioni in un worktree usa-e-getta
+  (`git worktree add --detach` piu' `git apply` del diff non committato),
+  ognuna col fallimento atteso. E' la domanda che trasforma una suite verde in
+  una prova, e costa poco.
+  **E gli si chiede di leggere le ragioni, non solo le regole**: su K1 il
+  critic ha misurato tutto cio' che gli era stato chiesto e non ha visto una
+  regola CSS inerte giustificata da un meccanismo inesistente, scritta in due
+  case. L'ha trovata l'hub leggendo il diff — che e' il motivo per cui il
+  diff si legge comunque.
+
 - **Docs duty**: a commit changing behaviour described in `docs/` updates the
   affected file in the same commit (map in CLAUDE.md); significant features
   add a CHANGELOG bullet under `## Unreleased` in the same commit.

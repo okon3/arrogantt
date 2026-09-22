@@ -687,10 +687,47 @@
 }
 
 /* Effective state, same as the bar's own dimming: the row is still there, just
-   not counted. The existing muted ink rather than a new colour, since this is
-   a row reading as "off", not a different kind of row. */
+   not counted. The whole row's content, not only the name, so a disabled row
+   reads as "off" at a glance — the two mechanisms the bar already uses,
+   extended rather than replaced: the existing muted ink for text (not a new
+   colour, since this is a row reading as "off", not a different kind of row),
+   and the bar's own desaturating filter (gantt.css:341-345, "opacity alone
+   would leave a saturated colour looking merely translucent") for whatever in
+   the row carries a saturated colour of its own rather than plain ink. The
+   row's action buttons — info, toggle, add — set their own colour and opacity
+   already and are never selected by either rule, so they stay full strength.
+
+   `.gantt-derived` (End, Duration) is deliberately left out of the ink rule:
+   it is already drawn at the faintest ink on every row, and moving it to the
+   muted ink here would make it *lighter* in dark mode than its own active-row
+   value — a cell reading as more prominent on a row that is supposedly off.
+   The rest of the row carries the "off" reading. */
+.gantt-host .gantt_grid_data .gantt_row.gantt-row--disabled .gantt_cell {
+  color: var(--ink-muted);
+}
+
+/* The name additionally keeps a line through it — the user's own choice of
+   the stronger reading over muted ink alone. On the name span rather than on
+   the cell above, so the line never crosses a date or a figure; the dot is a
+   sibling of this span, not a child (gridColumns.ts:274-277), so it stays out
+   of the line's reach without a rule of its own. A guard on the dot would not
+   buy the refactor that nests it here either: text decoration propagates from
+   the ancestor and a descendant cannot switch it off — only the dot's own
+   `display: inline-block` (line 558, there for its shape) would. */
 .gantt-host .gantt_grid_data .gantt_row.gantt-row--disabled .gantt-name {
   color: var(--ink-muted);
+  text-decoration: line-through;
+}
+
+/* Saturated colour, not plain ink: the avatar (background + white initials),
+   its part-time badge (its own `--warn`) and the task dot each carry a colour
+   of their own that the cell-wide ink rule above cannot reach — same
+   desaturating treatment as the bar, on the same reasoning. */
+.gantt-host .gantt_grid_data .gantt_row.gantt-row--disabled .gantt-dot,
+.gantt-host .gantt_grid_data .gantt_row.gantt-row--disabled .gantt-avatar,
+.gantt-host .gantt_grid_data .gantt_row.gantt-row--disabled .gantt-avatar__pct {
+  opacity: 0.45;
+  filter: saturate(0.3);
 }
 
 /* The same plan read from the other side: one lane per person, under the chart

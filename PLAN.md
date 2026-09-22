@@ -339,6 +339,21 @@ corregge il difetto.**
   richieste che non si puo' ancorare a tavolino: va prodotto un censimento di
   cio' che si vede, o il goal costruisce il gusto di chi implementa.
 
+**Misurato il 2026-09-22 dall'hub, con lo scanner della skill `design-taste`**
+(`scripts/preflight.mjs`, 26 file: i 21 `.tsx` piu' i 4 `.css`). **La resa
+meccanica e' gia' pulita**: nessun `transition: all`, nessun `outline: none`
+senza `:focus-visible`, nessun `z-index >= 999`, nessuna animazione da
+`scale(0)`, non piu' di tre `font-family`. Unico rilievo, e legittimo:
+`dialog.css:31` usa `min(85vh, calc(100vh - 48px))`. Le 251 violazioni
+"hard" che riporta sono **tutte** em dash in commenti e copy — regola
+anti-AI-tell per pagine di marketing, e qui la prosa del progetto li usa per
+scelta: **non e' un difetto, non va "corretto"**.
+**Conseguenza per K2**: il ramo "difetti meccanici di CSS" del censimento e'
+gia' chiuso, e chi audita non deve riaprirlo. Cio' che fa sembrare l'app un
+prototipo, se c'e', sta nella **composizione** (gerarchia, spaziatura,
+raggruppamento dei comandi, stati e microinteractions), non nelle violazioni
+catalogabili da uno scanner.
+
 **Collisione con T16, sciolta dall'utente il 2026-09-21.** T16 e questo goal
 sono lo stesso censimento a viewport diverse. Ordine deciso: **prima** il
 difetto gia' misurato sui task disattivati, **poi** l'audit del desktop
@@ -356,7 +371,7 @@ nessuna goal review deve scattare, perche' scatterebbe su un diff inesistente
 — il buco in cui e' caduta la review di Goal B. Il goal riceve fette **solo
 dopo** che l'utente ha comprato dal censimento.
 
-- [ ] K1 [impl] — **I task disattivati si distinguono davvero.** Oggi la
+- [x] K1 `6758cdb` [impl] — **I task disattivati si distinguono davvero.** Oggi la
       barra ha due trattamenti (`opacity: 0.45` + `saturate(0.3)`,
       `gantt.css:346-349`) e la riga in griglia **uno solo su una sola
       colonna** (`color: var(--ink-muted)` su `.gantt-name`,
@@ -367,6 +382,12 @@ dopo** che l'utente ha comprato dal censimento.
       stile. Vale la regola dell'80%: si corregge la mancanza che si vede.
       Rischio dichiarato: K2 potrebbe rimettere mano a questa scelta dentro
       un sistema piu' ampio; l'utente ha scelto di farlo prima sapendolo.
+      **Aggiunto dall'utente il 2026-09-22, dopo aver visto il primo giro**:
+      il nome di un task disattivato porta anche uno **strikethrough**, e
+      **tiene** l'inchiostro smorzato — variante scelta esplicitamente fra le
+      tre offerte, il segnale piu' forte possibile. Solo su `.gantt-name`, mai
+      sulle celle numeriche; e `text-decoration` si propaga agli inline, quindi
+      il `.gantt-dot` dentro la cella del nome va escluso a mano.
 
 - [ ] K2 [architect] — **Audit del desktop attuale: censimento + proposta.**
       Scope: guardare l'app a viewport desktop e censire cosa la fa sembrare
@@ -544,26 +565,18 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
 ## Log
 
 - **Dimensionamento**: impl oltre ~200k = task da splittare (F7 257k, F1 e
-  F4b ~225k); splittato rende 80-170k a meta'. Si taglia la **campagna di
-  verifica**, non il codice — ri-splittare sul codice li fa risalire, e
+  F4b ~225k, K1 213k su due round di correzione); splittato rende 80-170k a
+  meta'. Si taglia la **campagna di verifica**, non il codice — ri-splittare sul codice li fa risalire, e
   toglierla del tutto non rende economico il task (F8 146k).
 - **Un brief che porta gia' la fixture e i casi dell'accept si paga**: zero
   correzioni di corsia su tutti e sei i task di G e H (impl 82-197k, critic
   81-185k), e su I1 (deep 110k, critic 105k, 0 round; due Explore di
   ricognizione 56k+57k prima del brief).
-- **Un critic a cui si chiede «questi test mordono?» lo misura mutando il
-  codice**: su I1 quattro mutazioni in un worktree usa-e-getta
-  (`git worktree add --detach` + `git apply` del diff non committato), ognuna
-  col fallimento atteso. E' la domanda che trasforma una suite verde in una
-  prova; costa poco e va chiesta esplicitamente.
 - Un `[self]` guidato nel browser costa **una generazione dell'hub** (T65b,
   zero deleghe, oltre 176k da solo).
 - **Il critic e' la voce piu' cara e la piu' redditizia**: 75-95k a tavolino,
   102-242k nel browser, 128-191k la goal review. Trova cio' che l'accept non
   chiedeva: e' la regola, non l'eccezione.
-- Si briefa il critic dandogli **le domande in ordine di paura**, e
-  **vietandogli di dare entrambe le mani**: su G2 ha scelto, ribaltando
-  l'esitazione dell'hub con un argomento di *tipo*, non di gusto.
 - Dire a una goal review che un terzo `fix-first` non e' gratis le fa rendere
   COHERENCE invece di ACTIONS (terza di F, 128k: due difetti veri sotto il bar).
 - **Un elenco enumerato da una sezione di spec e' completo o non e' un
@@ -580,6 +593,11 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   vendeva il preset vecchio, due commenti che contraddicevano la riga sotto).
   Le trova il critic o la goal review, mai i test; e un grep non basta —
   `clientSafe` e `client-safety` sono la stessa nozione, ne matcha uno solo.
+  **E la prosa nuova mente quanto quella vecchia**: su K1 la corsia ha scritto
+  una regola CSS inerte giustificandola con un meccanismo inesistente (un
+  discendente non spegne la `text-decoration` dell'antenato), in due case. Il
+  codice era giusto, la ragione no, e il critic non l'ha vista: si leggono le
+  **ragioni**, non solo le regole.
 - **Una citazione copiata non e' verificata**: ne' un `file:line`, ne' un tipo,
   ne' un predicato, **ne' il nome di un'op** — `resourceUpdate` e' passato per
   tre mani e l'op e' `updateResource`. Si ri-localizza, e si cita per simbolo.

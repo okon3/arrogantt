@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A disabled task now reads as disabled everywhere: its whole row in the grid
+  goes quiet and its name is struck through, not just the name greyed.
 - Leave the disabled tasks out of an exported or printed picture, so what you
   hand over is the work someone has committed to.
 - "For the client" now gives just the names and the bars: no columns at all,
