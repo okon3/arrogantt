@@ -122,9 +122,10 @@ function resourceAvatar(resources: Resource[], id: string | undefined): string {
  * None of these carries `data-resource-id`, so none of them highlights.
  * That is the price of the overlap: a face covered down to a sliver is not
  * something a pointer can claim to have chosen, and the people past the
- * limit have no face at all. A branch staffed by one person still renders
- * as the ordinary avatar and still highlights — there the pointer is
- * unambiguous.
+ * limit have no face at all. Nor do they carry initials, for the same reason:
+ * under the overlap they printed as one word. A branch staffed by one person
+ * still renders as the ordinary avatar, initials and all, and still
+ * highlights — there is no pile there, and the pointer is unambiguous.
  *
  * Who they all are is a native `title`, as it is on every other avatar in
  * the grid: the app's own tooltip is deliberately detached from the rows and
@@ -143,10 +144,11 @@ function resourceStack(solved: SolvedProject, resources: Resource[], taskId: str
   const shown =
     people.length > AVATAR_STACK_LIMIT ? people.slice(0, AVATAR_STACK_LIMIT - 1) : people;
   const hidden = people.length - shown.length;
+  // Colour only. Two letters centred on 22px lose the second one under the
+  // overlap, and four faces of them printed as one word; the colour survives a
+  // sliver, the initials do not, and the title still names everybody.
   const faces = shown.map(
-    (person) =>
-      `<span class="gantt-avatar" style="background:${avatarColorOf(person.name)}">` +
-      `${escapeHtml(initialsOf(person.name))}</span>`,
+    (person) => `<span class="gantt-avatar" style="background:${avatarColorOf(person.name)}"></span>`,
   );
   if (hidden > 0) {
     faces.push(`<span class="gantt-avatar gantt-avatar--more">+${hidden}</span>`);

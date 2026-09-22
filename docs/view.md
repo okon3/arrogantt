@@ -259,8 +259,11 @@ that isn't there.
   field anyway). A summary's effort/resource/start are refused the same way.
 - **Summary resource column** shows up to 4 overlapping faces of everyone below
   + `+n`; native `title` names them all in face order; the summary bar carries
-  the same list. Those faces don't highlight (a sliver isn't a choice; `+n` has
-  no face); a single-person branch draws a normal avatar, which does.
+  the same list. Those faces carry **colour only, no initials** — under the 8px
+  overlap two letters printed as one word — and they don't highlight (a sliver
+  isn't a choice; `+n` has no face). `+n` is the one item drawn whole and the
+  only one with text. A single-person branch draws a normal avatar, initials
+  and highlight included: there is no pile.
 - The two derived columns cost 146px, paid by the **timeline**, not the name
   column (a truncated name is the one cell you can't guess; the timeline scrolls
   and re-scales).

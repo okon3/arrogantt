@@ -677,9 +677,10 @@ html:root[data-gantt-theme='dark'] {
 /* A summary's branch, as faces. They overlap so that four fit the column, and
    each carries a ring in the row's own colour so the one behind reads as a
    separate person rather than as a lump — dhtmlx puts `box-sizing: border-box`
-   on everything inside the container, so the ring costs no width. Painted in
+   on everything inside the container, so the ring costs no width. They carry
+   no initials: a colour reads from a sliver, two letters do not. Painted in
    DOM order, which leaves the last one whole: that is the "+n", the only one
-   whose text cannot be guessed from a sliver. */
+   whose text can be read at all. */
 .gantt-avatar-stack {
   display: inline-flex;
   vertical-align: middle;
@@ -693,15 +694,9 @@ html:root[data-gantt-theme='dark'] {
   margin-left: -8px;
 }
 
-/* The initials sit in the sliver the next face leaves, not in the middle of a
-   box that is mostly hidden: two letters centred on 22px lose their second one
-   under an 8px overlap. */
-.gantt-avatar-stack .gantt-avatar:not(:last-child) {
-  padding-right: 6px;
-}
-
 /* The people the column ran out of room for. Neutral on purpose: a colour of
-   its own would read as one more person. */
+   its own would read as one more person. It is the one item in the stack that
+   still carries text, and the only one drawn whole. */
 .gantt-avatar--more {
   background: var(--surface-hover);
   color: var(--ink-muted);
