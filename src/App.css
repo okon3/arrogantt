@@ -16,7 +16,7 @@
   gap: 18px;
   padding: 0 16px;
   border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--surface-sunken);
   flex: none;
 }
 
@@ -72,7 +72,7 @@
   padding: 2px 7px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-pill);
-  background: var(--surface-sunken);
+  background: var(--surface);
   color: var(--ink-muted);
   font: inherit;
   font-size: 11px;
@@ -182,12 +182,14 @@
 }
 
 .toolbar button:hover {
-  background: var(--surface-hover);
+  background: var(--line);
   color: var(--ink);
 }
 
+/* A step past the hover above: that one takes --line on the sunken bar, so
+   pressed has to move on to --line-strong or the two paint the same colour. */
 .toolbar button:active {
-  background: var(--line);
+  background: var(--line-strong);
 }
 
 /* Kept in place and greyed rather than hidden: a control that comes and goes
@@ -217,7 +219,7 @@
    painted. */
 .toolbar .toolbar__icon--on {
   color: var(--ink);
-  background: var(--surface-hover);
+  background: var(--line);
 }
 
 .toolbar__primary {
@@ -272,10 +274,12 @@
 
 /* A ring rather than a border: a border on a 24px circle eats the initials, and
    the gap is what makes the ring read as a selection instead of an outline. */
+/* The ring's inner gap: not a fill, the colour it needs is the bar underneath
+   it, which is sunken now — a plain --surface here would leave a white halo. */
 .toolbar .toolbar__person--on {
   opacity: 1;
   box-shadow:
-    0 0 0 2px var(--surface),
+    0 0 0 2px var(--surface-sunken),
     0 0 0 4px var(--accent);
 }
 
@@ -286,7 +290,7 @@
   gap: 6px;
   padding: 4px 10px;
   border-radius: var(--radius-pill);
-  background: var(--surface-sunken);
+  background: var(--surface);
   color: var(--ink-muted);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -959,7 +963,7 @@
   flex: none;
   padding: 5px 16px;
   border-top: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--surface-sunken);
   color: var(--ink-muted);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -1017,14 +1021,13 @@
   padding: 3px 8px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-pill);
-  background: var(--surface-sunken);
+  background: var(--surface);
   color: var(--ink);
 }
 
 .statusbar__searchfield:focus {
   outline: none;
   border-color: var(--accent);
-  background: var(--surface);
 }
 
 /* Fixed width, so stepping from 9/12 to 10/12 does not shift the buttons. */
@@ -1078,13 +1081,13 @@
 }
 
 .statusbar button:hover {
-  background: var(--surface-hover);
+  background: var(--line);
   color: var(--ink);
 }
 
 .statusbar__zoom button {
   min-width: 26px;
-  background: var(--surface-sunken);
+  background: var(--surface);
 }
 
 /* A toggle, so it has to show its state: the dot is the same colour as the ring
@@ -1105,7 +1108,7 @@
    never painted. */
 .statusbar .statusbar__critical--on {
   color: var(--ink);
-  background: var(--surface-hover);
+  background: var(--line);
 }
 
 .statusbar__critical--on::before {
@@ -1122,7 +1125,7 @@
    classes deep, same reason as `.statusbar .statusbar__critical--on` above. */
 .statusbar .statusbar__load--on {
   color: var(--ink);
-  background: var(--surface-hover);
+  background: var(--line);
 }
 
 .empty__steps kbd {

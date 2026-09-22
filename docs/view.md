@@ -78,6 +78,15 @@ that isn't there.
   rule is written twice.
 - **Paper stays light**: `planFigure` carries its own literals and `@media print`
   puts the page back to white. A dark plan is a screen, not a document.
+- **The header (`.app__bar`, carrying the toolbar) and the status bar sit on
+  `--surface-sunken`; the chart, grid, scale and timeline stay `--surface`.**
+  It is the one property every `inspiration_ui/` reference shares and this app
+  lacked — a two-tone chrome, the content as the object and the bars as its
+  frame. A taste adopted, not a defect fixed. The controls living on those two
+  bars are repainted with them, one register at rest → hover → pressed
+  (`--line` then `--line-strong`, since `--surface-hover` regresses against the
+  sunken background) and one for the borderless pills that would otherwise
+  vanish into it (`--surface`, matching `.app__help`'s existing pattern).
 
 ## Zoom and timeline range
 
