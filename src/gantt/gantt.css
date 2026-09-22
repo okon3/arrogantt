@@ -268,12 +268,12 @@ html:root[data-gantt-theme='dark'] {
 }
 
 .gantt_task_line {
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-bar);
   box-shadow: var(--shadow-raised);
 }
 
 .gantt_task_line .gantt_task_progress {
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-bar);
 }
 
 /* The task name always sits outside the bar, which keeps a short bar readable
@@ -410,7 +410,7 @@ html:root[data-gantt-theme='dark'] {
   inset: 0;
   /* Clips the fill to the bar's rounded corners so the shape reads as one
      object rather than a rectangle sitting inside another. */
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-bar);
   overflow: hidden;
 }
 
@@ -471,9 +471,11 @@ html:root[data-gantt-theme='dark'] {
   --dhx-gantt-task-background: #55637a;
   /* No border of its own: the base rule derives it from whatever fill wins on
      the element, so a summary the user coloured is outlined in that colour. */
-  /* Rounded like every other bar: a rectangle among capsules read as a
-     different kind of object rather than as a rollup of them. */
-  border-radius: var(--radius-pill);
+  /* Follows the bar family's radius, not a pill: at this element's own 10px
+     height the family's 6px would clamp to a half-height capsule, which is
+     the one shape the family no longer has. 3px keeps the leaf's proportion
+     (6 of 24) at the summary's height (2.5 of 10, rounded). */
+  border-radius: 3px;
   height: 10px !important;
   margin-top: 7px;
   box-shadow: none;
@@ -489,6 +491,9 @@ html:root[data-gantt-theme='dark'] {
 }
 
 .gantt_task_line.gantt-bar--summary .gantt_task_progress {
+  /* Without its own radius this inherits the leaf's 6px, rounder than the
+     10px-tall parent it fills, and the veil recedes at the corners. */
+  border-radius: 3px;
   background: rgb(0 0 0 / 22%);
 }
 

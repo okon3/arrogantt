@@ -943,14 +943,14 @@
   box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--accent);
 }
 
-/* Fixed pill: leftover row width lands in the gap before it, never in the
+/* Fixed size: leftover row width lands in the gap before it, never in the
    swatch itself. */
 .taskinfo__preview {
   flex: none;
   width: 56px;
   height: 14px;
   margin-left: auto;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-bar);
   box-shadow: var(--shadow-raised);
 }
 

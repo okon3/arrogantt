@@ -511,6 +511,12 @@ that isn't there.
   the status bar. Links are never drawn as the chain (a dependency between two
   critical tasks needn't be why either is critical).
 - Task names sit **beside** bars (inside belongs to the allocation profile).
+- **Bar shape = `--radius-bar` (6px)**, part of the app's small-radius family
+  (buttons, inputs, menu items), not the pill it used to be. The summary takes
+  **3px** instead, sized to its own 10px height — the family's radius there
+  would still clamp to a half-height capsule. Outside the family on purpose:
+  the milestone diamond keeps its own restated 3px, and the today scale chip
+  stays a pill — a chip, not a bar.
 - **Milestone = diamond** (dhtmlx milestone type): same colour, same ring (on
   the diamond), same dimming; grid dot becomes a diamond; dialog heading flips
   to *Milestone* at effort 0.

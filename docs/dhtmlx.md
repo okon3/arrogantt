@@ -75,8 +75,9 @@ touching `src/gantt` code that talks to the library.
 - **Milestone bar element is `visibility: hidden`**: what paints is
   `.gantt_task_content` rotated 45°. Decoration goes on the *content* (the
   critical ring rotates into a diamond there; an outline on the line paints
-  nothing). Content inherits the line's `border-radius` — restate it or the app's
-  pill radius rounds the diamond into a blob. `.gantt_milestone` repoints
+  nothing). Content inherits the line's `border-radius` — restate it or the
+  line's 6px bar radius rounds the diamond into a blob (measured: every vertex
+  of the 17px square goes, leaving a lens). `.gantt_milestone` repoints
   `--dhx-gantt-task-background` at dhtmlx violet with the same specificity as
   the app default — hence the default is restated on both classes rather than
   left to import order.
