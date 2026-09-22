@@ -111,8 +111,14 @@ html:root[data-gantt-theme='dark'] {
   color: var(--ink);
 }
 
+/* The vendor sets `font-family: Inter` on these two containers and ships its
+   own @font-face for it, so the header rows were the only text on screen in a
+   family this app never declares. Stated on the containers, not on the cells:
+   a cell's `inherit` resolves to whatever these carry. It moves the header
+   metrics, so the Rate/Cost ellipsis census in docs/view.md was remeasured. */
 .gantt_grid_scale,
 .gantt_task_scale {
+  font-family: inherit;
   background: var(--surface);
   border-bottom: 1px solid var(--line);
 }

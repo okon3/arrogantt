@@ -458,18 +458,20 @@ touching `src/gantt` code that talks to the library.
   loses *two* characters (`DURATION` → `DURATI…`, measured) — worse than the
   clip. Width is the only lever; size a header-driven column against its widest
   legal label.
-- **The header renders in a webfont this app never declares.** The vendor
-  stylesheet sets `font-family: Inter, Helvetica, Arial, sans-serif` on the head
-  cell — more specific than our `font-family: inherit` on `.gantt_container` —
-  and ships its own `@font-face` pulling Inter from `fonts.gstatic.com` with
-  `font-display: swap`. So a header's metrics are a *network* dependency: on a
-  cold or offline load (this is a local tool) the cut-off point is the
-  fallback's, not Inter's. Data cells are unaffected — they do inherit, and
-  compute `system-ui` at 13px against the header's 11px. Measured both ways
-  before sizing a column: Helvetica sits within 4px of Inter on every header
-  here and is **narrower** on the widest ones (`Cost (WWW)` 78.03 against
-  81.98), so Inter is the sizing case — but that is a measurement, not a
-  given.
+- **The header used to render in a webfont this app never declares, and the
+  cure is not on the cell.** The vendor stylesheet sets
+  `font-family: Inter, Helvetica, Arial, sans-serif` on **`.gantt_grid_scale`
+  and `.gantt_task_scale`**, the two scale containers, and ships its own
+  `@font-face` pulling Inter from `fonts.gstatic.com` with `font-display:
+  swap` — so a header's metrics were a *network* dependency, different on a
+  cold or offline load (this is a local tool). `font-family: inherit` on
+  `.gantt_grid_head_cell` / `.gantt_scale_cell` does **nothing**: the cell
+  inherits from the container, which is the element carrying Inter. It is
+  stated on the two containers instead. Data cells were never affected — they
+  do inherit, and compute `system-ui` at 13px against the header's 11px.
+  Changing this **moves every header's cut-off point**, and not by the same
+  amount on two columns: see the Rate/Cost census in
+  [view.md](view.md).
 - **A column named `add` ignores its `template`.** The grid renderer branches on
   the name before it looks at the column and emits a fixed
   `<div class='gantt_add'></div>`, then delegates the click on `.gantt_add`.

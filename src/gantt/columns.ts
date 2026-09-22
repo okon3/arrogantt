@@ -77,13 +77,14 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
   // caps a currency at 8 characters), so which string governs is a judgement
   // about what is plausible, not a rule.
   //
-  // `rate` is sized against its **header**: 84 holds the widest
-  // three-character currency in both fonts the header can render in
-  // (`Rate (WWW)`: 79.22px in dhtmlx's Inter, 76.61px in its fallback —
-  // `docs/dhtmlx.md`), and past three characters the cut is accepted, since
-  // `Rate (WWWWWWWW)` wants 140px of a 706px grid. A head cell has no padding
-  // and clips without an ellipsis, so an overflowing label abuts its
-  // neighbour's and the two read as one word.
+  // `rate` is sized against its **header**: 84 holds `Rate (WWW)`, the widest
+  // three-character currency, at 73.37px — and `Rate (EUROS)` too, at 77.28.
+  // Past that the cut is accepted, since `Rate (WWWWWWWW)` wants 130px of a
+  // 706px grid. A head cell has no padding and clips without an ellipsis, so
+  // an overflowing label abuts its neighbour's and the two read as one word.
+  // The figures are system-ui 600 11px, the app's own family: the scale
+  // containers inherit it rather than taking dhtmlx's Inter, and that choice
+  // moves every one of them — `docs/view.md` carries the census.
   //
   // `cost` is sized against a **cell**, because its widest plausible string is
   // one: a partially costed summary prefixes `≥ `, which costs 12.47px on top
