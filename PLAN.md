@@ -650,7 +650,7 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       (`gantt.css`, `.gantt-host .gantt_row.gantt-found`). Dopo K3 le due
       cose si dipingono uguali. In **griglia** restano distinte per un caso:
       la riga trovata porta anche `box-shadow: inset 2px 0 0 var(--accent)`.
-      In **timeline** quel bordo non c'e', e non resta niente a separarle.
+      In **timeline** quel bordo non c'e'; cosa resta e' misurato sotto.
       Il caso «trovata **e** selezionata» ha una regola sua (color-mix 16%) e
       continua a funzionare: il difetto e' fra una riga trovata e una riga
       selezionata **diverse**, con una ricerca attiva.
@@ -661,12 +661,25 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       quello in `gantt.css`. Una premessa non misurata sotto una decisione
       comprata in buona fede, che e' il modo esatto in cui `CLAUDE.md` dice
       che si perde mezzo goal.
-      **Letto dal foglio di stile, NON ancora misurato nel browser.** Ho
-      riletto tutte le regole `gantt-found` e nessuna distingue la timeline,
-      ma e' una deduzione da CSS — la specie di prova che oggi mi ha gia'
-      ingannato una volta su questo stesso file. **Primo passo del task:
-      misurarlo con una ricerca attiva e una riga selezionata non fra i
-      risultati, nei due schemi.** Se non si vede, il task muore li'.
+      **Misurato nel browser il 2026-09-22 (gen 14), nei due schemi, con
+      ricerca attiva e selezione fuori dai risultati. Il difetto c'e', ma la
+      frase qui sopra era sbagliata.** Fondo riga, identico bit per bit fra
+      trovata e selezionata: chiaro `rgb(241,238,252)`, scuro `rgb(42,37,66)`.
+      In griglia le separa il solo inset `2px` accento sulla trovata. In
+      timeline **non e' vero che non resta niente**: la barra della riga
+      selezionata porta `gantt_selected` e con essa un'ombra
+      `0 4px 24px / 0.08` contro `0 1px 2px / 0.06`, due `gantt_link_point` e
+      le maniglie di drag. Erano invisibili al foglio di stile perche' vivono
+      in `.gantt_bars_area`, non in `.gantt_task_row`. **Ma nessuno dei tre
+      dice «selezionata»**: sono affordance di trascinamento, grigie e
+      piccole, e l'ombra sparisce alla scala reale (ritaglio a 3x in
+      `.claude/k13-timeline-light.png`). Quindi il tono resta ambiguo fra i
+      due stati; non lo e' l'intera riga.
+      **Trappola di fixture, costata un giro**: la ricerca **seleziona da se'
+      il primo risultato**, quindi un `select()` chiamato nella stessa
+      valutazione che scrive nel campo finisce sovrascritto — va chiamato in
+      una valutazione successiva, o si misura il caso «trovata e selezionata»
+      credendo di misurare l'altro.
       **La scelta e' dell'utente, non della corsia**: o la selezione prende
       un tono suo, o la ricerca lo cambia, o si accetta la collisione perche'
       ricerca e selezione raramente convivono. Non decidere da solo.
