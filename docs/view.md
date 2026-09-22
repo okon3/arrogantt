@@ -284,7 +284,9 @@ that isn't there.
   1px the two read alike in both schemes.
   **`box-shadow` does not merge across rules**: a further row rule drawing a
   shadow on a group-start row needs a compound declaration carrying both, as
-  `.gantt-found.gantt-row--group-start` does for the grid's left-edge accent.
+  `.gantt-found.gantt-row--group-start` does for the left-edge accent — in
+  **both** panes. In the timeline the pairing is not a refinement: every
+  top-level row is a group start, so without it the match's edge never paints.
 - **Collapse to zero width, toolbar toggle** (`toggleGridCollapsed`), so the
   chart alone can fill the window. Remembers the width to restore by measuring
   `$grid.offsetWidth` at the moment of collapsing, not `config.grid_width` —
@@ -470,6 +472,12 @@ that isn't there.
   nothing to undo.
 - A closed summary hiding matches carries a **fainter mark** (a pointer to where
   to open, not a result; the walk lands on real matches).
+- A match is a background **and** a 2px left edge in `--accent`, in grid and
+  timeline both. The edge is what carries it: since Q3 gave the selected row
+  `--accent-soft`, the background alone says only "one of these two states",
+  and measured, a found row and a selected row were identical in the timeline.
+  The bar cannot carry the mark — its outline belongs to the critical chain and
+  its fill to the user's colour.
 - Case- and accent-insensitive both ways (*analysis* ↔ "Analysis"). Marks come
   from a row template asking one query (no per-row class copies). Matches
   re-measured after every edit; the current match keeps its place while it still

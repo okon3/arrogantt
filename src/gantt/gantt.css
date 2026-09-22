@@ -554,7 +554,11 @@ html:root[data-gantt-theme='dark'] {
   background: var(--accent-soft);
 }
 
-.gantt-host .gantt_grid_data .gantt_row.gantt-found {
+/* In the timeline too, and not for symmetry: there the background alone is
+   ambiguous, because `gantt_selected` paints the same `--accent-soft` (Q3).
+   Measured — a found row and a selected row read identically without this. */
+.gantt-host .gantt_grid_data .gantt_row.gantt-found,
+.gantt-host .gantt_task_row.gantt-found {
   box-shadow: inset 2px 0 0 var(--accent);
 }
 
@@ -566,7 +570,8 @@ html:root[data-gantt-theme='dark'] {
   background: color-mix(in srgb, var(--accent) 6%, transparent);
 }
 
-.gantt-host .gantt_grid_data .gantt_row.gantt-found-below {
+.gantt-host .gantt_grid_data .gantt_row.gantt-found-below,
+.gantt-host .gantt_task_row.gantt-found-below {
   box-shadow: inset 2px 0 0 color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
@@ -588,16 +593,19 @@ html:root[data-gantt-theme='dark'] {
   box-shadow: inset 0 2px 0 var(--line-strong);
 }
 
-/* `box-shadow` does not merge across rules: the grid's found/found-below marks
-   (above) are themselves a left-edge shadow, so a row that is both a match and
-   a group start needs one rule carrying both declarations — otherwise one wins
-   at equal specificity and the other is simply gone. The timeline needs no
-   pairing: its found marks are background only. */
-.gantt-host .gantt_grid_data .gantt_row.gantt-found.gantt-row--group-start {
+/* `box-shadow` does not merge across rules: the found/found-below marks (above)
+   are themselves a left-edge shadow, so a row that is both a match and a group
+   start needs one rule carrying both declarations — otherwise one wins at equal
+   specificity and the other is simply gone. Both panes need the pairing, and
+   the timeline's is not optional: every top-level row is a group start, so
+   without it the match's edge would never paint there at all. */
+.gantt-host .gantt_grid_data .gantt_row.gantt-found.gantt-row--group-start,
+.gantt-host .gantt_task_row.gantt-found.gantt-row--group-start {
   box-shadow: inset 2px 0 0 var(--accent), inset 0 2px 0 var(--line-strong);
 }
 
-.gantt-host .gantt_grid_data .gantt_row.gantt-found-below.gantt-row--group-start {
+.gantt-host .gantt_grid_data .gantt_row.gantt-found-below.gantt-row--group-start,
+.gantt-host .gantt_task_row.gantt-found-below.gantt-row--group-start {
   box-shadow:
     inset 2px 0 0 color-mix(in srgb, var(--accent) 60%, transparent),
     inset 0 2px 0 var(--line-strong);
