@@ -184,6 +184,12 @@ one wrong. The pattern, not the anecdotes:
   reverse: a threshold measured on one column and written down for both. `Rate`
   and `Cost` have separate width budgets, the sentence carried `Rate`'s number,
   and it survived three tasks and two reviews.
+- **A copied citation is not a verified one** — not a `file:line`, not a type,
+  not a predicate, and not the name of an op: `resourceUpdate` passed through
+  three hands and the op is `updateResource`. Re-locate it, and cite by symbol.
+  A specificity is the same kind of claim: **count the selector, don't inherit
+  the count** (K3 shipped a comment calling a vendor branch unbeatable that
+  three rules in the same file already beat).
 - **A probe must not measure its own prompts.** Grepping a string across a
   corpus that contains the briefs quoting that string counts itself. Filter to
   the field that records real invocations before drawing a number.

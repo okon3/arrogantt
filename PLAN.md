@@ -14,8 +14,9 @@ Restano I2 (textarea), I3 (CSV e agent API) e I4 (docs e changelog).
 Goal C aspetta quel report prima di ricevere task veri. **Goal J** (task
 completato come misura della stima) ha le domande di prodotto chiuse ma e'
 **sospeso dall'utente**: materiale pronto per un'analisi di dettaglio piu'
-avanti, non lavoro in corso. **Goal K** (polish di UI/UX) e' aperto e aspetta
-che si sciolga la sua collisione con T16.
+avanti, non lavoro in corso. **Goal K** (polish di UI/UX) e' aperto e in corso: K1, K2,
+K10 e K3 chiusi, restano K11, K12, K4-K9 e il nuovo K13. **K11 gira dopo
+K3**, che e' fatto: il suo vincolo di sequenza e' sciolto.
 
 **Trappola di misura, costata un falso negativo**: `ChangelogDialog` rende
 `className="help"` (`ChangelogDialog.tsx:10`) — un dialogo "changelog" nel DOM
@@ -525,7 +526,7 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       col commento che spiega perche' va ridichiarato o il diamante diventa
       una macchia): non toccarla senza guardarla.
 
-- [ ] K3 [impl] — **Gli stati si vedono: i quattro toggle e i colori di
+- [x] K3 `de85636` [impl] — **Gli stati si vedono: i quattro toggle e i colori di
       riga.** F2: `.toolbar button` / `.statusbar button` (0,1,1) battono le
       regole `--on` (0,1,0), quindi il background dello stato acceso **non
       dipinge mai** su collasso griglia, colonne, catena critica e carico
@@ -618,6 +619,33 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       stesso commit. `CLAUDE.md` porta il precedente esatto — una soglia
       misurata su una colonna e scritta per due, sopravvissuta a tre task e
       due review: `Rate` e `Cost` hanno budget di larghezza **separati**.
+
+- [ ] K13 [impl] — **La selezione e la ricerca si contendono lo stesso tono.**
+      Q3 ha dato alla riga selezionata `--accent-soft`, ma quel token era
+      **gia'** il colore della riga trovata dalla ricerca
+      (`gantt.css`, `.gantt-host .gantt_row.gantt-found`). Dopo K3 le due
+      cose si dipingono uguali. In **griglia** restano distinte per un caso:
+      la riga trovata porta anche `box-shadow: inset 2px 0 0 var(--accent)`.
+      In **timeline** quel bordo non c'e', e non resta niente a separarle.
+      Il caso «trovata **e** selezionata» ha una regola sua (color-mix 16%) e
+      continua a funzionare: il difetto e' fra una riga trovata e una riga
+      selezionata **diverse**, con una ricerca attiva.
+      **Non e' un errore di K3**: la corsia ha implementato Q3 alla lettera.
+      E' Q3 che e' stata decisa senza sapere che il token era occupato — la
+      motivazione («`--accent-soft` significa gia' elemento scelto: menu di
+      riga, selettore di colonne») aveva censito gli usi in `App.css` e non
+      quello in `gantt.css`. Una premessa non misurata sotto una decisione
+      comprata in buona fede, che e' il modo esatto in cui `CLAUDE.md` dice
+      che si perde mezzo goal.
+      **Letto dal foglio di stile, NON ancora misurato nel browser.** Ho
+      riletto tutte le regole `gantt-found` e nessuna distingue la timeline,
+      ma e' una deduzione da CSS — la specie di prova che oggi mi ha gia'
+      ingannato una volta su questo stesso file. **Primo passo del task:
+      misurarlo con una ricerca attiva e una riga selezionata non fra i
+      risultati, nei due schemi.** Se non si vede, il task muore li'.
+      **La scelta e' dell'utente, non della corsia**: o la selezione prende
+      un tono suo, o la ricerca lo cambia, o si accetta la collisione perche'
+      ricerca e selezione raramente convivono. Non decidere da solo.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
@@ -813,11 +841,11 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   vendeva il preset vecchio, due commenti che contraddicevano la riga sotto).
   Le trova il critic o la goal review, mai i test; e un grep non basta —
   `clientSafe` e `client-safety` sono la stessa nozione, ne matcha uno solo.
-  **E la prosa nuova mente quanto quella vecchia**: su K1 la corsia ha scritto
-  una regola CSS inerte giustificandola con un meccanismo inesistente (un
-  discendente non spegne la `text-decoration` dell'antenato), in due case. Il
-  codice era giusto, la ragione no, e il critic non l'ha vista: si leggono le
-  **ragioni**, non solo le regole.
-- **Una citazione copiata non e' verificata**: ne' un `file:line`, ne' un tipo,
-  ne' un predicato, **ne' il nome di un'op** — `resourceUpdate` e' passato per
-  tre mani e l'op e' `updateResource`. Si ri-localizza, e si cita per simbolo.
+  **E una ragione falsa non e' ornamento: guida la scelta sbagliata.** K1
+  scrisse una regola inerte su un meccanismo inesistente; K3 ha dichiarato
+  impossibile scavalcare il vendor — falso, la tecnica era gia' nel file tre
+  volte — e su quella premessa si e' ritirata su una variabile, rompendo meta'
+  delle righe. Entrambe le volte il codice sembrava giusto e la ragione no.
+- **T K3: impl 173k + 224k (1 round di correzione), critic sonnet 156k.** Il
+  critic nel browser ha ripagato: ha trovato il difetto guidando la cella che
+  la corsia aveva dichiarato **non** guidata. Chiedere quell'elenco rende.

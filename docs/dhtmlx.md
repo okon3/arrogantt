@@ -56,6 +56,22 @@ touching `src/gantt` code that talks to the library.
   0,1,0), so a milestone never gets a ring.
 - **A CSS rule beats an SVG presentation attribute** — the allocation profile's
   colour is an inline `style` on the path, not a `fill` attribute.
+- **A vendor rule splits into branches of unequal specificity, so a fix can
+  land on half the rows.** `.gantt_selected` ships as
+  `.gantt_grid_data .gantt_row.gantt_selected, .gantt_grid_data .gantt_row.odd
+  .gantt_selected` — (0,3,0) and (0,4,0). Beat the plain branch only and the
+  odd rows still obey the vendor; tie with it and the bundler's order decides.
+  The same split exists on the timeline at (0,2,0)/(0,3,0). Hover does *not*
+  split this way: both its branches read one variable, so re-pointing the
+  variable is enough there. **Grep the branch you are overriding before
+  choosing between a variable re-point and a rule**, and drive an odd *and* an
+  even row: a fixture whose rows are all the same kind cannot see the
+  difference (K3 shipped a selection that vanished under the pointer on even
+  rows only, because every fixture row was a `group-start`).
+- **A `.gantt-host`-qualified rule is how this project outranks the vendor**
+  rather than tying with it — `.gantt-found`, `.gantt-row--group-start` and
+  the selected row all use it. It is not a decoration: a tie is resolved by
+  the order Vite bundles the two stylesheets in, which no rule here controls.
 - **Milestone bar element is `visibility: hidden`**: what paints is
   `.gantt_task_content` rotated 45°. Decoration goes on the *content* (the
   critical ring rotates into a diamond there; an outline on the line paints
