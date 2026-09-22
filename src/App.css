@@ -211,9 +211,12 @@
   line-height: 1;
 }
 
-/* A toggle like the ones in the status bar, so it shows its state the same way. */
-.toolbar__icon--on {
-  color: var(--ink) !important;
+/* A toggle like the ones in the status bar, so it shows its state the same way.
+   Two classes deep, like `.toolbar .toolbar__icon` above: `.toolbar button`
+   alone outranks a single-class `--on` selector, and the background never
+   painted. */
+.toolbar .toolbar__icon--on {
+  color: var(--ink);
   background: var(--surface-hover);
 }
 
@@ -256,7 +259,14 @@
   opacity: 0.85;
 }
 
+/* `.toolbar button:hover` sets `color: var(--ink)` at (0,2,1), which outranks
+   `.toolbar .toolbar__person`'s `color: #fff` at (0,2,0) and turns the
+   initials near-black on their own fill. Restated here at (0,2,1) to tie and
+   win by source order. Literal on purpose, like the rule it restates: the
+   fill is inline per person and does not follow the scheme, so the ink above
+   it cannot be a scheme token either. */
 .toolbar .toolbar__person:hover {
+  color: #fff;
   opacity: 1;
 }
 
@@ -1090,8 +1100,11 @@
   vertical-align: baseline;
 }
 
-.statusbar__critical--on {
-  color: var(--ink) !important;
+/* Two classes deep, like `.toolbar .toolbar__icon--on` above: `.statusbar
+   button` alone outranks a single-class `--on` selector, and the background
+   never painted. */
+.statusbar .statusbar__critical--on {
+  color: var(--ink);
   background: var(--surface-hover);
 }
 
@@ -1105,9 +1118,10 @@
   border-style: dashed;
 }
 
-/* A toggle like the one beside it, so it shows its state the same way. */
-.statusbar__load--on {
-  color: var(--ink) !important;
+/* A toggle like the one beside it, so it shows its state the same way. Two
+   classes deep, same reason as `.statusbar .statusbar__critical--on` above. */
+.statusbar .statusbar__load--on {
+  color: var(--ink);
   background: var(--surface-hover);
 }
 

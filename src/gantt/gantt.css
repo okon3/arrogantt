@@ -30,6 +30,35 @@
   transition: opacity 140ms ease;
 }
 
+/* `hover-color` and `select` sit outside the dark media query below because
+   each had its own light-mode defect measured in K2 (F4) — not because the
+   token either points at is scheme-aware in a way the other nine re-pointed
+   variables below are not: every one of those nine also points at a token
+   redefined in dark, so that alone would explain nothing about why these
+   two, specifically, are singled out. Still written against both selectors,
+   same reason as the block below: `html:` outranks vendor's `:root` and
+   `:root[data-gantt-theme=dark]` rather than merely tying them.
+
+   `hover-color`: repointing the variable is the simplest fix that suffices
+   here, not the only one available — a `.gantt-host`-qualified selector
+   could outrank the vendor's `.odd:hover` branch outright, the technique
+   `.gantt-found` below already uses. It is not needed for hover: both of
+   the vendor's hover branches (plain and `.odd`) read this one variable, so
+   once it points at `--surface-hover` they agree with each other and with
+   `.gantt_grid_data .gantt_row:hover` below — there is no branch left to
+   lose to.
+
+   `select`: read by the drag-reorder ghost (`.gantt_drag_marker`), and by
+   the vendor's `.gantt_selected` branch that ties with our own rule on odd
+   rows — which is why that tie is invisible. It does not paint the selected
+   row by itself: see `.gantt-host ... .gantt_selected` below, where the
+   whole of it is explained. */
+html:root,
+html:root[data-gantt-theme='dark'] {
+  --dhx-gantt-base-colors-hover-color: var(--surface-hover);
+  --dhx-gantt-base-colors-select: var(--accent-soft);
+}
+
 /* dhtmlx v10 carries a dark theme of its own, keyed off `data-gantt-theme` on the
    root element — `theme.ts` sets it, since an attribute is the one thing a
    stylesheet cannot. Taking that theme whole would give the chart its greys
@@ -54,8 +83,6 @@
     --dhx-gantt-base-colors-text-base: var(--ink);
     --dhx-gantt-base-colors-text-light: var(--ink-muted);
     --dhx-gantt-base-colors-icons: var(--ink-faint);
-    --dhx-gantt-base-colors-select: var(--surface-hover);
-    --dhx-gantt-base-colors-hover-color: var(--surface-hover);
     --dhx-gantt-base-colors-primary: var(--accent);
     --dhx-gantt-base-colors-error: var(--critical);
   }
@@ -117,9 +144,10 @@
   background: transparent;
 }
 
-.gantt_grid_data .gantt_row:hover,
-.gantt_grid_data .gantt_row.gantt_selected,
-.gantt_task_row.gantt_selected {
+/* Hover only: the selected row needs a colour of its own, distinct from
+   this one, and lives in its own `.gantt-host`-qualified rule below rather
+   than sharing this selector (K2 F4). */
+.gantt_grid_data .gantt_row:hover {
   background: var(--surface-hover);
 }
 
@@ -488,6 +516,29 @@
   color: var(--ink-faint);
 }
 
+/* The selected row. Q3 (PLAN.md): `--accent-soft` in both schemes, not the
+   hover colour.
+
+   The vendor's `.gantt_selected` rule splits into a plain branch and an
+   `.odd` one a class heavier, and that asymmetry is the whole difficulty.
+   Re-pointing the variable it reads (above) and nothing else left a selected
+   **even** row tied with `.gantt_grid_data .gantt_row:hover` — a tie the
+   bundler's order broke in hover's favour, so an even selected row under the
+   pointer read as merely hovered, while the odd row beside it was fine
+   (K2 F4, round 2). Hence this rule, `.gantt-host`-qualified like
+   `.gantt-found` below.
+
+   It outranks the plain branch and beats hover, which is what fixes the even
+   rows. On **odd** rows it does not outrank: (0,4,0) on the grid and (0,3,0)
+   on the timeline **tie** with the vendor's `.odd` branch on each. The tie is
+   unobservable only because the re-point above feeds that branch the same
+   `--accent-soft` — so the re-point is load-bearing here, not just garnish
+   for the drag ghost. Drop it and the odd rows go back to a coin toss. */
+.gantt-host .gantt_grid_data .gantt_row.gantt_selected,
+.gantt-host .gantt_task_row.gantt_selected {
+  background: var(--accent-soft);
+}
+
 /* A row the search matched, in the grid and across the timeline both — nothing
    is hidden, so a match has to be findable among everything else. It is a
    background and an edge on purpose: the bar's outline belongs to the critical
@@ -514,9 +565,10 @@
   box-shadow: inset 2px 0 0 color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
-/* The one the eye was sent to. It is the selected row as well, so this only has
-   to be louder than the other matches — which the plain selection is not, being
-   fainter than the match tint it would sit on. */
+/* The one the eye was sent to. It is the selected row as well, and since Q3
+   gave selection the very tint a match already wears, the plain selection
+   cannot mark it: this rule is the only thing that tells the current match
+   from the others. */
 .gantt-host .gantt_grid_data .gantt_row.gantt-found.gantt_selected,
 .gantt-host .gantt_task_row.gantt-found.gantt_selected {
   background: color-mix(in srgb, var(--accent) 16%, transparent);
