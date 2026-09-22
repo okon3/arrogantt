@@ -389,7 +389,7 @@ dopo** che l'utente ha comprato dal censimento.
       sulle celle numeriche; e `text-decoration` si propaga agli inline, quindi
       il `.gantt-dot` dentro la cella del nome va escluso a mano.
 
-- [ ] K2 [architect] — **Audit del desktop attuale: censimento + proposta.**
+- [>] K2 [architect] — **Audit del desktop attuale: censimento + proposta.**
       Scope: guardare l'app a viewport desktop e censire cosa la fa sembrare
       un prototipo. Quattro aree, volute dall'utente: **organizzazione dei
       menu** (i comandi vivono su quattro superfici — `Toolbar.tsx` 216
