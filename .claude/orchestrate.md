@@ -126,6 +126,22 @@ this file binds it to this repo.
   regola CSS inerte giustificata da un meccanismo inesistente, scritta in due
   case. L'ha trovata l'hub leggendo il diff — che e' il motivo per cui il
   diff si legge comunque.
+  **Ma «questa ragione e' vera?» non basta: fatti dire il controfattuale che
+  ha provato.** Su K11 la domanda era fra le quattro, in ordine di paura, e
+  il critic ha risposto che tutti e tre i commenti reggevano. Uno diceva
+  «`--line-strong`, non `--surface-hover`, o hover e pressed dipingerebbero
+  lo stesso colore»: l'hover era `--line`, quindi il valore che pareggia era
+  `--line` e il controfattuale scritto era falso. Il critic ha misurato che
+  hover e pressed **oggi** differiscono — il **conseguente** — e ha dichiarato
+  vera la condizionale. E' la trappola di `CLAUDE.md` (*a conditional premise
+  loses its condition on the way*) vista dal lato di chi verifica: il
+  conseguente e' misurabile nel browser e la condizionale no, quindi misura
+  quello. Il rimedio e' una riga nel brief: **per ogni ragione, scrivi il
+  controfattuale che hai provato e come l'hai provato** — non «regge».
+
+- **Come si briefa la goal review qui.** Dirle che un terzo `fix-first` non
+  e' gratis le fa rendere COHERENCE invece di ACTIONS (terza di F, 128k: due
+  difetti veri sotto il bar, non tre task in piu').
 
 - **Docs duty**: a commit changing behaviour described in `docs/` updates the
   affected file in the same commit (map in CLAUDE.md); significant features

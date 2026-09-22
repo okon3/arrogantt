@@ -15,8 +15,9 @@ Goal C aspetta quel report prima di ricevere task veri. **Goal J** (task
 completato come misura della stima) ha le domande di prodotto chiuse ma e'
 **sospeso dall'utente**: materiale pronto per un'analisi di dettaglio piu'
 avanti, non lavoro in corso. **Goal K** (polish di UI/UX) e' aperto e in corso: K1, K2,
-K10 e K3 chiusi, restano K11, K12, K4-K9 e il nuovo K13. **K11 gira dopo
-K3**, che e' fatto: il suo vincolo di sequenza e' sciolto.
+K10, K3 e K11 chiusi, restano K12, K4-K9 e K13. **Le due barre ora stanno su
+`--surface-sunken`**: chi tocca un controllo che vive li' sopra ha un fondo
+diverso da quello per cui era stato dipinto.
 
 **Trappola di misura, costata un falso negativo**: `ChangelogDialog` rende
 `className="help"` (`ChangelogDialog.tsx:10`) — un dialogo "changelog" nel DOM
@@ -499,7 +500,7 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       collisione torna all'utente **coi numeri**, non si ri-raccomanda in
       silenzio.
 
-- [ ] K11 [impl] — **Superfici a due toni (K10, fetta H).** Header e status
+- [x] K11 `10169db` [impl] — **Superfici a due toni (K10, fetta H).** Header e status
       bar passano a `--surface-sunken`, il contenuto resta `--surface`
       (`App.css:19, 952`). E' **l'unica proprieta' che tutti e quattro i
       riferimenti condividono e che l'app non ha**: oggi header, toolbar,
@@ -514,6 +515,14 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       anche altrove.
       **Non guidato da K10 e da guidare qui**: le conseguenze in **dark** di
       questo cambio (il report ha letto solo i token, non l'app).
+      **Esito, 26 celle guidate nell'app a schemi freddi**: l'hover non regge
+      su `--surface-hover` e prende `--line` (1.120), il pressed sale a
+      `--line-strong` o pareggia con l'hover, le pastiglie senza bordo si
+      invertono su `--surface`, il vuoto dell'anello dell'avatar segue la
+      barra. Nessuna coppia esce piu' debole di come e' entrata e **il dark
+      guadagna piu' del chiaro** (`--line` si allontana di piu' dal tono
+      incassato li'). In chiaro la cucitura la porta la hairline, non il
+      riempimento: i due toni stanno a 1.036 e da soli non basterebbero.
 
 - [ ] K12 [impl] — **Le barre non sono pillole (K10, fetta I).** Raggio da
       pillola a **5-6px** (`gantt.css:243, 248`). Concordano i due
@@ -563,6 +572,12 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       l'`outline: auto` bianco del browser. Una regola sola,
       `2px solid var(--accent)` con `outline-offset: 2px` — **l'anello che
       l'editor inline usa gia'**: si estende, non si inventa.
+      **Trovato da K11, non e' un bottone e quindi non e' in F10**:
+      `.statusbar__searchfield:focus` e' l'unico controllo dell'app che
+      spegne l'`outline` e se lo rifa' a mano, e da `10169db` il segnale e'
+      **solo** il bordo accento (il fondo si alzava perche' a riposo era
+      incassato; ora coincide e la dichiarazione e' caduta). Quando questa
+      fetta scrive la regola unica, quel sito e' l'eccezione da guardare.
 
 - [ ] K5 [impl] — **L'inchiostro tenue in chiaro (F7).** `--ink-faint` da
       `#99a0ab` a **`#7d8590`** (Q2), **solo nel blocco chiaro** di
@@ -825,8 +840,6 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   102-242k nel browser, 128-191k la goal review; un audit Fable nel browser
   312k (K2, dieci matrici a due schemi). Trova cio' che l'accept non
   chiedeva: e' la regola, non l'eccezione.
-- Dire a una goal review che un terzo `fix-first` non e' gratis le fa rendere
-  COHERENCE invece di ACTIONS (terza di F, 128k: due difetti veri sotto il bar).
 - **Un elenco enumerato da una sezione di spec e' completo o non e' un
   elenco.** F2b ha taciuto un filtro, F3b una tabella da cui dipendeva la
   fixture, F8 ha ristretto «the widest string of each» alla fixture.
@@ -835,7 +848,6 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   **Prima di briefare, misurare la premessa**: se cade, il brief non serve.
   Un task di sola analisi paga la delega se l'hub tiene solo le conclusioni e
   rimisura da se' quelle portanti (T60: due Explore, 56k + 72k).
-- **Un `pass` del critic non esime dal leggere il diff**: quello di H1 mancava due difetti sotto il bar visibili **nel suo stesso report**.
 - **La prosa e' cio' che resta indietro.** Goal H: zero difetti di codice
   sopra il bar e **sette** frasi rese false dal diff (`docs/`, il README che
   vendeva il preset vecchio, due commenti che contraddicevano la riga sotto).
@@ -846,6 +858,9 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   impossibile scavalcare il vendor — falso, la tecnica era gia' nel file tre
   volte — e su quella premessa si e' ritirata su una variabile, rompendo meta'
   delle righe. Entrambe le volte il codice sembrava giusto e la ragione no.
-- **T K3: impl 173k + 224k (1 round di correzione), critic sonnet 156k.** Il
-  critic nel browser ha ripagato: ha trovato il difetto guidando la cella che
-  la corsia aveva dichiarato **non** guidata. Chiedere quell'elenco rende.
+- **K3: impl 173k + 224k (1 round), critic sonnet 156k. K11: impl 148k,
+  critic sonnet 140k, 0 round.** Il critic nel browser ripaga: su K3 il
+  difetto stava nella cella che la corsia aveva dichiarato **non** guidata;
+  su K11 ha trovato da solo la dichiarazione inerte. Chiedere quell'elenco
+  rende. **Un brief che porta la tabella delle celle gia' decise azzera i
+  round**: le 13 celle di K11 sono tornate tutte come prescritte.
