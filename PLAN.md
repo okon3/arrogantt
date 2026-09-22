@@ -424,6 +424,30 @@ e `CLAUDE.md` dice che questo strumento non deve un audit di accessibilita' a
 nessuno. Le fette sono sotto come K3-K9, ognuna col suo finding.
 **Tutte serial**: condividono il browser e la porta 5173, che e' un mutex.
 
+**K10 ha consegnato** `.claude/specs/K10-report.md` (2026-09-22). Cio' che
+cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
+- **I quattro riferimenti sono due sistemi, non quattro.** gantt02, kanban01
+  e project01 sono lo stesso prodotto (ClickUp 4.0: stesso rail, `Search
+  ⌘K`, violetto `#6747f2`); gantt_01 e' costruito su default Tailwind.
+  **Un «4 su 4 concordano» in quel report vale 2 su 2**: ripesare qualunque
+  conclusione tratta dal conteggio.
+- **«Crisp» e' per cinque settimi roba che l'app ha gia'**: inchiostro
+  primario 15.5:1 contro i loro 14.7-20, scalino verso il secondario 3.2×
+  contro ≥2.7×, hairline 1.16:1 contro 1.10-1.24, controlli quieti, righe
+  36px con testo 13. **Mancano due proprieta'**, comprate come K11 e K12.
+- **Non e' crisp**, per misura e nonostante l'apparenza: cambio di font,
+  header in sentence case, barre piu' sottili (i due riferimenti gantt si
+  contraddicono, 0.53 contro 0.65), barre sature, hairline piu' scure.
+  **Nessun linguaggio visivo nuovo, nessun sistema di componenti.**
+- **Q2 regge, e la collisione e' stata guardata.** gantt_01 mette i ruoli di
+  F7 a 2.37-2.42:1 — piu' *chiari* del nostro difetto a 2.63. ClickUp ha come
+  pavimento `#838383` = 3.79:1, dove cade `#7d8590`. Tre immagini concordano
+  con Q2, una no; l'utente ha visto i numeri e Q2 resta.
+- **Correzione a K2 §5, da usare al posto del suo numero**: `#7d8590` e'
+  **3.73:1**, non ~3.9; `#8a919d` e' 3.17, non ~3.2. Lo scalino del dark
+  (3.76) regge comunque, ed era l'argomento vero di Q2.
+
+
 - [x] K2 [architect] — **Audit del desktop attuale: censimento + proposta.**
       Scope: guardare l'app a viewport desktop e censire cosa la fa sembrare
       un prototipo. Quattro aree, volute dall'utente: **organizzazione dei
@@ -445,7 +469,7 @@ nessuno. Le fette sono sotto come K3-K9, ognuna col suo finding.
       disattivati sopra (che K1 avra' gia' chiuso) e i due fatti annotati
       sotto Goal C (dialogo People, bottone «Fit» che trabocca a 768px).
 
-- [>] K10 [architect] — **Cosa hanno i riferimenti che noi non abbiamo.**
+- [x] K10 `n/a` [architect] — **Cosa hanno i riferimenti che noi non abbiamo.**
       L'utente ha messo quattro screenshot in `inspiration_ui/` di
       applicazioni che per lui sono **crisp**. **Non erano ignorati**: l'hub
       ha letto male un `git check-ignore`, li ha scritti nel piano come tali
@@ -473,6 +497,33 @@ nessuno. Le fette sono sotto come K3-K9, ognuna col suo finding.
       riferimento contraddice una scelta gia' fatta (il candidato e' Q2), la
       collisione torna all'utente **coi numeri**, non si ri-raccomanda in
       silenzio.
+
+- [ ] K11 [impl] — **Superfici a due toni (K10, fetta H).** Header e status
+      bar passano a `--surface-sunken`, il contenuto resta `--surface`
+      (`App.css:19, 952`). E' **l'unica proprieta' che tutti e quattro i
+      riferimenti condividono e che l'app non ha**: oggi header, toolbar,
+      status bar, griglia, scala e timeline sono la stessa superficie.
+      **Gusto adottato, non difetto riparato** — l'utente l'ha comprata
+      sapendolo.
+      **Vincolo di sequenza, misurato: gira dopo K3.** `--surface-hover` sta
+      a **1.043:1 contro `--surface-sunken`**: spostata la barra sul fondo
+      incassato, l'hover dei suoi controlli sparisce quasi. Rimisurare
+      l'hover sulla barra incassata e, se non regge, usare `--line` come
+      hover **li' soltanto** — non ritoccare `--surface-hover`, che serve
+      anche altrove.
+      **Non guidato da K10 e da guidare qui**: le conseguenze in **dark** di
+      questo cambio (il report ha letto solo i token, non l'app).
+
+- [ ] K12 [impl] — **Le barre non sono pillole (K10, fetta I).** Raggio da
+      pillola a **5-6px** (`gantt.css:243, 248`). Concordano i due
+      riferimenti gantt, cioe' 2 su 2 di quelli pertinenti — non 4 su 4.
+      **Gusto adottato, non difetto riparato.**
+      Da controllare nello stesso passaggio, o il raggio litiga con cio' che
+      gli sta sotto e sopra: la traccia della barra (`gantt.css:299-305`) e
+      la sezione *Bar decorations* di `docs/view.md`, che va aggiornata nello
+      stesso commit. **La milestone ha un raggio suo** (`gantt.css:3px`,
+      col commento che spiega perche' va ridichiarato o il diamante diventa
+      una macchia): non toccarla senza guardarla.
 
 - [ ] K3 [impl] — **Gli stati si vedono: i quattro toggle e i colori di
       riga.** F2: `.toolbar button` / `.statusbar button` (0,1,1) battono le
@@ -719,6 +770,11 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   orfani non lo tocca** finche' questa riga esiste. Porta anche i quattro casi
   «misurati e a posto» (niente transizioni, `:active` distinto, cromatura dei
   dialoghi coerente, pixel interi a dpr 1) che nessuno deve ri-derivare.
+- `.claude/specs/K10-report.md` — i quattro riferimenti misurati contro il
+  censimento. Task `[x]`, **ma lo sweep degli orfani non lo tocca** finche'
+  questa riga esiste: porta i valori campionati dalle immagini, la lista di
+  cio' che uno screenshot non puo' contenere, e le tre proprieta' giudicate
+  **non** crisp — cioe' le tre cose che qualcuno riproporra'.
 - `.claude/specs/T26-report.md` — UX dei link, tutto misurato nell'app. O1, O2
   e il banner sono chiusi con Goal D, ma e' il materiale di **O4** (editor
   delle dipendenze), l'unica sua opzione ancora in giacenza: senza il report
