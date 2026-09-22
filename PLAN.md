@@ -15,7 +15,7 @@ Goal C aspetta quel report prima di ricevere task veri. **Goal J** (task
 completato come misura della stima) ha le domande di prodotto chiuse ma e'
 **sospeso dall'utente**: materiale pronto per un'analisi di dettaglio piu'
 avanti, non lavoro in corso. **Goal K** (polish di UI/UX) e' aperto e in corso: K1, K2,
-K10, K3, K11, K12 e K14 chiusi, restano K4-K9 e K13. Due conseguenze
+K10, K3, K11, K12, K13 e K14 chiusi, restano K4-K9. Due conseguenze
 per chi entra adesso: **le due barre stanno su `--surface-sunken`** (chi tocca
 un controllo che vive li' sopra ha un fondo diverso da quello per cui era
 stato dipinto), e **le barre del chart hanno `--radius-bar: 6px`**, non piu'
@@ -644,7 +644,7 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       misurata su una colonna e scritta per due, sopravvissuta a tre task e
       due review: `Rate` e `Cost` hanno budget di larghezza **separati**.
 
-- [>] K13 [self] — **La selezione e la ricerca si contendono lo stesso tono.**
+- [x] K13 `000d860` [self] — **La selezione e la ricerca si contendono lo stesso tono.**
       Q3 ha dato alla riga selezionata `--accent-soft`, ma quel token era
       **gia'** il colore della riga trovata dalla ricerca
       (`gantt.css`, `.gantt-host .gantt_row.gantt-found`). Dopo K3 le due
@@ -698,9 +698,15 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       found-below+group-start = bordo al 60% + hairline; solo selezionata =
       tono condiviso senza bordo; solo group-start = hairline; riga liscia =
       niente.
-      **Non guidato**: `found-below` che non sia group-start (un summary
-      annidato che contiene una corrispondenza), e le esportazioni PNG/print.
-      **Critic non ancora arbitrato** — vedi Log.
+      **La cella che l'hub non aveva guidato l'ha guidata il critic**:
+      `found-below` che non e' group-start (summary annidato con una
+      corrispondenza sotto) rende bordo al 60% e basta, identico nelle due
+      pareti e nei due schemi. Ha anche provato il controfattuale
+      dell'abbinamento togliendo il selettore timeline: il bordo **sparisce**
+      e resta la sola hairline. Verdetto `pass`, zero round.
+      **Fuori dal percorso, letto e non supposto**: PNG e print non
+      conoscono nessuna classe della ricerca — la figura esportata e' un SVG
+      costruito a parte, non il DOM vivo. Non e' una lacuna di copertura.
 
 - [x] K14 `d8a1d20` [self] — **Falso allarme, chiuso senza codice.** L'anello
       di criticita' del summary non e' una capsula: misurato nell'app (fixture
@@ -911,10 +917,10 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   impossibile scavalcare il vendor — falso, la tecnica era gia' nel file tre
   volte — e su quella premessa si e' ritirata su una variabile, rompendo meta'
   delle righe. Entrambe le volte il codice sembrava giusto e la ragione no.
-- **Goal K finora: impl 148-224k, critic 140-194k, zero round su K11 e K12**
-  — la tabella delle celle gia' decise nel brief e' cio' che li risparmia.
+- **Goal K: impl 148-224k, critic 121-194k, zero round da K11** — la tabella
+  delle celle nel brief li risparmia; K13 e K14 l'hub li ha fatti senza corsia.
 - **Il critic nel browser ripaga, e la leva e' l'elenco del non-guidato**: su
   K3 il difetto stava nella cella che la corsia aveva dichiarato non guidata;
-  su K12 l'hub ha **ordinato** al critic di guidare le due voci di
-  quell'elenco (anelli critici, barra stretta) e una delle due ha reso un
-  difetto. Farsi dare l'elenco e poi comprarlo e' il giro completo.
+  su K12 l'hub ha **ordinato** al critic di guidare quell'elenco e una voce
+  ha reso un difetto; su K13 la cella scoperta era pulita. Comprare l'elenco
+  e' il giro completo anche quando rende zero: misura una copertura supposta.
