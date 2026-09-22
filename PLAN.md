@@ -301,7 +301,7 @@ passata che produce il termine di paragone, l'occupazione fissa nel
 simulatore, la riscrittura dell'invariante di conservazione, e solo dopo
 proporre le fette.
 
-## Goal K — sembrare uno strumento, non un prototipo            [aperto]
+## Goal K — sembrare uno strumento, non un prototipo [completato, in attesa di goal review]
 Una passata di miglioramento e polish su UI e UX: far sembrare l'app
 **professionale**, organizzare le voci dei menu invece di lasciarle sparse,
 rendere la visualizzazione piu' **crisp**, e distinguere meglio i task
@@ -566,84 +566,18 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       Verifica **nei due schemi**, matrice di celle guidate: e' la lezione di
       `CLAUDE.md` sul costo osservato in un solo schema.
 
-- [ ] K4 [impl] — **I controlli sembrano dell'app, non del browser.**
-      F6: l'editor inline e' un input di default — Arial 13.33px, bordo
-      grigio 2px, raggio 0 — dentro una griglia Segoe UI 13px, sotto l'anello
-      violetto dell'app; `gantt.css:143` veste solo `:focus`. Dare
-      `font: inherit`, bordo `var(--line-strong)`, raggio e padding a
-      `.gantt_grid_editor_placeholder input, select`.
-      F8: il `+` di riga e' il glifo del font-icone di dhtmlx (13px, .6)
-      accanto a due lucide da 15px a .4 — tre pesi in un cluster di tre
-      icone. Template della colonna `add` con lucide `plus` 15px alla stessa
-      opacita' a riposo. **`CLAUDE.md`: le icone sono lucide, ovunque** —
-      `lucide-static` nei template HTML di dhtmlx, mai un SVG a mano.
-      F10: nessun bottone ha una regola `:focus-visible`, quindi l'anello e'
-      l'`outline: auto` bianco del browser. Una regola sola,
-      `2px solid var(--accent)` con `outline-offset: 2px` — **l'anello che
-      l'editor inline usa gia'**: si estende, non si inventa.
-      **Trovato da K11, non e' un bottone e quindi non e' in F10**:
-      `.statusbar__searchfield:focus` e' l'unico controllo dell'app che
-      spegne l'`outline` e se lo rifa' a mano, e da `10169db` il segnale e'
-      **solo** il bordo accento (il fondo si alzava perche' a riposo era
-      incassato; ora coincide e la dichiarazione e' caduta). Quando questa
-      fetta scrive la regola unica, quel sito e' l'eccezione da guardare.
-
-- [ ] K5 [impl] — **L'inchiostro tenue in chiaro (F7).** `--ink-faint` da
-      `#99a0ab` a **`#7d8590`** (Q2), **solo nel blocco chiaro** di
-      `index.css:34`. Tocca intestazioni di griglia, etichette delle
-      settimane, End/Duration, label sulle barre e la nota agenti — oggi
-      2.0-2.6:1 su bianco, contro 3.76:1 dello stesso ruolo in dark.
-      Misurare i **quattro ruoli di §1.5 del report prima e dopo**, e
-      riportare entrambe le colonne: il valore e' stato scelto su un numero,
-      quindi la prova che il difetto sparisce e' la misura, non l'accordo col
-      numero. Se la misura e l'occhio non concordano, vince l'occhio e si
-      torna dall'utente coi numeri.
-
-- [ ] K6 [impl] — **L'header non sfonda a 1366px (F1).** Il nome del file va
-      nel gruppo del marchio accanto alla versione (Q1a), con **ellissi**: la
-      pillola e' oggi la prima vittima del wrap e la seconda riga dell'header
-      contiene solo lei, portando l'altezza da 48 a 80px
-      (`App.css:144, 273`). Verificare a **1440, 1366, 1280 e 1180** che
-      l'header resti su una riga, e con un nome file lungo che tronchi invece
-      di mandare a capo la riga del marchio — il difetto si sposta li' se
-      l'ellissi manca.
-
-- [ ] K7 [impl] — **Le facce dei summary smettono di stampare lettere
-      sovrapposte (F5).** Le facce impilate portano **solo il colore**, senza
-      iniziali (Q4); un summary con **una** persona sola tiene le sue, perche'
-      li' non c'e' pila — `resourceStack` esce prima
-      (`gridColumns.ts:137-138`). Oggi 8px di sovrapposizione su facce da
-      22px con iniziali da 10px danno «ARME SC» (`gantt.css:602`).
-      **Non** toccare la geometria descritta in `docs/view.md` e **non**
-      abbassare `AVATAR_STACK_LIMIT` (`gridColumns.ts:32`): entrambe scartate
-      dall'utente. Il `title` nomina gia' tutti, «+n» compreso, e il commento
-      a `gridColumns.ts:128-134` spiega perche' resta un `title` nativo e non
-      il tooltip ricco — non riaprirlo.
-
-- [ ] K8 [impl] — **L'organizzazione: sopra il piano, sotto la vista (F12,
-      fetta E).** Collasso griglia e colonne si spostano accanto a
-      Collapse/Expand nella status bar; la nota `For agents:` esce dal
-      percorso dei controlli (estremita' destra, oppure dentro il dialogo
-      `?`). La toolbar resta: file · export · modifica · modello · highlight.
-      **Aggiornare `docs/view.md` nello stesso commit** — e' una decisione di
-      UI e quel file e' la sua casa. Verificare che le scorciatoie da tastiera
-      e gli `aria`/`title` seguano i controlli spostati, non restino dove
-      erano. La toolbar **era gia' raggruppata ed etichettata**
-      (`Toolbar.tsx:94, 161`): questo e' un riassetto comprato dall'utente,
-      non la riparazione di un difetto — non allargarlo.
-
-- [ ] K9 [impl] — **Una famiglia sola sullo schermo (F9).** Le intestazioni
-      di griglia e timeline sono Inter perche' la `font-family` del vendor non
-      e' sovrascritta; il resto dell'app e' Segoe UI. `font-family: inherit`
-      su `.gantt_grid_head_cell, .gantt_scale_cell`.
-      **La trappola, ed e' il motivo per cui questo task e' ultimo**: le
-      soglie di ellissi delle testate `Rate (WWW)` e `Cost` in `docs/view.md`
-      sono state misurate **in Inter 600 11px**. Cambiando famiglia cambiano
-      le larghezze: **rimisurare entrambe** e aggiornare i due numeri nello
-      stesso commit. `CLAUDE.md` porta il precedente esatto — una soglia
-      misurata su una colonna e scritta per due, sopravvissuta a tre task e
-      due review: `Rate` e `Cost` hanno budget di larghezza **separati**.
-
+- [x] K4 `9a3658c` — I controlli sembrano dell'app, non del browser.
+- [x] K5 `808c630` — L'inchiostro tenue in chiaro.
+- [ ] K6 — **Saltato: premessa falsa, misurata.** Spostare la pillola nel
+      gruppo del marchio non toglie il wrap, lo sposta: la pillola costa 110px
+      ovunque stia, e a 1366 con cinque persone l'header restava 81px con
+      l'ultimo gruppo di bottoni sulla seconda riga (prima: 80px con la sola
+      pillola). Modifica annullata. **K8 ha poi risolto l'obiettivo da solo**:
+      a HEAD l'header e' 48px a 1440 e 1366, 80px a 1280 e 1180 — sotto 1280
+      la pillola torna la prima vittima, e li' K6 avrebbe ancora senso.
+- [x] K7 `6c98d75` — Le facce dei summary portano il colore, non le iniziali.
+- [x] K8 `36a8bb6` — L'organizzazione: sopra il piano, sotto la vista.
+- [x] K9 `5f25e3e` — Una famiglia sola sullo schermo.
 - [x] K13 `000d860` [self] — **La selezione e la ricerca si contendono lo stesso tono.**
       Q3 ha dato alla riga selezionata `--accent-soft`, ma quel token era
       **gia'** il colore della riga trovata dalla ricerca
@@ -886,17 +820,10 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
 
 ## Log
 
-- **Dimensionamento**: impl oltre ~200k = task da splittare (F7 257k, F1 e
-  F4b ~225k, K1 213k su due round di correzione); splittato rende 80-170k a
-  meta'. Si taglia la **campagna di verifica**, non il codice — ri-splittare sul codice li fa risalire, e
-  toglierla del tutto non rende economico il task (F8 146k).
 - **Un brief che porta gia' la fixture e i casi dell'accept si paga**: zero
-  correzioni di corsia su tutti e sei i task di G e H (impl 82-197k, critic
-  81-185k), e su I1 (deep 110k, critic 105k, 0 round; due Explore di
-  ricognizione 56k+57k prima del brief).
+  correzioni di corsia su tutti e sei i task di G e H, e su I1 (0 round).
 - **Il critic e' la voce piu' cara e la piu' redditizia**: 75-95k a tavolino,
-  102-242k nel browser, 128-191k la goal review; un audit Fable nel browser
-  312k (K2, dieci matrici a due schemi). Trova cio' che l'accept non
+  102-242k nel browser, 128-191k la goal review. Trova cio' che l'accept non
   chiedeva: e' la regola, non l'eccezione.
 - **Un elenco enumerato da una sezione di spec e' completo o non e' un
   elenco.** F2b ha taciuto un filtro, F3b una tabella da cui dipendeva la
@@ -924,3 +851,10 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   su K12 l'hub ha **ordinato** al critic di guidare quell'elenco e una voce
   ha reso un difetto; su K13 la cella scoperta era pulita. Comprare l'elenco
   e' il giro completo anche quando rende zero: misura una copertura supposta.
+- **K4-K9 in un solo batch, hub senza corsie**: 5 task chiusi, 5 commit, 164+/88-
+  righe di src, 1 saltato (K6: premessa falsa in 4 misure, modifica annullata) e
+  32 righe di PLAN.md. **Due meccanismi scritti nell'entry non reggevano** —
+  il template della colonna `add` (il vendor la hardcoda) e `inherit` sulla
+  head cell (eredita dal container, che e' l'elemento con Inter): l'obiettivo
+  regge, il meccanismo no, e la prima stesura di K9 passava il censimento
+  identico senza accorgersene.
