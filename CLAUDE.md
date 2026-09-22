@@ -148,78 +148,26 @@ prove).
 
 ## What a verification may claim
 
-Thirteen false premises in three days of work, every one plausible and every
-one wrong. The pattern, not the anecdotes:
+The anecdotes behind these rules are in git (`8ff3a72` and earlier). The
+rules stand on their own.
 
-- **A recon reports what it saw, never what does not exist.** "No handler in
-  this repo" is not "no handler" — the library is an actor, not a backdrop
-  (dhtmlx updates `grid_width` through its own internal handler). "It looks
-  fine" is not "it measures fine": the absence of a measurement is not the
-  absence of a problem.
-- **Measure; don't derive.** A number computed at the desk, a cost observed in
-  one colour scheme, a geometry deduced from a stylesheet — each has been
-  wrong here. And **measure the variant you chose not to ship**: that is what
-  turns a justification into a proof, because it shows what the rejected path
-  would have done.
-- **An inherited premise is not a verified one.** Shortening another agent's
-  comment inherits its premise — abbreviating is not verifying. An
-  out-of-scope finding still needs checking before it is archived. A premise
-  that passes three hands becomes an institutional trap. **And a conditional
-  premise loses its condition on the way**: T58's brief said a border would
-  desync the panes *if* rows were not `border-box`; the code comment and the
-  doc both recorded the consequent as fact, in near-identical prose, and rows
-  are `border-box` — the decision was right, the recorded reason false, and
-  wrong twice because it had been written twice. One fact, one home.
-  **And a premise is verified on the path that uses it, never on the line that
-  states it.** T56 read the definition of `initialProject`, saw a module
-  constant, and concluded the render could only ever solve an empty project —
-  true of that line, false of the program, because `useRef(project)` one file
-  away made it the live model too. The reading was correct and the conclusion
-  was wrong; it took the hub, a lane and a critic three rounds to notice,
-  because each of them re-read the same line. Ask who else holds the reference.
-- **Scoping a code path out of a review scopes out the doc that describes it.**
-  A brief that tells the reviewer not to report `applied()` buys the other half
-  of the doc bullet verified and not its absoluteness — which was false
-  precisely on `applied()`. Scope the code, never the claim. The same slip in
-  reverse: a threshold measured on one column and written down for both. `Rate`
-  and `Cost` have separate width budgets, the sentence carried `Rate`'s number,
-  and it survived three tasks and two reviews.
-- **A copied citation is not a verified one** — not a `file:line`, not a type,
-  not a predicate, and not the name of an op: `resourceUpdate` passed through
-  three hands and the op is `updateResource`. Re-locate it, and cite by symbol.
-  A specificity is the same kind of claim: **count the selector, don't inherit
-  the count** (K3 shipped a comment calling a vendor branch unbeatable that
-  three rules in the same file already beat).
-- **A probe must not measure its own prompts.** Grepping a string across a
-  corpus that contains the briefs quoting that string counts itself. Filter to
-  the field that records real invocations before drawing a number.
-- **Check your own instructions against each other.** When a task carries both
-  an objective and a rule of economy — or an accept and the mechanism proposed
-  to reach it — verify them on every path that activates them: the bar
-  outranks the mechanism. And a numeric floor invented here can quietly crush
-  a decision the user already made; when a measure and a stated preference
-  collide, the collision goes to the user with the numbers.
-- **A completion notification is not a completion** — the same agent can
-  notify again and resume. With `strictPort` the dev port is a mutex: two
-  lanes restarting the server destroy each other's fixtures, silently. Check
-  that no other lane is live before touching the origin or the port.
-- **A goal's opening decisions are premises, not facts — and calling one
-  binding does not measure it.** Goal G opened with four decisions agreed
-  with the user and marked *not to be reopened*; the first recon killed three
-  of them. The arrows a collapsed branch would orphan are never drawn, the
-  absences to hide were never in the figure, the button to add was already
-  built. Each was plausible, none was wrong about the product — they were
-  wrong about the code, which nobody had read yet. Analyse before declaring
-  anything binding: a decision taken on an unmeasured premise costs the
-  rewrite of half a goal, and the user agreed to it in good faith.
-- **Write a census as a matrix, never as prose.** A finite measurement
-  described in sentences generalises past the cells that were driven, on every
-  rewrite — three rounds on the same paragraph produced 8, 8 and 3 findings of
-  that exact shape, and the author caught in the act was as often the hub as a
-  lane. A table of driven cells plus an explicit *what this did not drive*
-  list has no room for the generalisation: a cell either carries a measured
-  value or says it is absent. `docs/verification.md`'s keyboard census is the
-  worked example.
+- A recon reports what it saw, never what does not exist. The library is an
+  actor: dhtmlx paints bars in `.gantt_bars_area`, not in the row, and a
+  stylesheet is not the DOM.
+- Measure; don't derive. A number computed at the desk is a guess.
+- An inherited premise is not a verified one. Verify it on the path that uses
+  it, not on the line that states it; ask who else holds the reference.
+- A conditional keeps its condition. "X, or Y would happen" is verified by
+  testing Y, not by observing that X holds today.
+- Scope the code, never the claim: a doc sentence about a scoped-out path is
+  still in scope.
+- A copied citation is not a verified one. Re-locate it, cite by symbol.
+- A census is a matrix of driven cells plus an explicit "not driven" list.
+  Prose generalises past what was measured.
+- A completion notification is not a completion; the dev port is a mutex.
+- A goal's opening decisions are premises until the code has been read.
+- When a measured number and a stated preference collide, the collision goes
+  to the user with the numbers.
 
 ## How good is good enough
 
@@ -228,7 +176,9 @@ no pixel contract to anyone. **On anything visual, ~80% of the achievable
 precision is the target**; the last 20% needs a reason of its own, and "the
 threshold exists" is not one. A change that costs a new mechanism, a modifier
 class or a docs pass to move a perceptual metric by a fraction is overkill —
-fix the defect a user actually sees, then stop.
+fix the defect a user actually sees, then stop. The process follows the same
+rule: the *polish* tier in `.claude/orchestrate.md` is the 80% rule applied
+to verification itself.
 
 **A measured floor is evidence, not a goal.** The trap is to measure a
 threshold and let it become the task's objective: T22 asked for WCAG AA

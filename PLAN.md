@@ -820,41 +820,19 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
 
 ## Log
 
-- **Un brief che porta gia' la fixture e i casi dell'accept si paga**: zero
-  correzioni di corsia su tutti e sei i task di G e H, e su I1 (0 round).
-- **Il critic e' la voce piu' cara e la piu' redditizia**: 75-95k a tavolino,
-  102-242k nel browser, 128-191k la goal review. Trova cio' che l'accept non
-  chiedeva: e' la regola, non l'eccezione.
-- **Un elenco enumerato da una sezione di spec e' completo o non e' un
-  elenco.** F2b ha taciuto un filtro, F3b una tabella da cui dipendeva la
-  fixture, F8 ha ristretto «the widest string of each» alla fixture.
-- **Le misure piccole le fa l'hub**: probe vitest usa-e-getta, Explore non
-  residenti, un censimento nel browser — dove una corsia paga 40k di ingresso.
-  **Prima di briefare, misurare la premessa**: se cade, il brief non serve —
-  K14 e' morto cosi' a zero deleghe, smentendo finding e obiezione insieme.
-  Un task di sola analisi paga la delega se l'hub tiene solo le conclusioni e
-  rimisura da se' quelle portanti (T60: due Explore, 56k + 72k).
-- **La prosa e' cio' che resta indietro.** Goal H: zero difetti di codice
-  sopra il bar e **sette** frasi rese false dal diff (`docs/`, il README che
-  vendeva il preset vecchio, due commenti che contraddicevano la riga sotto).
-  Le trova il critic o la goal review, mai i test; e un grep non basta —
-  `clientSafe` e `client-safety` sono la stessa nozione, ne matcha uno solo.
-  **E una ragione falsa non e' ornamento: guida la scelta sbagliata.** K1
-  scrisse una regola inerte su un meccanismo inesistente; K3 ha dichiarato
-  impossibile scavalcare il vendor — falso, la tecnica era gia' nel file tre
-  volte — e su quella premessa si e' ritirata su una variabile, rompendo meta'
-  delle righe. Entrambe le volte il codice sembrava giusto e la ragione no.
-- **Goal K: impl 148-224k, critic 121-194k, zero round da K11** — la tabella
-  delle celle nel brief li risparmia; K13 e K14 l'hub li ha fatti senza corsia.
-- **Il critic nel browser ripaga, e la leva e' l'elenco del non-guidato**: su
-  K3 il difetto stava nella cella che la corsia aveva dichiarato non guidata;
-  su K12 l'hub ha **ordinato** al critic di guidare quell'elenco e una voce
-  ha reso un difetto; su K13 la cella scoperta era pulita. Comprare l'elenco
-  e' il giro completo anche quando rende zero: misura una copertura supposta.
-- **K4-K9 in un solo batch, hub senza corsie**: 5 task chiusi, 5 commit, 164+/88-
-  righe di src, 1 saltato (K6: premessa falsa in 4 misure, modifica annullata) e
-  32 righe di PLAN.md. **Due meccanismi scritti nell'entry non reggevano** —
-  il template della colonna `add` (il vendor la hardcoda) e `inherit` sulla
-  head cell (eredita dal container, che e' l'elemento con Inter): l'obiettivo
-  regge, il meccanismo no, e la prima stesura di K9 passava il censimento
-  identico senza accorgersene.
+Una riga per task o batch chiuso. Token in k dove misurati; `-` = non
+misurato. Le lezioni durevoli stanno in `.claude/orchestrate.md`, non qui.
+
+| chiuso | tier | hub | impl | critic | src +/- | round |
+|---|---|---|---|---|---|---|
+| G, H (6 task) | feature | - | 82-197 | 81-185 | - | 0 |
+| I1 | feature | 2 Explore 56+57 | 110 (deep) | 105 | - | 0 |
+| K1 | polish | - | 213 | - | 41 | 2 |
+| K2 (audit) | analisi | - | 312 (architect) | - | 0 | - |
+| K11, K12 | polish | - | 148-224 | 121-194 | 31, 22 | 0 |
+| K13 | polish | browser | - | browser | 26 | 0 |
+| K14 | polish | browser | - | - | 0 | - |
+| K4-K9 batch (5 task, K6 saltato) | polish | 1 sessione, senza corsie | - | - | 164+/88- | 0 |
+
+Sopra ~300k per meno di ~50 righe di `src/` e' un difetto di processo e va
+all'utente coi numeri, non nel Log come successo a zero round.
