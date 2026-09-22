@@ -470,3 +470,12 @@ touching `src/gantt` code that talks to the library.
   here and is **narrower** on the widest ones (`Cost (WWW)` 78.03 against
   81.98), so Inter is the sizing case — but that is a measurement, not a
   given.
+- **A column named `add` ignores its `template`.** The grid renderer branches on
+  the name before it looks at the column and emits a fixed
+  `<div class='gantt_add'></div>`, then delegates the click on `.gantt_add`.
+  So the `+` cannot be built like the other row buttons: its glyph is the
+  vendor's icon font, and replacing it with a lucide one means masking the
+  pseudo-element (`gantt.css`, `.gantt_add::before`) rather than writing
+  markup. The vendor also pins a `color` on that pseudo-element, so
+  `currentcolor` there reads the vendor's grey unless `color: inherit` is
+  restated.

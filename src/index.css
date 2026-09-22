@@ -150,3 +150,15 @@ body {
   background: var(--surface);
   overflow: hidden;
 }
+
+/* Every button in the app took the browser's `outline: auto` — a white ring on
+   Windows, invisible on the light chrome the toolbar and the status bar sit on.
+   Stated once, in the same shape the inline editors already use, drawn outside
+   the button since nothing here clips it. Two controls keep a ring of their
+   own and outrank this one by specificity: the row-menu item, which fills
+   instead, and the search field, which is not a button and carries the accent
+   on its border. */
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

@@ -162,12 +162,28 @@ html:root[data-gantt-theme='dark'] {
   border-right: 0;
 }
 
-/* dhtmlx styles the inline editors not at all, so they arrive with the amber
-   ring the browser gives any focused field — which in this palette reads as a
-   warning, and which every engine draws differently. Tab now walks a row of
-   them, so the ring is the only thing saying which cell the typing is going
-   into: it is stated here rather than left to the browser, and drawn inside the
-   field, since the grid clips whatever leaves its cell. */
+/* dhtmlx styles the inline editors not at all, so they arrive as UA controls —
+   Arial 13.33px, a 2px inset border, square corners — inside a 13px system-ui
+   grid. The field is the cell the row was reading a moment ago, so it is
+   dressed as one. */
+.gantt_grid_editor_placeholder input,
+.gantt_grid_editor_placeholder select {
+  font: inherit;
+  /* `inherit` lands on the layout cell's 14px, not the 13px the grid cell it
+     covers is set in, so the size is restated. */
+  font-size: 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 2px 6px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* The ring the browser gives a focused field is amber here — which in this
+   palette reads as a warning, and which every engine draws differently. Tab
+   walks a row of these, so the ring is the only thing saying which cell the
+   typing is going into: it is stated here rather than left to the browser, and
+   drawn inside the field, since the grid clips whatever leaves its cell. */
 .gantt_grid_editor_placeholder input:focus,
 .gantt_grid_editor_placeholder select:focus {
   outline: 2px solid var(--accent);
@@ -744,6 +760,38 @@ html:root[data-gantt-theme='dark'] {
    state doesn't hide behind the same fade as an untouched row. */
 .gantt-rowtoggle--off {
   opacity: 1;
+}
+
+/* The third icon of the row cluster, and the only one dhtmlx draws itself: a
+   column named `add` ignores its template (the vendor hardcodes the cell), so
+   the lucide glyph arrives as a mask over the font icon rather than as markup.
+   The asset is the same file `lucide-static` ships to the other two, so it
+   cannot drift from them. Size and fade follow .gantt-rowinfo above. */
+.gantt_add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.4;
+  color: var(--ink-faint);
+}
+
+.gantt_row:hover .gantt_add {
+  opacity: 1;
+}
+
+.gantt_add::before {
+  content: '';
+  /* The vendor pins a colour on this pseudo-element, so `currentcolor` would
+     read that instead of the cluster's ink. */
+  color: inherit;
+  width: 15px;
+  height: 15px;
+  background: currentcolor;
+  mask: url('lucide-static/icons/plus.svg') center / contain no-repeat;
+}
+
+.gantt_grid_data .gantt_row .gantt_add:hover {
+  color: var(--accent);
 }
 
 /* A group is a heading for the rows under it, so its name carries the weight. */
