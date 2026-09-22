@@ -517,6 +517,14 @@ that isn't there.
   would still clamp to a half-height capsule. Outside the family on purpose:
   the milestone diamond keeps its own restated 3px, and the today scale chip
   stays a pill — a chip, not a bar.
+- **The critical ring is rounder than the bar it marks — measured, accepted.**
+  An `outline` takes no radius of its own: its painted silhouette is
+  `border-radius + outline-offset + outline-width`. On the summary that is 6px
+  on a 16px-tall box (0.75 of a capsule) against the body's 0.60; on a leaf the
+  two nearly agree (0.60 against 0.50). The offset is not the lever — 0 moves
+  the ring to 0.71. The only lever is the body's radius, and at 2px the ring
+  reaches 0.625 while the body drops to 0.40 and reads squared: a visible cost
+  for an invisible gain.
 - **Milestone = diamond** (dhtmlx milestone type): same colour, same ring (on
   the diamond), same dimming; grid dot becomes a diamond; dialog heading flips
   to *Milestone* at effort 0.
