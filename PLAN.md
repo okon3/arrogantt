@@ -15,9 +15,11 @@ Goal C aspetta quel report prima di ricevere task veri. **Goal J** (task
 completato come misura della stima) ha le domande di prodotto chiuse ma e'
 **sospeso dall'utente**: materiale pronto per un'analisi di dettaglio piu'
 avanti, non lavoro in corso. **Goal K** (polish di UI/UX) e' aperto e in corso: K1, K2,
-K10, K3 e K11 chiusi, restano K12, K4-K9 e K13. **Le due barre ora stanno su
-`--surface-sunken`**: chi tocca un controllo che vive li' sopra ha un fondo
-diverso da quello per cui era stato dipinto.
+K10, K3, K11 e K12 chiusi, restano K4-K9, K13 e il nuovo K14. Due conseguenze
+per chi entra adesso: **le due barre stanno su `--surface-sunken`** (chi tocca
+un controllo che vive li' sopra ha un fondo diverso da quello per cui era
+stato dipinto), e **le barre del chart hanno `--radius-bar: 6px`**, non piu'
+una pillola.
 
 **Trappola di misura, costata un falso negativo**: `ChangelogDialog` rende
 `className="help"` (`ChangelogDialog.tsx:10`) — un dialogo "changelog" nel DOM
@@ -524,7 +526,7 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       incassato li'). In chiaro la cucitura la porta la hairline, non il
       riempimento: i due toni stanno a 1.036 e da soli non basterebbero.
 
-- [ ] K12 [impl] — **Le barre non sono pillole (K10, fetta I).** Raggio da
+- [x] K12 `c1d20a6` [impl] — **Le barre non sono pillole (K10, fetta I).** Raggio da
       pillola a **5-6px** (`gantt.css:243, 248`). Concordano i due
       riferimenti gantt, cioe' 2 su 2 di quelli pertinenti — non 4 su 4.
       **Gusto adottato, non difetto riparato.**
@@ -534,6 +536,13 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       stesso commit. **La milestone ha un raggio suo** (`gantt.css:3px`,
       col commento che spiega perche' va ridichiarato o il diamante diventa
       una macchia): non toccarla senza guardarla.
+      **Esito**: `--radius-bar: 6px`, e due celle che il report K10 non aveva
+      visto. Il **summary** e' alto 10px, quindi 6px si riscala a 5 — meta'
+      dell'altezza, di nuovo una capsula: prende **3px** suo, e con lui il suo
+      velo di avanzamento, o il velo recede agli angoli. Misurata anche la
+      variante scartata (6px forzato dal vivo sul summary: capsula piena).
+      Milestone e pastiglia di *oggi* restano fuori dalla famiglia.
+      **Lascia dietro K14**, l'anello di criticita' sullo stesso summary.
 
 - [x] K3 `de85636` [impl] — **Gli stati si vedono: i quattro toggle e i colori di
       riga.** F2: `.toolbar button` / `.statusbar button` (0,1,1) battono le
@@ -661,6 +670,30 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       **La scelta e' dell'utente, non della corsia**: o la selezione prende
       un tono suo, o la ricerca lo cambia, o si accetta la collisione perche'
       ricerca e selezione raramente convivono. Non decidere da solo.
+
+- [ ] K14 [impl] — **L'anello di criticita' su un summary resterebbe una
+      capsula.** `c1d20a6` ha tolto la pillola al corpo del summary (3px) ma
+      non all'`outline` che lo marca come critico
+      (`gantt.css:352-355`, `outline: 2px solid var(--critical)` con
+      `outline-offset: 1px`): su un summary i cui figli stanno sulla catena
+      critica, il corpo legge come rettangolo arrotondato e l'anello intorno
+      come capsula. Sulle foglie l'anello segue il 6px e non ha difetti.
+      **Premessa misurata dal critic di K12, NON riverificata dall'hub, e
+      l'hub ha un motivo per dubitarne**: il raggio di un `outline` e' quello
+      del bordo piu' l'offset, cioe' 3+1=4px su una scatola alta 10+2 — che
+      non e' una capsula. O la misura coglie un elemento diverso da quello che
+      il finding nomina, o il raggio dell'outline qui non viene da
+      `border-radius`. **Il primo passo e' stabilire quale**, non applicare un
+      valore: il critic ha provato `outline-offset: 0` e riporta che non
+      cambia nulla, che e' esattamente il sintomo di una causa diversa da
+      quella supposta.
+      Se il difetto c'e', e' dentro l'obiettivo della fetta I (le barre non
+      sono capsule) e va chiuso; se non c'e', il task muore e la nota resta
+      come falso positivo registrato.
+      **Fixture**: due foglie critiche in sequenza sotto lo stesso summary,
+      col toggle *Critical chain* acceso — `plan.ts` marca critico anche il
+      summary. Guidare anche `--critical-old` (tratteggiato) e una foglia,
+      come controllo.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
@@ -834,8 +867,6 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   correzioni di corsia su tutti e sei i task di G e H (impl 82-197k, critic
   81-185k), e su I1 (deep 110k, critic 105k, 0 round; due Explore di
   ricognizione 56k+57k prima del brief).
-- Un `[self]` guidato nel browser costa **una generazione dell'hub** (T65b,
-  zero deleghe, oltre 176k da solo).
 - **Il critic e' la voce piu' cara e la piu' redditizia**: 75-95k a tavolino,
   102-242k nel browser, 128-191k la goal review; un audit Fable nel browser
   312k (K2, dieci matrici a due schemi). Trova cio' che l'accept non
@@ -858,9 +889,11 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   impossibile scavalcare il vendor — falso, la tecnica era gia' nel file tre
   volte — e su quella premessa si e' ritirata su una variabile, rompendo meta'
   delle righe. Entrambe le volte il codice sembrava giusto e la ragione no.
-- **K3: impl 173k + 224k (1 round), critic sonnet 156k. K11: impl 148k,
-  critic sonnet 140k, 0 round.** Il critic nel browser ripaga: su K3 il
-  difetto stava nella cella che la corsia aveva dichiarato **non** guidata;
-  su K11 ha trovato da solo la dichiarazione inerte. Chiedere quell'elenco
-  rende. **Un brief che porta la tabella delle celle gia' decise azzera i
-  round**: le 13 celle di K11 sono tornate tutte come prescritte.
+- **K3: impl 173k + 224k (1 round), critic 156k. K11: impl 148k, critic 140k.
+  K12: impl 156k, critic 194k. Zero round su K11 e K12** — un brief che porta
+  la tabella delle celle gia' decise se li risparmia tutti.
+- **Il critic nel browser ripaga, e la leva e' l'elenco del non-guidato**: su
+  K3 il difetto stava nella cella che la corsia aveva dichiarato non guidata;
+  su K12 l'hub ha **ordinato** al critic di guidare le due voci di
+  quell'elenco (anelli critici, barra stretta) e una delle due ha reso un
+  difetto. Farsi dare l'elenco e poi comprarlo e' il giro completo.
