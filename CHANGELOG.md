@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Hide the grid and choose its columns from the status bar, beside Collapse
+  and Expand: everything that changes the view now lives on one bar, and the
+  toolbar is left to the file, the exports and the plan itself.
 - A disabled task now reads as disabled everywhere: its whole row in the grid
   goes quiet and its name is struck through, not just the name greyed.
 - Leave the disabled tasks out of an exported or printed picture, so what you

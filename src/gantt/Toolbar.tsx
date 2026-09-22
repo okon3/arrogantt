@@ -10,11 +10,7 @@ import {
   Plus,
   Users,
   CalendarDays,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Columns3,
 } from 'lucide-react';
-import type { MouseEvent } from 'react';
 import type { Resource } from '../scheduler';
 import { avatarColorOf, initialsOf } from './colors';
 
@@ -27,10 +23,6 @@ export interface ToolbarProps {
   /** What the next undo would take back, or null when there is nothing to undo. */
   undoing: string | null;
   redoing: string | null;
-  /** Whether the task grid is collapsed to zero width, to render the toggle pressed. */
-  gridCollapsed: boolean;
-  /** Whether the column picker popover is open, to render its button pressed. */
-  columnPickerOpen: boolean;
   onNew(): void;
   onOpen(): void;
   onSave(): void;
@@ -43,8 +35,6 @@ export interface ToolbarProps {
   onEditResources(): void;
   onEditCalendar(): void;
   onHighlight(resourceId: string | null): void;
-  onToggleGridCollapsed(): void;
-  onOpenColumnPicker(event: MouseEvent<HTMLButtonElement>): void;
 }
 
 export function Toolbar({
@@ -54,8 +44,6 @@ export function Toolbar({
   pinned,
   undoing,
   redoing,
-  gridCollapsed,
-  columnPickerOpen,
   onNew,
   onOpen,
   onSave,
@@ -68,8 +56,6 @@ export function Toolbar({
   onEditResources,
   onEditCalendar,
   onHighlight,
-  onToggleGridCollapsed,
-  onOpenColumnPicker,
 }: ToolbarProps) {
   return (
     <div className="toolbar">
@@ -185,28 +171,6 @@ export function Toolbar({
           })}
         </div>
       )}
-      <div className="toolbar__group">
-        <button
-          type="button"
-          className={`toolbar__icon${gridCollapsed ? ' toolbar__icon--on' : ''}`}
-          onClick={onToggleGridCollapsed}
-          aria-pressed={gridCollapsed}
-          aria-label={gridCollapsed ? 'Show the task grid' : 'Hide the task grid'}
-          title={gridCollapsed ? 'Show the task grid' : 'Hide the task grid, for the chart alone'}
-        >
-          {gridCollapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
-        </button>
-        <button
-          type="button"
-          className={`toolbar__icon${columnPickerOpen ? ' toolbar__icon--on' : ''}`}
-          onClick={onOpenColumnPicker}
-          aria-pressed={columnPickerOpen}
-          aria-label="Choose grid columns"
-          title="Choose which columns the grid shows"
-        >
-          <Columns3 size={15} />
-        </button>
-      </div>
       <span className="toolbar__file">
         {filename}
         {dirty && <span className="toolbar__dirty" title="Unsaved changes" />}

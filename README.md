@@ -54,7 +54,7 @@ total sits in the status bar, in the currency you labelled the money with.
 never a `0`, and a figure missing part of its price says `≥` with the uncosted
 effort declared beside it.
 
-**A grid you choose** — a toolbar button picks which columns are on screen, and
+**A grid you choose** — a status-bar button picks which columns are on screen, and
 the choice follows you from project to project. Rate and Cost ship switched
 off, so a plan that never mentions money looks exactly as it always did.
 

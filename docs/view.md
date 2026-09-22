@@ -212,7 +212,7 @@ that isn't there.
   in the typings and unprobed in this Community build; a column absent from
   `config.columns` cannot be tabbed into, edited or measured, which is what
   keeps the picker's per-column checks simple.
-- **The picker**: a toolbar icon (`Columns3`) opens a non-modal `<dialog>`
+- **The picker**: a status-bar icon (`Columns3`) opens a non-modal `<dialog>`
   popover around `ColumnChecklist` — one checkbox per registry entry in
   registry order, a rule this file's *Export dialog* section shares and
   neither owns — `text` never offered. Closes on Escape and on a
@@ -222,8 +222,10 @@ that isn't there.
   (an explicit `.focus()` in the positioning effect, `RowMenu`'s precedent —
   `setAutofocus` only fires through `showModal()`, which this dialog never
   calls), Tab/Shift+Tab cycle the checkboxes only, wrapping at both ends, and
-  Escape alone returns focus to the toolbar button (an outside click leaves
-  focus where the click put it).
+  Escape alone returns focus to the status-bar button (an outside click leaves
+  focus where the click put it). Opened from the status bar the popover has no
+  room below it, so it flips **above the button** — above its top edge, not its
+  bottom, or the last row of the list would cover the button that opened it.
 - **Persisted, but as a preference, not plan data**: `localStorage` key
   `arrogantt.columns.v1`, a JSON array of the *shown* names in registry order —
   written only by a picker change, read once at first render
@@ -290,7 +292,7 @@ that isn't there.
   `.gantt-found.gantt-row--group-start` does for the left-edge accent — in
   **both** panes. In the timeline the pairing is not a refinement: every
   top-level row is a group start, so without it the match's edge never paints.
-- **Collapse to zero width, toolbar toggle** (`toggleGridCollapsed`), so the
+- **Collapse to zero width, status-bar toggle** (`toggleGridCollapsed`), so the
   chart alone can fill the window. Remembers the width to restore by measuring
   `$grid.offsetWidth` at the moment of collapsing, not `config.grid_width` —
   not because the config value is known stale (dhtmlx's own internal listener
@@ -757,8 +759,8 @@ that isn't there.
   absent, same as the rate field beside it trimming by accident
   (`Number('  600 ')`); a padded `" EUR "` saves as `EUR`. `validateCurrency`
   (`cost.ts`) still runs on the trimmed, non-null label — one rule, one place.
-  The dialog's hint gained a sentence pointing at the toolbar's column picker
-  by its accessible name (`Choose grid columns`), since that button is
+  The dialog's hint gained a sentence pointing at the status bar's column
+  picker by its accessible name (`Choose grid columns`), since that button is
   icon-only and has no visible label to point at otherwise.
 - **`.dialog__subhead` is the one grammar for a section subhead inside a
   dialog body** (12px/600/uppercase/`letter-spacing: 0.06em`/`--ink-faint`) —

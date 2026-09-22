@@ -6,6 +6,7 @@ import type { Project } from './project';
 /** Where the button that opened the popover sits, so it can anchor under it. */
 export interface ColumnPickerAnchor {
   left: number;
+  top: number;
   bottom: number;
 }
 
@@ -54,9 +55,12 @@ export function ColumnPicker({
     // window whose toolbar sits near it.
     const { width, height } = node.getBoundingClientRect();
     const left = Math.min(anchor.left, window.innerWidth - width - 8);
+    // Above the button, not above its bottom edge: opened from the status bar
+    // the flip would otherwise land the last row of the list on the button
+    // that opened it.
     const top =
       anchor.bottom + height > window.innerHeight
-        ? Math.max(8, anchor.bottom - height - 4)
+        ? Math.max(8, anchor.top - height - 4)
         : anchor.bottom + 4;
     node.style.left = `${Math.max(8, left)}px`;
     node.style.top = `${top}px`;

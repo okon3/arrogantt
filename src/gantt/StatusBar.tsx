@@ -1,4 +1,4 @@
-import type { Ref } from 'react';
+import type { MouseEvent, Ref } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -6,8 +6,11 @@ import {
   ChevronsUpDown,
   ChartNoAxesColumn,
   CalendarCheck,
+  Columns3,
   Maximize2,
   Minus,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
 } from 'lucide-react';
 import { CRITICAL_CHAIN_LIMIT, type ChainState } from './project';
@@ -27,6 +30,10 @@ export interface StatusBarProps {
   chainState: ChainState;
   /** Whether the per-person load lanes are open under the chart. */
   loadShown: boolean;
+  /** Whether the task grid is collapsed to zero width, to render the toggle pressed. */
+  gridCollapsed: boolean;
+  /** Whether the column picker popover is open, to render its button pressed. */
+  columnPickerOpen: boolean;
   /** What is being looked for, owned by App because the matches are. */
   search: string;
   matchCount: number;
@@ -39,6 +46,8 @@ export interface StatusBarProps {
   onStepMatch(step: number): void;
   onCollapseAll(): void;
   onExpandAll(): void;
+  onToggleGridCollapsed(): void;
+  onOpenColumnPicker(event: MouseEvent<HTMLButtonElement>): void;
   onCriticalChain(): void;
   onToggleLoad(): void;
   onToday(): void;
@@ -86,6 +95,8 @@ export function StatusBar({
   scale,
   chainState,
   loadShown,
+  gridCollapsed,
+  columnPickerOpen,
   search,
   matchCount,
   matchPosition,
@@ -94,6 +105,8 @@ export function StatusBar({
   onStepMatch,
   onCollapseAll,
   onExpandAll,
+  onToggleGridCollapsed,
+  onOpenColumnPicker,
   onCriticalChain,
   onToggleLoad,
   onToday,
@@ -172,6 +185,10 @@ export function StatusBar({
           </>
         )}
       </div>
+      {/* What the grid shows and whether it shows at all, beside what its rows
+          are folded to: every one of them is a setting of the view, and none
+          of them touches the plan. They used to sit at the far end of the
+          toolbar, among the file and model actions. */}
       <div className="statusbar__rows">
         <button type="button" onClick={onCollapseAll} title="Collapse all tasks">
           <ChevronsDownUp size={14} />
@@ -180,6 +197,26 @@ export function StatusBar({
         <button type="button" onClick={onExpandAll} title="Expand all tasks">
           <ChevronsUpDown size={14} />
           Expand
+        </button>
+        <button
+          type="button"
+          className={'statusbar__view' + (gridCollapsed ? ' statusbar__view--on' : '')}
+          onClick={onToggleGridCollapsed}
+          aria-pressed={gridCollapsed}
+          aria-label={gridCollapsed ? 'Show the task grid' : 'Hide the task grid'}
+          title={gridCollapsed ? 'Show the task grid' : 'Hide the task grid, for the chart alone'}
+        >
+          {gridCollapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
+        </button>
+        <button
+          type="button"
+          className={'statusbar__view' + (columnPickerOpen ? ' statusbar__view--on' : '')}
+          onClick={onOpenColumnPicker}
+          aria-pressed={columnPickerOpen}
+          aria-label="Choose grid columns"
+          title="Choose which columns the grid shows"
+        >
+          <Columns3 size={14} />
         </button>
       </div>
       {/* Never disabled: a control that is dead reads as broken, and past the
@@ -209,11 +246,6 @@ export function StatusBar({
         <ChartNoAxesColumn size={14} />
         Resource load
       </button>
-      {/* An agent reads the page text and the accessibility tree before it reads
-          anything else, so the scripting surface has to be named there. */}
-      <span className="statusbar__agent">
-        For agents: <code>window.arrogantt.help()</code>
-      </span>
       <span className="statusbar__spacer" />
       <button type="button" onClick={onToday}>
         <CalendarCheck size={14} />
@@ -236,6 +268,13 @@ export function StatusBar({
         <Maximize2 size={14} />
         Fit
       </button>
+      {/* An agent reads the page text and the accessibility tree before it reads
+          anything else, so the scripting surface has to be named there — but it
+          is a pointer for a script, not a control, so it sits past the last of
+          them rather than between two. */}
+      <span className="statusbar__agent">
+        For agents: <code>window.arrogantt.help()</code>
+      </span>
     </footer>
   );
 }

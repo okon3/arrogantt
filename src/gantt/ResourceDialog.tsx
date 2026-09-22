@@ -134,7 +134,7 @@ export function ResourceDialog({
         Availability is the share of a working day the person gives to the project: 50% means half
         a day. In <strong>periods</strong> you can override it for specific ranges — 0% is an
         absence. Available effort is still split evenly across concurrent tasks. Rates and costs
-        are grid columns, hidden until you turn them on with the toolbar's{' '}
+        are grid columns, hidden until you turn them on with the status bar's{' '}
         <strong>Choose grid columns</strong> button.
       </p>
 

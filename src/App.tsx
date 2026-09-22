@@ -960,8 +960,6 @@ export default function App() {
           pinned={pinnedResource}
           undoing={undoLabel(history)}
           redoing={redoLabel(history)}
-          gridCollapsed={gridCollapsed}
-          columnPickerOpen={columnPicker !== null}
           onNew={() => void handleNew()}
           onOpen={() => void handleOpen()}
           onSave={handleSave}
@@ -974,8 +972,6 @@ export default function App() {
           onEditResources={openResources}
           onEditCalendar={openCalendar}
           onHighlight={setPinnedResource}
-          onToggleGridCollapsed={toggleGridCollapsed}
-          onOpenColumnPicker={openColumnPicker}
         />
         {/* Outside the toolbar so it keeps its place when the avatars wrap. */}
         <button
@@ -1032,6 +1028,8 @@ export default function App() {
         scale={scale}
         chainState={chainState}
         loadShown={showLoad}
+        gridCollapsed={gridCollapsed}
+        columnPickerOpen={columnPicker !== null}
         search={search}
         matchCount={matches.length}
         matchPosition={focusedMatch ? matches.indexOf(focusedMatch) + 1 : 0}
@@ -1040,6 +1038,8 @@ export default function App() {
         onStepMatch={stepMatch}
         onCollapseAll={() => chart.current?.collapseAll()}
         onExpandAll={() => chart.current?.expandAll()}
+        onToggleGridCollapsed={toggleGridCollapsed}
+        onOpenColumnPicker={openColumnPicker}
         onCriticalChain={handleCriticalChain}
         onToggleLoad={() => setShowLoad((shown) => !shown)}
         onToday={() => chart.current?.scrollToToday()}
