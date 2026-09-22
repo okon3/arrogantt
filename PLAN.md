@@ -644,7 +644,7 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       misurata su una colonna e scritta per due, sopravvissuta a tre task e
       due review: `Rate` e `Cost` hanno budget di larghezza **separati**.
 
-- [ ] K13 [impl] — **La selezione e la ricerca si contendono lo stesso tono.**
+- [>] K13 [self] — **La selezione e la ricerca si contendono lo stesso tono.**
       Q3 ha dato alla riga selezionata `--accent-soft`, ma quel token era
       **gia'** il colore della riga trovata dalla ricerca
       (`gantt.css`, `.gantt-host .gantt_row.gantt-found`). Dopo K3 le due
@@ -680,9 +680,27 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       valutazione che scrive nel campo finisce sovrascritto — va chiamato in
       una valutazione successiva, o si misura il caso «trovata e selezionata»
       credendo di misurare l'altro.
-      **La scelta e' dell'utente, non della corsia**: o la selezione prende
-      un tono suo, o la ricerca lo cambia, o si accetta la collisione perche'
-      ricerca e selezione raramente convivono. Non decidere da solo.
+      **Scelta dell'utente il 2026-09-22, fra quattro uscite**: non si tocca
+      nessuno dei due token e **il marchio della ricerca si estende alla
+      timeline** — l'inset `2px` accento che la griglia aveva gia'. Estende
+      una scelta presa, non riapre Q3, non sceglie un colore nuovo.
+      Implementato in `000d860`. **L'abbinamento con `gantt-row--group-start`
+      non era un raffinamento ma la condizione perche' il bordo dipinga**:
+      ogni riga di primo livello e' group-start, `box-shadow` non si fonde
+      fra regole e i due selettori pareggiano di specificita'. Il commento
+      che diceva «the timeline needs no pairing» e' stato riscritto nel CSS
+      e in `docs/view.md`.
+      **Celle guidate, nei due schemi, griglia e timeline** (dopo la
+      modifica le due pareti coincidono cella per cella):
+      trovata+group-start = bordo accento + hairline; trovata figlia (non
+      group-start) = bordo accento; trovata+selezionata = fondo 16% + bordo;
+      trovata+selezionata+group-start = fondo 16% + bordo + hairline;
+      found-below+group-start = bordo al 60% + hairline; solo selezionata =
+      tono condiviso senza bordo; solo group-start = hairline; riga liscia =
+      niente.
+      **Non guidato**: `found-below` che non sia group-start (un summary
+      annidato che contiene una corrispondenza), e le esportazioni PNG/print.
+      **Critic non ancora arbitrato** — vedi Log.
 
 - [x] K14 `d8a1d20` [self] — **Falso allarme, chiuso senza codice.** L'anello
       di criticita' del summary non e' una capsula: misurato nell'app (fixture
