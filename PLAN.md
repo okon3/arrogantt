@@ -393,19 +393,36 @@ l'utente deve ancora comprare. Si riapre con quelle, e si recensisce alla fine.
       sulle celle numeriche; e `text-decoration` si propaga agli inline, quindi
       il `.gantt-dot` dentro la cella del nome va escluso a mano.
 
-**Stato al 2026-09-22: il goal aspetta l'utente, non un agente.** K2 ha
-consegnato `.claude/specs/K2-report.md` (dieci matrici, dodici finding, sette
-fette, cinque domande di prodotto). L'utente lo sta leggendo prima di comprare
-— **nessun task nuovo finche' non risponde**, e nessuna goal review.
-La raccomandazione del report: fette A (sei regole morte o in collisione) e B
-(`--ink-faint` in chiaro, oggi 2.0-2.6:1) subito; C e D dopo, ognuna con una
-domanda; E e' l'unica che risponde all'aggettivo «organizzati» ed e' un
-riassetto, non una riparazione; F e G sono il 20%.
-**Q5 va guardata per prima**, ed e' un'aggiunta dell'hub alla raccomandazione:
-il censimento non ha potuto giudicare il blur a scaling Windows 125/150%. Se
-il «crisp» dell'utente nasce da li', non e' F7 ma mezzo pixel, e una lettura
-nativa di una hairline a `deviceScaleFactor` 1.25 lo decide prima di spendere
-su B.
+**Le cinque domande di K2, risposte dall'utente il 2026-09-22. Chiuse, non
+riproporre.** Il report resta la fonte delle misure; queste sono le scelte.
+- **Q5 - scaling: 100%.** Il censimento e' gia' stato fatto alla condizione
+  reale dell'utente, e §1.8 registra pixel interi su righe, barre, celle e
+  hairline a dpr 1. **Il probe a 1.25 non si fa**, e «crisp» resta ancorato a
+  F7 e a nient'altro. Se l'utente cambia postazione la domanda torna aperta,
+  non prima.
+- **Q1a - il nome del file va nel gruppo del marchio**, accanto alla
+  versione: `ARROGANTT v1.5 · project.gantt ●`. Con **ellissi come
+  assicurazione**, o il wrap si sposta li' su un nome lungo.
+- **Q1b - la fetta E si compra intera.** La regola «sopra si agisce sul
+  piano, sotto sulla vista» viene imposta: la memoria muscolare si riazzera,
+  l'utente l'ha scelto sapendolo.
+- **Q2 - `--ink-faint` in chiaro va a `#7d8590`** (~3.9:1), lo stesso
+  scalino che il dark ha gia' preso (3.76:1). Dark **non si tocca**. Non e'
+  AA e non deve esserlo.
+- **Q3 - riga selezionata: `--accent-soft` in entrambi gli schemi.** La
+  variabile esiste gia' e significa gia' «elemento scelto» (menu di riga,
+  selettore di colonne): si estende una nozione, non se ne inventa una.
+- **Q4 - le facce impilate di un summary portano solo il colore**, senza
+  iniziali; un summary con una persona sola tiene le sue. Il `title` nomina
+  gia' tutti. **Non** si tocca la geometria che `docs/view.md` descrive, e
+  **non** si abbassa `AVATAR_STACK_LIMIT` (`gridColumns.ts:32`, oggi 4): il
+  colpo d'occhio su quante persone resta.
+
+**Comprate: A, B, C, D, E, F. Non comprata: G** (raggiungibilita' da tastiera
+della status bar, 26 stop di Tab su un piano da 13 task) - resta nel report,
+e `CLAUDE.md` dice che questo strumento non deve un audit di accessibilita' a
+nessuno. Le fette sono sotto come K3-K9, ognuna col suo finding.
+**Tutte serial**: condividono il browser e la porta 5173, che e' un mutex.
 
 - [x] K2 [architect] — **Audit del desktop attuale: censimento + proposta.**
       Scope: guardare l'app a viewport desktop e censire cosa la fa sembrare
@@ -427,6 +444,129 @@ su B.
       Materiale gia' misurato, da non ri-supporre: l'asimmetria dei
       disattivati sopra (che K1 avra' gia' chiuso) e i due fatti annotati
       sotto Goal C (dialogo People, bottone «Fit» che trabocca a 768px).
+
+- [>] K10 [architect] — **Cosa hanno i riferimenti che noi non abbiamo.**
+      L'utente ha messo quattro screenshot in `inspiration_ui/` di
+      applicazioni che per lui sono **crisp**. **Non erano ignorati**: l'hub
+      ha letto male un `git check-ignore`, li ha scritti nel piano come tali
+      e `729308b` li ha committati in un repo pubblico. Corretto togliendoli
+      dall'indice e riscrivendo il commit (non era stato pushato) piu' una
+      riga vera in `.gitignore`. **Un check-ignore si legge dal codice di
+      uscita, non dall'output.** Sono **tutti e quattro in schema chiaro**, ed e' il
+      dettaglio che conta: tre dei dodici finding di K2 (F3, F4, F7) sono
+      difetti del tema chiaro, quindi i riferimenti cadono esattamente dove
+      l'app era gia' stata misurata piu' debole.
+      Output: `.claude/specs/K10-report.md` — matrice di celle misurate
+      (valore di ogni riferimento accanto al nostro, preso dal censimento K2
+      dove esiste) piu' lista di cio' che non e' stato guidato; e soprattutto
+      **cosa significa «crisp» per questo utente**, come poche proprieta'
+      concrete tracciabili a celle della matrice. Nessuna implementazione.
+      **Ordine**: gira **prima di K5 e K8**. K5 fissa un colore e K8 sposta
+      dei controlli; se i riferimenti dicono qualcosa su inchiostro o densita'
+      e' meglio saperlo prima di spendere quelle due fette. K3, K4, K6, K7
+      sono difetti misurati e non dipendono da questo — si possono fare in
+      parallelo di calendario, mai di porta.
+      **Guardia**: uno screenshot non contiene hover, focus, motion, tastiera,
+      empty state, ne' il comportamento su una stringa lunga. E un riferimento
+      non e' un requisito: una differenza e' una riga di matrice, diventa una
+      raccomandazione solo se si sa dire cosa ci guadagna l'utente. Se un
+      riferimento contraddice una scelta gia' fatta (il candidato e' Q2), la
+      collisione torna all'utente **coi numeri**, non si ri-raccomanda in
+      silenzio.
+
+- [ ] K3 [impl] — **Gli stati si vedono: i quattro toggle e i colori di
+      riga.** F2: `.toolbar button` / `.statusbar button` (0,1,1) battono le
+      regole `--on` (0,1,0), quindi il background dello stato acceso **non
+      dipinge mai** su collasso griglia, colonne, catena critica e carico
+      risorse — sopravvive solo `color !important`. Qualificare i tre
+      selettori `--on` con la classe del contenitore, **come fa gia'**
+      `.toolbar .toolbar__icon` (`App.css:208`): il precedente e' in casa.
+      (`App.css:215-218, 1093-1096, 1109-1112`.)
+      F3: in chiaro `.toolbar button:hover` batte
+      `.toolbar .toolbar__person { color: #fff }` e annerisce le iniziali
+      dell'avatar (`App.css:184, 246`). Invisibile in dark solo perche' li'
+      `--ink` e' quasi bianco — **e' lo stesso difetto in entrambi gli
+      schemi**, non un difetto del tema chiaro.
+      F4: in chiaro le righe dispari fanno hover nel `#e0e0e0` del vendor e
+      le pari nel `#f5f6f9` della palette, perche' il re-pointing dei
+      `--dhx-gantt-base-colors-*` vive **solo nel blocco dark**
+      (`gantt.css:50-58`). Piu' la selezione, per Q3: `--accent-soft` in
+      entrambi gli schemi — oggi in dark selezione e hover sono lo stesso
+      colore e una riga selezionata e' indistinguibile.
+      Verifica **nei due schemi**, matrice di celle guidate: e' la lezione di
+      `CLAUDE.md` sul costo osservato in un solo schema.
+
+- [ ] K4 [impl] — **I controlli sembrano dell'app, non del browser.**
+      F6: l'editor inline e' un input di default — Arial 13.33px, bordo
+      grigio 2px, raggio 0 — dentro una griglia Segoe UI 13px, sotto l'anello
+      violetto dell'app; `gantt.css:143` veste solo `:focus`. Dare
+      `font: inherit`, bordo `var(--line-strong)`, raggio e padding a
+      `.gantt_grid_editor_placeholder input, select`.
+      F8: il `+` di riga e' il glifo del font-icone di dhtmlx (13px, .6)
+      accanto a due lucide da 15px a .4 — tre pesi in un cluster di tre
+      icone. Template della colonna `add` con lucide `plus` 15px alla stessa
+      opacita' a riposo. **`CLAUDE.md`: le icone sono lucide, ovunque** —
+      `lucide-static` nei template HTML di dhtmlx, mai un SVG a mano.
+      F10: nessun bottone ha una regola `:focus-visible`, quindi l'anello e'
+      l'`outline: auto` bianco del browser. Una regola sola,
+      `2px solid var(--accent)` con `outline-offset: 2px` — **l'anello che
+      l'editor inline usa gia'**: si estende, non si inventa.
+
+- [ ] K5 [impl] — **L'inchiostro tenue in chiaro (F7).** `--ink-faint` da
+      `#99a0ab` a **`#7d8590`** (Q2), **solo nel blocco chiaro** di
+      `index.css:34`. Tocca intestazioni di griglia, etichette delle
+      settimane, End/Duration, label sulle barre e la nota agenti — oggi
+      2.0-2.6:1 su bianco, contro 3.76:1 dello stesso ruolo in dark.
+      Misurare i **quattro ruoli di §1.5 del report prima e dopo**, e
+      riportare entrambe le colonne: il valore e' stato scelto su un numero,
+      quindi la prova che il difetto sparisce e' la misura, non l'accordo col
+      numero. Se la misura e l'occhio non concordano, vince l'occhio e si
+      torna dall'utente coi numeri.
+
+- [ ] K6 [impl] — **L'header non sfonda a 1366px (F1).** Il nome del file va
+      nel gruppo del marchio accanto alla versione (Q1a), con **ellissi**: la
+      pillola e' oggi la prima vittima del wrap e la seconda riga dell'header
+      contiene solo lei, portando l'altezza da 48 a 80px
+      (`App.css:144, 273`). Verificare a **1440, 1366, 1280 e 1180** che
+      l'header resti su una riga, e con un nome file lungo che tronchi invece
+      di mandare a capo la riga del marchio — il difetto si sposta li' se
+      l'ellissi manca.
+
+- [ ] K7 [impl] — **Le facce dei summary smettono di stampare lettere
+      sovrapposte (F5).** Le facce impilate portano **solo il colore**, senza
+      iniziali (Q4); un summary con **una** persona sola tiene le sue, perche'
+      li' non c'e' pila — `resourceStack` esce prima
+      (`gridColumns.ts:137-138`). Oggi 8px di sovrapposizione su facce da
+      22px con iniziali da 10px danno «ARME SC» (`gantt.css:602`).
+      **Non** toccare la geometria descritta in `docs/view.md` e **non**
+      abbassare `AVATAR_STACK_LIMIT` (`gridColumns.ts:32`): entrambe scartate
+      dall'utente. Il `title` nomina gia' tutti, «+n» compreso, e il commento
+      a `gridColumns.ts:128-134` spiega perche' resta un `title` nativo e non
+      il tooltip ricco — non riaprirlo.
+
+- [ ] K8 [impl] — **L'organizzazione: sopra il piano, sotto la vista (F12,
+      fetta E).** Collasso griglia e colonne si spostano accanto a
+      Collapse/Expand nella status bar; la nota `For agents:` esce dal
+      percorso dei controlli (estremita' destra, oppure dentro il dialogo
+      `?`). La toolbar resta: file · export · modifica · modello · highlight.
+      **Aggiornare `docs/view.md` nello stesso commit** — e' una decisione di
+      UI e quel file e' la sua casa. Verificare che le scorciatoie da tastiera
+      e gli `aria`/`title` seguano i controlli spostati, non restino dove
+      erano. La toolbar **era gia' raggruppata ed etichettata**
+      (`Toolbar.tsx:94, 161`): questo e' un riassetto comprato dall'utente,
+      non la riparazione di un difetto — non allargarlo.
+
+- [ ] K9 [impl] — **Una famiglia sola sullo schermo (F9).** Le intestazioni
+      di griglia e timeline sono Inter perche' la `font-family` del vendor non
+      e' sovrascritta; il resto dell'app e' Segoe UI. `font-family: inherit`
+      su `.gantt_grid_head_cell, .gantt_scale_cell`.
+      **La trappola, ed e' il motivo per cui questo task e' ultimo**: le
+      soglie di ellissi delle testate `Rate (WWW)` e `Cost` in `docs/view.md`
+      sono state misurate **in Inter 600 11px**. Cambiando famiglia cambiano
+      le larghezze: **rimisurare entrambe** e aggiornare i due numeri nello
+      stesso commit. `CLAUDE.md` porta il precedente esatto — una soglia
+      misurata su una colonna e scritta per due, sopravvissuta a tre task e
+      due review: `Rate` e `Cost` hanno budget di larghezza **separati**.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
