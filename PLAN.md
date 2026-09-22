@@ -365,11 +365,15 @@ appena cambiato — la sua vecchia riga «l'audit gira sull'UI finale» e' da
 considerarsi **decaduta**, ed e' stata corretta sul posto.
 
 **Guardia, scritta prima di partire** (e' la stessa di Goal C, che l'ha
-pagata): questo goal **non deve avere un'analisi come unico task**. Il
-censimento vive sotto `## Maintenance` e consegna un report; alla sua chiusura
-nessuna goal review deve scattare, perche' scatterebbe su un diff inesistente
-— il buco in cui e' caduta la review di Goal B. Il goal riceve fette **solo
-dopo** che l'utente ha comprato dal censimento.
+pagata): questo goal **non deve avere un'analisi come unico task**. Il goal
+riceve fette **solo dopo** che l'utente ha comprato dal censimento.
+**Corretta sul posto il 2026-09-22**: la riga diceva che il censimento vive
+sotto `## Maintenance`, ed era copiata da Goal C, dove sta T16. Qui K2 sta
+**sotto Goal K**, quindi la sua chiusura lascia il goal senza task aperti e la
+condizione meccanica della goal review scatta — su un goal consegnato per un
+terzo. **La review non deve girare ora**: K1 e' l'unico diff, e cio' che il
+goal enuncia (professionale, menu organizzati, crisp) vive nelle fette che
+l'utente deve ancora comprare. Si riapre con quelle, e si recensisce alla fine.
 
 - [x] K1 `6758cdb` [impl] — **I task disattivati si distinguono davvero.** Oggi la
       barra ha due trattamenti (`opacity: 0.45` + `saturate(0.3)`,
@@ -389,7 +393,21 @@ dopo** che l'utente ha comprato dal censimento.
       sulle celle numeriche; e `text-decoration` si propaga agli inline, quindi
       il `.gantt-dot` dentro la cella del nome va escluso a mano.
 
-- [>] K2 [architect] — **Audit del desktop attuale: censimento + proposta.**
+**Stato al 2026-09-22: il goal aspetta l'utente, non un agente.** K2 ha
+consegnato `.claude/specs/K2-report.md` (dieci matrici, dodici finding, sette
+fette, cinque domande di prodotto). L'utente lo sta leggendo prima di comprare
+— **nessun task nuovo finche' non risponde**, e nessuna goal review.
+La raccomandazione del report: fette A (sei regole morte o in collisione) e B
+(`--ink-faint` in chiaro, oggi 2.0-2.6:1) subito; C e D dopo, ognuna con una
+domanda; E e' l'unica che risponde all'aggettivo «organizzati» ed e' un
+riassetto, non una riparazione; F e G sono il 20%.
+**Q5 va guardata per prima**, ed e' un'aggiunta dell'hub alla raccomandazione:
+il censimento non ha potuto giudicare il blur a scaling Windows 125/150%. Se
+il «crisp» dell'utente nasce da li', non e' F7 ma mezzo pixel, e una lettura
+nativa di una hairline a `deviceScaleFactor` 1.25 lo decide prima di spendere
+su B.
+
+- [x] K2 [architect] — **Audit del desktop attuale: censimento + proposta.**
       Scope: guardare l'app a viewport desktop e censire cosa la fa sembrare
       un prototipo. Quattro aree, volute dall'utente: **organizzazione dei
       menu** (i comandi vivono su quattro superfici — `Toolbar.tsx` 216
@@ -556,6 +574,11 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   dopo la leva 3 — il tooling si ripaga sul goal dopo, non su questo. Da
   riproporre solo con un goal nuovo. **Prima di scopare la leva 1**: provare
   che la browser mode di vitest parta su questa macchina Windows, mai fatto.
+- `.claude/specs/K2-report.md` — censimento desktop. Il task e' `[x]`, ma e'
+  il materiale da cui l'utente compra le fette di Goal K: **lo sweep degli
+  orfani non lo tocca** finche' questa riga esiste. Porta anche i quattro casi
+  «misurati e a posto» (niente transizioni, `:active` distinto, cromatura dei
+  dialoghi coerente, pixel interi a dpr 1) che nessuno deve ri-derivare.
 - `.claude/specs/T26-report.md` — UX dei link, tutto misurato nell'app. O1, O2
   e il banner sono chiusi con Goal D, ma e' il materiale di **O4** (editor
   delle dipendenze), l'unica sua opzione ancora in giacenza: senza il report
@@ -575,7 +598,8 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
 - Un `[self]` guidato nel browser costa **una generazione dell'hub** (T65b,
   zero deleghe, oltre 176k da solo).
 - **Il critic e' la voce piu' cara e la piu' redditizia**: 75-95k a tavolino,
-  102-242k nel browser, 128-191k la goal review. Trova cio' che l'accept non
+  102-242k nel browser, 128-191k la goal review; un audit Fable nel browser
+  312k (K2, dieci matrici a due schemi). Trova cio' che l'accept non
   chiedeva: e' la regola, non l'eccezione.
 - Dire a una goal review che un terzo `fix-first` non e' gratis le fa rendere
   COHERENCE invece di ACTIONS (terza di F, 128k: due difetti veri sotto il bar).
