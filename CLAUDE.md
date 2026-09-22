@@ -18,19 +18,12 @@ npx vitest run -t "compounds a reduced period"      # one case
 
 No vitest config file: it runs off `vite.config.ts` with defaults.
 
-On Windows `npm` resolves to `npm.ps1`, which **`Start-Process` hands to the
-shell's file association** — it opens the script in an editor instead of
-running it, and the dev server never starts. Run npm through the PowerShell
-tool directly (background it with the tool's own flag), or `Start-Process
-npm.cmd` if a detached process is really needed.
-
-After a structural CSS change, an `npm install`, or renaming a module-level
-constant, **restart the dev server** — Vite/HMR has served stale stylesheets
-and stale modules here repeatedly (a layout bug that isn't one; a
-`ReferenceError` on a name that exists; a fix that "doesn't work"). Reload
-before trusting any negative verdict from the browser. `npm run dev:fresh` is
-that restart in one command; the port is pinned, so a server that refuses to
-start means an old one is still up — not that the port moved.
+On Windows run npm through the PowerShell tool (backgrounded with the tool's
+own flag), never via `Start-Process npm`: `npm.ps1` opens in an editor instead
+of running. After a structural CSS change, an `npm install` or a renamed
+module-level constant, `npm run dev:fresh` before trusting any negative verdict
+from the browser — HMR serves stale stylesheets and modules here. The port is
+pinned, so a server that refuses to start means an old one is still up.
 
 ## Architecture
 
@@ -77,8 +70,8 @@ A working-minute on a day boundary = two instants (17:00 / next 08:00) —
 `fromWorkingMinutes(minutes, edge)`. **Compare working minutes, not dates, for
 adjacency**, and **never convert a schedule's minutes a second time**: read the
 `Date` it carries (the builder already chose a boundary side; a second conversion
-silently picks its own). `pinMilestones` and `rollUp` exist for this; it has cost
-two debugging sessions. Details: [docs/scheduling.md](docs/scheduling.md).
+silently picks its own). `pinMilestones` and `rollUp` exist for this. Details:
+[docs/scheduling.md](docs/scheduling.md).
 
 ## dhtmlx-gantt
 
@@ -138,36 +131,25 @@ file this app could not reopen — a refused save writes nothing and stays dirty
 would take undo and the draft with it. Details:
 [docs/file-format.md](docs/file-format.md).
 
-## Confirmations and verification
+## Verification
 
 `window.confirm` returns `false` instantly in the embedded browser — use
-`ConfirmDialog`. Verify UI in the browser, not by asserting it works; read
-[docs/verification.md](docs/verification.md) first (print, Escape, hover,
+`ConfirmDialog`. UI is verified in the running app, never asserted from code;
+read [docs/verification.md](docs/verification.md) first (print, Escape, hover,
 React-controlled fields, `ResizeObserver` — what synthetic input can and cannot
-prove).
+prove). What a verification may claim:
 
-## What a verification may claim
-
-The anecdotes behind these rules are in git (`8ff3a72` and earlier). The
-rules stand on their own.
-
-- A recon reports what it saw, never what does not exist. The library is an
-  actor: dhtmlx paints bars in `.gantt_bars_area`, not in the row, and a
-  stylesheet is not the DOM.
+- It reports what it saw, never what does not exist. The library is an actor:
+  dhtmlx paints bars in `.gantt_bars_area`, not in the row, and a stylesheet is
+  not the DOM.
 - Measure; don't derive. A number computed at the desk is a guess.
-- An inherited premise is not a verified one. Verify it on the path that uses
-  it, not on the line that states it; ask who else holds the reference.
+- An inherited premise is not a verified one: verify it on the path that uses
+  it, not on the line that states it.
 - A conditional keeps its condition. "X, or Y would happen" is verified by
   testing Y, not by observing that X holds today.
-- Scope the code, never the claim: a doc sentence about a scoped-out path is
-  still in scope.
 - A copied citation is not a verified one. Re-locate it, cite by symbol.
-- A census is a matrix of driven cells plus an explicit "not driven" list.
-  Prose generalises past what was measured.
-- A completion notification is not a completion; the dev port is a mutex.
-- A goal's opening decisions are premises until the code has been read.
-- When a measured number and a stated preference collide, the collision goes
-  to the user with the numbers.
+- A census is a matrix of driven cells plus an explicit "not driven" list;
+  scoping a code path out of a review does not scope out the sentence about it.
 
 ## How good is good enough
 
@@ -176,18 +158,12 @@ no pixel contract to anyone. **On anything visual, ~80% of the achievable
 precision is the target**; the last 20% needs a reason of its own, and "the
 threshold exists" is not one. A change that costs a new mechanism, a modifier
 class or a docs pass to move a perceptual metric by a fraction is overkill —
-fix the defect a user actually sees, then stop. The process follows the same
-rule: the *polish* tier in `.claude/orchestrate.md` is the 80% rule applied
-to verification itself.
+fix the defect a user actually sees, then stop. The *polish* tier in
+`.claude/orchestrate.md` is the same rule applied to verification itself.
 
-**A measured floor is evidence, not a goal.** The trap is to measure a
-threshold and let it become the task's objective: T22 asked for WCAG AA
-(4.5:1) on 24px avatar initials and the real defect was that a 55% veil washed
-them out. Lifting the veil to 85% took one character and recovered most of the
-legibility; chasing the standard would have meant adaptive ink on two
-surfaces, or reopening a settled palette, for a fraction of a ratio nobody
-reads at that size. When a number and the visible defect disagree, fix the
-defect.
+**A measured floor is evidence, not a goal.** When a number and the visible
+defect disagree, fix the defect; when a number and a stated preference collide,
+the collision goes to the user with the numbers.
 
 **This does not extend to correctness.** The *Invariants* above, the
 day-boundary rule, effort conservation and the file format's strict gate are
@@ -195,42 +171,38 @@ absolute: they are semantics, not polish, and a wrong schedule is not 80% of a
 right one. The 80% rule is about how far to push perceptual precision, never
 about how much of a rule to honour.
 
-## Documentation map — keep it current
+## Documentation map — keep it current, keep it small
 
 | File | Contents |
 | --- | --- |
 | `README.md` | Shop window: features, screenshots, quick start. Sells, doesn't document. |
 | `docs/scheduling.md` | Engine semantics: simulation, float, availability, day boundaries. |
-| `docs/view.md` | UI decisions and their reasons. |
+| `docs/view.md` | UI decisions that constrain later work: the constraint and the fact, not how it was found — that is the commit message. |
 | `docs/file-format.md` | `.gantt` v2, strict parsing, CSV/PNG/print. |
-| `docs/dhtmlx.md` | Library traps — add every new one. |
+| `docs/dhtmlx.md` | Library traps a code comment at the site cannot hold. |
 | `docs/verification.md` | Embedded-browser quirks, verifying UI from an agent. |
 | `src/gantt/agentApi.help.md` | Agent surface. **Is** `arrogantt.help()` and `/llms.txt`. |
 | `CHANGELOG.md` | Releases a user cares about. Newest first; the header badge shows the top entry. |
 
 **A commit that changes behaviour described in `docs/` updates the affected file
-in the same commit.** Docs are written tersely — keep them that way: every fact,
-no prose. README changes only when the feature set changes; retake
-`docs/assets/` screenshots when the UI drifts enough to misrepresent them.
+in the same commit.** Docs are facts, not prose: a bullet is at most three lines
+and records what was decided, not how it was found. README changes only when the
+feature set changes; retake `docs/assets/` screenshots when the UI drifts enough
+to misrepresent them.
 
-**Changelog and versioning.** A significant feature adds a bullet to
-`CHANGELOG.md` in the same commit — features a user would notice, never fixes
-or plumbing. **A bullet says what the reader can now do, not how it was
-built**: no internals (repo, `localStorage`, library names), and **no markdown
-markup** — the dialog renders a note as plain text, so `*emphasis*` and
-backticks reach the user as punctuation. A bullet may wrap onto indented
-lines. During development, bullets accumulate under a `## Unreleased`
-heading at the **top** of the file: the parser skips headings without a `v`
-prefix, so the badge keeps showing the last released version, no popup fires,
-and the bullets stay out of the dialog until released. It must stay first —
-lower down, its bullets would attach to the release above it. **Releasing** =
-renaming that heading to `## v<next-minor> — <today>`, nothing else: the badge
-bumps and the changelog reopens once for everyone. Either side proposes the
-release at a natural wrap-up (a goal completes, a build is about to be
-distributed); the user always confirms before the rename. Major bump only for
-a breaking change to the `.gantt` file format. The log is
-never exhaustive: recent releases only, oldest entries pruned — git history is
-the full record.
+**A lesson becomes a rule only if it recurred and code cannot prevent it.** A
+test, an assertion, a script or a lint rule comes first; a line here or in
+`docs/` is the fallback. This file is read at every session start: delete
+before adding.
+
+**Changelog.** A significant feature adds a bullet to `CHANGELOG.md` in the same
+commit — what a user can now do, never fixes, plumbing, internals or markdown
+markup (the dialog renders plain text). Bullets accumulate under `## Unreleased`,
+which stays first in the file; releasing = renaming that heading to
+`## v<next-minor> — <today>`, proposed at a natural wrap-up and always confirmed
+by the user before the rename. Major bump only for a breaking change to the
+`.gantt` file format. Recent releases only: git is the full record. Parser
+rules: `src/gantt/changelog.test.ts`.
 
 ## Conventions
 
