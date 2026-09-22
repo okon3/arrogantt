@@ -15,7 +15,7 @@ Goal C aspetta quel report prima di ricevere task veri. **Goal J** (task
 completato come misura della stima) ha le domande di prodotto chiuse ma e'
 **sospeso dall'utente**: materiale pronto per un'analisi di dettaglio piu'
 avanti, non lavoro in corso. **Goal K** (polish di UI/UX) e' aperto e in corso: K1, K2,
-K10, K3, K11 e K12 chiusi, restano K4-K9, K13 e il nuovo K14. Due conseguenze
+K10, K3, K11, K12 e K14 chiusi, restano K4-K9 e K13. Due conseguenze
 per chi entra adesso: **le due barre stanno su `--surface-sunken`** (chi tocca
 un controllo che vive li' sopra ha un fondo diverso da quello per cui era
 stato dipinto), e **le barre del chart hanno `--radius-bar: 6px`**, non piu'
@@ -542,7 +542,7 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       velo di avanzamento, o il velo recede agli angoli. Misurata anche la
       variante scartata (6px forzato dal vivo sul summary: capsula piena).
       Milestone e pastiglia di *oggi* restano fuori dalla famiglia.
-      **Lascia dietro K14**, l'anello di criticita' sullo stesso summary.
+      **Ha lasciato dietro K14**, chiuso come falso allarme: l'anello regge.
 
 - [x] K3 `de85636` [impl] — **Gli stati si vedono: i quattro toggle e i colori di
       riga.** F2: `.toolbar button` / `.statusbar button` (0,1,1) battono le
@@ -671,29 +671,19 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       un tono suo, o la ricerca lo cambia, o si accetta la collisione perche'
       ricerca e selezione raramente convivono. Non decidere da solo.
 
-- [ ] K14 [impl] — **L'anello di criticita' su un summary resterebbe una
-      capsula.** `c1d20a6` ha tolto la pillola al corpo del summary (3px) ma
-      non all'`outline` che lo marca come critico
-      (`gantt.css:352-355`, `outline: 2px solid var(--critical)` con
-      `outline-offset: 1px`): su un summary i cui figli stanno sulla catena
-      critica, il corpo legge come rettangolo arrotondato e l'anello intorno
-      come capsula. Sulle foglie l'anello segue il 6px e non ha difetti.
-      **Premessa misurata dal critic di K12, NON riverificata dall'hub, e
-      l'hub ha un motivo per dubitarne**: il raggio di un `outline` e' quello
-      del bordo piu' l'offset, cioe' 3+1=4px su una scatola alta 10+2 — che
-      non e' una capsula. O la misura coglie un elemento diverso da quello che
-      il finding nomina, o il raggio dell'outline qui non viene da
-      `border-radius`. **Il primo passo e' stabilire quale**, non applicare un
-      valore: il critic ha provato `outline-offset: 0` e riporta che non
-      cambia nulla, che e' esattamente il sintomo di una causa diversa da
-      quella supposta.
-      Se il difetto c'e', e' dentro l'obiettivo della fetta I (le barre non
-      sono capsule) e va chiuso; se non c'e', il task muore e la nota resta
-      come falso positivo registrato.
-      **Fixture**: due foglie critiche in sequenza sotto lo stesso summary,
-      col toggle *Critical chain* acceso — `plan.ts` marca critico anche il
-      summary. Guidare anche `--critical-old` (tratteggiato) e una foglia,
-      come controllo.
+- [x] K14 `d8a1d20` [self] — **Falso allarme, chiuso senza codice.** L'anello
+      di criticita' del summary non e' una capsula: misurato nell'app (fixture
+      via `arrogantt`, dpr 8, profilo dell'angolo letto sui pixel) sta a
+      **0.75** di capsula contro lo 0.60 del corpo. **Entrambe le letture
+      erano sbagliate**: il critic di K12 ha esagerato la parola, e il 4px che
+      l'hub gli opponeva era il bordo **interno** dell'outline — la silhouette
+      dipinta vale `border-radius + offset + spessore`. L'offset **non e' la
+      leva** (a 0 fa 0.71), il che spiega il sintomo che il critic dava per
+      misterioso invece di lasciarlo aperto. Variante scartata misurata dal
+      vivo: corpo a 2px porta l'anello a 0.625 e il corpo a 0.40, squadrato —
+      costo visibile per guadagno invisibile. Accettato dall'utente il
+      2026-09-22 sotto la regola dell'80%. Geometria e decisione ora in
+      `docs/view.md` (*Bar decorations*): qui non resta niente da rifare.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
@@ -876,7 +866,8 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   fixture, F8 ha ristretto «the widest string of each» alla fixture.
 - **Le misure piccole le fa l'hub**: probe vitest usa-e-getta, Explore non
   residenti, un censimento nel browser — dove una corsia paga 40k di ingresso.
-  **Prima di briefare, misurare la premessa**: se cade, il brief non serve.
+  **Prima di briefare, misurare la premessa**: se cade, il brief non serve —
+  K14 e' morto cosi' a zero deleghe, smentendo finding e obiezione insieme.
   Un task di sola analisi paga la delega se l'hub tiene solo le conclusioni e
   rimisura da se' quelle portanti (T60: due Explore, 56k + 72k).
 - **La prosa e' cio' che resta indietro.** Goal H: zero difetti di codice
@@ -889,9 +880,8 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   impossibile scavalcare il vendor — falso, la tecnica era gia' nel file tre
   volte — e su quella premessa si e' ritirata su una variabile, rompendo meta'
   delle righe. Entrambe le volte il codice sembrava giusto e la ragione no.
-- **K3: impl 173k + 224k (1 round), critic 156k. K11: impl 148k, critic 140k.
-  K12: impl 156k, critic 194k. Zero round su K11 e K12** — un brief che porta
-  la tabella delle celle gia' decise se li risparmia tutti.
+- **Goal K finora: impl 148-224k, critic 140-194k, zero round su K11 e K12**
+  — la tabella delle celle gia' decise nel brief e' cio' che li risparmia.
 - **Il critic nel browser ripaga, e la leva e' l'elenco del non-guidato**: su
   K3 il difetto stava nella cella che la corsia aveva dichiarato non guidata;
   su K12 l'hub ha **ordinato** al critic di guidare le due voci di
