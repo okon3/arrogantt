@@ -150,7 +150,7 @@ stretto.
       caratteri salvano e il file si scrive, 2001 lasciano il dialogo aperto
       col messaggio del parser e il progetto intatto; l'undo di una modifica
       alla sola descrizione dice `edited "<nome>"`. Nove celle guidate nel
-      browser, tre check verdi. — commit {SHA}
+      browser, tre check verdi. — commit 6a38277
 - [ ] I3 [impl] — Il campo esce dall'app: colonna CSV (`planCsv.ts`) e agent
       API (`getTask`, `updateTask`, `TaskInput`), con `agentApi.help.md`
       nello stesso commit. **No** figura, **no** stampa.
