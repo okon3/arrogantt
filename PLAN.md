@@ -169,7 +169,7 @@ stretto.
       **Accept**: la sezione *Details dialog* dice che il campo non ha
       superficie sul grafico, che `save()` rifiuta invece di troncare e che
       la costante e' una sola; `## Unreleased` esiste di nuovo e porta un
-      bullet che parla all'utente, non alle interne. Tre check verdi. — commit {SHA}
+      bullet che parla all'utente, non alle interne. Tre check verdi. — commit 73b0fd4
 
 **Conseguenza da proporre, non da fare dentro questo goal**: S5b (unificare
 la mappa riga) e' in giacenza «finche' un goal non aggiunge campi di riga»
