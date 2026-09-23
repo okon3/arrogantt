@@ -186,9 +186,13 @@ about how much of a rule to honour.
 
 **A commit that changes behaviour described in `docs/` updates the affected file
 in the same commit.** Docs are facts, not prose: a bullet is at most three lines
-and records what was decided, not how it was found. README changes only when the
-feature set changes; retake `docs/assets/` screenshots when the UI drifts enough
-to misrepresent them.
+and records what was decided, not how it was found. **A number belongs in a doc
+only when it is the rule** (a file-format field, a working day's hours); a
+measured value goes stale with the next edit and then costs a re-measurement
+to keep the sentence true. Name the token or constant that holds it instead.
+The proof that something was measured is the commit message, not the doc.
+README changes only when the feature set changes; retake `docs/assets/`
+screenshots when the UI drifts enough to misrepresent them.
 
 **A lesson becomes a rule only if it recurred and code cannot prevent it.** A
 test, an assertion, a script or a lint rule comes first; a line here or in
