@@ -15,7 +15,7 @@ import {
   withResourceUpdated,
   type ResourcePatch,
 } from './resources';
-import { serializeForFile } from './serialization';
+import { DESCRIPTION_LIMIT, serializeForFile } from './serialization';
 import type { AvailabilityOverride, CalendarSpec } from '../scheduler';
 
 /**
@@ -54,9 +54,11 @@ export interface TaskInput {
    * leaves it as it was; `false` clears it, never storing it.
    */
   disabled?: boolean;
+  /** Free text, up to 2000 characters. `null` or `''` removes it. */
+  description?: string | null;
 }
 
-export interface NewTaskInput extends TaskInput {
+export interface NewTaskInput extends Omit<TaskInput, 'description'> {
   parentId?: string | null;
   /**
    * Placed straight below this row as its sibling, rather than at the end of a
@@ -180,6 +182,23 @@ function asDate(value: string | Date, field: string): Date {
 /** A copy, so a caller poking at the result cannot reach into the model. */
 function copy<T>(value: T): T {
   return structuredClone(value);
+}
+
+/**
+ * Both predicates `deserializeProject` gates a file on (`serialization.ts`):
+ * a string, counted in UTF-16 units. The type is not the compiler's job here —
+ * this surface is driven from plain JS. Without either check a script writes a
+ * value the model accepts and every Save refuses from then on, with no remedy
+ * but rewriting the field by hand.
+ */
+function validatedDescription(value: unknown): string {
+  if (typeof value !== 'string') {
+    throw new Error(`description: expected a string, got ${typeof value}`);
+  }
+  if (value.length > DESCRIPTION_LIMIT) {
+    throw new Error(`description: ${value.length} characters, the limit is ${DESCRIPTION_LIMIT}`);
+  }
+  return value;
 }
 
 export function createAgentApi(host: AgentHost): AgentApi {
@@ -306,6 +325,13 @@ export function createAgentApi(host: AgentHost): AgentApi {
       // The handle would fall back to the end of the plan, which is a placement
       // the caller did not ask for and would not notice.
       if (patch?.after) details(patch.after);
+      // onAfterTaskAdd, the only path that turns a new row into a project task,
+      // reads the dhtmlx row, and description is deliberately never written onto
+      // one (I2): accepting the field here would be the exact write-the-caller-
+      // believes-happened case updateTask's own summary check refuses below.
+      if (patch && 'description' in patch && (patch as { description?: unknown }).description !== undefined) {
+        throw new Error('addTask does not set a description: call updateTask(id, { description })');
+      }
       return chart().addTask({
         name: patch?.name,
         nominalDays: patch?.nominalDays,
@@ -343,6 +369,14 @@ export function createAgentApi(host: AgentHost): AgentApi {
         color: patch.color === undefined ? current.color : patch.color || undefined,
         progress: patch.progress ?? current.progress,
         disabled: patch.disabled ?? current.disabled,
+        // Undefined leaves it alone; null and '' both delete the stored text,
+        // the same contract TaskPatch.description carries (ganttHandle.ts).
+        description:
+          patch.description === undefined
+            ? undefined
+            : patch.description === null || patch.description === ''
+              ? ''
+              : validatedDescription(patch.description),
       });
     },
 

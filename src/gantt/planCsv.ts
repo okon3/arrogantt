@@ -41,7 +41,7 @@ const HEADERS = [
 
 /** The currency label rides the header; cells stay bare numbers (§5.4). */
 function headers(currency: string | null): string[] {
-  return [...HEADERS, currencyLabel('Cost', currency), 'Uncosted (d)'];
+  return [...HEADERS, currencyLabel('Cost', currency), 'Uncosted (d)', 'Description'];
 }
 
 /** `YYYY-MM-DDTHH:mm` as the day comes first here, purely textual. */
@@ -81,6 +81,7 @@ function row(task: PlanTask, nameOfResource: (id: string) => string): string[] {
     task.disabled ? 'yes' : '',
     task.cost === null ? '' : decimal(task.cost),
     decimal(task.uncostedDays),
+    task.description ?? '',
   ];
 }
 

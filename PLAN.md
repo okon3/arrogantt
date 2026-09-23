@@ -9,8 +9,8 @@ cliente senza colonne, task disattivati riconoscibili ovunque e fuori dalle
 figure, controlli di vista sulla status bar. `## Unreleased` non esiste
 adesso: il primo bullet di Goal I lo ricrea.
 **Goal I** (descrizione per task) e' **avviato**: domande di prodotto tutte
-chiuse, suddivisione rivista sulla ricognizione del 2026-09-21, I1 e I2
-committati. Restano I3 (CSV e agent API) e I4 (docs e changelog).
+chiuse, suddivisione rivista sulla ricognizione del 2026-09-21. Resta
+solo I4 (docs e changelog).
 `## Maintenance` porta T16 (audit mobile) e T17 (nome del task in hover);
 Goal C aspetta quel report prima di ricevere task veri. **Goal J** (task
 completato come misura della stima) ha le domande di prodotto chiuse ma e'
@@ -151,29 +151,21 @@ stretto.
       col messaggio del parser e il progetto intatto; l'undo di una modifica
       alla sola descrizione dice `edited "<nome>"`. Nove celle guidate nel
       browser, tre check verdi. — commit 6a38277
-- [ ] I3 [impl] — Il campo esce dall'app: colonna CSV (`planCsv.ts`) e agent
-      API (`getTask`, `updateTask`, `TaskInput`), con `agentApi.help.md`
-      nello stesso commit. **No** figura, **no** stampa.
-      **Gia' fatto da I1, da non rifare**: `getTask()` restituisce gia' la
-      descrizione — `TaskInfo` deriva da `TaskDetails` e lo spread `...rest`
-      la porta fuori da solo (`agentApi.ts:241-242`). Manca **solo** la
-      scrittura (`TaskInput` + `updateTask`) e la documentazione. `help.md`
-      non era dovuto in I1: la riga 46 descrive `getTask(id)` come «one task
-      in full» senza elencare i campi, quindi il diff non ha reso falsa
-      nessuna frase.
-      **Da fissare con un test in I3**: che `getTask()` **ometta la chiave**
-      su un task senza descrizione, invece di renderla `undefined`. E' la
-      correzione che I1 ha applicato dopo il critic e che nessun test morde
-      oggi — `agentApi.test.ts` non passa per `GanttChart.getTaskDetails`.
-      **Trappola nei test del CSV**: `csvOf` (`planCsv.test.ts:14`) splitta
-      le righe con `.split('
-')` ignorando il quoting — una fixture con
-      descrizione multi-riga lo rompe. `escape` (`planCsv.ts:59-62`) invece
-      il newline lo regge gia'.
+- [x] I3 [impl] — Il campo esce dall'app: colonna CSV (`planCsv.ts`) e agent
+      API (`updateTask`, `TaskInput`), con `agentApi.help.md` e la sezione CSV
+      di `docs/file-format.md` nello stesso commit. **No** figura, **no**
+      stampa, **no** colonna di griglia.
+      **Accept**: `Description` e' l'ultima colonna del CSV, vuota su un task
+      che non ne ha, quotata su un testo multi-riga; `updateTask` scrive,
+      `null` e `''` cancellano, `undefined` lascia stare; il gate copia
+      **entrambi** i predicati del parser (tipo e 2000 unita' UTF-16) perche'
+      la superficie si guida da JS puro; `addTask` rifiuta il campo e indica
+      `updateTask`; `getTask()` omette la chiave; la descrizione compare una
+      volta sola nel file salvato. Otto celle guidate nel browser, quattro
+      guardie mutate, tre check verdi. — commit {SHA}
 - [ ] I4 [self] — `docs/view.md` e il bullet di changelog.
       `docs/file-format.md` **e' gia' fatto**: il campo e i due rifiuti del
-      parsing strict sono entrati nel commit di I1, perche' e' quello che ha
-      cambiato il formato.
+      parsing strict con I1, la colonna CSV con I3.
 
 **Conseguenza da proporre, non da fare dentro questo goal**: S5b (unificare
 la mappa riga) e' in giacenza «finche' un goal non aggiunge campi di riga»
@@ -498,6 +490,7 @@ misurato. Le lezioni durevoli stanno in `.claude/orchestrate.md`, non qui.
 | K15 (ACTION 1 + 2 nit) | polish | browser | - | - | 15+/9- | 0 |
 | T17 | polish | browser | - | - | 11+/4- | 0 |
 | I2 | feature | 1 Explore 28 | 115 | 132 | 46+/2- | 0 |
+| I3 | feature | lettura diretta | 139 | 138 | 50+/4- | 1 (hub) |
 
 Sopra ~300k per meno di ~50 righe di `src/` e' un difetto di processo e va
 all'utente coi numeri, non nel Log come successo a zero round.

@@ -13,6 +13,8 @@ import type { SolvedProject } from './project';
 export interface PlanTask {
   id: string;
   name: string;
+  /** The task's own free text, absent when it has none: the model's own spelling. */
+  description?: string;
   /** The only structural truth. Null at top level. */
   parentId: string | null;
   /** Derived from `parentId` for printing an outline. Carries no information. */
@@ -99,6 +101,7 @@ export function buildPlan(solved: SolvedProject): Plan {
       tasks.push({
         id: task.id,
         name: task.name,
+        ...(task.description === undefined ? {} : { description: task.description }),
         parentId: parentId ?? null,
         depth,
         isSummary: summaryIds.has(task.id),

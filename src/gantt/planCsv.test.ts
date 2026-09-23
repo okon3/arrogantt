@@ -62,7 +62,7 @@ describe('planToCsv', () => {
   it('heads the columns and ends every line, the last one included', () => {
     const text = planToCsv(buildPlan(solve(project)), people);
     expect(text.slice(1).split('\r\n')[0]).toBe(
-      'Id;Task;Level;Summary;Person;Start;End;Effort (d);Duration (d);Contended;Predecessors;Disabled;Cost;Uncosted (d)',
+      'Id;Task;Level;Summary;Person;Start;End;Effort (d);Duration (d);Contended;Predecessors;Disabled;Cost;Uncosted (d);Description',
     );
     expect(text.endsWith('\r\n')).toBe(true);
   });
@@ -71,7 +71,7 @@ describe('planToCsv', () => {
     const priced: Project = { ...project, currency: 'EUR' };
     const text = planToCsv(buildPlan(solve(priced)), people);
     expect(text.slice(1).split('\r\n')[0]).toBe(
-      'Id;Task;Level;Summary;Person;Start;End;Effort (d);Duration (d);Contended;Predecessors;Disabled;Cost (EUR);Uncosted (d)',
+      'Id;Task;Level;Summary;Person;Start;End;Effort (d);Duration (d);Contended;Predecessors;Disabled;Cost (EUR);Uncosted (d);Description',
     );
   });
 
@@ -201,6 +201,29 @@ describe('planToCsv', () => {
   it('holds a header and nothing else for an empty plan', () => {
     const empty = planToCsv(buildPlan(solve({ ...project, tasks: [] })), people);
     expect(empty.slice(1).split('\r\n').filter((line) => line.length > 0)).toHaveLength(1);
+  });
+
+  it('carries the description in the last column, quoted across its bare newline', () => {
+    const described: Project = {
+      ...project,
+      tasks: [
+        {
+          id: '1',
+          name: 'Analisi',
+          nominalDays: 5,
+          start: new Date(2026, 8, 7, 8, 0),
+          resourceId: 'r1',
+          // A bare LF, not a CRLF: csvOf below splits rows on CRLF only, so this
+          // stays inside one field without breaking the fixture's own row count.
+          description: 'riga uno\nriga due',
+        },
+      ],
+    };
+    expect(at(described, 'Analisi')[14]).toBe('"riga uno\nriga due"');
+  });
+
+  it('exports an empty cell for a task with no description', () => {
+    expect(at(project, 'Analisi')[14]).toBe('');
   });
 });
 

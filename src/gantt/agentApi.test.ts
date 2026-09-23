@@ -106,6 +106,82 @@ describe('agent API disabled flag', () => {
   });
 });
 
+describe('agent API description', () => {
+  it('omits the key from getTask on a task with no description', () => {
+    const { api } = harness();
+    const task = api.getTask('t1');
+    expect('description' in task).toBe(false);
+  });
+
+  it('reports the description getTask carries', () => {
+    const { api } = harness(details({ description: 'nota' }));
+    const task = api.getTask('t1');
+    expect(task.description).toBe('nota');
+  });
+
+  it('writes a description through updateTask', () => {
+    const { api, handle } = harness();
+    api.updateTask('t1', { description: 'nota' });
+    expect(handle.updateTask).toHaveBeenCalledWith('t1', expect.objectContaining({ description: 'nota' }));
+  });
+
+  it('removes the description (key set, empty) when the caller passes an empty string', () => {
+    const { api, handle } = harness();
+    api.updateTask('t1', { description: '' });
+    const patch = handle.updateTask.mock.calls[0][1];
+    expect('description' in patch).toBe(true);
+    expect(patch.description).toBe('');
+  });
+
+  it('removes the description (key set, empty) when the caller passes null', () => {
+    const { api, handle } = harness();
+    api.updateTask('t1', { description: null });
+    const patch = handle.updateTask.mock.calls[0][1];
+    expect('description' in patch).toBe(true);
+    expect(patch.description).toBe('');
+  });
+
+  it('leaves the description alone when the caller omits it', () => {
+    const { api, handle } = harness();
+    api.updateTask('t1', { name: 'Rinominata' });
+    const patch = handle.updateTask.mock.calls[0][1];
+    expect(patch.description).toBeUndefined();
+  });
+
+  it('accepts exactly 2000 characters', () => {
+    const { api, handle } = harness();
+    const text = 'a'.repeat(2000);
+    api.updateTask('t1', { description: text });
+    expect(handle.updateTask).toHaveBeenCalledWith('t1', expect.objectContaining({ description: text }));
+  });
+
+  it('throws on 2001 characters without calling the handle', () => {
+    const { api, handle } = harness();
+    expect(() => api.updateTask('t1', { description: 'a'.repeat(2001) })).toThrow(/2001/);
+    expect(handle.updateTask).not.toHaveBeenCalled();
+  });
+
+  // The surface is driven from plain JS, where the compiler is not in the way:
+  // a number stored here parses back as one and makes every later Save refuse.
+  it('throws on a description that is not a string, without calling the handle', () => {
+    const { api, handle } = harness();
+    for (const value of [5, true, [], {}, 0, false]) {
+      expect(() => api.updateTask('t1', { description: value as never })).toThrow(
+        /expected a string/,
+      );
+    }
+    expect(handle.updateTask).not.toHaveBeenCalled();
+  });
+
+  it('refuses addTask when a description is passed, naming the remedy', () => {
+    const { api, handle } = harness();
+    expect(() => api.addTask({ name: 'a', description: 'b' } as never)).toThrow(
+      /addTask does not set a description.*updateTask/,
+    );
+    expect(handle.addTask).not.toHaveBeenCalled();
+  });
+});
+
 describe('agent API setCurrency', () => {
   it('forwards a valid label to the handle', () => {
     const { api, handle } = harness();

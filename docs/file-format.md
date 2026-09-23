@@ -111,8 +111,9 @@ part-time/absence; `Disabled` marks a placeholder the numeric columns would
 otherwise sum in as committed work. Dates come from the schedule's own `Date`s, never re-converted
 from working minutes (milestone lands on its diamond's instant).
 
-`Cost` and `Uncosted (d)` are appended after `Disabled`, the last two columns
-so a sheet built on the earlier order still reads. `Cost` carries the
+`Cost` and `Uncosted (d)` are appended after `Disabled`, so a sheet built on
+the earlier order still reads — every later column goes on the end for the
+same reason. `Cost` carries the
 `currency` label in its header (`Cost (EUR)`, plain `Cost` with none); the
 cell itself is a bare number, empty when nothing priced the row (no resource,
 or a person with no rate on those days). Empty is not `0`: a `0` is a row that
@@ -121,6 +122,9 @@ or a person with no rate on those days). Empty is not `0`: a `0` is a row that
 use the same decimal comma as the other columns and **no grouping** (a grouped
 figure is a text cell). A summary's `Cost` sums only its priced children, so
 beside a non-zero `Uncosted (d)` it is a lower bound.
+
+`Description` is the last column, appended after `Uncosted (d)` for the same
+reason: the task's own free text verbatim, empty when it has none.
 
 ## PNG and print
 

@@ -61,6 +61,10 @@ A `getPlan()` task:
   "cost": 4800, "uncostedDays": 0, "dailyRates": [] }
 ```
 
+- `description` — the task's own free text, up to 2000 characters. **Absent when
+  the task has none**, never an empty string or `null`: check with `'description'
+  in task`, not `=== undefined`.
+
 - `parentId` is the only structural truth; `depth` is there to print an outline.
 - `isSummary` — has children. Its effort, dates and resource roll up from the
   leaves and it is never scheduled, so those fields cannot be written on it.
@@ -183,8 +187,8 @@ which is exactly the task a planner has to move.
 
 | Call | Notes |
 | --- | --- |
-| `addTask(patch?) → id` | `{ name, nominalDays, start, resourceId, color, disabled, parentId, after }`, all optional. The start is normalised to the opening of a working day. |
-| `updateTask(id, patch)` | Any subset of `{ name, nominalDays, start, resourceId, color, progress, disabled }`. Throws on `nominalDays`, `start` or `resourceId` for a summary. |
+| `addTask(patch?) → id` | `{ name, nominalDays, start, resourceId, color, disabled, parentId, after }`, all optional. The start is normalised to the opening of a working day. **Does not take `description`** — throws, naming `updateTask`, if one is passed. |
+| `updateTask(id, patch)` | Any subset of `{ name, nominalDays, start, resourceId, color, progress, disabled, description }`. Throws on `nominalDays`, `start` or `resourceId` for a summary, and on a `description` over 2000 characters. |
 | `deleteTask(id)` | Takes the subtree with it and clears dependencies on any of it. |
 | `setParent(id, parentId \| null)` | `null` moves it to the top level. Refuses a parent from inside `id`'s own subtree. |
 | `link(from, to)` | Finish-to-start. **Refuses a cycle before mutating.** |
@@ -243,6 +247,18 @@ reports the task's own flag here, not the effective one** — a leaf under a
 disabled group reads `disabled: false` from `getTask()` while `getPlan()`
 reports it `true` for the same row, since the plan is asking what the engine
 actually sees.
+
+`description` is free text, up to 2000 characters, on `updateTask` only —
+**`addTask` refuses one rather than dropping it**: the only path that turns a
+new row into a project task reads it off the grid, which never carries a
+description, so accepting the field there would silently lose it. Set it after
+creating the row instead: `updateTask(id, { description })`. `null` and `''`
+both remove the stored text; `undefined` (the field left out) leaves it alone.
+Anything that is not a string, and any string over 2000 characters, throws
+before anything is written — the same two checks the file format gates a load
+on, so a script cannot write a value that a later Save would then refuse. `getTask()` **omits the key** on a task with no
+description, rather than reporting it as an empty string or `null`: check with
+`'description' in task`.
 
 **`getTask()`'s `cost`, `uncostedDays` and `dailyRates` are the same figures as
 `getPlan().tasks[i]`'s** — one rule prices a row, and both calls read it the
