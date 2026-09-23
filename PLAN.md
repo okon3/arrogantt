@@ -2,7 +2,7 @@
 
 ## Cosa resta sul tavolo
 
-Goal D, E, F, G e H sono **chiusi, recensiti e potati**; le loro Accept lines
+Goal D, E, F, G, H e K sono **chiusi, recensiti e potati**; le loro Accept lines
 sono cadute dopo la review, come vuole la regola. Ultima release **`v1.5`**;
 i bullet di H (figura per il cliente: nessuna colonna, nessun task
 disattivato) aspettano sotto `## Unreleased` — scelta dell'utente, il badge
@@ -14,12 +14,14 @@ Restano I2 (textarea), I3 (CSV e agent API) e I4 (docs e changelog).
 Goal C aspetta quel report prima di ricevere task veri. **Goal J** (task
 completato come misura della stima) ha le domande di prodotto chiuse ma e'
 **sospeso dall'utente**: materiale pronto per un'analisi di dettaglio piu'
-avanti, non lavoro in corso. **Goal K** (polish di UI/UX) e' aperto e in corso: K1, K2,
-K10, K3, K11, K12, K13 e K14 chiusi, restano K4-K9. Due conseguenze
-per chi entra adesso: **le due barre stanno su `--surface-sunken`** (chi tocca
-un controllo che vive li' sopra ha un fondo diverso da quello per cui era
-stato dipinto), e **le barre del chart hanno `--radius-bar: 6px`**, non piu'
-una pillola.
+avanti, non lavoro in corso. **Goal K** (polish di UI/UX) e' **chiuso, recensito e potato**; quel che
+non va riproposto sta sotto `## Decisioni chiuse`. Tre conseguenze per chi
+entra adesso: **le due barre stanno su `--surface-sunken`** (chi tocca un
+controllo che vive li' sopra ha un fondo diverso da quello per cui era stato
+dipinto), **le barre del chart hanno `--radius-bar: 6px`**, non piu' una
+pillola, e **la status bar e' una riga sola** (`white-space: nowrap`): chi le
+aggiunge un controllo lo paga in ellissi sul costo e sulla nota agent, non in
+altezza — e sotto ~980px la fila esce di larghezza.
 
 **Trappola di misura, costata un falso negativo**: `ChangelogDialog` rende
 `className="help"` (`ChangelogDialog.tsx:10`) — un dialogo "changelog" nel DOM
@@ -301,393 +303,6 @@ passata che produce il termine di paragone, l'occupazione fissa nel
 simulatore, la riscrittura dell'invariante di conservazione, e solo dopo
 proporre le fette.
 
-## Goal K — sembrare uno strumento, non un prototipo   [completato, review 1: fix-first]
-Una passata di miglioramento e polish su UI e UX: far sembrare l'app
-**professionale**, organizzare le voci dei menu invece di lasciarle sparse,
-rendere la visualizzazione piu' **crisp**, e distinguere meglio i task
-disattivati dagli altri. Aperto dall'utente il 2026-09-21.
-
-**Le tre richieste sono dell'utente, alla lettera. Nessuna e' ancora un
-difetto misurato**, ed e' la distinzione che decide come si apre questo goal:
-un goal visivo che parte da aggettivi costruisce il gusto di chi implementa,
-non la mancanza che l'utente vede.
-
-**La regola che governa tutto il goal, e che qui vale piu' che altrove.**
-`CLAUDE.md`, *How good is good enough*: su qualunque cosa visiva il bersaglio
-e' **~80% della precisione ottenibile**; l'ultimo 20% ha bisogno di una
-ragione propria, e «la soglia esiste» non lo e'. Il precedente e' T22: si
-chiese WCAG AA su iniziali da 24px e il difetto vero era un velo al 55% che
-le lavava via — alzarlo a 85% costo' un carattere e recupero' quasi tutta la
-leggibilita'. **Quando un numero e il difetto visibile non concordano, si
-corregge il difetto.**
-
-**Misurato il 2026-09-21, a tavolino, prima di aprire qualunque fetta.**
-- **Task disattivati — c'e' un'asimmetria concreta, non solo un'impressione.**
-  La *barra* ha due trattamenti: `opacity: 0.45` **piu'** `filter:
-  saturate(0.3)` (`gantt.css:346-349`, col commento che spiega perche' la sola
-  opacita' non bastava). La *riga in griglia* ne ha **uno solo, e su una sola
-  colonna**: `color: var(--ink-muted)` applicato a `.gantt-name`
-  (`gantt.css:692-694`). Effort, date, persona e le altre celle di una riga
-  disattivata si leggono **identiche a una riga attiva**. E' il candidato
-  numero uno e non richiede di inventare niente: richiede di estendere una
-  scelta gia' presa.
-- **I menu non sono «buttati a caso» ovunque: la toolbar e' gia' raggruppata
-  e etichettata.** `Toolbar.tsx` porta gruppi con `label="Export"` (riga 94) e
-  `label="Highlight"` (161), e i bottoni hanno `title` descrittivi. I comandi
-  pero' vivono su **quattro superfici distinte** — `Toolbar.tsx` (216 righe),
-  `RowMenu.tsx` (151), `StatusBar.tsx` (241) e bottoni in `App.tsx`. La
-  lamentela va **localizzata**: quale di queste quattro legge come casuale, o
-  e' la ripartizione *fra* le quattro il problema? Da guardare nell'app, non
-  da dedurre dai file.
-- **«Crisp» non ha ancora nessun difetto attaccato.** E' l'unica delle tre
-  richieste che non si puo' ancorare a tavolino: va prodotto un censimento di
-  cio' che si vede, o il goal costruisce il gusto di chi implementa.
-
-**Misurato il 2026-09-22 dall'hub, con lo scanner della skill `design-taste`**
-(`scripts/preflight.mjs`, 26 file: i 21 `.tsx` piu' i 4 `.css`). **La resa
-meccanica e' gia' pulita**: nessun `transition: all`, nessun `outline: none`
-senza `:focus-visible`, nessun `z-index >= 999`, nessuna animazione da
-`scale(0)`, non piu' di tre `font-family`. Unico rilievo, e legittimo:
-`dialog.css:31` usa `min(85vh, calc(100vh - 48px))`. Le 251 violazioni
-"hard" che riporta sono **tutte** em dash in commenti e copy — regola
-anti-AI-tell per pagine di marketing, e qui la prosa del progetto li usa per
-scelta: **non e' un difetto, non va "corretto"**.
-**Conseguenza per K2**: il ramo "difetti meccanici di CSS" del censimento e'
-gia' chiuso, e chi audita non deve riaprirlo. Cio' che fa sembrare l'app un
-prototipo, se c'e', sta nella **composizione** (gerarchia, spaziatura,
-raggruppamento dei comandi, stati e microinteractions), non nelle violazioni
-catalogabili da uno scanner.
-
-**Collisione con T16, sciolta dall'utente il 2026-09-21.** T16 e questo goal
-sono lo stesso censimento a viewport diverse. Ordine deciso: **prima** il
-difetto gia' misurato sui task disattivati, **poi** l'audit del desktop
-attuale (menu, polish, crispness, microinteractions), **poi** la passata
-mobile come task separato. Il desktop e' la superficie primaria; mobile e'
-sola visualizzazione e viene dopo.
-**Conseguenza da non perdere**: T16 auditera' un'UI che questo goal avra'
-appena cambiato — la sua vecchia riga «l'audit gira sull'UI finale» e' da
-considerarsi **decaduta**, ed e' stata corretta sul posto.
-
-**Guardia, scritta prima di partire** (e' la stessa di Goal C, che l'ha
-pagata): questo goal **non deve avere un'analisi come unico task**. Il goal
-riceve fette **solo dopo** che l'utente ha comprato dal censimento.
-**Corretta sul posto il 2026-09-22**: la riga diceva che il censimento vive
-sotto `## Maintenance`, ed era copiata da Goal C, dove sta T16. Qui K2 sta
-**sotto Goal K**, quindi la sua chiusura lascia il goal senza task aperti e la
-condizione meccanica della goal review scatta — su un goal consegnato per un
-terzo. **La review non deve girare ora**: K1 e' l'unico diff, e cio' che il
-goal enuncia (professionale, menu organizzati, crisp) vive nelle fette che
-l'utente deve ancora comprare. Si riapre con quelle, e si recensisce alla fine.
-
-- [x] K1 `6758cdb` [impl] — **I task disattivati si distinguono davvero.** Oggi la
-      barra ha due trattamenti (`opacity: 0.45` + `saturate(0.3)`,
-      `gantt.css:346-349`) e la riga in griglia **uno solo su una sola
-      colonna** (`color: var(--ink-muted)` su `.gantt-name`,
-      `gantt.css:692-694`): effort, date e persona si leggono come su una
-      riga attiva. Estendere una scelta gia' presa, non inventarne una.
-      Verifica **nel browser**, con `getComputedStyle` su celle di righe
-      attive e disattivate a confronto — non a occhio e non dal foglio di
-      stile. Vale la regola dell'80%: si corregge la mancanza che si vede.
-      Rischio dichiarato: K2 potrebbe rimettere mano a questa scelta dentro
-      un sistema piu' ampio; l'utente ha scelto di farlo prima sapendolo.
-      **Aggiunto dall'utente il 2026-09-22, dopo aver visto il primo giro**:
-      il nome di un task disattivato porta anche uno **strikethrough**, e
-      **tiene** l'inchiostro smorzato — variante scelta esplicitamente fra le
-      tre offerte, il segnale piu' forte possibile. Solo su `.gantt-name`, mai
-      sulle celle numeriche; e `text-decoration` si propaga agli inline, quindi
-      il `.gantt-dot` dentro la cella del nome va escluso a mano.
-
-**Le cinque domande di K2, risposte dall'utente il 2026-09-22. Chiuse, non
-riproporre.** Il report resta la fonte delle misure; queste sono le scelte.
-- **Q5 - scaling: 100%.** Il censimento e' gia' stato fatto alla condizione
-  reale dell'utente, e §1.8 registra pixel interi su righe, barre, celle e
-  hairline a dpr 1. **Il probe a 1.25 non si fa**, e «crisp» resta ancorato a
-  F7 e a nient'altro. Se l'utente cambia postazione la domanda torna aperta,
-  non prima.
-- **Q1a - il nome del file va nel gruppo del marchio**, accanto alla
-  versione: `ARROGANTT v1.5 · project.gantt ●`. Con **ellissi come
-  assicurazione**, o il wrap si sposta li' su un nome lungo.
-- **Q1b - la fetta E si compra intera.** La regola «sopra si agisce sul
-  piano, sotto sulla vista» viene imposta: la memoria muscolare si riazzera,
-  l'utente l'ha scelto sapendolo.
-- **Q2 - `--ink-faint` in chiaro va a `#7d8590`** (~3.9:1), lo stesso
-  scalino che il dark ha gia' preso (3.76:1). Dark **non si tocca**. Non e'
-  AA e non deve esserlo.
-- **Q3 - riga selezionata: `--accent-soft` in entrambi gli schemi.** La
-  variabile esiste gia' e significa gia' «elemento scelto» (menu di riga,
-  selettore di colonne): si estende una nozione, non se ne inventa una.
-- **Q4 - le facce impilate di un summary portano solo il colore**, senza
-  iniziali; un summary con una persona sola tiene le sue. Il `title` nomina
-  gia' tutti. **Non** si tocca la geometria che `docs/view.md` descrive, e
-  **non** si abbassa `AVATAR_STACK_LIMIT` (`gridColumns.ts:32`, oggi 4): il
-  colpo d'occhio su quante persone resta.
-
-**Comprate: A, B, C, D, E, F. Non comprata: G** (raggiungibilita' da tastiera
-della status bar, 26 stop di Tab su un piano da 13 task) - resta nel report,
-e `CLAUDE.md` dice che questo strumento non deve un audit di accessibilita' a
-nessuno. Le fette sono sotto come K3-K9, ognuna col suo finding.
-**Tutte serial**: condividono il browser e la porta 5173, che e' un mutex.
-
-**K10 ha consegnato** `.claude/specs/K10-report.md` (2026-09-22). Cio' che
-cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
-- **I quattro riferimenti sono due sistemi, non quattro.** gantt02, kanban01
-  e project01 sono lo stesso prodotto (ClickUp 4.0: stesso rail, `Search
-  ⌘K`, violetto `#6747f2`); gantt_01 e' costruito su default Tailwind.
-  **Un «4 su 4 concordano» in quel report vale 2 su 2**: ripesare qualunque
-  conclusione tratta dal conteggio.
-- **«Crisp» e' per cinque settimi roba che l'app ha gia'**: inchiostro
-  primario 15.5:1 contro i loro 14.7-20, scalino verso il secondario 3.2×
-  contro ≥2.7×, hairline 1.16:1 contro 1.10-1.24, controlli quieti, righe
-  36px con testo 13. **Mancano due proprieta'**, comprate come K11 e K12.
-- **Non e' crisp**, per misura e nonostante l'apparenza: cambio di font,
-  header in sentence case, barre piu' sottili (i due riferimenti gantt si
-  contraddicono, 0.53 contro 0.65), barre sature, hairline piu' scure.
-  **Nessun linguaggio visivo nuovo, nessun sistema di componenti.**
-- **Q2 regge, e la collisione e' stata guardata.** gantt_01 mette i ruoli di
-  F7 a 2.37-2.42:1 — piu' *chiari* del nostro difetto a 2.63. ClickUp ha come
-  pavimento `#838383` = 3.79:1, dove cade `#7d8590`. Tre immagini concordano
-  con Q2, una no; l'utente ha visto i numeri e Q2 resta.
-- **Correzione a K2 §5, da usare al posto del suo numero**: `#7d8590` e'
-  **3.73:1**, non ~3.9; `#8a919d` e' 3.17, non ~3.2. Lo scalino del dark
-  (3.76) regge comunque, ed era l'argomento vero di Q2.
-
-
-- [x] K2 [architect] — **Audit del desktop attuale: censimento + proposta.**
-      Scope: guardare l'app a viewport desktop e censire cosa la fa sembrare
-      un prototipo. Quattro aree, volute dall'utente: **organizzazione dei
-      menu** (i comandi vivono su quattro superfici — `Toolbar.tsx` 216
-      righe, `RowMenu.tsx` 151, `StatusBar.tsx` 241, piu' bottoni in
-      `App.tsx`; la toolbar **e' gia' raggruppata ed etichettata**, quindi la
-      lamentela va localizzata, non assunta), **polish e crispness**
-      (l'unica delle richieste senza nessun difetto ancora attaccato: va
-      prodotto il censimento, o il goal costruisce il gusto di chi
-      implementa), **microinteractions**, e la coerenza generale.
-      Output: report in `.claude/specs/K2-report.md` con opzioni e
-      raccomandazione — **nessuna implementazione**; le fette si scopano
-      dopo, col confronto utente.
-      Il censimento si consegna come **matrice di celle guidate** piu' una
-      lista esplicita di cio' che non e' stato guidato — mai in prosa (la
-      regola sta in `CLAUDE.md`, ed e' costata tre round sullo stesso
-      paragrafo).
-      Materiale gia' misurato, da non ri-supporre: l'asimmetria dei
-      disattivati sopra (che K1 avra' gia' chiuso) e i due fatti annotati
-      sotto Goal C (dialogo People, bottone «Fit» che trabocca a 768px).
-
-- [x] K10 `n/a` [architect] — **Cosa hanno i riferimenti che noi non abbiamo.**
-      L'utente ha messo quattro screenshot in `inspiration_ui/` di
-      applicazioni che per lui sono **crisp**. **Non erano ignorati**: l'hub
-      ha letto male un `git check-ignore`, li ha scritti nel piano come tali
-      e `729308b` li ha committati in un repo pubblico. Corretto togliendoli
-      dall'indice e riscrivendo il commit (non era stato pushato) piu' una
-      riga vera in `.gitignore`. **Un check-ignore si legge dal codice di
-      uscita, non dall'output.** Sono **tutti e quattro in schema chiaro**, ed e' il
-      dettaglio che conta: tre dei dodici finding di K2 (F3, F4, F7) sono
-      difetti del tema chiaro, quindi i riferimenti cadono esattamente dove
-      l'app era gia' stata misurata piu' debole.
-      Output: `.claude/specs/K10-report.md` — matrice di celle misurate
-      (valore di ogni riferimento accanto al nostro, preso dal censimento K2
-      dove esiste) piu' lista di cio' che non e' stato guidato; e soprattutto
-      **cosa significa «crisp» per questo utente**, come poche proprieta'
-      concrete tracciabili a celle della matrice. Nessuna implementazione.
-      **Ordine**: gira **prima di K5 e K8**. K5 fissa un colore e K8 sposta
-      dei controlli; se i riferimenti dicono qualcosa su inchiostro o densita'
-      e' meglio saperlo prima di spendere quelle due fette. K3, K4, K6, K7
-      sono difetti misurati e non dipendono da questo — si possono fare in
-      parallelo di calendario, mai di porta.
-      **Guardia**: uno screenshot non contiene hover, focus, motion, tastiera,
-      empty state, ne' il comportamento su una stringa lunga. E un riferimento
-      non e' un requisito: una differenza e' una riga di matrice, diventa una
-      raccomandazione solo se si sa dire cosa ci guadagna l'utente. Se un
-      riferimento contraddice una scelta gia' fatta (il candidato e' Q2), la
-      collisione torna all'utente **coi numeri**, non si ri-raccomanda in
-      silenzio.
-
-- [x] K11 `10169db` [impl] — **Superfici a due toni (K10, fetta H).** Header e status
-      bar passano a `--surface-sunken`, il contenuto resta `--surface`
-      (`App.css:19, 952`). E' **l'unica proprieta' che tutti e quattro i
-      riferimenti condividono e che l'app non ha**: oggi header, toolbar,
-      status bar, griglia, scala e timeline sono la stessa superficie.
-      **Gusto adottato, non difetto riparato** — l'utente l'ha comprata
-      sapendolo.
-      **Vincolo di sequenza, misurato: gira dopo K3.** `--surface-hover` sta
-      a **1.043:1 contro `--surface-sunken`**: spostata la barra sul fondo
-      incassato, l'hover dei suoi controlli sparisce quasi. Rimisurare
-      l'hover sulla barra incassata e, se non regge, usare `--line` come
-      hover **li' soltanto** — non ritoccare `--surface-hover`, che serve
-      anche altrove.
-      **Non guidato da K10 e da guidare qui**: le conseguenze in **dark** di
-      questo cambio (il report ha letto solo i token, non l'app).
-      **Esito, 26 celle guidate nell'app a schemi freddi**: l'hover non regge
-      su `--surface-hover` e prende `--line` (1.120), il pressed sale a
-      `--line-strong` o pareggia con l'hover, le pastiglie senza bordo si
-      invertono su `--surface`, il vuoto dell'anello dell'avatar segue la
-      barra. Nessuna coppia esce piu' debole di come e' entrata e **il dark
-      guadagna piu' del chiaro** (`--line` si allontana di piu' dal tono
-      incassato li'). In chiaro la cucitura la porta la hairline, non il
-      riempimento: i due toni stanno a 1.036 e da soli non basterebbero.
-
-- [x] K12 `c1d20a6` [impl] — **Le barre non sono pillole (K10, fetta I).** Raggio da
-      pillola a **5-6px** (`gantt.css:243, 248`). Concordano i due
-      riferimenti gantt, cioe' 2 su 2 di quelli pertinenti — non 4 su 4.
-      **Gusto adottato, non difetto riparato.**
-      Da controllare nello stesso passaggio, o il raggio litiga con cio' che
-      gli sta sotto e sopra: la traccia della barra (`gantt.css:299-305`) e
-      la sezione *Bar decorations* di `docs/view.md`, che va aggiornata nello
-      stesso commit. **La milestone ha un raggio suo** (`gantt.css:3px`,
-      col commento che spiega perche' va ridichiarato o il diamante diventa
-      una macchia): non toccarla senza guardarla.
-      **Esito**: `--radius-bar: 6px`, e due celle che il report K10 non aveva
-      visto. Il **summary** e' alto 10px, quindi 6px si riscala a 5 — meta'
-      dell'altezza, di nuovo una capsula: prende **3px** suo, e con lui il suo
-      velo di avanzamento, o il velo recede agli angoli. Misurata anche la
-      variante scartata (6px forzato dal vivo sul summary: capsula piena).
-      Milestone e pastiglia di *oggi* restano fuori dalla famiglia.
-      **Ha lasciato dietro K14**, chiuso come falso allarme: l'anello regge.
-
-- [x] K3 `de85636` [impl] — **Gli stati si vedono: i quattro toggle e i colori di
-      riga.** F2: `.toolbar button` / `.statusbar button` (0,1,1) battono le
-      regole `--on` (0,1,0), quindi il background dello stato acceso **non
-      dipinge mai** su collasso griglia, colonne, catena critica e carico
-      risorse — sopravvive solo `color !important`. Qualificare i tre
-      selettori `--on` con la classe del contenitore, **come fa gia'**
-      `.toolbar .toolbar__icon` (`App.css:208`): il precedente e' in casa.
-      (`App.css:215-218, 1093-1096, 1109-1112`.)
-      F3: in chiaro `.toolbar button:hover` batte
-      `.toolbar .toolbar__person { color: #fff }` e annerisce le iniziali
-      dell'avatar (`App.css:184, 246`). Invisibile in dark solo perche' li'
-      `--ink` e' quasi bianco — **e' lo stesso difetto in entrambi gli
-      schemi**, non un difetto del tema chiaro.
-      F4: in chiaro le righe dispari fanno hover nel `#e0e0e0` del vendor e
-      le pari nel `#f5f6f9` della palette, perche' il re-pointing dei
-      `--dhx-gantt-base-colors-*` vive **solo nel blocco dark**
-      (`gantt.css:50-58`). Piu' la selezione, per Q3: `--accent-soft` in
-      entrambi gli schemi — oggi in dark selezione e hover sono lo stesso
-      colore e una riga selezionata e' indistinguibile.
-      Verifica **nei due schemi**, matrice di celle guidate: e' la lezione di
-      `CLAUDE.md` sul costo osservato in un solo schema.
-
-- [x] K4 `9a3658c` — I controlli sembrano dell'app, non del browser.
-- [x] K5 `808c630` — L'inchiostro tenue in chiaro.
-- [x] K6 `n/a` — **Saltato: premessa falsa, misurata.** Spostare la pillola nel
-      gruppo del marchio non toglie il wrap, lo sposta: la pillola costa 110px
-      ovunque stia, e a 1366 con cinque persone l'header restava 81px con
-      l'ultimo gruppo di bottoni sulla seconda riga (prima: 80px con la sola
-      pillola). Modifica annullata. **K8 ha poi risolto l'obiettivo da solo**:
-      a HEAD l'header e' 48px a 1440 e 1366, 80px a 1280 e 1180 — sotto 1280
-      la pillola torna la prima vittima, e li' K6 avrebbe ancora senso.
-- [x] K7 `6c98d75` — Le facce dei summary portano il colore, non le iniziali.
-- [x] K8 `36a8bb6` — L'organizzazione: sopra il piano, sotto la vista.
-- [x] K9 `5f25e3e` — Una famiglia sola sullo schermo.
-- [x] K13 `000d860` [self] — **La selezione e la ricerca si contendono lo stesso tono.**
-      Q3 ha dato alla riga selezionata `--accent-soft`, ma quel token era
-      **gia'** il colore della riga trovata dalla ricerca
-      (`gantt.css`, `.gantt-host .gantt_row.gantt-found`). Dopo K3 le due
-      cose si dipingono uguali. In **griglia** restano distinte per un caso:
-      la riga trovata porta anche `box-shadow: inset 2px 0 0 var(--accent)`.
-      In **timeline** quel bordo non c'e'; cosa resta e' misurato sotto.
-      Il caso «trovata **e** selezionata» ha una regola sua (color-mix 16%) e
-      continua a funzionare: il difetto e' fra una riga trovata e una riga
-      selezionata **diverse**, con una ricerca attiva.
-      **Non e' un errore di K3**: la corsia ha implementato Q3 alla lettera.
-      E' Q3 che e' stata decisa senza sapere che il token era occupato — la
-      motivazione («`--accent-soft` significa gia' elemento scelto: menu di
-      riga, selettore di colonne») aveva censito gli usi in `App.css` e non
-      quello in `gantt.css`. Una premessa non misurata sotto una decisione
-      comprata in buona fede, che e' il modo esatto in cui `CLAUDE.md` dice
-      che si perde mezzo goal.
-      **Misurato nel browser il 2026-09-22 (gen 14), nei due schemi, con
-      ricerca attiva e selezione fuori dai risultati. Il difetto c'e', ma la
-      frase qui sopra era sbagliata.** Fondo riga, identico bit per bit fra
-      trovata e selezionata: chiaro `rgb(241,238,252)`, scuro `rgb(42,37,66)`.
-      In griglia le separa il solo inset `2px` accento sulla trovata. In
-      timeline **non e' vero che non resta niente**: la barra della riga
-      selezionata porta `gantt_selected` e con essa un'ombra
-      `0 4px 24px / 0.08` contro `0 1px 2px / 0.06`, due `gantt_link_point` e
-      le maniglie di drag. Erano invisibili al foglio di stile perche' vivono
-      in `.gantt_bars_area`, non in `.gantt_task_row`. **Ma nessuno dei tre
-      dice «selezionata»**: sono affordance di trascinamento, grigie e
-      piccole, e l'ombra sparisce alla scala reale (ritaglio a 3x in
-      `.claude/k13-timeline-light.png`). Quindi il tono resta ambiguo fra i
-      due stati; non lo e' l'intera riga.
-      **Trappola di fixture, costata un giro**: la ricerca **seleziona da se'
-      il primo risultato**, quindi un `select()` chiamato nella stessa
-      valutazione che scrive nel campo finisce sovrascritto — va chiamato in
-      una valutazione successiva, o si misura il caso «trovata e selezionata»
-      credendo di misurare l'altro.
-      **Scelta dell'utente il 2026-09-22, fra quattro uscite**: non si tocca
-      nessuno dei due token e **il marchio della ricerca si estende alla
-      timeline** — l'inset `2px` accento che la griglia aveva gia'. Estende
-      una scelta presa, non riapre Q3, non sceglie un colore nuovo.
-      Implementato in `000d860`. **L'abbinamento con `gantt-row--group-start`
-      non era un raffinamento ma la condizione perche' il bordo dipinga**:
-      ogni riga di primo livello e' group-start, `box-shadow` non si fonde
-      fra regole e i due selettori pareggiano di specificita'. Il commento
-      che diceva «the timeline needs no pairing» e' stato riscritto nel CSS
-      e in `docs/view.md`.
-      **Celle guidate, nei due schemi, griglia e timeline** (dopo la
-      modifica le due pareti coincidono cella per cella):
-      trovata+group-start = bordo accento + hairline; trovata figlia (non
-      group-start) = bordo accento; trovata+selezionata = fondo 16% + bordo;
-      trovata+selezionata+group-start = fondo 16% + bordo + hairline;
-      found-below+group-start = bordo al 60% + hairline; solo selezionata =
-      tono condiviso senza bordo; solo group-start = hairline; riga liscia =
-      niente.
-      **La cella che l'hub non aveva guidato l'ha guidata il critic**:
-      `found-below` che non e' group-start (summary annidato con una
-      corrispondenza sotto) rende bordo al 60% e basta, identico nelle due
-      pareti e nei due schemi. Ha anche provato il controfattuale
-      dell'abbinamento togliendo il selettore timeline: il bordo **sparisce**
-      e resta la sola hairline. Verdetto `pass`, zero round.
-      **Fuori dal percorso, letto e non supposto**: PNG e print non
-      conoscono nessuna classe della ricerca — la figura esportata e' un SVG
-      costruito a parte, non il DOM vivo. Non e' una lacuna di copertura.
-
-- [x] K14 `d8a1d20` [self] — **Falso allarme, chiuso senza codice.** L'anello
-      di criticita' del summary non e' una capsula: misurato nell'app (fixture
-      via `arrogantt`, dpr 8, profilo dell'angolo letto sui pixel) sta a
-      **0.75** di capsula contro lo 0.60 del corpo. **Entrambe le letture
-      erano sbagliate**: il critic di K12 ha esagerato la parola, e il 4px che
-      l'hub gli opponeva era il bordo **interno** dell'outline — la silhouette
-      dipinta vale `border-radius + offset + spessore`. L'offset **non e' la
-      leva** (a 0 fa 0.71), il che spiega il sintomo che il critic dava per
-      misterioso invece di lasciarlo aperto. Variante scartata misurata dal
-      vivo: corpo a 2px porta l'anello a 0.625 e il corpo a 0.40, squadrato —
-      costo visibile per guadagno invisibile. Accettato dall'utente il
-      2026-09-22 sotto la regola dell'80%. Geometria e decisione ora in
-      `docs/view.md` (*Bar decorations*): qui non resta niente da rifare.
-
-- [x] K15 [self] `"The status bar stays one row down to 1040"` — **La status bar va a capo a 1366.** Goal review, ACTION 1:
-      a 1366x900 `.statusbar` misura **49px** (35 a 1440) e le etichette si
-      spezzano dentro i controlli ("12 / tasks", "Critical / chain",
-      "Resource / load", "Scale: / Months"). K8 ha aggiunto due bottoni da
-      28px piu' i gap e ha spostato li' la rottura che il commento di
-      `.statusbar__cost` (`App.css:967-976`) colloca ancora a <=1290 — quel
-      commento e' quindi falso e va nello stesso commit. `white-space: nowrap`
-      sulle etichette; la nota `For agents:` (~190px, ultima della fila,
-      puntatore per uno script) cade o si nasconde per prima.
-      Nello stesso commit due nit di prosa della review: `CHANGELOG.md:5-7`
-      sovrastima ("everything that changes the view now lives on one bar" —
-      i pin di Highlight sono controlli di vista rimasti in toolbar), e
-      `docs/view.md:212` chiama "fixed pill" il preview colore, che da K12
-      porta `--radius-bar`.
-      **Accept**: `.statusbar` 35px e `.app__bar` 48px a 1366, fixture da 13
-      task, `EUR`, 5 persone; solo chiaro, il layout non dipende dallo schema.
-      **Tier polish**: niente brief, niente corsia, niente critic; un commit.
-      **Esito, misurato in chiaro a 1366.** La premessa regge ma vuole una
-      condizione che la review non nominava: con tutti i task prezzati la
-      barra sta gia' a 35px e lo spacer ha 69px di slack — serve la clausola
-      `· N d not costed`, che porta il costo a 181px e lo spacer a 0. Trovato
-      anche che **la barra oggi va gia' in overflow orizzontale sotto ~1040**
-      (25px a 1000, 225px a 800), difetto preesistente che nessuno aveva
-      misurato. `white-space: nowrap` tiene 35px da 1440 a 1040 e sposta
-      l'overflow a ~980. **`flex-wrap: wrap` misurato e scartato**: toglie
-      l'overflow ovunque ma porta la barra a 67px, peggio dei 49 che si
-      elimina, su viewport che T16 possiede. Il meccanismo scritto qui sopra
-      non serviva: la nota `For agents:` non cade ne' si nasconde, le basta
-      l'ellissi — stesso trattamento che `.statusbar__cost` aveva gia', e il
-      `textContent` resta intero, quindi il puntatore per gli script non si
-      accorcia.
-
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
 analisi, arrivati come richieste singole. **Non ricevono la goal review**, ed
@@ -721,13 +336,44 @@ di questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       Goal C (dialogo People e bottone «Fit»).
       Il censimento si consegna come **matrice di celle guidate** piu' una
       lista esplicita di cio' che non e' stato guidato — mai in prosa.
-      **Depends: NON piu' soddisfatta.** La vecchia riga diceva «l'audit gira
-      sull'UI finale» — resa falsa dall'apertura di Goal K, che cambiera'
-      menu e resa desktop. Ordine deciso dall'utente il 2026-09-21: T16 va
-      **dopo** K1 e K2 e dopo le fette che K2 fara' comprare, o auditerebbe
-      un'UI in movimento.
+      **Depends: soddisfatta.** L'ordine deciso dall'utente il 2026-09-21
+      voleva T16 dopo Goal K, o auditerebbe un'UI in movimento: Goal K e'
+      chiuso e potato, quindi l'UI desktop e' ferma e T16 puo' partire.
+      Auditera' menu e resa **dopo** lo spostamento dei controlli di vista
+      sulla status bar, non prima.
 
 ## Decisioni chiuse — non riproporre
+
+**UI e UX (Goal K).** Chiuso, recensito (`fix-first`, una ACTION, chiusa da
+K15) e potato. Le cinque risposte dell'utente restano vincolanti: il nome del
+file sta nel gruppo del marchio con ellissi; la regola «sopra si agisce sul
+piano, sotto sulla vista» e' imposta e la memoria muscolare si riazzera;
+`--ink-faint` in chiaro e' `#7d8590` (3.73:1) e il **dark non si tocca**;
+la riga selezionata porta `--accent-soft` in entrambi gli schemi; le facce
+impilate di un summary portano **solo il colore** e `AVATAR_STACK_LIMIT`
+resta 4. Il probe a 1.25 di scaling **non si fa**.
+**Comprate A-F; G no** — raggiungibilita' da tastiera della status bar, 26
+stop di Tab: `CLAUDE.md` dice che questo strumento non deve un audit di
+accessibilita' a nessuno.
+**Tre cose misurate e chiuse senza codice**: spostare la pillola del nome nel
+gruppo del marchio **non toglie il wrap, lo sposta** (K6, e K8 ha poi risolto
+l'obiettivo da solo); l'anello di criticita' del summary **non e' una capsula**
+(K14, 0.75 contro 0.60, geometria in `docs/view.md`); `flex-wrap` sulla status
+bar toglie l'overflow ma la porta a 67px, peggio dei 49 che evita (K15).
+**Due token fanno due mestieri, accettato sotto la regola dell'80%**:
+`--accent-soft` e' sia selezione sia risultato di ricerca — li separa il bordo
+`2px` accento, che da K13 dipinge in griglia **e** in timeline, e la sua
+comparsa dipende dall'abbinamento con `gantt-row--group-start`, non e' un
+raffinamento; `--line` e' sia hairline sia riempimento hover/on sulle barre
+incassate, quindi **un toggle acceso a riposo dipinge il colore dell'hover** e
+lo distinguono inchiostro e pallino. Chi torna su quei token riapre questo,
+non lo scopre.
+**Dai riferimenti (K10)**: sono **due sistemi, non quattro** (ClickUp 4.0 in
+tre immagini, Tailwind di default nella quarta), quindi un «4 su 4» li' vale
+2 su 2; e «crisp» e' per cinque settimi roba che l'app aveva gia'. Niente
+linguaggio visivo nuovo, nessun sistema di componenti. Gli screenshot in
+`inspiration_ui/` sono ignorati **davvero** ora: un `git check-ignore` si
+legge dal codice di uscita, non dall'output.
 
 **Repo e pubblicazione.** Non ricreare mai `okon3/yagni`: i redirect di web,
 API e git che tengono vivi i cloni esistenti muoiono nell'istante in cui
@@ -834,14 +480,17 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
   dopo la leva 3 — il tooling si ripaga sul goal dopo, non su questo. Da
   riproporre solo con un goal nuovo. **Prima di scopare la leva 1**: provare
   che la browser mode di vitest parta su questa macchina Windows, mai fatto.
-- `.claude/specs/K2-report.md` — censimento desktop. Il task e' `[x]`, ma e'
-  il materiale da cui l'utente compra le fette di Goal K: **lo sweep degli
-  orfani non lo tocca** finche' questa riga esiste. Porta anche i quattro casi
+- `.claude/specs/K2-report.md` — censimento desktop. Goal K e' chiuso e le
+  fette sono state comprate, ma **lo sweep degli orfani non lo tocca**: e' la
+  linea di base contro cui T16 misurera' il mobile, e porta i quattro casi
   «misurati e a posto» (niente transizioni, `:active` distinto, cromatura dei
   dialoghi coerente, pixel interi a dpr 1) che nessuno deve ri-derivare.
+  **Una sua cella e' morta**: il label di barra in dark a 2.30:1 non e' viva —
+  la goal review ha misurato 3.76:1 sul summary e `--ink-muted` sulla foglia.
+  Chi rilegge il report non ri-apra quel finding.
 - `.claude/specs/K10-report.md` — i quattro riferimenti misurati contro il
-  censimento. Task `[x]`, **ma lo sweep degli orfani non lo tocca** finche'
-  questa riga esiste: porta i valori campionati dalle immagini, la lista di
+  censimento. Goal K e' chiuso, **ma lo sweep degli orfani non lo tocca**:
+  porta i valori campionati dalle immagini, la lista di
   cio' che uno screenshot non puo' contenere, e le tre proprieta' giudicate
   **non** crisp — cioe' le tre cose che qualcuno riproporra'.
 - `.claude/specs/T26-report.md` — UX dei link, tutto misurato nell'app. O1, O2
