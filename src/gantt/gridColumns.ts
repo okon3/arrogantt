@@ -273,10 +273,20 @@ export function buildColumns(ctx: RowContext, shown: ReadonlySet<PlanColumnName>
       // The dot turns into a diamond on a milestone, the shape the chart draws
       // it as: the grid says nothing else about effort 0 that a "0g" in the
       // next column does not already say.
-      template: (task) =>
-        `<span class="gantt-dot${task.type === MILESTONE_TYPE ? ' gantt-dot--milestone' : ''}"` +
-        ` style="background:${String(task.bar_color || DEFAULT_BAR_COLOR)}"></span>` +
-        `<span class="${task.is_summary ? 'gantt-name gantt-name--summary' : 'gantt-name'}">${escapeHtml(String(task.text ?? ''))}</span>`,
+      // The name carries a native `title` unconditionally: the cell clips with
+      // an ellipsis at its default width already (a 58-character name loses
+      // 199px of 393), and the template cannot know which rows overflow
+      // without measuring every row after every render. A tooltip repeating a
+      // short name is the cheaper noise.
+      template: (task) => {
+        const name = escapeHtml(String(task.text ?? ''));
+        return (
+          `<span class="gantt-dot${task.type === MILESTONE_TYPE ? ' gantt-dot--milestone' : ''}"` +
+          ` style="background:${String(task.bar_color || DEFAULT_BAR_COLOR)}"></span>` +
+          `<span class="${task.is_summary ? 'gantt-name gantt-name--summary' : 'gantt-name'}"` +
+          ` title="${name}">${name}</span>`
+        );
+      },
       editor: { type: 'text', map_to: 'text' },
     },
     ...PLAN_COLUMNS.filter((entry) => shown.has(entry.name)).map((entry) => ({

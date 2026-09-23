@@ -310,21 +310,11 @@ analisi, arrivati come richieste singole. **Non ricevono la goal review**, ed
 e' il prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno
 di questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 
-- [ ] T17 [impl] — Il nome del task per esteso in hover sulla griglia.
-      Chiesto dall'utente il 2026-09-21 insieme a Goal I, ma indipendente da
-      esso: riguarda il **nome troncato**, non la descrizione, e sotto
-      l'enunciato di Goal I sarebbe contrabbando.
-      **Un `title` HTML nativo, nessun componente nuovo** — e' la convenzione
-      gia' in vigore e c'e' una ragione scritta: `gridColumns.ts:130-132`
-      registra che **il tooltip ricco dell'app sta solo sulle barre**
-      (`barTooltip.ts` via `gantt.ext.tooltips`) e che la griglia usa `title`
-      nativi, perche' riportarlo su una cella sarebbe «un secondo tooltip
-      nella stessa colonna». Una corsia che vede `barTooltip.ts` sara'
-      tentata di riusarlo: vietarlo nel brief.
-      Da misurare prima: **se il nome tronchi davvero**, e a quale larghezza
-      di colonna — un tooltip che ripete cio' che si legge gia' e' rumore.
-      Se dopo la misura il difetto non si vede, va riportato all'utente coi
-      numeri, non costruito lo stesso.
+- [x] T17 [self] — Il nome del task per esteso in hover sulla griglia: un
+      `title` nativo sullo span `.gantt-name`, incondizionato. Premessa
+      misurata dall'hub prima di scrivere (al default di 230px un nome di 58
+      caratteri perde 199px di 393); la corsia e' passata da `[impl]` a
+      `[self]` — una riga di template non paga i 40k d'ingresso. — commit 0b0b2e3
 
 - [ ] T16 [architect] — Valutazione mobile: audit + proposta
       Scope: audit dell'app a viewport smartphone (375px) e tablet (768px),
@@ -517,6 +507,7 @@ misurato. Le lezioni durevoli stanno in `.claude/orchestrate.md`, non qui.
 | K4-K9 batch (5 task, K6 saltato) | polish | 1 sessione, senza corsie | - | - | 164+/88- | 0 |
 | goal review 1 | review | browser | - | 179 (fable) | 0 | - |
 | K15 (ACTION 1 + 2 nit) | polish | browser | - | - | 15+/9- | 0 |
+| T17 | polish | browser | - | - | 11+/4- | 0 |
 
 Sopra ~300k per meno di ~50 righe di `src/` e' un difetto di processo e va
 all'utente coi numeri, non nel Log come successo a zero round.

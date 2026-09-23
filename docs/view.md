@@ -131,6 +131,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - Columns: inputs (name, resource, effort, start) + derived **end and
   duration**, faint italic, **no editor declared**. A summary's
   effort/resource/start are refused the same way.
+- **The name cell carries a native `title` with the full name**, unconditional
+  — the cell clips with an ellipsis at its own default width, and no render
+  measures which rows overflow. The rich tooltip stays on the bars.
 - **Summary resource column** shows up to `AVATAR_STACK_LIMIT` overlapping
   faces + `+n`; native `title` names them all. Stacked faces carry **colour
   only, no initials**, and don't highlight; `+n` is the only one with text. A
