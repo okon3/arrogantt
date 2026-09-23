@@ -162,7 +162,7 @@ stretto.
       la superficie si guida da JS puro; `addTask` rifiuta il campo e indica
       `updateTask`; `getTask()` omette la chiave; la descrizione compare una
       volta sola nel file salvato. Otto celle guidate nel browser, quattro
-      guardie mutate, tre check verdi. — commit {SHA}
+      guardie mutate, tre check verdi. — commit e534996
 - [ ] I4 [self] — `docs/view.md` e il bullet di changelog.
       `docs/file-format.md` **e' gia' fatto**: il campo e i due rifiuti del
       parsing strict con I1, la colonna CSV con I3.
