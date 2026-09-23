@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.6 — 2026-09-23
 
 - Hide the grid and choose its columns from the status bar, beside Collapse
   and Expand: what changes the view sits under the chart, and the toolbar is

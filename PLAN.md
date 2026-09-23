@@ -3,10 +3,11 @@
 ## Cosa resta sul tavolo
 
 Goal D, E, F, G, H e K sono **chiusi, recensiti e potati**; le loro Accept lines
-sono cadute dopo la review, come vuole la regola. Ultima release **`v1.5`**;
-i bullet di H (figura per il cliente: nessuna colonna, nessun task
-disattivato) aspettano sotto `## Unreleased` — scelta dell'utente, il badge
-resta a v1.5 e il rilascio si fa quando serve distribuire una build.
+sono cadute dopo la review, come vuole la regola. Ultima release **`v1.6`**
+(2026-09-23), che ha portato i bullet accumulati di H e K: figura per il
+cliente senza colonne, task disattivati riconoscibili ovunque e fuori dalle
+figure, controlli di vista sulla status bar. `## Unreleased` non esiste
+adesso: il primo bullet di Goal I lo ricrea.
 **Goal I** (descrizione per task) e' **avviato**: domande di prodotto tutte
 chiuse, suddivisione rivista sulla ricognizione del 2026-09-21, I1 committato.
 Restano I2 (textarea), I3 (CSV e agent API) e I4 (docs e changelog).
