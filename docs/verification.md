@@ -327,6 +327,9 @@ restart happens *before* the measurement, not during it.
 
 - **Verify visuals with `getComputedStyle`** — not the attribute, not the data
   field. More than one bug was invisible from the code.
+- **`scripts/probe-rows.js` reads the rows, not the stylesheet** — classes and
+  paint per surface, `absent` where smart rendering left no node. Run it with
+  `agent-browser eval -b <base64 of the file>`; ids via `window.__probeRowIds`.
 - **`scrollWidth` on an `<input>` ignores its placeholder.** An overflowing
   placeholder still reports `scrollWidth === clientWidth`, so the usual overflow
   test passes on unfixed code — it was prescribed as T37's accept criterion and
