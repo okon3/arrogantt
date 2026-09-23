@@ -958,6 +958,12 @@
   color: var(--ink-muted);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  /* A label that breaks inside its own control reads as a second control:
+     "Critical / chain" on two lines is worse than the bar losing a few
+     characters off its widest span. Below ~980px the run overflows instead,
+     which is what it already did — wrapping the bar to two rows costs more
+     height (67px) than the 49 this avoids. */
+  white-space: nowrap;
 }
 
 .statusbar__spacer {
@@ -965,15 +971,10 @@
 }
 
 /* A flex item's default min-width is its content's, so without this the cost
-   claims room it never gives back. Measured on Fixture C: the rule earns its
-   keep at 1040px and below, holding the footer at 49px instead of 59 and 75 —
-   49 being the height the bar already had there carrying no cost at all.
-   Do not delete it on the evidence of the 1100-1290px band, where it changes
-   no height: that band wraps 35 → 49 because of the cost span itself, a
-   regression bought under the 80% rule with both cheaper fixes measured —
-   flex-shrink here alone recovers 1290px only, and a shrink-priority scheme
-   over the whole bar holds 35px down to 1120px but empties this span and
-   pushes Fit off-screen below 1100px. */
+   claims room it never gives back — and with the bar's `white-space: nowrap`
+   that content is the whole span, uncosted clause included. It and
+   `.statusbar__agent` are the two spans that give, in that order: both are
+   readable truncated, every other item in the run is a control. */
 .statusbar__cost {
   min-width: 0;
   overflow: hidden;
@@ -982,7 +983,12 @@
 }
 
 /* Discreet on purpose: it is a pointer for a script, not a feature to advertise. */
+/* Gives before the cost does, and the ellipsis costs nothing an agent reads:
+   the truncation is the box's, so `textContent` still carries the whole call. */
 .statusbar__agent {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--ink-faint, var(--ink-muted));
   opacity: 0.75;
 }

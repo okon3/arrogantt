@@ -209,7 +209,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   - **Notes (`.taskinfo__notes`) reserve a minimum of one two-line note** and
     grow past it; the height varies task-to-task, never mid-edit. Spacing is
     the region's `gap`, not a per-note margin.
-  - **The colour preview (`.taskinfo__preview`) is a fixed pill**,
+  - **The colour preview (`.taskinfo__preview`) is a fixed swatch** carrying
+    `--radius-bar`, the bars' own corner;
     `margin-left: auto`; `.taskinfo__colors` wraps so a wider palette
     degrades to a second line.
 
@@ -238,6 +239,10 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   `Cost ≥ 12,500 EUR · 7 d not costed` for a lower bound, no suffix without
   `currency`. Shown iff `buildPlan(...).totalCost !== null`. Independent of
   the column selection.
+- **One row, never two**: `white-space: nowrap` on the bar, and the cost and
+  the agent note are the only items that give, by ellipsis. A label breaking
+  inside its control reads as a second control; wrapping the whole bar costs
+  more height than the break it avoids.
 
 ## Search
 

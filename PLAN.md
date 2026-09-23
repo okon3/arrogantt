@@ -301,7 +301,7 @@ passata che produce il termine di paragone, l'occupazione fissa nel
 simulatore, la riscrittura dell'invariante di conservazione, e solo dopo
 proporre le fette.
 
-## Goal K — sembrare uno strumento, non un prototipo [completato, in attesa di goal review]
+## Goal K — sembrare uno strumento, non un prototipo   [completato, review 1: fix-first]
 Una passata di miglioramento e polish su UI e UX: far sembrare l'app
 **professionale**, organizzare le voci dei menu invece di lasciarle sparse,
 rendere la visualizzazione piu' **crisp**, e distinguere meglio i task
@@ -568,7 +568,7 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
 
 - [x] K4 `9a3658c` — I controlli sembrano dell'app, non del browser.
 - [x] K5 `808c630` — L'inchiostro tenue in chiaro.
-- [ ] K6 — **Saltato: premessa falsa, misurata.** Spostare la pillola nel
+- [x] K6 `n/a` — **Saltato: premessa falsa, misurata.** Spostare la pillola nel
       gruppo del marchio non toglie il wrap, lo sposta: la pillola costa 110px
       ovunque stia, e a 1366 con cinque persone l'header restava 81px con
       l'ultimo gruppo di bottoni sulla seconda riga (prima: 80px con la sola
@@ -655,6 +655,38 @@ cambia le decisioni gia' prese, e che nessuno deve ri-derivare:
       costo visibile per guadagno invisibile. Accettato dall'utente il
       2026-09-22 sotto la regola dell'80%. Geometria e decisione ora in
       `docs/view.md` (*Bar decorations*): qui non resta niente da rifare.
+
+- [x] K15 [self] `"The status bar stays one row down to 1040"` — **La status bar va a capo a 1366.** Goal review, ACTION 1:
+      a 1366x900 `.statusbar` misura **49px** (35 a 1440) e le etichette si
+      spezzano dentro i controlli ("12 / tasks", "Critical / chain",
+      "Resource / load", "Scale: / Months"). K8 ha aggiunto due bottoni da
+      28px piu' i gap e ha spostato li' la rottura che il commento di
+      `.statusbar__cost` (`App.css:967-976`) colloca ancora a <=1290 — quel
+      commento e' quindi falso e va nello stesso commit. `white-space: nowrap`
+      sulle etichette; la nota `For agents:` (~190px, ultima della fila,
+      puntatore per uno script) cade o si nasconde per prima.
+      Nello stesso commit due nit di prosa della review: `CHANGELOG.md:5-7`
+      sovrastima ("everything that changes the view now lives on one bar" —
+      i pin di Highlight sono controlli di vista rimasti in toolbar), e
+      `docs/view.md:212` chiama "fixed pill" il preview colore, che da K12
+      porta `--radius-bar`.
+      **Accept**: `.statusbar` 35px e `.app__bar` 48px a 1366, fixture da 13
+      task, `EUR`, 5 persone; solo chiaro, il layout non dipende dallo schema.
+      **Tier polish**: niente brief, niente corsia, niente critic; un commit.
+      **Esito, misurato in chiaro a 1366.** La premessa regge ma vuole una
+      condizione che la review non nominava: con tutti i task prezzati la
+      barra sta gia' a 35px e lo spacer ha 69px di slack — serve la clausola
+      `· N d not costed`, che porta il costo a 181px e lo spacer a 0. Trovato
+      anche che **la barra oggi va gia' in overflow orizzontale sotto ~1040**
+      (25px a 1000, 225px a 800), difetto preesistente che nessuno aveva
+      misurato. `white-space: nowrap` tiene 35px da 1440 a 1040 e sposta
+      l'overflow a ~980. **`flex-wrap: wrap` misurato e scartato**: toglie
+      l'overflow ovunque ma porta la barra a 67px, peggio dei 49 che si
+      elimina, su viewport che T16 possiede. Il meccanismo scritto qui sopra
+      non serviva: la nota `For agents:` non cade ne' si nasconde, le basta
+      l'ellissi — stesso trattamento che `.statusbar__cost` aveva gia', e il
+      `textContent` resta intero, quindi il puntatore per gli script non si
+      accorcia.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
@@ -833,6 +865,8 @@ misurato. Le lezioni durevoli stanno in `.claude/orchestrate.md`, non qui.
 | K13 | polish | browser | - | browser | 26 | 0 |
 | K14 | polish | browser | - | - | 0 | - |
 | K4-K9 batch (5 task, K6 saltato) | polish | 1 sessione, senza corsie | - | - | 164+/88- | 0 |
+| goal review 1 | review | browser | - | 179 (fable) | 0 | - |
+| K15 (ACTION 1 + 2 nit) | polish | browser | - | - | 15+/9- | 0 |
 
 Sopra ~300k per meno di ~50 righe di `src/` e' un difetto di processo e va
 all'utente coi numeri, non nel Log come successo a zero round.
