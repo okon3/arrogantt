@@ -844,6 +844,12 @@
   visibility: hidden;
 }
 
+/* Free text, so it grows the way a paragraph does — horizontal resize would
+   fight the dialog's fixed width. */
+.taskinfo__description {
+  resize: vertical;
+}
+
 /* Fixed tracks over the dialog's 512px content box (1fr, measured
    170.656/170.672/170.672px — the browser's own subpixel split of 512 ÷ 3)
    so the six entries stop drifting with their content — see docs/view.md §

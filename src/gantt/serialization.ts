@@ -160,7 +160,7 @@ function requireNumber(value: unknown, context: string): number {
   return value;
 }
 
-const DESCRIPTION_LIMIT = 2000;
+export const DESCRIPTION_LIMIT = 2000;
 
 function requireDescription(value: unknown, context: string): string {
   if (typeof value !== 'string') {

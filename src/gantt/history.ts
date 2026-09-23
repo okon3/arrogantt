@@ -96,7 +96,15 @@ function labelFor(beforeText: string, after: Project): string {
 }
 
 /** Fields a person edits on a task, parentage and dependencies apart. */
-const OWN_FIELDS = ['name', 'nominalDays', 'resourceId', 'progress', 'color', 'disabled'] as const;
+const OWN_FIELDS = [
+  'name',
+  'nominalDays',
+  'resourceId',
+  'progress',
+  'color',
+  'disabled',
+  'description',
+] as const;
 
 const nameOf = (task: ProjectTask) => task.name.trim() || 'unnamed task';
 const quoted = (task: ProjectTask) => `"${nameOf(task)}"`;

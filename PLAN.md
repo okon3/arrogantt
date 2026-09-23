@@ -9,8 +9,8 @@ cliente senza colonne, task disattivati riconoscibili ovunque e fuori dalle
 figure, controlli di vista sulla status bar. `## Unreleased` non esiste
 adesso: il primo bullet di Goal I lo ricrea.
 **Goal I** (descrizione per task) e' **avviato**: domande di prodotto tutte
-chiuse, suddivisione rivista sulla ricognizione del 2026-09-21, I1 committato.
-Restano I2 (textarea), I3 (CSV e agent API) e I4 (docs e changelog).
+chiuse, suddivisione rivista sulla ricognizione del 2026-09-21, I1 e I2
+committati. Restano I3 (CSV e agent API) e I4 (docs e changelog).
 `## Maintenance` porta T16 (audit mobile) e T17 (nome del task in hover);
 Goal C aspetta quel report prima di ricevere task veri. **Goal J** (task
 completato come misura della stima) ha le domande di prodotto chiuse ma e'
@@ -142,26 +142,15 @@ stretto.
       `ProjectFileError`; un tipo sbagliato lancia; `serializeForFile`
       ri-apre un file con 2000 caratteri e newline dentro. `FILE_VERSION`
       resta 2. Tre check verdi. — commit 3eaa6bf
-- [ ] I2 [impl] — La textarea nel `TaskDialog`, summary inclusi, col giro
+- [x] I2 [impl] — La textarea nel `TaskDialog`, summary inclusi, col giro
       completo edit → modello → `applySolution`; oltre 2000 `save()` rifiuta
-      con `error`, nessun `maxLength`. Verifica nel browser.
-      **Quattro vincoli misurati dal critic di I1, da mettere nel brief.**
-      (a) Senza il rifiuto in `save()` l'app costruisce un progetto che non
-      sa salvare: misurato, 2001 caratteri nel modello passano
-      `serializeProject` (undo e draft intatti) e fanno lanciare
-      `serializeForFile` — Save rifiuta, non scrive niente e resta dirty,
-      con l'unico rimedio di accorciare a mano un testo che la UI aveva
-      accettato. E' il motivo per cui il rifiuto e' **al salvataggio** e non
-      al parsing soltanto.
-      (b) `DESCRIPTION_LIMIT` (`serialization.ts:163`) **non e' esportato**:
-      I2 lo esporta e lo importa, non riscrive un secondo 2000.
-      (c) Il limite conta unita' **UTF-16** (`.length`): 1001 emoji fanno
-      2002 e vengono rifiutate. Il conteggio di I2 deve usare `.length` come
-      il parser, o il limite diventa due numeri diversi.
-      (d) `history.ts:99` — `OWN_FIELDS` non include `description`: senza
-      quella riga una modifica alla sola descrizione e' annullabile
-      (lo snapshot e' il testo intero) ma il bottone dice «Undo last change»
-      invece di «Undo edited "X"».
+      con `error`, nessun `maxLength`.
+      **Accept**: testo multi-riga salvato e riletto verbatim, sui summary
+      come sulle foglie; svuotare il campo toglie la chiave dal task; 2000
+      caratteri salvano e il file si scrive, 2001 lasciano il dialogo aperto
+      col messaggio del parser e il progetto intatto; l'undo di una modifica
+      alla sola descrizione dice `edited "<nome>"`. Nove celle guidate nel
+      browser, tre check verdi. — commit {SHA}
 - [ ] I3 [impl] — Il campo esce dall'app: colonna CSV (`planCsv.ts`) e agent
       API (`getTask`, `updateTask`, `TaskInput`), con `agentApi.help.md`
       nello stesso commit. **No** figura, **no** stampa.
@@ -508,6 +497,7 @@ misurato. Le lezioni durevoli stanno in `.claude/orchestrate.md`, non qui.
 | goal review 1 | review | browser | - | 179 (fable) | 0 | - |
 | K15 (ACTION 1 + 2 nit) | polish | browser | - | - | 15+/9- | 0 |
 | T17 | polish | browser | - | - | 11+/4- | 0 |
+| I2 | feature | 1 Explore 28 | 115 | 132 | 46+/2- | 0 |
 
 Sopra ~300k per meno di ~50 righe di `src/` e' un difetto di processo e va
 all'utente coi numeri, non nel Log come successo a zero round.

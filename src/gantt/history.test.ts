@@ -204,6 +204,14 @@ describe('naming a change', () => {
     expect(describeChange(withPeriods, withPeriods)).toBe(GENERIC_CHANGE);
   });
 
+  it('names a description-only edit, not a generic change', () => {
+    const withDescription = projectOf([
+      task({ description: 'Raccolta requisiti dal cliente' }),
+      task({ id: 't2', name: 'Modello dati' }),
+    ]);
+    expect(describeChange(before, withDescription)).toBe('edited "Requisiti"');
+  });
+
   it('names a task with no name at all', () => {
     expect(describeChange(projectOf([]), projectOf([task({ name: '  ' })]))).toBe(
       'added "unnamed task"',

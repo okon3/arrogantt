@@ -6,6 +6,7 @@ import { Dialog } from './Dialog';
 import { formatDays } from './format';
 import type { TaskDetails, TaskPatch } from './ganttHandle';
 import { CRITICAL_CHAIN_LIMIT, type MeasuredSlack } from './project';
+import { DESCRIPTION_LIMIT } from './serialization';
 
 const dayFormat = new Intl.DateTimeFormat('en-GB', {
   day: '2-digit',
@@ -44,6 +45,7 @@ export function TaskDialog({
   const [color, setColor] = useState(task.color);
   const [progress, setProgress] = useState(String(Math.round(task.progress * 100)));
   const [disabled, setDisabled] = useState(task.disabled);
+  const [description, setDescription] = useState(task.description ?? '');
   const [error, setError] = useState<string | null>(null);
 
   const save = () => {
@@ -70,6 +72,15 @@ export function TaskDialog({
     // Keeps the time of day the engine assigned: only the calendar day is edited
     // here, and a start at midnight would sit outside the working window.
     const startDate = new Date(year, month - 1, day, task.start.getHours(), task.start.getMinutes());
+    // Whitespace-only reads as empty (deletes the stored text); otherwise the
+    // value goes through verbatim — a description with content is not trimmed.
+    const descriptionToSave = description.trim() === '' ? '' : description;
+    if (descriptionToSave.length > DESCRIPTION_LIMIT) {
+      setError(
+        `Description: ${descriptionToSave.length} characters, the limit is ${DESCRIPTION_LIMIT}`,
+      );
+      return;
+    }
     onSave({
       name: trimmed,
       nominalDays: days,
@@ -78,6 +89,7 @@ export function TaskDialog({
       color: task.ownsColor ? color || undefined : undefined,
       progress: percentage / 100,
       disabled,
+      description: descriptionToSave,
     });
   };
 
@@ -304,6 +316,16 @@ export function TaskDialog({
           <span className="taskinfo__hint">
             Stays on the plan but does not weigh: no capacity, out of roll-up and critical chain.
           </span>
+        </label>
+
+        <label className="taskinfo__field taskinfo__field--wide">
+          <span className="taskinfo__label">Description</span>
+          <textarea
+            className="dialog__control taskinfo__description"
+            rows={4}
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+          />
         </label>
       </div>
 
