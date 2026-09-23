@@ -2,17 +2,15 @@
 
 ## Cosa resta sul tavolo
 
-Goal D, E, F, G, H e K sono **chiusi, recensiti e potati**; le loro Accept lines
+Goal D, E, F, G, H, I e K sono **chiusi, recensiti e potati**; le loro Accept lines
 sono cadute dopo la review, come vuole la regola. Ultima release **`v1.6`**
 (2026-09-23), che ha portato i bullet accumulati di H e K: figura per il
 cliente senza colonne, task disattivati riconoscibili ovunque e fuori dalle
-figure, controlli di vista sulla status bar. `## Unreleased` e' stato
-ricreato dal bullet di Goal I.
-**Goal I** (descrizione per task) e' **avviato**: domande di prodotto tutte
-chiuse, suddivisione rivista sulla ricognizione del 2026-09-21. Tutti e
-quattro i task sono chiusi: il goal aspetta la sua review.
-`## Maintenance` porta T16 (audit mobile) e T17 (nome del task in hover);
-Goal C aspetta quel report prima di ricevere task veri. **Goal J** (task
+figure, controlli di vista sulla status bar. **Goal I** (descrizione per
+task) e' **chiuso, recensito (`ship`, zero ACTION) e potato**: il suo bullet
+ha ricreato `## Unreleased`, non ancora rilasciato.
+`## Maintenance` porta il solo T16 (audit mobile); Goal C aspetta quel
+report prima di ricevere task veri. **Goal J** (task
 completato come misura della stima) ha le domande di prodotto chiuse ma e'
 **sospeso dall'utente**: materiale pronto per un'analisi di dettaglio piu'
 avanti, non lavoro in corso. **Goal K** (polish di UI/UX) e' **chiuso, recensito e potato**; quel che
@@ -52,129 +50,6 @@ documento gia' a 768px di viewport (bordo destro 955px su 768 di
 `clientWidth`), in empty state. Non e' un difetto del rename e sotto la regola
 dell'80% non vale un meccanismo da solo — ma e' il primo indizio che il goal
 raccogliera'.
-
-## Goal I — un task puo' dire piu' del suo titolo                   [aperto]
-Ogni task porta una **descrizione** libera, per veicolare quello che il titolo
-da solo non regge. Aperto dall'utente il 2026-09-21.
-
-**Deciso dall'utente, non da riaprire.**
-- Il campo vive nel **modal di dettaglio** del task (`TaskDialog.tsx`), e
-  tanto basta: non e' richiesta nessun'altra superficie.
-- Vale **anche per i raggruppamenti** (summary), non solo per le foglie.
-
-**Risposte dell'utente, 2026-09-21 — chiuse.**
-- **La descrizione non ha nessuna superficie nel grafico**, e va bene cosi'.
-  Niente icona di riga, niente tooltip: si legge aprendo il modal, oppure
-  da CSV e dall'agent API. Chiesto due volte e confermato due volte — **una
-  goal review che lo segnala come MISSING sta segnalando una scelta**, non
-  una dimenticanza.
-  (Il tooltip che l'utente ha chiesto nella stessa conversazione riguarda il
-  **nome** del task, non la descrizione: e' in `## Maintenance`, T17.)
-- **Agent API: si'** — «potrebbe dare informazioni utili all'agente». Quindi
-  `agentApi.help.md` va aggiornato **nello stesso commit**: e' anche
-  `arrogantt.help()` e `/llms.txt`, e non se ne fa una seconda copia.
-- **CSV: si'. Figura e stampa: no.** (`planCsv.ts` rientra quindi nello scope
-  di questo goal, a differenza di Goal H.)
-- **Limite 2000 caratteri**, in una **textarea**, testo senza formattazione.
-
-**Misurato il 2026-09-21 (due Explore), non piu' da supporre.**
-- **Il CSV gia' regge i newline**: `escape` (`planCsv.ts:59-62`) quota su
-  `/[;"
-]/` e raddoppia le virgolette — RFC4180, nessuna sostituzione del
-  newline. La superficie CSV e' quindi una voce in `HEADERS`
-  (`planCsv.ts:25-40`) e una in `row()` (`planCsv.ts:64-85`), non un task.
-  **Trappola nei test, non nel codice**: l'helper `csvOf`
-  (`planCsv.test.ts:14`) splitta le righe con `.split('
-')` ignorando il
-  quoting — una fixture con descrizione multi-riga lo rompe. `columns()`
-  (righe 25-39) invece lo stato quoted lo tiene gia'.
-- **Il limite di 2000 vive in due posti, con due comportamenti diversi.**
-  Nel parsing **rifiuta** (dottrina del formato: rifiuta, non ripara), con il
-  precedente esatto di `validateCurrency` (`cost.ts:64-79`, `length > 8`).
-  Nella textarea **non tronca**: scelta dell'utente del 2026-09-21, niente
-  `maxLength`, e' `save()` a rifiutare con un messaggio nello stato `error`
-  che `TaskDialog` gia' possiede (`TaskDialog.tsx:47`, `save()` 49-82) —
-  nessun testo incollato sparisce in silenzio.
-- **Il pattern «vuoto = assente» esiste gia' e va copiato, non inventato**:
-  `if (typeof record.x === 'string' && record.x.length > 0) task.x = record.x`
-  (`serialization.ts:288`, `parentId`). E il file lo scrive da solo:
-  `serializeProject` spande `...task` (`serialization.ts:91`), quindi il
-  parser e' **l'unico** punto di difesa — esattamente come per `disabled`.
-- **Il campo non si ferma al modello.** `getTask` spande `...rest` da
-  `details(id)` (`agentApi.ts:240-243`): compare da solo nella risposta, ma
-  solo se sta su `TaskDetails` (`ganttHandle.ts:114-147`). Il giro completo
-  passa quindi per `TaskDetails`, `TaskPatch` (`ganttHandle.ts:148-160`) e
-  `NewTask` (`ganttHandle.ts:10-25`) — la mappa riga del chart.
-- **Nel repo non esiste nessuna `<textarea>`** (solo `HTMLTextAreaElement` in
-  `shortcuts.ts:18`, che gia' spegne le scorciatoie sul focus). Il primo
-  controllo del genere porta CSS strutturale: riavviare il dev server prima
-  di credere a un verdetto negativo.
-
-**Fatto verificato il 2026-09-21, che risparmia un round.** `ProjectTask`
-(`project.ts:30-48`) tiene `disabled?: boolean` con una regola scritta nel
-commento: **si conserva solo `true`**, perche' l'assenza e' lo stato di
-default e un `false` scritto in un file o in uno snapshot sarebbe una seconda
-grafia su cui il confronto di `dirty` litigherebbe. Una `description?: string`
-ha **esattamente** la stessa trappola: `''` e assente devono essere una cosa
-sola, o salvare-riaprire sporca il progetto senza che nessuno abbia toccato
-niente. Vale per il parsing strict, per `serializeProject` e per il gate di
-`serializeForFile`.
-
-**Versione del formato: nessun bump, e la riga precedente era un equivoco.**
-`FILE_VERSION = 2` (`serialization.ts:16`) e' un intero controllato **solo
-come tetto** in lettura (righe 175-182): alzarlo a 3 non segnalerebbe un
-campo in piu', farebbe **rifiutare il file alle build precedenti**. Il «bump
-minore» di `CLAUDE.md` e' la versione **dell'app** nel changelog (v1.5 →
-v1.6), non quella del formato. Il file resta v2.
-
-**Suddivisione rivista sulla ricognizione del 2026-09-21.** La provvisoria
-diceva cinque fette `[impl]`; la misura ne ha cambiate due. I3 e I4 si
-fondono (due superfici additive non valgono due ingressi da 40k), e I1 passa
-a **deep**: tocca il gate strict di `serializeForFile` e la derivazione di
-`dirty`, ed e' la forma esatta dell'errore di F1 registrato nel binding — una
-corsia che copia la forma di un predicato vicino invece del predicato piu'
-stretto.
-- [x] I1 [deep] — Il campo nel modello, nel formato e nella mappa riga.
-      **Accept**: round-trip di una descrizione multi-riga identico;
-      `"description": ""` in ingresso da' un task con `'description' in task`
-      falso e un round-trip che non contiene la stringa `description`;
-      assente resta assente; 2000 caratteri passano e 2001 lanciano
-      `ProjectFileError`; un tipo sbagliato lancia; `serializeForFile`
-      ri-apre un file con 2000 caratteri e newline dentro. `FILE_VERSION`
-      resta 2. Tre check verdi. — commit 3eaa6bf
-- [x] I2 [impl] — La textarea nel `TaskDialog`, summary inclusi, col giro
-      completo edit → modello → `applySolution`; oltre 2000 `save()` rifiuta
-      con `error`, nessun `maxLength`.
-      **Accept**: testo multi-riga salvato e riletto verbatim, sui summary
-      come sulle foglie; svuotare il campo toglie la chiave dal task; 2000
-      caratteri salvano e il file si scrive, 2001 lasciano il dialogo aperto
-      col messaggio del parser e il progetto intatto; l'undo di una modifica
-      alla sola descrizione dice `edited "<nome>"`. Nove celle guidate nel
-      browser, tre check verdi. — commit 6a38277
-- [x] I3 [impl] — Il campo esce dall'app: colonna CSV (`planCsv.ts`) e agent
-      API (`updateTask`, `TaskInput`), con `agentApi.help.md` e la sezione CSV
-      di `docs/file-format.md` nello stesso commit. **No** figura, **no**
-      stampa, **no** colonna di griglia.
-      **Accept**: `Description` e' l'ultima colonna del CSV, vuota su un task
-      che non ne ha, quotata su un testo multi-riga; `updateTask` scrive,
-      `null` e `''` cancellano, `undefined` lascia stare; il gate copia
-      **entrambi** i predicati del parser (tipo e 2000 unita' UTF-16) perche'
-      la superficie si guida da JS puro; `addTask` rifiuta il campo e indica
-      `updateTask`; `getTask()` omette la chiave; la descrizione compare una
-      volta sola nel file salvato. Otto celle guidate nel browser, quattro
-      guardie mutate, tre check verdi. — commit e534996
-- [x] I4 [self] — `docs/view.md` e il bullet di changelog.
-      `docs/file-format.md` era gia' fatto: il campo e i due rifiuti del
-      parsing strict con I1, la colonna CSV con I3.
-      **Accept**: la sezione *Details dialog* dice che il campo non ha
-      superficie sul grafico, che `save()` rifiuta invece di troncare e che
-      la costante e' una sola; `## Unreleased` esiste di nuovo e porta un
-      bullet che parla all'utente, non alle interne. Tre check verdi. — commit 73b0fd4
-
-**Conseguenza da proporre, non da fare dentro questo goal**: S5b (unificare
-la mappa riga) e' in giacenza «finche' un goal non aggiunge campi di riga»
-— Goal I ne aggiunge uno. Diventa proponibile alla chiusura del goal, non
-prima, e resta corsia deep.
 
 ## Goal J — un task completato misura la stima         [sospeso dall'utente]
 Un task si puo' marcare **completato**, e quello e' l'unico caso in cui la
@@ -320,6 +195,16 @@ di questi cresce fino a meritarne una, si apre un goal e lo si sposta.
 
 ## Decisioni chiuse — non riproporre
 
+**La descrizione di un task (Goal I).** Chiuso, recensito (`ship`, zero
+ACTION) e potato. **Non ha e non avra' superficie sul grafico**: niente icona
+di riga, niente tooltip — chiesto due volte e confermato due volte. Si legge
+dal modal, dal CSV e dall'agent API. **`addTask` la rifiuta** invece di
+perderla (l'unico percorso di creazione legge la riga dhtmlx, dove la
+descrizione non arriva): la si scrive con `updateTask` sul nuovo id, due
+chiamate e due undo, ed e' una verruca accettata. **Asimmetria nota e
+accettata**: il solo whitespace il dialogo lo cancella, agent API e parser lo
+conservano — la colpisce solo uno script.
+
 **UI e UX (Goal K).** Chiuso, recensito (`fix-first`, una ACTION, chiusa da
 K15) e potato. Le cinque risposte dell'utente restano vincolanti: il nome del
 file sta nel gruppo del marchio con ellissi; la regola «sopra si agisce sul
@@ -403,6 +288,9 @@ fatta**, e va rifatta se qualcuno riapre la questione.
 
 ## Da riproporre — nessuno le ha comprate
 
+- **S5b, unificare la mappa riga** (corsia deep). Era in giacenza «finche' un
+  goal non aggiunge campi di riga»: Goal I ne ha aggiunto uno, quindi la
+  condizione e' soddisfatta e la proposta e' aperta.
 - **`applied()` (`resources.ts:48`) scrive `availability ?? 1` a ogni
   `updateResource` dell'agent API** — l'ultimo gemello della regola che F12 ha
   appuntato sul dialogo People. Offerto due volte, rimandato due volte;
@@ -495,6 +383,8 @@ misurato. Le lezioni durevoli stanno in `.claude/orchestrate.md`, non qui.
 | T17 | polish | browser | - | - | 11+/4- | 0 |
 | I2 | feature | 1 Explore 28 | 115 | 132 | 46+/2- | 0 |
 | I3 | feature | lettura diretta | 139 | 138 | 50+/4- | 1 (hub) |
+| I4 | docs | hub | - | - | 0 | - |
+| goal review I | review | - | - | 87 (fable) | 0 | - |
 
 Sopra ~300k per meno di ~50 righe di `src/` e' un difetto di processo e va
 all'utente coi numeri, non nel Log come successo a zero round.
