@@ -184,6 +184,17 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   subtree + dependency cleanup).
 - Only a task **with subtasks** confirms deletion. The opener button names its
   task.
+- **The description is a dialog-only field**: a textarea last in the grid, on
+  summaries as much as on leaves. It has no surface on the chart — no row
+  icon, no tooltip, no column — and reaches a reader through the modal, the
+  CSV and the agent API instead.
+  - **`save()` refuses past `DESCRIPTION_LIMIT`** rather than truncating with
+    `maxLength`: the model must never hold a project `serializeForFile`
+    would refuse, which would leave Save writing nothing. One constant
+    (`serialization.ts`), counted in UTF-16 units on every surface that
+    writes — the dialog, the agent API and the parser.
+  - Whitespace-only reads as empty in the dialog and removes the text; the
+    agent API stores what it is given, `''` and `null` apart.
 - **Row heights are stable, not incidental** (`TaskDialog.tsx`, `.taskinfo__*`
   in App.css): anything matching a control's height uses
   `--dialog-control-h` on `.dialog` (`dialog.css`), set to the taller of the

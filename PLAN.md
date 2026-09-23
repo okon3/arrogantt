@@ -6,11 +6,11 @@ Goal D, E, F, G, H e K sono **chiusi, recensiti e potati**; le loro Accept lines
 sono cadute dopo la review, come vuole la regola. Ultima release **`v1.6`**
 (2026-09-23), che ha portato i bullet accumulati di H e K: figura per il
 cliente senza colonne, task disattivati riconoscibili ovunque e fuori dalle
-figure, controlli di vista sulla status bar. `## Unreleased` non esiste
-adesso: il primo bullet di Goal I lo ricrea.
+figure, controlli di vista sulla status bar. `## Unreleased` e' stato
+ricreato dal bullet di Goal I.
 **Goal I** (descrizione per task) e' **avviato**: domande di prodotto tutte
-chiuse, suddivisione rivista sulla ricognizione del 2026-09-21. Resta
-solo I4 (docs e changelog).
+chiuse, suddivisione rivista sulla ricognizione del 2026-09-21. Tutti e
+quattro i task sono chiusi: il goal aspetta la sua review.
 `## Maintenance` porta T16 (audit mobile) e T17 (nome del task in hover);
 Goal C aspetta quel report prima di ricevere task veri. **Goal J** (task
 completato come misura della stima) ha le domande di prodotto chiuse ma e'
@@ -163,9 +163,13 @@ stretto.
       `updateTask`; `getTask()` omette la chiave; la descrizione compare una
       volta sola nel file salvato. Otto celle guidate nel browser, quattro
       guardie mutate, tre check verdi. — commit e534996
-- [ ] I4 [self] — `docs/view.md` e il bullet di changelog.
-      `docs/file-format.md` **e' gia' fatto**: il campo e i due rifiuti del
+- [x] I4 [self] — `docs/view.md` e il bullet di changelog.
+      `docs/file-format.md` era gia' fatto: il campo e i due rifiuti del
       parsing strict con I1, la colonna CSV con I3.
+      **Accept**: la sezione *Details dialog* dice che il campo non ha
+      superficie sul grafico, che `save()` rifiuta invece di troncare e che
+      la costante e' una sola; `## Unreleased` esiste di nuovo e porta un
+      bullet che parla all'utente, non alle interne. Tre check verdi. — commit {SHA}
 
 **Conseguenza da proporre, non da fare dentro questo goal**: S5b (unificare
 la mappa riga) e' in giacenza «finche' un goal non aggiunge campi di riga»

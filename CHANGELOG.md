@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Give a task a description: free text in its detail dialog, for groups as
+  well as single tasks, where the title alone does not carry what you mean.
+  It comes out with the CSV export and is readable by a script.
+
 ## v1.6 — 2026-09-23
 
 - Hide the grid and choose its columns from the status bar, beside Collapse
