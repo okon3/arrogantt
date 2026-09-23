@@ -314,7 +314,7 @@ di questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       `title` nativo sullo span `.gantt-name`, incondizionato. Premessa
       misurata dall'hub prima di scrivere (al default di 230px un nome di 58
       caratteri perde 199px di 393); la corsia e' passata da `[impl]` a
-      `[self]` — una riga di template non paga i 40k d'ingresso. — commit 0b0b2e3
+      `[self]` — una riga di template non paga i 40k d'ingresso. — commit 44cfc48
 
 - [ ] T16 [architect] — Valutazione mobile: audit + proposta
       Scope: audit dell'app a viewport smartphone (375px) e tablet (768px),
