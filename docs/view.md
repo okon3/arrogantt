@@ -1,886 +1,454 @@
 # View decisions
 
-The view wraps dhtmlx-gantt Community, **rendering only** — the engine doesn't
+The view wraps dhtmlx-gantt Community, **rendering only**; the engine doesn't
 know it exists. Library traps: [dhtmlx.md](dhtmlx.md). This file records the
-*decisions* and their reasons.
+constraints and the facts; the reasoning is in the commit that made each.
 
 Icons are lucide only (`lucide-react` in components, `lucide-static` strings
-in dhtmlx templates) — except the critical-chain/dirty CSS dots, the logo and
-the HelpDialog diagram, none of which are icons. The `→` between a period
-row's two dates is one more exception: it's the word "to" set as an arrow,
-not an interactive control, and a grey svg arrow there would imply affordance
-that isn't there.
+in dhtmlx templates), except the critical-chain/dirty CSS dots, the logo and
+the HelpDialog diagram. The `→` between a period row's two dates is the word
+"to" set as an arrow, not a control.
 
 ## Colour scheme
 
-- **Follows the system, with no switch of its own.** A per-app theme is one more
-  piece of state to persist, to expose in the file or in `localStorage`, and to
-  disagree with the desktop around it. `prefers-color-scheme` already answers.
-- One palette, two sets of values: the dark scheme redefines the same variables
-  in `index.css` and no rule knows which one it is in. Accents *lighten* on
-  emphasis there — on a dark surface that is what "stronger" looks like.
-- **`--band-nonworking`** (chart bands, help diagram — one variable, two
-  consumers, both painted *under* their content) is derived in light, flat in
-  dark: a share of `--line-strong` there, `rgb(0 0 0 / 18%)` here. A share of
-  the line grey lightens over dark rows, and a weekend that lightens stops
-  reading as background — so dark stops tracking `--line-strong` on purpose,
-  and a later retune of the line grey will not reach it.
-- **`--band-nonworking-over`** is the load lane's own veil, since that one
-  paints *over* its content instead: the same light grey there would wash a
-  saturated fill out rather than read as a weekend over it. Black at low alpha
-  in both schemes — `rgb(0 0 0 / 18%)` in dark, same figure as its sibling;
-  a separately tuned low alpha in light, since a shared value would have to
-  serve two different jobs.
-- **Task, avatar and swatch colours do not change.** They are the user's (or
-  keyed to a person's name); a palette that shifted with the desktop would make
-  the same plan two different pictures.
-- **`COLOR_OPTIONS`'s 14 tints (`colors.ts`) are distinguished by hue *and*
-  luminance, not hue alone** — the only way to keep this many apart on a 12px
-  bar, and it degrades gracefully for colour-blind users (minimum CIEDE2000
-  ΔE00 across every pair: 13.87). Chroma is not capped: clearing 3:1 on both
-  rows confines lightness to a narrow band, and inside it separation can only
-  come from chroma — the two most chromatic tints (`#9f2cdd`, `#dc28af`, OKLab
-  C ≈ 0.25) sit above every Material 500 tone. A deliberate trade, chosen
-  against a soberer set with fewer tints.
-  Every tint clears 3:1 (WCAG's non-text floor) against **both** chart
-  row backgrounds — white in light scheme, `#1b1e24` in dark — since a tint
-  never changes with the scheme but the row under it does.
-- **A bar's outline is a darker mix of its own fill, not a fixed line colour**
-  (`--dhx-gantt-task-border`, `gantt.css`): 14 tints instead of 7 put
-  neighbouring tints close enough that two adjacent bars merge without a
-  separator, and one fixed grey would fight half the palette. Same 0.72
-  multiplier as `shade()` (`colors.ts`), spelled in CSS because only there can
-  it read the fill dhtmlx sets inline per task. It costs 2px of the bar's
-  content box — [dhtmlx.md](dhtmlx.md) for what that moves.
-- **The `seg-pct` badge's ink adapts to the tint it sits on, rather than the
-  palette being capped to stay legible for one fixed ink.** `needsDarkInk`
-  (`colors.ts`) compares a tint's contrast against white and against a
-  near-black (`--bar-fill-ink-dark`, same figure as dark-mode `--on-accent`,
-  invariant for the same reason) and picks whichever wins; `segmentBar.ts`
-  reads it once per fill and emits `seg-pct--dark` beside the existing
-  `seg-pct--above`. Every tint clears 4.5:1 against whichever ink it gets.
-  Without this, no single fixed ink can stay legible across a palette that
-  also has to clear 3:1 against both rows — the two floors leave a band of
-  tints where a single ink reads at neither.
-- **`AVATAR_COLORS` is kept clear of the task palette** by neither a lightness nor
-  a chroma band (the task set now spans both, to read on both rows) but by a
-  verified CIEDE2000 floor: 11.2 between avatars, 11.8 against every tint —
-  on par with the tints' own 13.87 — so an avatar never reads as a task
-  colour.
-- **Dark `--on-accent` is near-black (`#0a0c12`), not white.** Accents lighten
-  in dark (above), so white label ink loses AA on them (≈3.4:1); the near-black
-  clears 4.5:1 with margin (≈5.6:1 at rest, ≈7.6:1 on the `--accent-strong`
-  hover). Every accent-filled button — `.dialog__btn--primary`,
-  `.toolbar__primary`, `.empty__primary` — reads its ink from that variable;
-  none hardcodes a colour on an `--accent` background.
-- dhtmlx's own dark theme is taken for the parts we don't skin, with its base
-  colours re-pointed at the palette — [dhtmlx.md](dhtmlx.md) for how, and why the
-  rule is written twice.
-- **Paper stays light**: `planFigure` carries its own literals and `@media print`
-  puts the page back to white. A dark plan is a screen, not a document.
-- **The header (`.app__bar`, carrying the toolbar) and the status bar sit on
-  `--surface-sunken`; the chart, grid, scale and timeline stay `--surface`.**
-  It is the one property every `inspiration_ui/` reference shares and this app
-  lacked — a two-tone chrome, the content as the object and the bars as its
-  frame. A taste adopted, not a defect fixed. The controls living on those two
-  bars are repainted with them, one register at rest → hover → pressed
-  (`--line` then `--line-strong`, since `--surface-hover` regresses against the
-  sunken background) and one for the borderless pills that would otherwise
-  vanish into it (`--surface`, matching `.app__help`'s existing pattern).
+- **Follows the system, with no switch of its own** (`prefers-color-scheme`).
+- One palette, two sets of values: dark redefines the same variables in
+  `index.css`; no rule knows which scheme it is in. Accents lighten on
+  emphasis in dark.
+- **`--band-nonworking`** (chart bands, help diagram; painted under content)
+  is derived from `--line-strong` in light and flat in dark on purpose: a
+  retune of the line grey does not reach dark.
+- **`--band-nonworking-over`** is the load lane's veil (painted over content):
+  black at low alpha in both schemes, tuned separately.
+- **Task, avatar and swatch colours do not change with the scheme.**
+- **`COLOR_OPTIONS` tints (`colors.ts`) are distinguished by hue and
+  luminance**, every tint clearing WCAG's non-text floor against both chart
+  row backgrounds. Chroma is not capped, a deliberate trade against a soberer
+  set.
+- **A bar's outline is a darker mix of its own fill**, not a fixed line colour
+  (`--dhx-gantt-task-border`, `gantt.css`), same multiplier as `shade()` in
+  `colors.ts`. It costs the bar content box ([dhtmlx.md](dhtmlx.md)).
+- **The `seg-pct` badge's ink adapts to the tint** (`needsDarkInk`,
+  `colors.ts`; `segmentBar.ts` emits `seg-pct--dark`), rather than capping the
+  palette for one fixed ink.
+- **`AVATAR_COLORS` is kept clear of the task palette** by a CIEDE2000 floor,
+  not a lightness or chroma band.
+- **Dark `--on-accent` is near-black, not white**: accents lighten in dark.
+  Every accent-filled button reads its ink from that variable.
+- dhtmlx's own dark theme is taken for the parts we don't skin, base colours
+  re-pointed at the palette ([dhtmlx.md](dhtmlx.md)).
+- **Paper stays light**: `planFigure` carries its own literals and
+  `@media print` puts the page back to white.
+- **The header (`.app__bar`) and the status bar sit on `--surface-sunken`;
+  chart, grid, scale and timeline stay `--surface`.** A taste adopted, not a
+  defect fixed. Controls on those bars: one register at rest → hover →
+  pressed (`--line` then `--line-strong`, since `--surface-hover` regresses
+  against the sunken background), and `--surface` for borderless pills that
+  would otherwise vanish into it.
 
 ## Zoom and timeline range
 
-- Five zoom levels (days → quarters). Month columns top out ~10 months of plan;
-  quarters carry multi-year. Quarters are a custom scale unit (dhtmlx ships
-  none).
-- Ctrl+wheel (and trackpad pinch — same gesture) zooms: app-bound `wheel`
-  listener, one step per gesture burst.
-- **The window widens whenever the plan no longer fits** (dhtmlx computes range
-  at render; a pinned range outranks data → empty chart with rows in the grid).
-  An edit only ever grows it; a zoom or *Fit* recomputes it. Not per-edit — a
-  full redraw per edit isn't worth it.
-- **The widened window is pinned, on the plan plus the widest task name**, so
-  that the room past the last bar is the app's answer rather than the path's:
-  a plan reached by editing gets what the same plan reached by opening its file
-  gets. Left to the data, the margin is one column — 90px against a name that
-  renders 214, and a name sliced mid-word there is unreachable at any scroll,
-  since the timeline ends where the range does. The trailing space an edit gains
-  is the price and is deliberate.
-- **Wide enough is decided in pixels, at the scale on screen** — a pin is two
-  dates, and dates go short on their own: coarser columns buy fewer pixels for
-  the same pin, and a plan grown to just inside it keeps one column. So a change
-  of scale asks the question again, and the answer is the widest name measured
-  off the stylesheet, kept against the names it was measured on (a third of the
-  edit it rides on, on 300 rows; rebuilding the key is free).
-- **A change of scale recomputes the window from the plan, it does not repair
-  it**: an edit may only widen — the room a user is looking through is not taken
-  back from under a keystroke — but a zoom that only widened would keep every
-  widening the coarse levels needed, and the same plan at the same level would
-  end up wider for having been zoomed out and back. Plan and level decide the
-  window; the route there does not.
-- *Fit* picks the level for the plan alone and the margin goes back on top, so
-  the margin is what Fit leaves off screen. **Bars can be off screen too**, and
-  not because of the margin: columns never render narrower than dhtmlx's
+- Five zoom levels (days → quarters). Quarters are a custom scale unit.
+- Ctrl+wheel and trackpad pinch zoom: app-bound `wheel` listener, one step per
+  gesture burst.
+- **The window widens whenever the plan no longer fits.** An edit only ever
+  grows it; a zoom or *Fit* recomputes it. Not per edit.
+- **The widened window is pinned on the plan plus the widest task name**, so
+  the room past the last bar is the app's answer, not the path's. Left to the
+  data the margin is one column, and a name sliced there is unreachable at
+  any scroll. Trailing space after an edit is the deliberate price.
+- **Wide enough is decided in pixels, at the scale on screen**: coarser
+  columns buy fewer pixels for the same pin, so a change of scale asks again.
+  The widest name is measured off the stylesheet and cached against the names
+  it was measured on.
+- **A change of scale recomputes the window from the plan; it does not repair
+  it.** Plan and level decide the window, the route there does not.
+- *Fit* picks the level for the plan alone and the margin goes back on top.
+  **Bars can be off screen too**: columns never render narrower than
   `min_column_width`, so a plan too wide for the window at the coarsest level
-  cannot be on screen whole — 9 tasks over four years in a 1264px window fit to
-  *Years* and still spill 264px left and 251px right of the view. Off screen,
-  not lost: the timeline scrolls to them. The limit is the library's, with the
-  margin or without it ([dhtmlx.md](dhtmlx.md)).
-- **An opened plan is collapsed and fitted at once**: shape first, leaves one
-  click away. Status-bar count is the plan's, not the screen's. Collapsing never
-  changes the dates spanned; open branches are view state — none of it marks the
+  scrolls. The limit is the library's ([dhtmlx.md](dhtmlx.md)).
+- **An opened plan is collapsed and fitted at once.** Status-bar count is the
+  plan's, not the screen's. Open branches are view state: nothing marks the
   file dirty.
-- Every way in (toolbar, drag-drop, draft, `loadText`) shares one call; fit runs
-  after the load. **Undo is not an opening**: same restore path, but keeps
+- Every way in (toolbar, drag-drop, draft, `loadText`) shares one call; fit
+  runs after the load. **Undo is not an opening**: same restore path, keeps
   viewport, zoom, closed branches.
 
 ## Grid
 
-- **Columns are a registry (`src/gantt/columns.ts`), the grid a filter over
-  it.** `PLAN_COLUMNS` holds `resource_id`, `nominal_days`, `start_date`,
-  `end_shown`, `elapsed_days`, `rate`, `cost` — metadata only (label, grid
-  width, figure width, default visibility); `gridColumns.ts`'s
-  `GRID_CELLS` is the one place a column's cell (`template`/`editor`/`align`)
-  is decided, keyed exhaustively so a registry entry with no renderer is a
-  compile error. `text`, `info`, `toggle`, `add` are structural and never
-  hideable.
+- **Columns are a registry (`columns.ts`), the grid a filter over it.**
+  `PLAN_COLUMNS` holds metadata; `gridColumns.ts`'s `GRID_CELLS` decides each
+  cell (`template`/`editor`/`align`), keyed exhaustively so a registry entry
+  with no renderer is a compile error. `text`, `info`, `toggle`, `add` are
+  structural and never hideable.
 - **Every numeric column is `align: 'right'`; dates and the avatar stay
-  `center`.** Effort, Duration, Rate and Cost are read down the column against
-  the rows above, and centring makes figures of unequal width (`2d` against
-  `55d`, `600` against `33,000`) impossible to line up; a date is fixed-width,
-  so it has nothing to gain. The 6px cell gutter keeps a figure off the column
-  border, and a `≥` prefix pushes left while the digits stay aligned. **The
-  headers remain centred, measured not chosen**: a column's `align` does not
-  reach `.gantt_grid_head_cell` in this build (`docs/dhtmlx.md`), and moving
-  them would cost a stylesheet rule plus a gutter to match for no legibility
-  the grid actually shows.
-- **`rate` and `cost`, `defaultShown: false`.** A project that never enters a
-  rate looks exactly as it did before these two existed; ticking either in the
-  picker persists across projects and reloads like any other column. Their
-  `label(project)` is the first in the registry that reads its argument: the
-  header carries the currency (`Rate (EUR)` / `Cost (EUR)`), the bare word when
-  `project.currency` is absent — the unit lives in the header, never in a cell
-  (`format.ts`'s `formatMoney`/`formatDays` are unitless by the same rule the
-  status bar total follows). They are also **the only two columns whose width is
-  measured against a named string**, and not against the same kind of string:
-  `rate` against its header, which has a legal maximum, and `cost` against a
-  cell, whose widest plausible form is a partially costed summary's `≥` in
-  front of a nine-digit total. `columns.ts` carries both reasons and the
-  measurements. Whether a header is cut depends on the column and the glyphs,
-  not the character count — measured live in the running app (header font
-  system-ui 600 11px, the app's own, since the scale containers were made to
-  inherit it; two instruments agreeing on every cell below: a `Range` over the
-  header text minus one trailing `letter-spacing`, and
-  `scrollWidth > clientWidth`):
-
-  | Currency | chars | `rate` (84px avail) | `cost` (98px avail) |
-  | --- | --- | --- | --- |
-  | `€` | 1 | 46.28 fits | 48.12 fits |
-  | `EUR` | 3, ordinary | 61.76 fits | 63.62 fits |
-  | `WWW` | 3, widest | 73.37 fits | 75.22 fits |
-  | `EURO` | 4, ordinary | 70.64 fits | 72.48 fits |
-  | `WWWW` | 4, widest | 84.65 **cut** | 86.50 fits |
-  | `EUROS` | 5, ordinary | 77.28 fits | 79.14 fits |
-  | `WWWWW` | 5, widest | 95.93 **cut** | 97.78 fits |
-  | `WWWWWWWW` | 8, `validateCurrency`'s max | 129.79 **cut** | 131.64 **cut** |
-
-  **The two columns have separate budgets and, measured, separate thresholds.**
-  `rate` cuts from four *widest* characters on, while `EURO` and `EUROS` both
-  hold: the same length lands on opposite sides of the split, so the count
-  never decided it — the glyphs and the column did. `cost`'s 98px holds every
-  case up to five widest characters, and only the eight-character maximum cuts
-  there. The cut is accepted rather than paid for in grid width, as is a
-  ten-digit cost. **Not driven**: any currency string outside these eight; the
-  figure's own header. That one (`figureWidth`) is a separate budget under a
-  different rule: `truncate` (`planFigure.ts`) divides the width by a fixed
-  6.4px per character, glyph-blind, so there the count *is* the criterion —
-  `rate` fits 10 characters, so `Rate (EUR)` holds and four cut; `cost` fits
-  12, so `Cost (EUROS)` holds and six cut. Goal G's export dialog redecides it.
-  Cost cell: empty when the row's own effort
-  (`rolled_effort_days`) is zero (a milestone, or an all-zero summary); `—` in
-  the `gantt-derived` register, titled *No resource* or *No rate for `<name>`
-  on these days*, when `cost_amount` is `null` (the null rule is
-  `reportedCost` in `cost.ts` — never re-derived here from the day counts);
-  `≥ <amount>` titled `<n> d of effort not costed` when some of the row's
-  effort had no rate — the `≥` needs no legend because a rate is never
-  negative, so a partial sum is always a true lower bound; otherwise the plain
-  amount. Rate cell: the row's own `daily_rates` — one figure, an en dash
-  range (`600–650`) when the rate changed inside the task, `—` when a leaf has
-  effort and no rate, empty on a summary and on a milestone (every non-summary
-  zero-effort leaf is a milestone, so there is no leaf left uncovered). Neither
-  column carries an `editor` or a `DERIVED_ON_SUMMARY` entry — there is
-  nothing on either cell a click could open.
-- **Hidden means not built, never `hide: true`.** `GridColumn.hide` is `(PRO)`
-  in the typings and unprobed in this Community build; a column absent from
-  `config.columns` cannot be tabbed into, edited or measured, which is what
-  keeps the picker's per-column checks simple.
-- **The picker**: a status-bar icon (`Columns3`) opens a non-modal `<dialog>`
-  popover around `ColumnChecklist` — one checkbox per registry entry in
-  registry order, a rule this file's *Export dialog* section shares and
-  neither owns — `text` never offered. Closes on Escape and on a
-  capture-phase outside click
-  (`ColumnPicker.tsx`, same shape as `RowMenu`), and that click opens no
-  inline editor under the pointer. Focus moves to the first checkbox on open
-  (an explicit `.focus()` in the positioning effect, `RowMenu`'s precedent —
-  `setAutofocus` only fires through `showModal()`, which this dialog never
-  calls), Tab/Shift+Tab cycle the checkboxes only, wrapping at both ends, and
-  Escape alone returns focus to the status-bar button (an outside click leaves
-  focus where the click put it). Opened from the status bar the popover has no
-  room below it, so it flips **above the button** — above its top edge, not its
-  bottom, or the last row of the list would cover the button that opened it.
-- **Persisted, but as a preference, not plan data**: `localStorage` key
-  `arrogantt.columns.v1`, a JSON array of the *shown* names in registry order —
-  written only by a picker change, read once at first render
-  (`readColumnSelection`). Absent key, a value that is not a JSON array of
-  strings, or a JSON parse failure all fall back to the defaults; a name the
-  registry does not recognise is dropped silently; a registry name absent
-  from the array is hidden. Not the `.gantt` file: a client's copy must not
-  carry the author's grid layout, and the file gate never sees this key.
-- **View state like the grid collapse, except this one survives a reload**: no
-  undo entry, no dirty flag, nothing reaches `toText()`, no `window.arrogantt` op
-  (`agentApi.ts` is an adapter over the same handle ops the buttons use, and
-  there is no op for this one either).
+  `center`.** Headers remain centred: `align` does not reach the head cell in
+  this build ([dhtmlx.md](dhtmlx.md)), and a rule of our own would buy no
+  legibility.
+- **`rate` and `cost`, `defaultShown: false`.** Their `label(project)` carries
+  the currency (`Rate (EUR)`), the bare word when absent; the unit lives in the
+  header, never in a cell (`format.ts` is unitless). They are the only two
+  columns whose width is sized against a named string: `rate` against its
+  header, `cost` against a `≥` nine-digit cell; `columns.ts` carries the
+  budgets. **The two have separate budgets and separate cut-off thresholds**,
+  decided by glyphs and column, not character count; a long currency label is
+  cut rather than paid for in grid width. The figure's header (`figureWidth`)
+  is a separate, glyph-blind budget under `truncate` in `planFigure.ts`.
+  Cost cell: empty when the row's own effort is zero; `—` (`gantt-derived`),
+  titled *No resource* or *No rate for `<name>` on these days*, when
+  `cost_amount` is `null` (the null rule is `reportedCost` in `cost.ts`, never
+  re-derived here); `≥ <amount>` titled `<n> d of effort not costed` for a
+  partial sum (a rate is never negative, so it is a true lower bound). Rate
+  cell: the row's `daily_rates`, one figure or an en-dash range, `—` for a leaf
+  with effort and no rate, empty on summaries and milestones. Neither carries
+  an `editor`.
+- **Hidden means not built, never `hide: true`** (`(PRO)` in the typings,
+  unprobed). A column absent from `config.columns` cannot be tabbed into,
+  edited or measured.
+- **The picker**: a status-bar icon opens a non-modal `<dialog>` around
+  `ColumnChecklist`, one checkbox per registry entry in registry order (a rule
+  shared with the Export dialog), `text` never offered. Closes on Escape and
+  on a capture-phase outside click that opens no editor (`ColumnPicker.tsx`,
+  same shape as `RowMenu`). Focus moves to the first checkbox on open (an
+  explicit `.focus()`; `setAutofocus` only fires through `showModal()`), Tab
+  cycles the checkboxes wrapping, Escape alone returns focus to the button.
+  It flips **above the button**, above its top edge.
+- **Persisted as a preference, not plan data**: `localStorage`
+  `arrogantt.columns.v1`, a JSON array of the shown names, written by a picker
+  change, read once at first render (`readColumnSelection`). Anything
+  malformed falls back to the defaults; unknown names are dropped silently.
+  Never in the `.gantt` file.
+- **View state that survives a reload**: no undo entry, no dirty flag, nothing
+  in `toText()`, no `window.arrogantt` op.
 - **One rebuild path, `rebuildColumns()` in `GanttChart`**, called from
-  `setColumns`, from `loadProject` (after `gantt.parse` — an opened file's
-  `currency` can change a header label), from `setCurrency`, and from
-  `setResources` when its third argument (the People dialog's currency field)
-  is present — and nowhere in `applySolution` (nothing on that path changes
-  which columns exist or their labels). **It carries over the width of every
-  column the user dragged**, by name: the registry decides which columns
-  exist, never how wide someone made them — a rebuild that forgot them
-  re-truncated every task name on the next tick, on every one of its call
-  sites, `loadProject`, `setCurrency` and `setResources` included
-  (`docs/dhtmlx.md` carries the measurement). Grid open: sets
-  `config.grid_width` from the new columns. Grid collapsed
-  (`savedGridWidthRef.current !== null`): leaves `grid_width` at 0 and writes
-  the new budget into `savedGridWidthRef`, so a restore comes back at the size
-  the *current* selection needs — the splitter's own position from before the
-  rebuild is forgotten, which is fine for view state. `gantt.render()` is enough to make
-  the rebuild stick (`docs/dhtmlx.md`); the init effect builds from the user's
-  selection before `gantt.init()`, so the first paint carries no flash.
-- Columns: inputs (name, resource, effort, start) + derived **end and duration**
-  — faint italic, **no editor declared** (nothing to open; the model has no end
-  field anyway). A summary's effort/resource/start are refused the same way.
-- **Summary resource column** shows up to 4 overlapping faces of everyone below
-  + `+n`; native `title` names them all in face order; the summary bar carries
-  the same list. Those faces carry **colour only, no initials** — under the 8px
-  overlap two letters printed as one word — and they don't highlight (a sliver
-  isn't a choice; `+n` has no face). `+n` is the one item drawn whole and the
-  only one with text. A single-person branch draws a normal avatar, initials
-  and highlight included: there is no pile.
-- The two derived columns cost 146px, paid by the **timeline**, not the name
-  column (a truncated name is the one cell you can't guess; the timeline scrolls
-  and re-scales).
+  `setColumns`, `loadProject` (after `gantt.parse`), `setCurrency`, and
+  `setResources` with a currency argument; never from `applySolution`. **It
+  carries over every dragged width by name.** Grid open: sets
+  `config.grid_width`. Grid collapsed: leaves it at 0 and writes the budget
+  into `savedGridWidthRef`. `gantt.render()` makes it stick
+  ([dhtmlx.md](dhtmlx.md)); the init effect builds from the selection before
+  `gantt.init()`.
+- Columns: inputs (name, resource, effort, start) + derived **end and
+  duration**, faint italic, **no editor declared**. A summary's
+  effort/resource/start are refused the same way.
+- **Summary resource column** shows up to `AVATAR_STACK_LIMIT` overlapping
+  faces + `+n`; native `title` names them all. Stacked faces carry **colour
+  only, no initials**, and don't highlight; `+n` is the only one with text. A
+  single-person branch draws a normal avatar.
+- The two derived columns are paid by the **timeline**, not the name column.
 - Editor keys: Tab/Shift+Tab walk editable cells across rows saving each on
   leave; Enter saves+closes; Esc closes without saving. Focused field carries
-  the app's violet focus ring.
+  the app's focus ring.
 - **A top-level task starts a new group** (`gantt-row--group-start`,
-  `installRowTemplates`), marked on the grid row and the timeline row both: the
-  tree's indentation stops at the grid, so the timeline has nothing else saying
-  where one block ends. A 2px inset top shadow in `--line-strong`.
-  Not a background: hover, `gantt_selected`, `gantt-found` and
-  `gantt-found-below` already contend for the row's background, which is why
-  `gantt.css:113-118` keeps zebra striping off.
-  Not a `border-top`: rows compute `border-box` at an inline `height`, so a
-  border costs no row height — but it offsets the grid pane against the
-  timeline by its own width **once the grid scrolls** (measured: 2px, constant
-  on every row, no accumulation; the inset shadow measures 0 at every scroll
-  position).
-  2px, not 1px: `--line-strong` (`#dfe2e8` light, `#3d434e` dark) is one step
-  from the `--line` (`#edeef1`, `#2b2f37`) of the ordinary row hairline, so at
-  1px the two read alike in both schemes.
-  **`box-shadow` does not merge across rules**: a further row rule drawing a
-  shadow on a group-start row needs a compound declaration carrying both, as
-  `.gantt-found.gantt-row--group-start` does for the left-edge accent — in
-  **both** panes. In the timeline the pairing is not a refinement: every
-  top-level row is a group start, so without it the match's edge never paints.
-- **Collapse to zero width, status-bar toggle** (`toggleGridCollapsed`), so the
-  chart alone can fill the window. Remembers the width to restore by measuring
-  `$grid.offsetWidth` at the moment of collapsing, not `config.grid_width` —
-  not because the config value is known stale (dhtmlx's own internal listener
-  does keep it in step with a real drag, [dhtmlx.md](dhtmlx.md)), but
-  defensively: no handler in this app's own code observes that drag, so
-  nothing here depends on an internal side effect it doesn't own. Not
-  persisted — it does not survive a reload, and it is view state only: no
-  undo entry, no dirty flag.
-- **The dhtmlx row schema is written in five places** (cited by symbol, not by
-  line — the count moves with every field added): `toGanttData` and
-  `applySolution` (plus `writeChainOntoRows` for the chain flags) map model →
-  row; `handle.addTask` builds a new row; `onAfterTaskAdd` and `pullFromView`
-  read row → model. A new field goes in **both** model → row paths wherever
-  the row mirrors the model — derived figures and carried inputs
-  (`nominal_days`, `resource_id`, and now `cost_amount`, `cost_costed_days`,
-  `cost_uncosted_days`, `daily_rates`) alike; identity and view state are the
-  exception the next bullet draws. Added to one path only, a field is right on
-  open and stale after every edit — it doesn't throw, it lies. `progress` sits
-  on the exception side and is not an oversight: the parse and `updateTask`
-  write it, and no path clears it on the model without writing the row. The
-  cost fields are read-only derivations of the solve, like `elapsed_days`, so
-  `handle.addTask`'s placeholder values (`null`/`0`/`0`/`[]`) are overwritten
-  by the `applySolution()` its own caller (`onAfterTaskAdd`) triggers, never
-  rendered.
-- **The two model → row paths are not interchangeable**, so a single
-  `rowFieldsOf` could not be the whole of either. `toGanttData` formats
-  `start_date`/`end_date` as **strings** — `gantt.parse` wants them
-  (`ganttRows.ts:51`) — while `applySolution` assigns **`Date`**
-  (`GanttChart.tsx:235`); whether `gantt.parse` accepts a `Date` there is
-  **unverified**. And identity and view state (`text`, `parent`, `open`,
-  `progress`) are written by the parse alone (`ganttRows.ts:46-61`): it has to
-  stay that way, since rewriting `parent` during a move or reopening collapsed
-  branches on every solve would be a bug. The three row → model paths do not
-  unify — reading a row back is different semantics, not the same map reversed.
+  `installRowTemplates`), marked on grid and timeline rows both with a 2px
+  inset top shadow in `--line-strong`. Not a background: hover, selected,
+  found already contend for it, and zebra striping is off for the same
+  reason. Not a `border-top`: a border offsets the grid pane against the
+  timeline once the grid scrolls. 2px, not 1px: `--line-strong` is one step
+  from `--line`, and at 1px the two read alike. **`box-shadow` does not merge
+  across rules**: a further row rule drawing a shadow on a group-start row
+  needs a compound declaration carrying both
+  (`.gantt-found.gantt-row--group-start`), in **both** panes; in the timeline
+  every top-level row is a group start, so without it the match's edge never
+  paints.
+- **Collapse to zero width, status-bar toggle** (`toggleGridCollapsed`).
+  Remembers the width by measuring `$grid.offsetWidth`, not
+  `config.grid_width`, defensively. Not persisted; no undo, no dirty.
+- **The dhtmlx row schema is written in five places**: `toGanttData` and
+  `applySolution` (plus `writeChainOntoRows`) map model → row;
+  `handle.addTask` builds a new row; `onAfterTaskAdd` and `pullFromView` read
+  row → model. A new field goes in **both** model → row paths wherever the row
+  mirrors the model; added to one only, it is right on open and stale after
+  every edit. Identity and view state (`text`, `parent`, `open`, `progress`)
+  are written by the parse alone and must stay so.
+- **The two model → row paths are not interchangeable**: `toGanttData` formats
+  dates as strings for `gantt.parse`, `applySolution` assigns `Date`; whether
+  `gantt.parse` accepts a `Date` is unverified.
 
 ## Right-click add
 
 - Context menu on grid row, bar, or a bar's empty lane: task below, subtask
-  inside, milestone below. (Before: only *append*, then drag into place.)
+  inside, milestone below.
 - **Where you click decides the start**: on the timeline, the day under the
-  pointer (rounded to first working day, like a drop); in the grid, the target
-  row lends its start (summary → rolled-up earliest). **Never today** — an
-  unchosen date next to a March plan would drag the plan's start back.
-- Menu names its row; closes on Esc or outside click, and that click does
-  nothing else (it would open an inline editor). Del and Ctrl+Z are held off
-  while open, as inside dialogs.
+  pointer (rounded to a working day); in the grid, the target row lends its
+  start. **Never today.**
+- Menu closes on Esc or outside click, and that click does nothing else. Del
+  and Ctrl+Z are held off while open.
 
 ## Details dialog
 
-- Holds float (measured per row on open — a column would be a search per row per
-  edit), progress, colour, and delete (with subtree + dependency cleanup).
-- Only a task **with subtasks** confirms deletion — the one whose extent isn't
-  on screen. The opener button names its task (identical unnamed buttons defeat
-  keyboard users stepping between rows).
+- Holds float (measured per row on open), progress, colour, and delete (with
+  subtree + dependency cleanup).
+- Only a task **with subtasks** confirms deletion. The opener button names its
+  task.
 - **Row heights are stable, not incidental** (`TaskDialog.tsx`, `.taskinfo__*`
-  in App.css). Numbers measured in the browser, never derived: this dialog's
-  `.dialog__control` renders at 27px for text/number, 29px for select/date —
-  a browser sizing quirk, not a stylesheet difference — so anything matching a
-  control's height uses the taller, 29px, from one `--dialog-control-h: 29px`
-  custom property on `.dialog` (`dialog.css`). The floor lives on the three
-  row-matching rules below, not on `.dialog__control` itself: a row whose only
-  control is text/number (no select/date sibling to already hold it at 29px)
-  has nothing else to absorb the difference, so putting the floor on the
-  primitive grows that row by ~2px instead of leaving it stable.
+  in App.css): anything matching a control's height uses
+  `--dialog-control-h` on `.dialog` (`dialog.css`), set to the taller of the
+  browser's two native control heights. The floor lives on the row-matching
+  rules, not on `.dialog__control`.
   - **The "0 = milestone" hint is always rendered**, hidden with
-    `visibility: hidden` (`.taskinfo__hint--reserved`) rather than removed, on
-    a leaf whose effort isn't 0 and on a summary's Effort cell (never a
-    milestone) — its slot holds the row's height instead of the row shrinking
-    mid-edit.
-  - **`.taskinfo__derived` carries only the semantics** (italic, `--ink-faint`)
-    — it is shared with the Float em-dash in the Computed `dl`, which must stay
-    a plain inline span. The height rule (`display: inline-flex; align-items:
-    center; min-height: var(--dialog-control-h)`) is the modifier
-    `.taskinfo__derived--cell`, applied only to the spans standing in for a
-    grid cell (`fromChildren`, the colour row's "inherited from the parent
-    task"). `.taskinfo__checkbox` gets the same `min-height` directly.
-    `.taskinfo__amount` also gets it, since its native 27px would otherwise
-    leave a leaf's row 2px short of the same row on a summary (whose Effort
-    cell shows the 29px derived span).
-  - **The intro hint (`p.dialog__hint.taskinfo__intro`) reserves a min-height**
-    for its normal/milestone text swap — both variants measure 48px at this
-    dialog's width.
-  - **Computed (`.taskinfo__readonly`) is a fixed 3-track grid**
-    (`grid-template-columns: repeat(3, 1fr)`), six entries over two rows —
-    DOM order End · Duration · Total effort / Float · Rate · Cost. Fixed
-    tracks, so no entry drifts with its content. Tracks
-    measure 170.656/170.672/170.672px over the same 512px content box (the
-    browser's own subpixel split of 512 ÷ 3). Widest strings measured to fit,
-    not derived: header `Total effort`, label `Rate (XXXXXXXX)`/
-    `Cost (XXXXXXXX)` (an 8-character currency — nine is refused by
-    `validateCurrency`), a Cost reading `≥ 999,999.75`, and an End date
-    (`dd/mm/yyyy`, `tabular-nums` keeps every date the same width). `row-gap:
-    var(--space-2)` separates the two rows — the block's own only internal
-    seam, the same 8px grain `.taskinfo__notes` stacks on. `dt`/`dd` stay the
-    sole descendant exception (semantic structure, no primitive reached);
-    order and inks (`tabular-nums`, `gantt-stretched`, `.taskinfo__critical`,
-    the Float em-dash) unchanged.
-    - **Rate and Cost read the same two descriptors the grid cell renders**
-      (`rateCellText`/`costCellText`, `costCells.ts`) — the dialog and the
-      grid cannot say different things about the same row because they run
-      the same function. The dialog's milestone test is `project.ts`'s
-      predicate spelled out (`task.nominalDays === 0 && !task.isSummary`),
-      never the dialog's own `isMilestone` (which reads the `effort` field
-      being typed, on purpose, so its hint can swap mid-edit) — the Computed
-      block shows the last solve and must not flicker while a zero is typed.
-      The `(CUR)` parenthesis form lives in one place, `currencyLabel`
-      (`costCells.ts`): this `dt` reads it like every other surface that
-      labels a figure — grid header and CSV export included — and nothing
-      re-spells the parentheses.
+    `visibility: hidden` (`.taskinfo__hint--reserved`), so the row does not
+    shrink mid-edit.
+  - **`.taskinfo__derived` carries only the semantics**; the height rule is
+    the modifier `.taskinfo__derived--cell`, on spans standing in for a grid
+    cell. `.taskinfo__checkbox` and `.taskinfo__amount` get the same
+    `min-height`.
+  - **The intro hint reserves a min-height** for its normal/milestone swap.
+  - **Computed (`.taskinfo__readonly`) is a fixed 3-track grid**: End ·
+    Duration · Total effort / Float · Rate · Cost, so no entry drifts with its
+    content. Sized against `Total effort`, an 8-character currency label, a
+    `≥` cost and a `dd/mm/yyyy` date (`tabular-nums`).
+    - **Rate and Cost read the same descriptors the grid cell renders**
+      (`rateCellText`/`costCellText`, `costCells.ts`). The dialog's milestone
+      test is `project.ts`'s predicate, not the dialog's own `isMilestone`
+      (which reads the field being typed, on purpose). `currencyLabel`
+      (`costCells.ts`) is the one home of the `(CUR)` form.
     - **A summary's Cost reason ignores `resourceName`**: `costCellText` takes
-      a required `isSummary`, and on the no-figure branch a summary reads `No
-      resource` whatever name it is handed. The two surfaces that render the
-      descriptor's `title` — the grid cell and this dialog — therefore say the
-      same thing about a task that was a rated leaf and then gained a child;
-      the third caller, `planFigure.ts`, renders `text` only and shows no
-      reason on any row. The flag is required rather than optional so no
-      renderer can be added without answering it. The grid's raw `resource_id`
-      still holds the assignment from when the row was a leaf; it is no longer
-      readable as one.
-  - **Notes (`.taskinfo__notes`) are a region with a reserved minimum, not a
-    fixed band.** `min-height` is one real two-line `.taskinfo__note`,
-    measured at this width (12px font: 16px × 2 = 32px) — not derived from
-    line-height. A short one-line note still reserves that floor; a second
-    note or a longer wrap grows the region past it. Accepted trade-off:
-    `task`/`slack` are fixed at mount (the dialog remounts per open), so this
-    height only ever varies task-to-task, never mid-edit — cross-task pixel
-    parity isn't worth a permanent blank band under a one-line note, but a
-    note must never clip. Spacing between notes is the region's own
-    `gap: var(--space-2)`, not a per-note margin (a UA default `<p>` margin
-    would otherwise sneak back in if a per-note margin were reintroduced).
-  - **The colour preview (`.taskinfo__preview`) is a fixed 56×14px pill**, not
-    the elastic `flex: 1` it stretched to. `margin-left: auto` sends leftover
-    row width into the gap before it rather than into the pill.
-    `.taskinfo__colors` takes `flex-wrap: wrap` with `row-gap: var(--space-2)`
-    so a wider palette degrades to a second line instead of overflowing the
-    512px content box — at today's 14-swatch palette, picker + swatches +
-    preview still fit one line with margin to spare (measured: the row holds
-    at 28px, the picker button's own height — swatches are the shorter 20px
-    circles beside it). Picker/swatch geometry (34×28, 20px circles, `--on`
-    ring) untouched.
+      a required `isSummary`, so grid and dialog say the same about a task
+      that gained a child; `planFigure.ts` renders `text` only.
+  - **Notes (`.taskinfo__notes`) reserve a minimum of one two-line note** and
+    grow past it; the height varies task-to-task, never mid-edit. Spacing is
+    the region's `gap`, not a per-note margin.
+  - **The colour preview (`.taskinfo__preview`) is a fixed pill**,
+    `margin-left: auto`; `.taskinfo__colors` wraps so a wider palette
+    degrades to a second line.
 
 ## Bar tooltip
 
-- Hover answers: dates, effort vs elapsed, person and share, and (while marked)
-  criticality and reason. Reports only what is already computed — never asks the
-  engine (float figure = a re-solve per day probed; click price, not hover
-  price). Where the marking is dashed the tooltip says in words it predates the
-  last edit — ring and sentence must not disagree.
-- Uses dhtmlx's own tooltip extension (in Community, unlike `addTaskLayer`):
-  one delegated listener, task looked up by id — survives redraws and smart
-  rendering.
+- Hover answers dates, effort vs elapsed, person and share, and (while marked)
+  criticality and reason. Reports only what is already computed, never asks
+  the engine. Where the marking is dashed the tooltip says it predates the
+  last edit.
+- Uses dhtmlx's own tooltip extension: one delegated listener, survives
+  redraws and smart rendering.
 
 ## Highlight (person)
 
 - **Highlighting is not filtering**: their rows/bars/links keep opacity, the
-  rest fades to 25%. A summary counts as theirs if anyone below is; a link is
-  kept if either end is theirs. Selected row is not spared (a bright row in
-  someone else's colour would read as highlight).
-- Toolbar avatars pin; hovering an avatar (toolbar or grid) borrows the
-  highlight. Load lanes follow.
-- Implementation: every row already carries a class per person below it;
-  highlighting injects **one stylesheet rule** dimming the rest — no redraw
-  (dhtmlx drops hand-set classes on redraw, and a hover redraw would replace the
-  node under the pointer).
+  rest fades. A summary counts as theirs if anyone below is; a link if either
+  end is. The selected row is not spared.
+- Toolbar avatars pin; hovering an avatar borrows the highlight. Load lanes
+  follow.
+- Implementation: every row carries a class per person below it; highlighting
+  injects **one stylesheet rule**, no redraw.
 
 ## Status bar
 
-- The project total sits beside `N tasks`: `Cost 12,500 EUR`, or `Cost ≥
-  12,500 EUR · 7 d not costed` when part of it is a lower bound (rates are
-  non-negative, so `≥` cannot lie), or with no suffix when the project has no
-  `currency` label. Shown iff `buildPlan(...).totalCost !== null` — a reading
-  of the solve, not of the people list: a rate with nothing assigned prices
-  nothing and shows nothing. Independent of the grid's column selection.
+- The project total sits beside `N tasks`: `Cost 12,500 EUR`, or
+  `Cost ≥ 12,500 EUR · 7 d not costed` for a lower bound, no suffix without
+  `currency`. Shown iff `buildPlan(...).totalCost !== null`. Independent of
+  the column selection.
 
 ## Search
 
-- Status-bar box: marks matches in grid and timeline, shows count; Enter walks
-  (opening branches, scrolling, selecting), Shift+Enter backwards, wraps.
-  Ctrl+F focuses the box (beats the browser's find); Esc empties it.
-- **Marks and walks, never filters** (same argument as highlight; on a tree,
-  filtering either drops the hierarchy or shows non-matches). Nothing hidden =
-  nothing to undo.
-- A closed summary hiding matches carries a **fainter mark** (a pointer to where
-  to open, not a result; the walk lands on real matches).
-- A match is a background **and** a 2px left edge in `--accent`, in grid and
-  timeline both. The edge is what carries it: since Q3 gave the selected row
-  `--accent-soft`, the background alone says only "one of these two states",
-  and measured, a found row and a selected row were identical in the timeline.
-  The bar cannot carry the mark — its outline belongs to the critical chain and
-  its fill to the user's colour.
-- Case- and accent-insensitive both ways (*analysis* ↔ "Analysis"). Marks come
-  from a row template asking one query (no per-row class copies). Matches
-  re-measured after every edit; the current match keeps its place while it still
-  matches.
+- Status-bar box: marks matches in grid and timeline, shows count; Enter
+  walks (opening branches, scrolling, selecting), Shift+Enter backwards,
+  wraps. Ctrl+F focuses the box; Esc empties it.
+- **Marks and walks, never filters.**
+- A closed summary hiding matches carries a **fainter mark**.
+- **A match is a background and a 2px left edge in `--accent`, in grid and
+  timeline both.** The edge carries it: the selected row shares
+  `--accent-soft`, so the background alone is ambiguous. The bar cannot carry
+  the mark (its outline is the critical chain's, its fill the user's).
+- Case- and accent-insensitive. Marks come from a row template asking one
+  query. Matches re-measured after every edit; the current match keeps its
+  place while it still matches.
 
 ## Disabled tasks
 
-- Toggled from the row menu (leaf or summary — *Disable*/*Enable*, label
-  read off the row's own flag), from the details dialog's *Disabled*
-  checkbox, and from a red ban-icon button in its own grid column (title
-  flips *Enable*/*Disable*, stays at full opacity once off so the state is
-  discoverable without hovering). All three go through `updateTask`'s
-  `TaskPatch` — no pathway of their own, so undo and the dirty check come free.
-- What is drawn is the **effective** state (`solved.disabledIds`): a leaf's own
-  flag or one inherited from a disabled ancestor. The row menu and the dialog
-  show the row's **own** flag instead — a child inside a disabled group renders
-  dimmed with its own checkbox still unticked, since the group is what carries
-  the flag.
-- Bar dimmed (opacity + desaturating filter, so a coloured bar fades too — bar
-  colours are inline, see [dhtmlx.md](dhtmlx.md)). The grid row reuses both:
-  most cells' ink goes to the existing muted ink; the derived cells (End,
-  Duration) are left out of that and keep their own fainter ink instead
-  (reason in the `gantt.css` comment); the task dot, the person avatar and its
-  part-time badge — each a saturated colour of their own, not plain ink — take
-  the bar's own opacity + desaturating filter. The name additionally carries a
-  line through it, on top of the muted ink; the dot is a sibling span, so the
-  line does not cross it.
-  The row's action buttons (info, toggle, add) are never selected by any of
-  this and stay at full strength, since the toggle is how the row is turned
-  back on. Milestones share `task_class`, so the diamond dims for free.
-- Never coexists with critical or shared (the engine guarantees it), so the
-  three classes are independent — no ordering rules needed between them.
+- Toggled from the row menu, the details dialog's *Disabled* checkbox, and a
+  ban-icon grid column (stays at full opacity once off). All three go through
+  `updateTask`'s `TaskPatch`.
+- Drawn state is the **effective** one (`solved.disabledIds`); menu and dialog
+  show the row's **own** flag.
+- Bar dimmed (opacity + desaturating filter). Grid row: most cells' ink goes
+  muted; End/Duration keep their fainter ink (reason in the `gantt.css`
+  comment); dot, avatar and part-time badge take the bar's opacity + filter;
+  the name is struck through, and the dot is a sibling span so the line does
+  not cross it. Action buttons stay at full strength. Milestones share
+  `task_class`.
+- Never coexists with critical or shared (engine guarantee), so the three
+  classes are independent.
 
 ## Bar decorations
 
-- **Critical chain = outline, never fill** (bar colour is the user's; a
-  background rule silently beats the inline variable). **Off by default** — a
-  ring on every load reads as a warning before any question was asked; toggle in
-  the status bar. Links are never drawn as the chain (a dependency between two
-  critical tasks needn't be why either is critical).
-- Task names sit **beside** bars (inside belongs to the allocation profile).
-- **Bar shape = `--radius-bar` (6px)**, part of the app's small-radius family
-  (buttons, inputs, menu items), not the pill it used to be. The summary takes
-  **3px** instead, sized to its own 10px height — the family's radius there
-  would still clamp to a half-height capsule. Outside the family on purpose:
-  the milestone diamond keeps its own restated 3px, and the today scale chip
-  stays a pill — a chip, not a bar.
-- **The critical ring is rounder than the bar it marks — measured, accepted.**
-  An `outline` takes no radius of its own: its painted silhouette is
-  `border-radius + outline-offset + outline-width`. On the summary that is 6px
-  on a 16px-tall box (0.75 of a capsule) against the body's 0.60; on a leaf the
-  two nearly agree (0.60 against 0.50). The offset is not the lever — 0 moves
-  the ring to 0.71. The only lever is the body's radius, and at 2px the ring
-  reaches 0.625 while the body drops to 0.40 and reads squared: a visible cost
-  for an invisible gain.
-- **Milestone = diamond** (dhtmlx milestone type): same colour, same ring (on
-  the diamond), same dimming; grid dot becomes a diamond; dialog heading flips
-  to *Milestone* at effort 0.
-- Milestone day placement: its start and end are the same working minute = two
-  instants. One that closes something is drawn where that thing was drawn (else
-  the diamond sits a weekend past the bar, beyond the plan's end where dhtmlx
-  draws nothing); one nothing runs into sits on the morning of its given date.
-  Decided from **predecessors**, never the start constraint.
-- Today: exact vertical line at every zoom + a pill on the scale cell holding it.
+- **Critical chain = outline, never fill.** **Off by default**; toggle in the
+  status bar. Links are never drawn as the chain.
+- Task names sit **beside** bars.
+- **Bar shape = `--radius-bar`**, the app's small-radius family. The summary
+  takes its own smaller radius, sized to its height; the milestone diamond
+  restates its own; the today scale chip stays a pill (a chip, not a bar).
+- **The critical ring is rounder than the bar it marks; accepted.** An
+  `outline` has no radius of its own: its silhouette is `border-radius +
+  outline-offset + outline-width`, so the offset is not the lever and the
+  body's radius is; shrinking it reads squared for no visible gain.
+- **Milestone = diamond**: same colour, same ring, same dimming; grid dot
+  becomes a diamond; dialog heading flips to *Milestone* at effort 0.
+- Milestone day placement: one that closes something is drawn where that
+  thing ends; one nothing runs into sits on the morning of its date. Decided
+  from **predecessors**, never the start constraint.
+- Today: exact vertical line at every zoom + a pill on the scale cell.
 
 ## Dependencies
 
-- The link handle sits above the task label (`.gantt_link_control { z-index:
-  3 }` in `gantt.css`): the label used to cover the dot whole, and a mousedown
-  aimed at it dragged the bar instead of drawing a link.
-- Only finish-to-start links: dragging from the predecessor's left dot is
-  rejected in `onBeforeLinkAdd` with a message, never scheduled. The type is a
-  view concept — `syncLinks` reads every link as finish-to-start
-  source→target regardless of what dhtmlx drew, so a start-to-start gesture
-  would show one thing and schedule another.
-- The error banner (`.app__error`, `App.tsx`) — a rejected link, a failed open,
-  a failed PNG export — clears on the next successful model change, not on a
-  timeout: it's reset in the `onChange` funnel, the same place every model
-  change flows through. It's an absolutely positioned overlay inside
-  `.app__body`, not in flow, so its appearance never shifts the grid rows
-  under a pointer that's mid-gesture.
+- The link handle sits above the task label (`.gantt_link_control
+  { z-index: 3 }`, `gantt.css`): the label used to cover the dot.
+- Only finish-to-start links: a left-handle drag is rejected in
+  `onBeforeLinkAdd` with a message. `syncLinks` reads every link as FS.
+- The error banner (`.app__error`, `App.tsx`) clears on the next successful
+  model change (reset in the `onChange` funnel), not on a timeout. Absolutely
+  positioned inside `.app__body`, so it never shifts rows under a mid-gesture
+  pointer.
 
 ## Non-working time shading
 
-- Two registers: **non-working days** grey (calendar-driven — a 4-day week
-  shades like a weekend); **time off** red — shutdown on every row, absence only
-  on that person's rows. Only zero periods count as time off; reduced
-  availability reads in the profile.
-- Bands positioned in **pixels**, not shaded cells → exact at every zoom. Time
-  off paints twice: tint under bars + hatch over them (a bar crossing an absence
-  shows both its colour and the reason it stretched).
-- Only non-working days can be dropped, and by **width** (< 10px reads as a
-  hairline), not zoom level: a weekend at month scale (7px) disappears, a
-  3-day-week's off days (13px) stay. Time off has no floor.
-- Width test = one pixels-per-day for the whole timeline × run length in days —
-  never the band's own width (month columns vary 28–31 days → bands blinked
-  along the chart). Runs measured before clipping to the rendered range.
+- Two registers: **non-working days** grey (calendar-driven); **time off**
+  red, shutdown on every row, absence on that person's rows. Only zero periods
+  count as time off.
+- Bands positioned in **pixels**, exact at every zoom. Time off paints twice:
+  tint under bars + hatch over them.
+- Only non-working days can be dropped, by **width** (below the hairline
+  threshold), not zoom level. Time off has no floor.
+- Width test = one pixels-per-day for the whole timeline × run length; never
+  the band's own width (month columns vary). Runs measured before clipping to
+  the rendered range.
 - Allocation profile = single SVG path inside the bar. Both it and the bands
-  place own elements in the data area (`addTaskLayer` is PRO; dhtmlx rewrites
-  its own layers every render).
+  place own elements in the data area.
 
 ## Resource load lanes (*Resource load*)
 
-- One lane per person under the chart, same time axis. **Over-allocation cannot
-  happen** (the engine divides, never overbooks) — the signal is **unclaimed
-  capacity**: dashed ceiling = what they have (follows part-time, overrides,
-  absences), solid band = what the plan booked, gap = the answer.
-- Lanes tile the plan end to end; everyone gets one even with nothing booked (an
-  empty lane is what you came to find). Label: days booked + days free. Hovering
-  a lane names the tasks and rates at that point; hovering the avatar borrows
-  the chart's highlight.
-- **A summary contributes nothing** (double-count); an unassigned task appears
-  in no lane (no capacity involved).
-- Aggregation is the engine's (`load.ts`), from the same allocation segments the
-  bars draw, keyed by resource. Contiguity in *working* minutes merges
-  stretches; capacity is taken from what the simulation granted, not re-resolved
-  (a lane disagreeing with its schedule is worse than none).
-- X positions from the chart's `posFromDate`, following its horizontal scroll;
-  the lane starts at the timeline's measured origin, not at the grid's width,
-  which stops two borders short of it;
-  weekends shaded with the same runs and threshold as the timeline, but with
-  `--band-nonworking-over` and **over the plot, not under it**: the lane's axis
-  is working minutes, so a weekend is no time at all there, and a fill spanning
-  one crosses it at full height.
-- **`.loadlane__label` carries no padding or border**, unlike a typical labelled
-  box, so it can render at any width `toggleGridCollapsed` drives it to,
-  including 0 — `paintLoad`'s `timelineOffset` is otherwise correct at every
-  width, collapsed included. Two independent floors had to go, not one:
-  a flex item's implicit `min-width: auto` ignores an inline `width` in favour
-  of its content's own minimum (fixed with `min-width: 0`), and, separately, a
-  `box-sizing: border-box` element can never render narrower than its own
-  padding plus border, whatever `min-width` says (a negative content area
-  clamps to 0, not to the requested total) — measured on an empty clone: 21px
-  rendered against a requested 1px, exactly the label's 2×10px padding + 1px
-  border. Spacing moved to `margin` on the label's first/last child, and the
-  divider that was `border-right` is now an inset `box-shadow` (paints without
-  adding to the box, and stays inside it regardless of `overflow: hidden` —
-  an outset shadow would be clipped by it). At a fully collapsed grid the
-  avatar and name simply clip away (nothing to label); the lane's origin
-  still lines up with the chart's bars exactly, as pinned by T30/T31.
+- One lane per person under the chart, same time axis. **Over-allocation
+  cannot happen**; the signal is **unclaimed capacity**: dashed ceiling =
+  capacity, solid band = booked, gap = the answer.
+- Lanes tile the plan; everyone gets one. Label: days booked + days free.
+  Hovering a lane names tasks and rates; hovering the avatar borrows the
+  highlight.
+- **A summary contributes nothing; an unassigned task appears in no lane.**
+- Aggregation is the engine's (`load.ts`), from the same allocation segments
+  the bars draw; capacity from what the simulation granted, not re-resolved.
+- X positions from `posFromDate`, following the scroll; the lane starts at the
+  timeline's measured origin, not the grid's width ([dhtmlx.md](dhtmlx.md)).
+  Weekends shaded with the same runs and threshold, in
+  `--band-nonworking-over` **over the plot**.
+- **`.loadlane__label` carries no padding or border**, so it renders at any
+  width `toggleGridCollapsed` drives it to, including 0: a flex item's
+  implicit `min-width: auto` and a `border-box` element's padding were two
+  separate floors. Spacing is `margin` on its first/last child; the divider is
+  an inset `box-shadow`.
 
 ## In-app help
 
-- Reached from `?` and from the empty state — the two moments someone looks.
-  Explains the rising/falling fill and why critical-with-float isn't a
-  contradiction.
+- Reached from `?` and from the empty state. Explains the rising/falling fill
+  and why critical-with-float isn't a contradiction.
 - Diagram **drawn, not screenshotted**: SVG using `segmentBar.ts` geometry and
-  `gantt.css` colours (a screenshot is a stale binary and carries UI noise).
-  Pairs the profile with the one comparison that matters: 5 days effort vs 8
-  days calendar.
-- Empty state is minimal (name, one line, two buttons, help link) — the old
-  5-step explainer stood between the user and their first task.
-- Header version badge: the top `CHANGELOG.md` entry, clickable to open the
-  changelog dialog. The last version seen lives in `localStorage`
-  (`arrogantt.seenVersion`); on startup, if the top entry differs from it, the
-  dialog opens on its own, once, and closing it (however opened) records the
-  current version. First-ever visit (nothing stored) records silently instead
-  of greeting a new user with release notes. Waits for the unsaved-draft
-  question to be settled first — never stacks on that dialog.
+  `gantt.css` colours.
+- Empty state is minimal (name, one line, two buttons, help link).
+- Header version badge: the top `CHANGELOG.md` entry, opens the changelog
+  dialog. Last seen version in `localStorage` (`arrogantt.seenVersion`); a
+  new top entry opens the dialog once; a first visit records silently. Waits
+  for the unsaved-draft question first.
 
 ## Dialogs
 
-- `Dialog` (`src/gantt/Dialog.tsx`) owns the `<dialog>` chrome for every modal:
-  `showModal`, the focus/scroll fallback, and the header/body/footer skeleton.
-  Content and buttons stay per-dialog. Mounted only while open, like before —
-  it never takes an `open` prop, so a draft still initialises from props on
-  mount rather than through an effect.
+- `Dialog` (`Dialog.tsx`) owns the `<dialog>` chrome for every modal:
+  `showModal`, the focus/scroll fallback, header/body/footer. Mounted only
+  while open; never takes an `open` prop.
 - **`.dialog__body` is the only scroll container.** Header, error slot and
-  footer are `flex: none`, so a scrolled-past error or a title never leaves
-  view, and the footer's buttons are always reachable without scrolling.
-- **Width is fixed per dialog, never content-driven** — no `min-width`
-  anywhere in a dialog rule; a `min-width` next to content pressure is what
-  let an expanded row resize a dialog before. Height is content-driven up to a
-  cap, past which the body scrolls.
-- No header close button. Esc and the footer button both dismiss through the
-  same path — a real Escape fires the native `cancel` event and then `close`
-  right after, both wired to `onDismiss`, which is latched to run at most once
-  per mount.
-- **Focus on open rests on the safe option, not the one that acts.** A real
-  Escape and a stray Enter must not perform a confirmation's destructive or
-  irreversible action, so `ConfirmDialog`'s Cancel button — not its confirm
-  button — carries a literal `autofocus` HTML attribute, applied through
-  `setAutofocus` (`src/gantt/autofocus.ts`; its own module because a
-  non-component export costs `Dialog.tsx` its Fast Refresh). React's
-  `autoFocus` prop cannot supply this: it only calls `.focus()` at mount,
-  while the dialog is still closed (`showModal` runs later), which does
-  nothing. `Dialog`'s own fallback looks
-  for that same literal attribute to decide whether to focus the dialog itself
-  instead. TaskDialog's name field carries it the same way, through
-  `setAutofocus` (`src/gantt/TaskDialog.tsx`).
-  **`ExportDialog` is the one deviation, and the premise is what fails, not
-  the rule**: an export is neither destructive nor irreversible — it writes a
-  file beside the plan and changes nothing in it — so its *confirm* button
-  carries the attribute and Enter exports, while Escape cancels like
-  everywhere else. Measured: focus on open reads the `Export` button, and a
-  synthetic Enter with no further click downloaded `project.png`.
-- CSS: `src/dialog.css`, imported in `App.tsx` before `App.css` — an
-  equal-specificity per-dialog override in App.css then wins by source order,
-  which is how later migrations drop `!important` without a specificity war.
-  Every `.dialog__*` primitive is reached by an explicit class on its own
-  element — never by a per-dialog descendant selector, for the same reason. A
-  combinator between two primitives inside dialog.css itself
-  (`.dialog__header + .dialog__body`) is not that case: nothing outside the
-  file is reaching in, so no per-dialog override is outranked.
-  Everything about the chrome lives in that one file, the backdrop's dark alpha
-  included — it sits beside the light one rather than in App.css's block of
-  alpha veils, because a light/dark pair split across two files drifts apart.
-- **`.dialog` states the base size, 13px.** `.dialog__control` and
-  `.dialog__btn` are `font: inherit`: with no base they resolved against the
-  UA's 16px, which every content block corrected for itself (`.people__table`,
-  `.ranges`, `.taskinfo__field`, `.calendar__day`) and the footer buttons never
-  did. A field dropped straight into `.dialog__body` now comes out at 13 like
-  the rest. Sizes that are a deliberate step off it stay explicit: title 16,
-  confirm message 14, hints and errors 12.
-- **A descendant rule outranks a primitive.** A block rule reaching a control
-  by element — `.block__row button` (0,1,1) — beats `.dialog__btn` /
-  `.dialog__control` (0,1,0) whatever the source order, so the control keeps
-  the block's styling and every per-dialog override of the primitive is inert
-  too. No dialog control is styled that way any more: give it an explicit
-  class instead (`.people__pct`, `.ranges__date`, `.taskinfo__amount` — same
-  element, same specificity, App.css later, so it wins by order alone). Grep
-  for what else selects a control before assuming its class styles it.
-- **Period-row lists (`.ranges__row`: Calendar shutdowns, People availability,
-  People rate periods) share one CSS grid template**: fixed date/count/remove
-  tracks (`120px 12px 120px 1fr 88px 28px`), plus a `--pct` modifier that
-  inserts a 68px value track between the dates and the label. The template
-  lives once, in `PeriodRowList`, with a render prop for that value track;
-  `AvailabilityList` and `RatePeriodList` are thin wrappers over it. The rate
-  rows reuse the `--pct` modifier verbatim rather than a modifier of their
-  own, so the two lists in People's expanded panel share their tracks **by
-  construction** — same class, same computed template, whatever each list
-  holds. Confirmed rather than assumed, with one row in each:
-  `getComputedStyle(row).gridTemplateColumns` byte-identical and all seven
-  `getBoundingClientRect().x` equal to the pixel. Nothing here owes a
-  tolerance — a divergence would mean the rate rows had stopped sharing the
-  modifier, not that they had drifted within it.
-  Count is `white-space: nowrap` — 88px is "no working days" (measured 87px, the
-  widest string either list produces) rounded up to the `--space-*` grain;
-  a fixed track whose content wraps would change that one row's height
-  silently, which nowrap turns into a visibly wrong string instead. **The
-  label is the only elastic (`1fr`) track** — free text is the one thing that
-  can absorb leftover width, so dates, counts and remove buttons stay aligned
-  down the list whatever the label or count text is. A field's unit (`%`)
-  sits inside the field (`.dialog__field`/`.dialog__suffix`, dialog.css), so
-  the fixed track carries the whole field and not a bare input with a span
-  beside it — the rate row is the deliberate exception: its unit is a
-  currency declared once for the whole dialog, not per row, so its value
-  track (`.ranges__rate`) is a bare input with no wrapper and no suffix.
-  Same primitive in `TaskDialog`'s Effort ("days") and Progress
-  ("%") fields (`.taskinfo__amount`), outside any period-row list.
+  footer are `flex: none`.
+- **Width is fixed per dialog, never content-driven**: no `min-width` in a
+  dialog rule. Height is content-driven up to a cap.
+- No header close button. Esc and the footer button dismiss through
+  `onDismiss`, latched once per mount (a real Escape fires `cancel` then
+  `close`).
+- **Focus on open rests on the safe option, not the one that acts.**
+  `ConfirmDialog`'s Cancel carries a literal `autofocus` attribute via
+  `setAutofocus` (`autofocus.ts`; its own module for Fast Refresh). React's
+  `autoFocus` prop cannot supply this: it focuses at mount, while the dialog
+  is still closed. TaskDialog's name field uses the same. **`ExportDialog` is
+  the one deviation**: an export is neither destructive nor irreversible, so
+  its confirm button carries it and Enter exports.
+- CSS: `src/dialog.css`, imported before `App.css`, so an equal-specificity
+  per-dialog override wins by source order. Every `.dialog__*` primitive is
+  reached by an explicit class on its own element, never a descendant
+  selector. The backdrop's dark alpha lives beside the light one in that file.
+- **`.dialog` states the base font size**; `.dialog__control` and
+  `.dialog__btn` are `font: inherit`. Deliberate steps off it stay explicit.
+- **A descendant rule outranks a primitive**: `.block__row button` beats
+  `.dialog__btn` whatever the order. No dialog control is styled that way;
+  give it an explicit class. Grep for what else selects a control before
+  assuming its class styles it.
+- **Period-row lists (`.ranges__row`: shutdowns, availability, rate periods)
+  share one CSS grid template**, in `PeriodRowList`, with a `--pct` modifier
+  for the value track; `AvailabilityList` and `RatePeriodList` are thin
+  wrappers, so the two lists in People's panel share tracks by construction.
+  Count is `nowrap`. **The label is the only `1fr` track.** A field's unit
+  sits inside the field (`.dialog__field`/`.dialog__suffix`); the rate row is
+  the exception, its currency declared once for the dialog.
 - **The People table (`.people__table`) is `table-layout: fixed` with a
-  `<colgroup>`**, so no cell's content can move a column: Name auto (≈260 at
-  the dialog's 680px content box, 728px dialog width) · Availability 88 ·
-  Daily rate 88 · Periods 160 · Tasks 48 · Remove 36 — all measured against
-  both the header string and the widest cell content (`scrollWidth <=
-  clientWidth`), not derived on paper. In the Availability, Daily rate and
-  Tasks columns the widest content is the header string itself, not the data
-  — measured with a 5-digit rate in every row, the "Daily rate" header
-  (56px) still outmeasures the widest value (35px). The expanded absences
-  panel (`.people__offPanel`) spans the table's content box — zero
-  horizontal padding on `.people__offRow td` plus the panel's own padding —
-  so it reads as part of the row above rather than a separate block. The
-  Periods column button now summarises both the availability and the rate
-  periods (one string, `title` and text the same), and the expanded panel
-  hosts both lists under their own `.dialog__subhead`s.
+  `<colgroup>`**, tracks sized against header and widest content. The
+  expanded panel (`.people__offPanel`) spans the table's content box and hosts
+  both period lists under their own `.dialog__subhead`s.
 - **The People dialog's `Currency` field sits above the table, on its own
-  line** (`.people__currency`, a `<label>` like every other labelled control
-  in these dialogs): the word beside an 88px `.dialog__control`, not stacked
-  above it — a single field reads as one line, not a section of the dialog.
-  It carries the project's `currency` label to `GanttChart`'s `setResources`
-  as that call's third argument, so a Save that changes both a rate and the
-  label costs one undo step, never two. **The dialog trims; the parser and
-  the API do not** — a typed `"  "` saves as
-  absent, same as the rate field beside it trimming by accident
-  (`Number('  600 ')`); a padded `" EUR "` saves as `EUR`. `validateCurrency`
-  (`cost.ts`) still runs on the trimmed, non-null label — one rule, one place.
-  The dialog's hint gained a sentence pointing at the status bar's column
-  picker by its accessible name (`Choose grid columns`), since that button is
-  icon-only and has no visible label to point at otherwise.
-- **`.dialog__subhead` is the one grammar for a section subhead inside a
-  dialog body** (12px/600/uppercase/`letter-spacing: 0.06em`/`--ink-faint`) —
-  Calendar's "Working days"/"Shutdowns", Task info's "Computed" and People's
-  expanded panel ("Availability periods"/"Rate periods") share it; one that
-  **opens** a body or a padded panel adds `.dialog__subhead--flush` rather
-  than forking the grammar or reaching for a descendant selector, because
-  whatever sits above it already spaces it: a hint's own bottom margin, the
-  body's top padding when there is no hint (Export's "Rows", the body's first
-  child), or inside `.people__offPanel` the panel's own top padding, which
-  would otherwise stack with the primitive's margin and read as a gap the
-  panel does not own.
-- **`.dialog__hint` caps its measure at 58ch**, which keeps a caption from
-  outrunning the fields below it. A hint that is the dialog's whole prose adds
-  `.dialog__hint--wide` (`max-width: none`) — Help's opening paragraph, whose
-  body has no field grid to measure against.
-- **`Dialog` takes an optional `bodyClassName`, appended to `.dialog__body`.**
-  The sanctioned per-dialog body override: an explicit class ties specificity
-  at (0,1,0) with the primitive and wins by App.css source order, rather than
-  a descendant selector that would outrank it and start the specificity war
-  above. `ConfirmDialog`'s `.confirm__body` is the case in hand — it trims the
-  body's bottom padding to `--space-2` so the message-to-buttons gap is 24px
-  (8 + the footer's 16) instead of the primitive's 40.
+  line** (`.people__currency`), and reaches `setResources` as its third
+  argument so one Save is one undo step. **The dialog trims; the parser and
+  the API do not.** `validateCurrency` (`cost.ts`) runs on the trimmed label.
+- **`.dialog__subhead` is the one grammar for a section subhead**; one that
+  opens a body or a padded panel adds `.dialog__subhead--flush`.
+- **`.dialog__hint` caps its measure at `58ch`**; a hint that is the dialog's
+  whole prose adds `.dialog__hint--wide`.
+- **`Dialog` takes an optional `bodyClassName`**, the sanctioned per-dialog
+  body override (ties specificity, wins by order). `ConfirmDialog`'s
+  `.confirm__body` is the case in hand.
 
 ## Export dialog
 
-One dialog (`src/gantt/ExportDialog.tsx`) on both the PNG and the Print
-button; `action` decides the title and the confirm label, nothing else. CSV
-still starts at the click — `planToCsv(plan, resources)` takes neither a
-scope nor a column list, so it has nothing to ask.
+One dialog (`ExportDialog.tsx`) on both the PNG and the Print button; `action`
+decides the title and the confirm label. CSV starts at the click: nothing to
+ask.
 
-- **Three questions, and no fourth.** Rows: *The whole plan*, or *As I
-  see it* — the grid's collapsed branches, passed as `collapsedIds`. Columns:
-  `ColumnChecklist` over the registry. And *Leave out disabled tasks*, which
-  is a row filter but not a scope: it cuts what the plan does not commit to,
-  whatever the grid is showing. The **dates always span the whole
-  plan** whatever the rows, because `options.slice` selects rows and never
-  dates, so every page of a figure shares one scale (`planFigure.ts`).
+- **Three questions, and no fourth**: Rows (*The whole plan* / *As I see it*,
+  passed as `collapsedIds`), Columns (`ColumnChecklist`), and *Leave out
+  disabled tasks* (a row filter, not a scope). **Dates always span the whole
+  plan** (`options.slice` selects rows, never dates).
 - **The preset is a button, never a mode.** *For the client* empties the
-  column selection — no registry column at all — and checks
-  *Leave out disabled tasks*, because a client's figure has no
-  business showing what the organisation privately disabled either. It
-  **leaves the scope where it is**: the scope mirrors the tree the user has
-  already arranged on screen, and a preset that closed it under them would
-  make what they see and what they get diverge, which is the one thing the
-  WYSIWYG scope exists to prevent.
+  column selection and checks *Leave out disabled tasks*; it **leaves the
+  scope where it is**.
 - **The default is continuity, and `resolveExportSettings`
-  (`exportSettings.ts`) is its only home.** Nothing stored: *The whole plan*,
-  and the grid's live column selection — what PNG and print did before this
-  dialog existed, so an update changes nothing under anyone's feet and the
-  client preset stays one click away. The component writes no fallback of
-  its own; it drafts at mount from the settings it is handed.
-- **One checkbox list, two clients.** `ColumnChecklist.tsx` holds the rule
-  "one checkbox per registry entry"; the grid's popover and this dialog each
-  render it inside their own shell. Generalising `ColumnPicker` instead would
-  have carried its popover behaviour — non-modal, dismissed by a
-  capture-phase outside click, focus handed back to the opener — into a modal
-  that must have none of it.
+  (`exportSettings.ts`) is its only home**: nothing stored → the whole plan
+  and the grid's live selection. The component drafts at mount from what it
+  is handed.
+- **One checkbox list, two clients** (`ColumnChecklist.tsx`); generalising
+  `ColumnPicker` would have carried its popover behaviour into a modal.
 - **A confirmed print waits one render; a confirmed PNG does not.**
-  `window.print()` blocks until the sheet is dismissed, so a call in the
-  confirm callback would hold the dialog on screen for the whole of it —
-  React gets no turn to unmount in between. The request goes into state, an
-  effect makes the call. A PNG blocks nothing and runs straight from the
-  callback. Why that effect also writes the ref `installPrintFigure` reads is
-  in the comment there, and only there. **Measured on the PNG path**:
-  branch collapsed, *As I see it* confirmed, then a `beforeprint` — the figure
-  drew `Design` and `Launch`, not `Wireframes`/`Mockups`. The grid's own
-  selection differed at that moment, so a ref left behind would have read the
-  other way round.
-- **Ctrl+P opens nothing** and prints with the settings as they stand, which
-  is what that key promises: `installPrintFigure` hangs off `beforeprint`, by
-  which time the browser's print is already arriving and no modal can
-  interpose.
+  `window.print()` blocks, so the request goes into state and an effect makes
+  the call. Why that effect also writes the ref `installPrintFigure` reads is
+  in the comment there, and only there.
+- **Ctrl+P opens nothing** and prints with the settings as they stand:
+  `installPrintFigure` hangs off `beforeprint`.
 - **Its own `localStorage` key** (`arrogantt.export.v1`), written only by a
-  confirm, read once at first render. The grid and an export are two clients
-  of one registry picking differently at the same moment, so neither key may
-  stand in for the other — and once the export key exists it wins, measured
-  across a reload: grid `[…, rate]` on screen, dialog reopening on the
-  stored empty column set with *Leave out disabled tasks* checked.
+  confirm, read once at first render; once it exists it wins over the grid's.
 
 ## The chart's model is the caller's object until a file replaces it
 
-`<GanttChart project={initialProject}>` hands over a **module-level constant**
-(`App.tsx`), and the chart keeps it by reference: `projectRef = useRef(project)`.
-Until `loadProject` reassigns `projectRef.current` — opening a file, *New*, or
-resuming a draft, which all go through it — the live model **is** that constant,
-so the prop and the model are the same object. After any of those, they are two.
-
-That asymmetry decides what an exception from `solve()` costs, and it cost three
-measurements to find:
-
-- On a **virgin** session a throw in the render body took the whole tree down —
-  blank page, open plan gone. That is why `solve` at mount is now lazy: it was
-  the only solve on the render path.
-- After a load, the render body solves the untouched empty constant, so the same
-  bad model throws only from inside a dhtmlx handler, where **nothing catches it
-  and nothing shows**: the chart stays on screen while the model keeps the bad
-  value and silently stops taking edits.
-
-Measure a model-level failure on **both** kinds of session. A fixture built after
-`loadText` is not the state a user starts in.
+`<GanttChart project={initialProject}>` hands over a module-level constant
+(`App.tsx`) kept by reference (`projectRef = useRef(project)`). Until
+`loadProject` reassigns it (open, *New*, resuming a draft), the live model
+**is** that constant. So a throw from `solve()` costs differently: on a
+virgin session a throw in the render body took the tree down (hence `solve`
+at mount is lazy); after a load the same bad model throws only inside a dhtmlx
+handler, where nothing catches it and the chart silently stops taking edits.
+Measure a model-level failure on **both** kinds of session.
 
 ## Undo and the draft
 
-- Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y + toolbar arrows, greyed when empty, each
-  naming its step (*Undo: deleted "Requisiti"*). Inactive while a
-  field or dialog holds focus.
-- A step is a **whole-project snapshot** (same text a file holds, restored
-  through the file path). A command log would have to describe every edit path
-  and would silently miss the next one; snapshots make coverage a property of
-  the code — the chart reports every change through one callback, the snapshot
-  is taken there. Fifty snapshots of a few KB cost nothing.
-- Open/new **clears history** (Ctrl+Z resurrecting the previous project is not
-  an undo). Restore keeps zoom, scroll, selection; filename/dirty/count are read
-  from the restored project. *Unsaved* = diff against last-saved text, so
-  undoing back to saved clears the marker.
-- **Draft**: plan written to `localStorage` 1s after it stops changing; a reload
-  **asks** before taking it back (never silently). Only the current project,
-  never the history stack (quota). A refused write drops the stored draft (an
-  older draft is worse than none). Draft cleared on save and new project; while
-  dirty, the browser's own beforeunload question guards a reload.
+- Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y + toolbar arrows, each naming its step.
+  Inactive while a field or dialog holds focus.
+- A step is a **whole-project snapshot**, restored through the file path; the
+  chart reports every change through one callback and the snapshot is taken
+  there.
+- Open/new **clears history**. Restore keeps zoom, scroll, selection.
+  *Unsaved* = diff against last-saved text.
+- **Draft**: written to `localStorage` shortly after the plan stops changing;
+  a reload **asks** before taking it back. Only the current project, never
+  the history. A refused write drops the stored draft. Cleared on save and new
+  project; while dirty, `beforeunload` guards a reload.
