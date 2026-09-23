@@ -45,6 +45,13 @@ git history (`8ff3a72` and earlier); the rules stand on their own.
 - **Goal & plan**: `PLAN.md` at the repo root; the goal is its `## Goal`
   section. Goal-review bar = that section plus the Accept lines of the goal's
   tasks.
+  **A visual goal opens from a defect the user points at, never from an
+  adjective.** "More professional" or "crisper" is not a goal statement: the
+  first step is the user marking at most three things on a screenshot, and
+  those three are the tasks. No architect census, no reference study, no
+  finding the user did not see (Goal K: a 312k census bought twelve findings,
+  two of which then cost a hub generation each to establish whether they
+  existed). A goal that does not fit one session is two goals.
 
 - **The plan is a ledger, not a journal.** A task entry is at most eight
   lines: title, what, accept, the constraints the user set (bold, verbatim),
