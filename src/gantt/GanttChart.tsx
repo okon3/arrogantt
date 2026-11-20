@@ -19,8 +19,9 @@ import {
   WHEEL_ZOOM_COOLDOWN,
 } from './zoomLevels';
 import { fitRangeToPlan, repinRangeToScale, appliedScrollX } from './timelineGeometry';
+import { installPaceHandles } from './paceHandles';
 import { mountOverlays, nonWorkingSpans, paintBands, placeTodayLine } from './timelineOverlays';
-import { isContended } from '../scheduler';
+import { isContended, type ShareOverride } from '../scheduler';
 import { renderLoadPanel, scrollLoadPanel, type LoadLane } from './loadPanel';
 import { DEFAULT_BAR_COLOR, resourceClass } from './colors';
 import {
@@ -106,6 +107,7 @@ export function GanttChart({
   onOpenTask,
   onRowMenu,
   onToggleDisabled,
+  onSetPacePeriods,
   onDeleteTask,
   onScaleChange,
   onChainState,
@@ -139,6 +141,8 @@ export function GanttChart({
   }) => void;
   /** The grid's per-row power button — same action as the menu's Enable/Disable. */
   onToggleDisabled?: (taskId: string, ownDisabled: boolean) => void;
+  /** A leaf's pace periods as a gesture on its bar left them, already through `parseTaskShare`. */
+  onSetPacePeriods?: (taskId: string, periods: ShareOverride[]) => void;
   /** Asked, not done: the confirmation belongs with the rest of the dialogs. */
   onDeleteTask?: (id: string) => void;
   onScaleChange?: (label: string) => void;
@@ -157,6 +161,7 @@ export function GanttChart({
   const openTaskRef = useRef(onOpenTask);
   const rowMenuRef = useRef(onRowMenu);
   const toggleDisabledRef = useRef(onToggleDisabled);
+  const setPacePeriodsRef = useRef(onSetPacePeriods);
   const deleteTaskRef = useRef(onDeleteTask);
   const scaleChangeRef = useRef(onScaleChange);
   const changeRef = useRef(onChange);
@@ -219,6 +224,7 @@ export function GanttChart({
     openTaskRef.current = onOpenTask;
     rowMenuRef.current = onRowMenu;
     toggleDisabledRef.current = onToggleDisabled;
+    setPacePeriodsRef.current = onSetPacePeriods;
     deleteTaskRef.current = onDeleteTask;
     scaleChangeRef.current = onScaleChange;
     changeRef.current = onChange;
@@ -232,6 +238,7 @@ export function GanttChart({
     onReject,
     onRowMenu,
     onScaleChange,
+    onSetPacePeriods,
     onToggleDisabled,
   ]);
 
@@ -1256,6 +1263,24 @@ export function GanttChart({
       }, undefined),
     ];
 
+    const detachPaceHandles = installPaceHandles({
+      container,
+      project: () => projectRef.current,
+      solved: () => solvedRef.current,
+      // The one write that is not an edit: a drag shows each step re-solved,
+      // and only its release — or nothing, on Escape — reaches `onChange`.
+      // The drag hands back the list it found, so nothing of this is left.
+      preview: (taskId, periods) => {
+        const task = projectRef.current.tasks.find((candidate) => candidate.id === taskId);
+        if (!task) return;
+        if (periods?.length) task.shareOverrides = periods;
+        else delete task.shareOverrides;
+        applySolution(false);
+      },
+      commit: (taskId, periods) => setPacePeriodsRef.current?.(taskId, periods),
+      reject: (message) => rejectRef.current?.(message),
+    });
+
     loadProject(projectRef.current);
 
     /**
@@ -1306,6 +1331,7 @@ export function GanttChart({
       // would leave it there with nothing to describe.
       gantt.ext.tooltips.tooltip.hide();
       overlays.detach();
+      detachPaceHandles();
       gantt.ext.zoom.detachEvent(zoomHandler);
       container.removeEventListener('wheel', zoomOnWheel, true);
       container.removeEventListener('contextmenu', openRowMenu);

@@ -38,6 +38,7 @@ export function PeriodRowList<T extends DayRange>({
   newPeriod,
   labelPlaceholder,
   countSuffix,
+  overlapRefused = false,
   valueCell,
   onChange,
 }: {
@@ -50,6 +51,12 @@ export function PeriodRowList<T extends DayRange>({
   labelPlaceholder(period: T): string;
   /** Appended to the working-day count — `' away'` on a zero-percent row. */
   countSuffix?(period: T): string;
+  /**
+   * The list's periods may not share a day (a task's pace), instead of the
+   * last declared winning: the note under an overlapped row then says what
+   * Save will refuse, not what will be ignored.
+   */
+  overlapRefused?: boolean;
   /** The contents of the `--pct` modifier's value track. */
   valueCell(period: T, update: (patch: Partial<T>) => void): ReactNode;
   onChange(periods: T[]): void;
@@ -122,9 +129,11 @@ export function PeriodRowList<T extends DayRange>({
             {(covered.all || covered.days > 0) && (
               <p className="ranges__covered">
                 <Layers size={12} aria-hidden />
-                {covered.all
-                  ? 'Fully overridden by a later period'
-                  : `Overridden on ${covered.days} ${covered.days === 1 ? 'day' : 'days'} by a later period`}
+                {overlapRefused
+                  ? `Overlaps a later period${covered.all ? '' : ` on ${covered.days} ${covered.days === 1 ? 'day' : 'days'}`}: the periods of one task may not share a day`
+                  : covered.all
+                    ? 'Fully overridden by a later period'
+                    : `Overridden on ${covered.days} ${covered.days === 1 ? 'day' : 'days'} by a later period`}
               </p>
             )}
           </div>

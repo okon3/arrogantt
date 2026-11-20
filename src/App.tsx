@@ -10,7 +10,7 @@ import { CircleHelp } from 'lucide-react';
 // ?inline: as a data URI the mark survives even a lone single-file index.html,
 // where a URL beside the page would have nothing to point at.
 import markUrl from './assets/favicon.svg?inline';
-import type { CalendarSpec } from './scheduler';
+import type { CalendarSpec, ShareOverride } from './scheduler';
 import { GanttChart } from './gantt/GanttChart';
 import { INITIAL_SCALE_LABEL } from './gantt/zoomLevels';
 import type { GanttHandle } from './gantt/ganttHandle';
@@ -24,6 +24,7 @@ import { ExportDialog } from './gantt/ExportDialog';
 import { HelpDialog } from './gantt/HelpDialog';
 import { ResourceDialog } from './gantt/ResourceDialog';
 import { TaskDialog } from './gantt/TaskDialog';
+import { seededSharePeriod } from './gantt/taskShare';
 import type { Person } from './gantt/cost';
 import type { TaskDetails, TaskPatch } from './gantt/ganttHandle';
 import { createAgentApi } from './gantt/agentApi';
@@ -89,6 +90,19 @@ const DEFAULT_FILENAME = `project${PROJECT_EXTENSION}`;
 const initialProject = emptyProject();
 const initialText = serializeProject(initialProject);
 const draftStore = localDraftStorage();
+
+/**
+ * The patch that hands a task back as it stands: `updateTask` takes every
+ * input, and a caller changing one field adds it on top of these.
+ */
+const unchangedPatch = (details: TaskDetails): TaskPatch => ({
+  name: details.name,
+  nominalDays: details.nominalDays,
+  start: details.start,
+  resourceId: details.resourceId || undefined,
+  color: details.ownsColor ? details.color : undefined,
+  progress: details.progress,
+});
 
 export default function App() {
   const chart = useRef<GanttHandle>(null);
@@ -198,6 +212,8 @@ export default function App() {
     details: TaskDetails;
     /** The day a pace period is to be started on, when the row menu asked for one. */
     paceFrom?: Date;
+    /** A period on `day` at the share the task runs at there, as solved when the dialog opened. */
+    newPacePeriod(day: string): ShareOverride;
     /** Measured when the dialog opens, since the figure costs a search. */
     slack: MeasuredSlack | null;
     resources: Person[];
@@ -533,23 +549,26 @@ export default function App() {
     const handle = chart.current;
     const details = handle?.getTaskDetails(taskId);
     if (!handle || !details) return;
-    handle.updateTask(taskId, {
-      name: details.name,
-      nominalDays: details.nominalDays,
-      start: details.start,
-      resourceId: details.resourceId || undefined,
-      color: details.ownsColor ? details.color : undefined,
-      progress: details.progress,
-      disabled: !currentDisabled,
-    });
+    handle.updateTask(taskId, { ...unchangedPatch(details), disabled: !currentDisabled });
+  }, []);
+
+  /** A gesture on a bar's pace periods, through the same funnel as the dialog's Save. */
+  const setPacePeriods = useCallback((taskId: string, periods: ShareOverride[]) => {
+    const handle = chart.current;
+    const details = handle?.getTaskDetails(taskId);
+    if (!handle || !details) return;
+    handle.updateTask(taskId, { ...unchangedPatch(details), shareOverrides: periods });
   }, []);
 
   const openTaskDetails = useCallback((id: string, pace?: { from?: Date }) => {
     const handle = chart.current;
     const details = handle?.getTaskDetails(id);
     if (!handle || !details) return;
+    const solved = handle.getSolved();
     setOpenTask({
       details,
+      newPacePeriod: (day) =>
+        seededSharePeriod(details, solved.schedule.tasks.get(id), day, solved.calendar),
       // From the grid there is no day to point at: the task's solved start, as
       // for a creation from the same menu.
       ...(pace ? { paceFrom: pace.from ?? details.start } : {}),
@@ -1014,6 +1033,7 @@ export default function App() {
           onOpenTask={openTaskDetails}
           onRowMenu={setRowMenu}
           onToggleDisabled={toggleDisabled}
+          onSetPacePeriods={setPacePeriods}
           onDeleteTask={(id) => void requestDelete(id)}
           onScaleChange={setScale}
           onReject={setError}
@@ -1134,6 +1154,7 @@ export default function App() {
         <TaskDialog
           task={openTask.details}
           paceFrom={openTask.paceFrom}
+          newPacePeriod={openTask.newPacePeriod}
           slack={openTask.slack}
           resources={openTask.resources}
           workingDays={openTask.workingDays}

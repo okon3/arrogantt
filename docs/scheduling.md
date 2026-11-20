@@ -159,8 +159,9 @@ resolved by `shareAt` through the same projection as a person's periods.
 - **Fixed first, the rest split equally** among tasks with no share. Shares
   over 100% are scaled down in proportion; tasks with no share then **stop**
   (no segment) until the sum drops below 100% — at exactly 100% too.
-- **A period replaces the default; overlapping periods: last declared wins.**
-  No default = fixed only inside the periods, an ordinary task outside.
+- **A period replaces the default; overlapping periods: last declared wins**
+  — engine only: `parseTaskShare` never lets two periods of one task share a
+  day. No default = fixed only inside the periods, an ordinary task outside.
 - **Share 0 = pause**: no segment, capacity goes to the others. A period on a
   weekend or shutdown costs nothing.
 - **Unassigned**: share of a full rate; still never contends — each unassigned

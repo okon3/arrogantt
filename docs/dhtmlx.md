@@ -123,6 +123,12 @@ library. Each bullet is a constraint or a fact; how it was found is in git.
 - **Hand-set row classes don't survive a redraw**: classes must come from
   templates. A re-render also replaces the node under the pointer, killing
   hover.
+- **A bar's node (`.gantt_task_line`) is replaced on every `refreshData` and
+  on selection**, children included. Anything dragged across a re-solve
+  lives outside the bar, reused by key (`paceHandles.ts`).
+- **A press on an element of ours in `$task_data` outside `.gantt_task_line`
+  never arms the task drag.** With `pointer-events: none` on its body the bar
+  underneath keeps its own drag, tooltip and menu.
 - **Smart rendering: only bars in view exist in the DOM.** Counting
   `.gantt_task_line` undercounts silently. Read the task data, or
   `showTask(id)` then `getComputedStyle`.

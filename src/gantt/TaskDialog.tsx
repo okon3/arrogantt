@@ -8,7 +8,7 @@ import type { TaskDetails, TaskPatch } from './ganttHandle';
 import { PercentCell, PeriodRowList } from './PeriodRowList';
 import { CRITICAL_CHAIN_LIMIT, type MeasuredSlack } from './project';
 import { DESCRIPTION_LIMIT } from './serialization';
-import { hasShare, parseTaskShare, sharePeriodAt, sharePeriodOn } from './taskShare';
+import { hasShare, parseTaskShare } from './taskShare';
 
 const dayFormat = new Intl.DateTimeFormat('en-GB', {
   day: '2-digit',
@@ -27,6 +27,7 @@ const toPercentInput = (share: number | undefined) =>
 export function TaskDialog({
   task,
   paceFrom,
+  newPacePeriod,
   slack,
   resources,
   workingDays,
@@ -38,6 +39,8 @@ export function TaskDialog({
   task: TaskDetails;
   /** Opens with one unsaved pace period on this day, its percent focused. */
   paceFrom?: Date;
+  /** The period a new row starts as on `day`: one day, at the share the task already runs at. */
+  newPacePeriod(day: string): ShareOverride;
   /** Null when the plan is past the size the app will measure. */
   slack: MeasuredSlack | null;
   resources: Resource[];
@@ -60,7 +63,7 @@ export function TaskDialog({
   const [sharePercent, setSharePercent] = useState(toPercentInput(task.share));
   const [sharePeriods, setSharePeriods] = useState<ShareOverride[]>(() => [
     ...(task.shareOverrides ?? []),
-    ...(paceFrom ? [sharePeriodAt(paceFrom)] : []),
+    ...(paceFrom ? [newPacePeriod(toDayInput(paceFrom))] : []),
   ]);
   const pace = useRef<HTMLDivElement>(null);
   // An effect, not `autofocus`: it runs after Dialog's own `showModal()`, which
@@ -400,9 +403,10 @@ export function TaskDialog({
               periods={sharePeriods}
               workingWeekdays={workingDays}
               emptyMessage="No periods: the pace above holds for the whole task."
-              newPeriod={sharePeriodOn}
+              newPeriod={newPacePeriod}
               labelPlaceholder={(period) => (period.share === 0 ? 'Pause' : 'Reason')}
               countSuffix={(period) => (period.share === 0 ? ' paused' : '')}
+              overlapRefused
               valueCell={(period, update) => (
                 <PercentCell value={period.share} onChange={(share) => update({ share })} />
               )}

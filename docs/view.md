@@ -205,10 +205,15 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   - Percent in the form, fraction in the model. The default goes back **only
     if retyped**: the field shows a rounded figure, and writing it back would
     change a share nobody touched. Empty = not fixed.
-  - `save()` runs `parseTaskShare`, the gate the file and the agent API use.
+  - `save()` runs `parseTaskShare`, the gate the file and the agent API use;
+    it refuses periods sharing a day, so an overlapped row (`overlapRefused`)
+    says what Save will refuse, not *overridden*.
   - Row menu *Set pace from here…* (leaf with effort) opens the dialog with one
     **unsaved** period on the pointed day, unsnapped (grid: the solved start),
     percent focused. Nothing is written before Save. Label wraps to line two.
+  - **A new period starts at the share the task already has there**, unrounded
+    (`seedShare`): adding one moves nothing. Same function for *Add period*,
+    the row menu and the bar; the dialog seeds from the solve it opened on.
 - **Row heights are stable, not incidental** (`TaskDialog.tsx`, `.taskinfo__*`
   in App.css): anything matching a control's height uses
   `--dialog-control-h` on `.dialog` (`dialog.css`), set to the taller of the
@@ -327,6 +332,32 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   from **predecessors**, never the start constraint.
 - Today: exact vertical line at every zoom + a pill on the scale cell.
 
+## Pace periods on the bar
+
+- Double-click on a leaf's bar adds a one-day period; edges drag in whole
+  days, the level grip in tenths (0 = paused); × or an edge past the other
+  removes it. Summaries and milestones get nothing. No modifier key.
+- **A layer over the bars (`.pace-layer`), not markup inside them**: dhtmlx
+  replaces a bar's node on refresh and selection ([dhtmlx.md](dhtmlx.md)).
+  `pacePeriods.ts` decides what a gesture means; `paceHandles.ts` is the DOM.
+- **Nothing paints at rest**: the chrome comes up with `pace-period--hot`, set
+  on `mousemove` over the task's timeline row (a period's body lets the
+  pointer through, so `:hover` never matches), and during a drag.
+- Below `MIN_INTERACTIVE_PX` a period is two ticks and takes no pointer.
+- **The grip is the period's share of the person, not the rate drawn**: on a
+  part-time person the fill under a period at 100% stops short of the grip.
+- **An edge stops at the task's solved span, read live, and at the day beside
+  the neighbouring period** (`dragSpan`, `moveEdge`). A double-click outside
+  the bar or inside a period adds nothing.
+- **A period already outside its bar is not pulled in**: `clipToSpan` is
+  called from the drag clamp only.
+- **A drag previews by re-solving without `onChange`** (`preview`, in
+  `GanttChart`'s init effect); its release is one `updateTask` through
+  `onSetPacePeriods`, like the dialog's Save.
+- Escape, or a release where the drag began, puts the task's own list back.
+  Every key is swallowed mid-drag.
+- **Periods of one task do not overlap**, on every path in (`parseTaskShare`).
+
 ## Dependencies
 
 - The link handle sits above the task label (`.gantt_link_control
@@ -428,7 +459,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   the exception, its currency declared once for the dialog.
 - **A period-row a later row overlaps says so on a line under it**
   (`coverageByLaterRanges`, last declared wins): passive, never refused or
-  reordered; days counted as working days, like the row's own count.
+  reordered; days counted as working days. A task's pace list refuses instead.
 - **The People table (`.people__table`) is `table-layout: fixed` with a
   `<colgroup>`**, tracks sized against header and widest content. The
   expanded panel (`.people__offPanel`) spans the table's content box and hosts

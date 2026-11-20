@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_CALENDAR, type ScheduledTask } from '../scheduler';
+import { DEFAULT_CALENDAR, dayIndexOf, type ScheduledTask } from '../scheduler';
 import { barFactsOf, renderBarTooltip } from './barTooltip';
 import { buildPlan } from './plan';
 import { solve, type Project, type ProjectTask } from './project';
@@ -10,7 +10,13 @@ import {
   serializeForFile,
   serializeProject,
 } from './serialization';
-import { hasShare, parseTaskShare, shareInForce, sharePeriodAt } from './taskShare';
+import {
+  hasShare,
+  parseTaskShare,
+  seedShare,
+  seededSharePeriod,
+  shareInForce,
+} from './taskShare';
 
 const at = (dayOffset: number) => new Date(2026, 8, 7 + dayOffset, 8, 0);
 const period = { from: '2026-09-09', to: '2026-09-10', share: 0 };
@@ -34,9 +40,10 @@ describe('parseTaskShare, the one gate', () => {
     expect(() => parseTaskShare(undefined, [{ ...period, share: 0.009 }])).toThrow(
       /Share period 1: a share below 1%/,
     );
-    expect(parseTaskShare(0.01, [{ ...period, share: 0.01 }, period])).toEqual({
+    const later = { from: '2026-09-11', to: '2026-09-11', share: 0 };
+    expect(parseTaskShare(0.01, [{ ...period, share: 0.01 }, later])).toEqual({
       share: 0.01,
-      shareOverrides: [{ ...period, share: 0.01 }, period],
+      shareOverrides: [{ ...period, share: 0.01 }, later],
     });
   });
 
@@ -51,10 +58,26 @@ describe('parseTaskShare, the one gate', () => {
 
   it('keeps a label and the declared order, and takes 0 and 1 in a period', () => {
     const periods = [
-      { from: '2026-09-09', to: '2026-09-09', share: 1, label: 'Crunch' },
+      { from: '2026-09-10', to: '2026-09-10', share: 1, label: 'Crunch' },
       { from: '2026-09-09', to: '2026-09-09', share: 0 },
     ];
     expect(parseTaskShare(1, periods)).toEqual({ share: 1, shareOverrides: periods });
+  });
+
+  it('refuses two periods sharing a day, naming both as declared', () => {
+    const week = { from: '2026-09-07', to: '2026-09-11', share: 0.5 };
+    const wednesday = { from: '2026-09-09', to: '2026-09-09', share: 0 };
+    const apart = { from: '2026-09-14', to: '2026-09-14', share: 0 };
+    expect(() => parseTaskShare(undefined, [apart, wednesday, week])).toThrow(
+      'Share periods 2 and 3 overlap (2026-09-09 and 2026-09-07 to 2026-09-11)',
+    );
+    expect(() => parseTaskShare(undefined, [week, { ...week, share: 0 }])).toThrow(/1 and 2 overlap/);
+    // One day in common is an overlap; none, however close, is not.
+    expect(() => parseTaskShare(undefined, [week, { ...apart, from: '2026-09-11' }])).toThrow(
+      /overlap/,
+    );
+    const adjacent = [week, { from: '2026-09-12', to: '2026-09-14', share: 0 }];
+    expect(parseTaskShare(undefined, adjacent).shareOverrides).toEqual(adjacent);
   });
 
   it('refuses a default of zero, pointing at a period instead', () => {
@@ -93,12 +116,12 @@ describe('shareInForce', () => {
   const task = {
     share: 0.5,
     shareOverrides: [
-      { from: '2026-09-08', to: '2026-09-10', share: 0 },
+      { from: '2026-09-08', to: '2026-09-09', share: 0 },
       { from: '2026-09-10', to: '2026-09-10', share: 0.25 },
     ],
   };
 
-  it('lets a period replace the default, and the last declared win', () => {
+  it('lets a period replace the default on its own days', () => {
     expect(shareInForce(task, at(0))).toBe(0.5);
     expect(shareInForce(task, at(1))).toBe(0);
     expect(shareInForce(task, at(3))).toBe(0.25);
@@ -146,6 +169,7 @@ describe('share in the file', () => {
     [{ shareOverrides: [{ ...period, from: '2026-09-11' }] }, /ends before it starts/],
     [{ shareOverrides: [{ ...period, share: 2 }] }, /numeric "share"/],
     [{ shareOverrides: [{ from: period.from, to: period.to }] }, /numeric "share"/],
+    [{ shareOverrides: [period, { ...period, from: period.to }] }, /periods 1 and 2 overlap/],
   ])('refuses a task carrying %j, naming it', (fields, message) => {
     const file = JSON.parse(serializeProject(project([leaf()])));
     Object.assign(file.tasks[0], fields);
@@ -315,23 +339,83 @@ describe('against the schedule the engine returns', () => {
 
   it('solves whatever the gate lets through, a whole task of pauses included', () => {
     const pace = parseTaskShare(0.01, [
-      { from: '2026-09-07', to: '2026-12-31', share: 0 },
+      { from: '2026-09-07', to: '2026-09-07', share: 0 },
+      { from: '2026-09-09', to: '2026-12-31', share: 0 },
       { from: '2026-09-08', to: '2026-09-08', share: 1 },
     ]);
     expect(() => solve(project([leaf({ ...pace, resourceId: undefined })]))).not.toThrow();
   });
 });
 
-describe('a period seeded from a pointed day', () => {
-  it('lands on the local calendar day, whatever the hour', () => {
-    const paused = { from: '2026-09-09', to: '2026-09-09', share: 0 };
-    expect(sharePeriodAt(new Date(2026, 8, 9, 0, 0))).toEqual(paused);
-    expect(sharePeriodAt(new Date(2026, 8, 9, 23, 30))).toEqual(paused);
+describe('the share a new period starts at', () => {
+  const day = (offset: number) => dayIndexOf(at(offset));
+  const seeded = (tasks: ProjectTask[], offset: number, resources = project(tasks).resources) => {
+    const plan = { ...project(tasks), resources };
+    const solved = solve(plan);
+    return {
+      plan,
+      solved,
+      share: seedShare(tasks[0], solved.schedule.tasks.get(tasks[0].id), day(offset), solved.calendar),
+    };
+  };
+  const ends = (plan: Project) =>
+    [...solve(plan).schedule.tasks.values()].map((task) => [task.id, task.end.getTime()]);
+
+  it('is the half two equal tasks split their person at, and adding it moves nothing', () => {
+    const tasks = [leaf(), leaf({ id: '2' })];
+    const { plan, solved, share } = seeded(tasks, 1);
+    expect(share).toBe(0.5);
+    const added = seededSharePeriod(tasks[0], solved.schedule.tasks.get('1'), '2026-09-08', solved.calendar);
+    expect(added).toEqual({ from: '2026-09-08', to: '2026-09-08', share: 0.5 });
+    const after = { ...plan, tasks: [{ ...tasks[0], ...parseTaskShare(undefined, [added]) }, tasks[1]] };
+    expect(ends(after)).toEqual(ends(plan));
   });
 
+  it('is unrounded, so three tasks sharing one person stay where they were', () => {
+    const tasks = [leaf(), leaf({ id: '2' }), leaf({ id: '3' })];
+    const { plan, share } = seeded(tasks, 2);
+    expect(share).toBeCloseTo(1 / 3, 12);
+    const added = { from: '2026-09-09', to: '2026-09-09', share };
+    const after = { ...plan, tasks: [{ ...tasks[0], shareOverrides: [added] }, ...tasks.slice(1)] };
+    expect(ends(after)).toEqual(ends(plan));
+  });
+
+  it('is a share of what the person gives, not of a full day', () => {
+    const partTime = [{ id: 'alice', name: 'Alice', availability: 0.5 }];
+    expect(seeded([leaf()], 1, partTime).share).toBe(1);
+    expect(seeded([leaf(), leaf({ id: '2' })], 1, partTime).share).toBe(0.5);
+  });
+
+  it('is the share already in force where one is fixed', () => {
+    expect(seeded([leaf({ share: 0.3 }), leaf({ id: '2' })], 1).share).toBe(0.3);
+    expect(seeded([leaf({ shareOverrides: [{ ...period, share: 0.2 }] })], 2).share).toBe(0.2);
+  });
+
+  it('takes the nearest stretch the task runs in on a day it does not', () => {
+    // A half each until the short one ends, then alone.
+    const tasks = [leaf({ id: 'long', nominalDays: 6 }), leaf({ id: 'short', nominalDays: 1 })];
+    // Saturday 12 September: the week behind it ended alone.
+    expect(seeded(tasks, 5).share).toBe(1);
+    // The day before the plan starts: the first stretch is the split one.
+    expect(seeded(tasks, -1).share).toBe(0.5);
+    // Far past the end.
+    expect(seeded(tasks, 60).share).toBe(1);
+  });
+
+  it('is 100% for a task that never runs, and never below the floor', () => {
+    const calendar = solve(project([leaf()])).calendar;
+    expect(seedShare({}, undefined, day(0), calendar)).toBe(1);
+    const crowd = Array.from({ length: 150 }, (_, index) => leaf({ id: String(index) }));
+    expect(seeded(crowd, 0).share).toBe(0.01);
+  });
+});
+
+describe('a period seeded from a pointed day', () => {
+  const calendar = solve(project([leaf()])).calendar;
+
   it('is left on a closed day, and passes the gate as it stands', () => {
-    const saturday = sharePeriodAt(new Date(2026, 8, 12, 14, 0));
-    expect(saturday.from).toBe('2026-09-12');
+    const saturday = seededSharePeriod({}, undefined, '2026-09-12', calendar);
+    expect(saturday).toEqual({ from: '2026-09-12', to: '2026-09-12', share: 1 });
     expect(parseTaskShare(undefined, [saturday]).shareOverrides).toEqual([saturday]);
   });
 });

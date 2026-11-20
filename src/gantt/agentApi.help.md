@@ -66,7 +66,8 @@ A `getPlan()` task:
   in task`, not `=== undefined`.
 - `share` / `shareOverrides` — on a leaf, the exact share of its person's
   capacity it is fixed at (`0..1`) and the periods `[{ from, to, share, label? }]`
-  that replace it. **Each absent when not set**, and always on a summary.
+  that replace it. **Each absent when not set**, and always on a summary. The
+  periods of one task never overlap.
 
 - `parentId` is the only structural truth; `depth` is there to print an outline.
 - `isSummary` — has children. Its effort, dates and resource roll up from the
@@ -268,8 +269,10 @@ at 20% even when alone, and the rest of the person stays free for their other
 tasks. From 0.01 (1%) up to 1; `null` unfixes it. `shareOverrides` is a list of
 periods `[{ from, to, share, label? }]`, days as `YYYY-MM-DD`, both required,
 `from` not after `to`, `share` 0 or from 0.01 to 1: a period **replaces** the default
-(the last declared wins on overlap, as for a person's `availabilityOverrides`)
-and **`share: 0` pauses the task** — its effort is unchanged. A period needs no
+and **`share: 0` pauses the task** — its effort is unchanged. **Two periods of
+one task may not share a day** (adjacent is fine): the call throws, naming the
+two, and writes nothing — unlike a person's `availabilityOverrides`, where the
+last declared wins. A period needs no
 default: the task is then fixed only inside it. The list replaces the stored
 one; `null` or `[]` clears it; either field left out is left alone. A default
 of `0` is refused (the task would never finish — use a period). Shares fixed on

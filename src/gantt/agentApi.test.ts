@@ -288,6 +288,9 @@ describe('agent API task share', () => {
     expect(() =>
       api.updateTask('t1', { shareOverrides: [{ ...period, share: Infinity }] }),
     ).toThrow(/numeric "share"/);
+    expect(() =>
+      api.updateTask('t1', { shareOverrides: [period, { ...period, from: period.to }] }),
+    ).toThrow(/Share periods 1 and 2 overlap/);
     expect(handle.updateTask).not.toHaveBeenCalled();
   });
 

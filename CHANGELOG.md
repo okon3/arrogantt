@@ -14,7 +14,11 @@
   person's time, for the whole task or for chosen periods, and the rest of
   their time goes to their other tasks. A period at 0% pauses the task.
   Right-click a bar and pick "Set pace from here" to start a period on the
-  day you point at.
+  day you point at. Or set and adjust periods directly on the bar:
+  double-click a day to start one, drag its edges to cover more days, drag
+  its level up or down to change the percentage. A new period starts at the
+  pace the task already has there, so adding it moves nothing. The periods
+  of one task can no longer overlap.
 
 ## v1.6 — 2026-09-23
 

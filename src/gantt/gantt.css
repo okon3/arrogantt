@@ -1119,3 +1119,181 @@ html:root[data-gantt-theme='dark'] {
   font-style: normal;
   color: var(--ink-faint);
 }
+
+/* Pace-period handles (paceHandles.ts): a layer of our own over the bars.
+   Nothing here paints at rest — the chrome comes up with `--hot`, set while
+   the pointer is over the task's row, and with `--dragging`. The inverse pair
+   is the ink: a bar's fill is the user's and does not change with the scheme. */
+.pace-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.pace-period {
+  position: absolute;
+  box-sizing: border-box;
+  /* The body lets the pointer through: the bar under it keeps its own drag,
+     its tooltip and its menu. Only the parts below take it. */
+  pointer-events: none;
+  z-index: 2;
+}
+
+.pace-edge {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 9px;
+  cursor: ew-resize;
+  pointer-events: auto;
+}
+
+.pace-edge--from {
+  left: -4.5px;
+}
+
+.pace-edge--to {
+  right: -4.5px;
+}
+
+.pace-edge::before,
+.pace-level::before {
+  content: '';
+  position: absolute;
+  border-radius: 1px;
+  background: var(--inverse-ink);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--inverse-surface) 55%, transparent);
+  opacity: 0;
+}
+
+.pace-edge::before {
+  left: 3.5px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+}
+
+.pace-level {
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  height: 9px;
+  margin-top: -4.5px;
+  cursor: ns-resize;
+  pointer-events: auto;
+}
+
+.pace-level::before {
+  left: 0;
+  right: 0;
+  top: 3.5px;
+  height: 2px;
+}
+
+.pace-readout {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--inverse-surface);
+  color: var(--inverse-ink);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.pace-x {
+  position: absolute;
+  /* Beside the period, not above it: the first row's top is the scale's edge,
+     and `$task_data` clips there. */
+  left: calc(100% + 7px);
+  top: calc(50% - 7px);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--inverse-surface);
+  color: var(--inverse-ink);
+  cursor: pointer;
+  pointer-events: auto;
+  display: none;
+}
+
+.pace-x svg {
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin: 2px;
+  stroke-width: 3;
+}
+
+.pace-period--hot .pace-x {
+  display: block;
+}
+
+.pace-period--hot .pace-edge::before,
+.pace-period--hot .pace-level::before,
+.pace-period--hot .pace-readout,
+.pace-period--dragging .pace-edge::before,
+.pace-period--dragging .pace-level::before,
+.pace-period--dragging .pace-readout {
+  opacity: 1;
+}
+
+.pace-period--dragging .pace-edge::before,
+.pace-period--dragging .pace-level::before {
+  background: var(--accent);
+}
+
+.pace-period--dragging .pace-x {
+  display: none;
+}
+
+/* Too narrow to aim at: a tick per edge, and the pointer passes through. */
+.pace-period--tiny .pace-edge {
+  pointer-events: none;
+}
+
+.pace-period--tiny .pace-edge::before {
+  left: 4px;
+  width: 1px;
+  box-shadow: none;
+}
+
+.pace-period--tiny .pace-level,
+.pace-period--tiny .pace-x {
+  display: none;
+}
+
+/* On `body`, beside the pointer while a handle is dragged; above the bar
+   tooltip (50), like the row menu. */
+.pace-tip {
+  position: fixed;
+  z-index: 60;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--inverse-surface);
+  color: var(--inverse-ink);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* The pointer leaves the handle long before the drag ends. */
+body.pace-dragging-x,
+body.pace-dragging-x * {
+  cursor: ew-resize !important;
+}
+
+body.pace-dragging-y,
+body.pace-dragging-y * {
+  cursor: ns-resize !important;
+}
