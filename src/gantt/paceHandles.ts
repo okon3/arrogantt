@@ -416,7 +416,21 @@ export function installPaceHandles(options: Options): () => void {
     gantt.attachEvent('onGanttRender', repaint, undefined),
     // onGanttRender alone is a render behind: refreshData sizes the rows after it.
     gantt.attachEvent('onDataRender', repaint, undefined),
+    // dhtmlx moves the bar under the pointer without a render, so the periods
+    // would stay behind where the task was: out of sight until it lands.
+    gantt.attachEvent(
+      'onBeforeTaskDrag',
+      () => {
+        layer.hidden = true;
+        return true;
+      },
+      undefined,
+    ),
   ];
+  const showLayer = () => {
+    layer.hidden = false;
+  };
+  document.addEventListener('mouseup', showLayer, true);
 
   paint();
 
@@ -433,6 +447,7 @@ export function installPaceHandles(options: Options): () => void {
     container.removeEventListener('dblclick', onDblClick, true);
     container.removeEventListener('mousemove', onHover);
     container.removeEventListener('mouseleave', onLeave);
+    document.removeEventListener('mouseup', showLayer, true);
     handlers.forEach((id) => gantt.detachEvent(id));
     layer.remove();
     tip.remove();
