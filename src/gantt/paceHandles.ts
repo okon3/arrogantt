@@ -178,9 +178,14 @@ export function installPaceHandles(options: Options): () => void {
             box,
             task.shareOverrides[box.index].fromDay === draggedFrom,
           );
-          node.style.left = `${box.left}px`;
+          // Day columns run midnight to midnight, the bar from the opening of
+          // its first day to the close of its last: without the clamp a period
+          // on either end sticks out of its task.
+          const left = Math.max(box.left, bar.left);
+          const right = Math.min(box.left + box.width, bar.left + bar.width);
+          node.style.left = `${left}px`;
           node.style.top = `${box.top}px`;
-          node.style.width = `${box.width}px`;
+          node.style.width = `${Math.max(0, right - left)}px`;
           node.style.height = `${box.height}px`;
           // The period's share of the person, not the rate the bar draws.
           (node.querySelector('.pace-level') as HTMLElement).style.top =
