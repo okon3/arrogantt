@@ -360,6 +360,11 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - **Nothing paints at rest**: the chrome comes up with `pace-period--hot`, set
   on `mousemove` over the task's timeline row (a period's body lets the
   pointer through, so `:hover` never matches), and during a drag.
+- **A bar's percent labels (`.seg-pct`) show on that same hover only**, for
+  every bar, paced or not: the shell puts `gantt-bar--hot` on the hot task's
+  bar and again after each redraw (dhtmlx replaces the node). Screen only.
+- No readout on the period: the bar's own labels say the rate, the drag tip
+  the period's dates and share.
 - Below `MIN_INTERACTIVE_PX` a period is two ticks and takes no pointer.
 - **The grip is the period's share of the person, not the rate drawn**: on a
   part-time person the fill under a period at 100% stops short of the grip.

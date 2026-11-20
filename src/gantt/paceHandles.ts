@@ -64,8 +64,11 @@ interface Drag {
 const PARTS =
   `<div class="pace-edge pace-edge--from" data-pace-part="from"></div>` +
   `<div class="pace-edge pace-edge--to" data-pace-part="to"></div>` +
-  `<div class="pace-level" data-pace-part="level"><span class="pace-readout"></span></div>` +
+  `<div class="pace-level" data-pace-part="level"></div>` +
   `<div class="pace-x" data-pace-part="delete" title="Remove this period">${X}</div>`;
+
+/** On the bar of the task under the pointer: what brings its percent labels up (gantt.css). */
+const HOT_BAR_CLASS = 'gantt-bar--hot';
 
 const dayX = (day: number) => gantt.posFromDate(dateOfDay(day));
 
@@ -122,7 +125,19 @@ export function installPaceHandles(options: Options): () => void {
     (taskId === hotTask ? ' pace-period--hot' : '') +
     (dragging ? ' pace-period--dragging' : '');
 
+  /** The bar is dhtmlx's node, replaced on every refresh: marked again on each paint. */
+  const markHotBar = () => {
+    for (const bar of container.querySelectorAll(`.${HOT_BAR_CLASS}`)) {
+      bar.classList.remove(HOT_BAR_CLASS);
+    }
+    // No node while the bar is scrolled out of the rendered range.
+    if (hotTask && gantt.isTaskExists(hotTask)) {
+      gantt.getTaskNode(hotTask)?.classList.add(HOT_BAR_CLASS);
+    }
+  };
+
   const paint = () => {
+    markHotBar();
     const { min_date: from, max_date: to } = gantt.getState();
     const live = new Set<string>();
     if (from instanceof Date && to instanceof Date) {
@@ -170,7 +185,6 @@ export function installPaceHandles(options: Options): () => void {
           // The period's share of the person, not the rate the bar draws.
           (node.querySelector('.pace-level') as HTMLElement).style.top =
             `${((1 - box.share) * 100).toFixed(1)}%`;
-          node.querySelector('.pace-readout')!.textContent = shareLabel(box.share);
         }
       }
     }
@@ -363,6 +377,7 @@ export function installPaceHandles(options: Options): () => void {
     for (const node of nodes.values()) {
       node.classList.toggle('pace-period--hot', node.dataset.paceTask === hotTask);
     }
+    markHotBar();
   };
 
   /**
@@ -401,6 +416,8 @@ export function installPaceHandles(options: Options): () => void {
   paint();
 
   return () => {
+    hotTask = null;
+    markHotBar();
     if (drag) {
       const ended = drag;
       endDrag();

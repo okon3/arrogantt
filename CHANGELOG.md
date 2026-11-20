@@ -23,6 +23,8 @@
   its start, or let whatever comes before it push it, and its periods stay
   on the same days of the task. A period never runs past the end of its
   task: when the task gets shorter the period is cut back with it.
+- The percentages on a bar now show only while you point at it, so a plan
+  at rest reads as shapes instead of a wall of figures.
 
 ## v1.6 — 2026-09-23
 

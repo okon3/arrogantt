@@ -466,6 +466,17 @@ html:root[data-gantt-theme='dark'] {
   pointer-events: none;
 }
 
+/* A plan at rest shows shapes, not figures: the percentages come up on the bar
+   the pointer is over or on whose row it is, and stay up while one of its pace
+   periods is dragged — `gantt-bar--hot`, which paceHandles.ts keeps on that
+   bar across redraws; `:hover` covers a node dhtmlx swapped under the pointer.
+   Screen only: paper has no pointer to bring them up. */
+@media screen {
+  .gantt_task_line:not(.gantt-bar--hot):not(:hover) .seg-pct {
+    visibility: hidden;
+  }
+}
+
 /* Sits above the fill, on the bare track rather than on the colour, so it takes
    the ink that track carries instead of the white the labels inside use. */
 .seg-pct--above {
@@ -1193,23 +1204,6 @@ html:root[data-gantt-theme='dark'] {
   height: 2px;
 }
 
-.pace-readout {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  padding: 0 5px;
-  border-radius: var(--radius-pill);
-  background: var(--inverse-surface);
-  color: var(--inverse-ink);
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 14px;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-}
-
 .pace-x {
   position: absolute;
   /* Beside the period, not above it: the first row's top is the scale's edge,
@@ -1240,10 +1234,8 @@ html:root[data-gantt-theme='dark'] {
 
 .pace-period--hot .pace-edge::before,
 .pace-period--hot .pace-level::before,
-.pace-period--hot .pace-readout,
 .pace-period--dragging .pace-edge::before,
-.pace-period--dragging .pace-level::before,
-.pace-period--dragging .pace-readout {
+.pace-period--dragging .pace-level::before {
   opacity: 1;
 }
 
