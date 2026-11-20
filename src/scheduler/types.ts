@@ -28,15 +28,27 @@ export interface Task {
   share?: number;
   /**
    * Periods where the share differs from the default, or is fixed where there
-   * is no default. Same rules as a resource's overrides: a period replaces the
-   * default, the last declared wins. `share: 0` pauses the task.
+   * is no default: a period replaces the default, the last declared wins.
+   * `share: 0` pauses the task. Counted from the task's anchor, so they move
+   * with it.
    */
   shareOverrides?: ShareOverride[];
 }
 
-export interface ShareOverride extends DayRange {
+/**
+ * A run of the task's own working days, inclusive at both ends.
+ *
+ * Day 0 is the working day holding the task's anchor — the first instant it is
+ * ready and its resource has capacity — and day k the k-th working day after
+ * it: closed days are not counted. Day 0 runs from the anchor, every other day
+ * from its opening, each to its close.
+ */
+export interface ShareOverride {
+  fromDay: number;
+  toDay: number;
   /** 0 to 1. 0 means paused. */
   share: number;
+  label?: string;
 }
 
 /**
@@ -95,6 +107,11 @@ export interface AllocationSegment {
  */
 export interface ScheduledTask {
   id: TaskId;
+  /**
+   * The anchor: the first instant the task is ready and its resource has
+   * capacity. Work may begin later — paused by its own share, or left nothing
+   * by the others' — and that wait is inside the span.
+   */
   start: Date;
   end: Date;
   startWorkingMinutes: number;

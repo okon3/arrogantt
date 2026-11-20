@@ -232,7 +232,7 @@ describe('agent API task fields', () => {
 });
 
 describe('agent API task share', () => {
-  const period = { from: '2026-09-09', to: '2026-09-10', share: 0 };
+  const period = { fromDay: 2, toDay: 3, share: 0 };
   const sent = (handle: { updateTask: { mock: { calls: unknown[][] } } }) =>
     handle.updateTask.mock.calls[0][1] as { share?: unknown; shareOverrides?: unknown };
 
@@ -280,16 +280,22 @@ describe('agent API task share', () => {
     expect(() => api.updateTask('t1', { share: NaN })).toThrow(/Invalid share/);
     expect(() => api.updateTask('t1', { share: '0.5' as never })).toThrow(/Invalid share/);
     expect(() =>
-      api.updateTask('t1', { shareOverrides: [{ ...period, from: '2026-09-11' }] }),
+      api.updateTask('t1', { shareOverrides: [{ ...period, fromDay: 4 }] }),
     ).toThrow(/ends before it starts/);
     expect(() =>
-      api.updateTask('t1', { shareOverrides: [{ from: period.from, share: 0 } as never] }),
-    ).toThrow(/no start or end/);
+      api.updateTask('t1', { shareOverrides: [{ fromDay: 2, share: 0 } as never] }),
+    ).toThrow(/whole "fromDay" and "toDay"/);
+    // The dated shape of the first draft of this feature: refused, never read.
+    expect(() =>
+      api.updateTask('t1', {
+        shareOverrides: [{ from: '2026-09-09', to: '2026-09-10', share: 0 } as never],
+      }),
+    ).toThrow(/day offsets from the task's start/);
     expect(() =>
       api.updateTask('t1', { shareOverrides: [{ ...period, share: Infinity }] }),
     ).toThrow(/numeric "share"/);
     expect(() =>
-      api.updateTask('t1', { shareOverrides: [period, { ...period, from: period.to }] }),
+      api.updateTask('t1', { shareOverrides: [period, { ...period, fromDay: period.toDay }] }),
     ).toThrow(/Share periods 1 and 2 overlap/);
     expect(handle.updateTask).not.toHaveBeenCalled();
   });

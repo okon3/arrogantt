@@ -16,11 +16,14 @@ export function isShared(scheduled: ScheduledTask): boolean {
  * `paced`: the task carries share settings of its own. Only then does a gap
  * between segments call for the profile, so a stretch the task is stopped by
  * its own 0% reads as empty track — while a full-rate bar spanning its
- * person's absence stays the plain fill it has always been.
+ * person's absence stays the plain fill it has always been. A wait before the
+ * first segment is only ever a share's doing, its own or another task's.
  */
 export function drawsProfile(scheduled: ScheduledTask, paced: boolean): boolean {
   return (
     isShared(scheduled) ||
+    (scheduled.segments.length > 0 &&
+      scheduled.segments[0].startWorkingMinutes > scheduled.startWorkingMinutes) ||
     (paced &&
       scheduled.segments.some(
         (segment, index) =>
@@ -58,7 +61,8 @@ export function renderSegments(
   const origin = scheduled.start.getTime();
   const asPercent = (date: Date) => ((date.getTime() - origin) / spanMs) * 100;
 
-  let path = 'M 0,100';
+  // Along the floor to where work begins: the span opens on the anchor.
+  let path = `M 0,100 L ${asPercent(scheduled.segments[0].start).toFixed(2)},100`;
   const labels: string[] = [];
 
   scheduled.segments.forEach((segment, index) => {

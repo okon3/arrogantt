@@ -65,7 +65,7 @@ export interface TaskInput {
   description?: string | null;
   /** Exact share of its person's capacity, above 0 and up to 1. `null` unfixes it. Leaves only. */
   share?: number | null;
-  /** `[{ from, to, share }]`, days as `YYYY-MM-DD`; `share: 0` pauses. Replaces the list; `null` or `[]` clears. Leaves only. */
+  /** `[{ fromDay, toDay, share }]`, working days of the task counted from the one it starts on (0); `share: 0` pauses. Replaces the list; `null` or `[]` clears. Leaves only. */
   shareOverrides?: ShareOverride[] | null;
 }
 

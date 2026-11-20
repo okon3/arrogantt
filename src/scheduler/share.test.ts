@@ -189,7 +189,7 @@ describe('an event a hair off a whole minute', () => {
     const result = schedule(tasks, [alice], { origin: start, calendar: DEFAULT_CALENDAR });
     expect(result.tasks.get('a')!.end).toEqual(new Date(2026, 11, 7, 12, 0));
     // The same working minute seen from its other side: after the lunch break.
-    expect(result.tasks.get('c')!.start).toEqual(new Date(2026, 11, 7, 13, 0));
+    expect(result.tasks.get('c')!.segments[0].start).toEqual(new Date(2026, 11, 7, 13, 0));
     expect(result.tasks.get('b')!.end).toEqual(new Date(2026, 11, 9, 17, 0));
     expect(result.tasks.get('c')!.end).toEqual(new Date(2026, 11, 9, 17, 0));
     wholeMinutes(result);
@@ -197,13 +197,12 @@ describe('an event a hair off a whole minute', () => {
   });
 });
 
+const period = (fromDay: number, toDay: number, share: number) => ({ fromDay, toDay, share });
+
 describe('a share period', () => {
   it('fixes the share inside it only, with boundaries on its edges', () => {
-    // Tuesday to Thursday at 0.2; an ordinary equal split before and after.
-    const tasks = [
-      task('a', 4, { shareOverrides: [{ from: '2026-09-08', to: '2026-09-10', share: 0.2 }] }),
-      task('b', 4),
-    ];
+    // The task's second to fourth day at 0.2; an ordinary equal split around it.
+    const tasks = [task('a', 4, { shareOverrides: [period(1, 3, 0.2)] }), task('b', 4)];
     const result = run(tasks);
     expect(profile(result, 'a')).toEqual([
       [0, 1, 0.5, 1],
@@ -223,10 +222,7 @@ describe('a share period', () => {
   });
 
   it('at zero pauses the task and hands its capacity to the other', () => {
-    const tasks = [
-      task('a', 4, { shareOverrides: [{ from: '2026-09-08', to: '2026-09-09', share: 0 }] }),
-      task('b', 4),
-    ];
+    const tasks = [task('a', 4, { shareOverrides: [period(1, 2, 0)] }), task('b', 4)];
     const result = run(tasks);
     expect(profile(result, 'a')).toEqual([
       [0, 1, 0.5, 1],
@@ -242,9 +238,7 @@ describe('a share period', () => {
   });
 
   it('at zero on the only pending task jumps the clock to its end', () => {
-    const tasks = [
-      task('a', 4, { shareOverrides: [{ from: '2026-09-09', to: '2026-09-10', share: 0 }] }),
-    ];
+    const tasks = [task('a', 4, { shareOverrides: [period(2, 3, 0)] })];
     const result = run(tasks);
     expect(profile(result, 'a')).toEqual([
       [0, 2, 1, 1],
@@ -253,22 +247,8 @@ describe('a share period', () => {
     expectEffortConserved(result, tasks);
   });
 
-  it('at zero holds back a task that arrives inside it', () => {
-    const tasks = [
-      task('a', 1, { shareOverrides: [{ from: '2026-09-07', to: '2026-09-08', share: 0 }] }),
-    ];
-    const result = run(tasks);
-    expect(result.tasks.get('a')!.startWorkingMinutes).toBe(days(2));
-    expect(result.tasks.get('a')!.endWorkingMinutes).toBe(days(3));
-  });
-
   it('replaces the default instead of scaling it', () => {
-    const tasks = [
-      task('a', 1, {
-        share: 0.5,
-        shareOverrides: [{ from: '2026-09-07', to: '2026-09-07', share: 0.2 }],
-      }),
-    ];
+    const tasks = [task('a', 1, { share: 0.5, shareOverrides: [period(0, 0, 0.2)] })];
     const result = run(tasks);
     expect(profile(result, 'a')).toEqual([
       [0, 1, 0.2, 0.2],
@@ -277,11 +257,11 @@ describe('a share period', () => {
     expectEffortConserved(result, tasks);
   });
 
-  const week = { from: '2026-09-07', to: '2026-09-11', share: 0.2 };
-  const wednesday = { from: '2026-09-09', to: '2026-09-09', share: 1 };
+  const week = period(0, 4, 0.2);
+  const third = period(2, 2, 1);
 
   it('gives way to a narrower one declared after it', () => {
-    const tasks = [task('a', 3, { shareOverrides: [week, wednesday] })];
+    const tasks = [task('a', 3, { shareOverrides: [week, third] })];
     const result = run(tasks);
     expect(profile(result, 'a')).toEqual([
       [0, 2, 0.2, 0.2],
@@ -293,7 +273,7 @@ describe('a share period', () => {
   });
 
   it('buries a narrower one declared before it', () => {
-    const tasks = [task('a', 3, { shareOverrides: [wednesday, week] })];
+    const tasks = [task('a', 3, { shareOverrides: [third, week] })];
     const result = run(tasks);
     expect(profile(result, 'a')).toEqual([
       [0, 5, 0.2, 0.2],
@@ -301,24 +281,191 @@ describe('a share period', () => {
     ]);
     expectEffortConserved(result, tasks);
   });
+});
 
-  it('on a weekend costs nothing', () => {
-    const tasks = [
-      task('a', 6, { shareOverrides: [{ from: '2026-09-12', to: '2026-09-13', share: 0 }] }),
-    ];
+describe('a share period is counted in the working days of its task', () => {
+  const sixDays = (extra: Partial<Task> = {}) => [
+    task('a', 6, { shareOverrides: [period(2, 4, 0.2)], ...extra }),
+    task('b', 6),
+  ];
+
+  it("holds on the task's third to fifth day", () => {
+    const tasks = sixDays();
     const result = run(tasks);
-    expect(profile(result, 'a')).toEqual([[0, 6, 1, 1]]);
+    expect(profile(result, 'a')).toEqual([
+      [0, 2, 0.5, 1],
+      [2, 5, 0.2, 0.2],
+      [5, 10.2, 0.5, 1],
+      [10.2, 12, 1, 1],
+    ]);
+    expect(profile(result, 'b')).toEqual([
+      [0, 2, 0.5, 1],
+      [2, 5, 0.8, 1],
+      [5, 10.2, 0.5, 1],
+    ]);
+    expectEffortConserved(result, tasks);
   });
 
-  it('on a company shutdown costs nothing', () => {
+  it('moves with a start constraint a week later', () => {
+    const tasks = sixDays({ startConstraint: new Date(2026, 8, 14, 8, 0) });
+    const result = run(tasks);
+    // B has the first week to itself; A's third to fifth day are now 16–18.
+    expect(profile(result, 'a')).toEqual([
+      [5, 7, 0.5, 1],
+      [7, 10, 0.2, 0.2],
+      [10, 14.4, 1, 1],
+    ]);
+    const paced = result.tasks.get('a')!.segments[1];
+    expect(paced.start).toEqual(new Date(2026, 8, 16, 8, 0));
+    expect(paced.end).toEqual(new Date(2026, 8, 18, 17, 0));
+    expectEffortConserved(result, tasks);
+  });
+
+  it('counts the half day a predecessor leaves as day 0', () => {
+    // P ends at noon, so A is anchored at 13:00 on Monday.
     const tasks = [
-      task('a', 2, { shareOverrides: [{ from: '2026-09-08', to: '2026-09-08', share: 0.2 }] }),
+      task('p', 0.5, { resourceId: undefined }),
+      task('a', 1, {
+        predecessors: ['p'],
+        shareOverrides: [period(0, 0, 0.5), period(1, 1, 0.25)],
+      }),
     ];
+    const result = run(tasks);
+    const a = result.tasks.get('a')!;
+    expect(a.start).toEqual(new Date(2026, 8, 7, 13, 0));
+    expect(profile(result, 'a')).toEqual([
+      [0.5, 1, 0.5, 0.5],
+      [1, 2, 0.25, 0.25],
+      [2, 2.5, 1, 1],
+    ]);
+    expect(a.segments[0].end).toEqual(new Date(2026, 8, 7, 17, 0));
+    expect(a.segments[1].start).toEqual(new Date(2026, 8, 8, 8, 0));
+    expect(a.segments[1].end).toEqual(new Date(2026, 8, 8, 17, 0));
+    expect(a.end).toEqual(new Date(2026, 8, 9, 12, 0));
+    expectEffortConserved(result, tasks);
+  });
+
+  it('does not count a weekend', () => {
+    // Days 4 and 5 are the Friday and the Monday after it.
+    const tasks = [task('a', 8, { shareOverrides: [period(4, 5, 0.5)] })];
+    const result = run(tasks);
+    expect(profile(result, 'a')).toEqual([
+      [0, 4, 1, 1],
+      [4, 6, 0.5, 0.5],
+      [6, 9, 1, 1],
+    ]);
+    const paced = result.tasks.get('a')!.segments[1];
+    expect(paced.start).toEqual(new Date(2026, 8, 11, 8, 0));
+    expect(paced.end).toEqual(new Date(2026, 8, 14, 17, 0));
+    expectEffortConserved(result, tasks);
+  });
+
+  it('does not count a company shutdown', () => {
+    const tasks = [task('a', 2, { shareOverrides: [period(1, 1, 0.5)] })];
     const result = schedule(tasks, [alice], {
       origin: MONDAY,
       calendar: { ...DEFAULT_CALENDAR, holidays: [{ from: '2026-09-08', to: '2026-09-08' }] },
     });
-    expect(profile(result, 'a')).toEqual([[0, 2, 1, 1]]);
+    // Tuesday is closed: day 1 is the Wednesday.
+    expect(profile(result, 'a')).toEqual([
+      [0, 1, 1, 1],
+      [1, 2, 0.5, 0.5],
+      [2, 2.5, 1, 1],
+    ]);
+    expect(result.tasks.get('a')!.segments[1].start).toEqual(new Date(2026, 8, 9, 8, 0));
+  });
+
+  it('is anchored on the day its person is back', () => {
+    const tasks = [task('a', 3, { shareOverrides: [period(1, 1, 0.5)] })];
+    const result = run(tasks, [
+      {
+        ...alice,
+        availabilityOverrides: [{ from: '2026-09-07', to: '2026-09-07', availability: 0 }],
+      },
+    ]);
+    const a = result.tasks.get('a')!;
+    expect(a.start).toEqual(new Date(2026, 8, 8, 8, 0));
+    expect(a.startWorkingMinutes).toBe(days(1));
+    expect(profile(result, 'a')).toEqual([
+      [1, 2, 1, 1],
+      [2, 3, 0.5, 0.5],
+      [3, 4.5, 1, 1],
+    ]);
+    expectEffortConserved(result, tasks);
+  });
+});
+
+describe('a task that waits inside its own span', () => {
+  it('starts on its anchor when its first days are paused', () => {
+    const tasks = [task('a', 2, { shareOverrides: [period(0, 1, 0)] }), task('b', 2)];
+    const result = run(tasks);
+    const a = result.tasks.get('a')!;
+    expect(a.start).toEqual(MONDAY);
+    expect(a.startWorkingMinutes).toBe(0);
+    expect(a.elapsedWorkingMinutes).toBe(days(4));
+    expect(profile(result, 'a')).toEqual([[2, 4, 1, 1]]);
+    expect(profile(result, 'b')).toEqual([[0, 2, 1, 1]]);
+    expectEffortConserved(result, tasks);
+  });
+
+  it('starts on its anchor when fixed shares leave it nothing', () => {
+    const tasks = [
+      task('x', 1.2, { share: 0.6 }),
+      task('y', 0.8, { share: 0.4 }),
+      task('c', 1),
+    ];
+    const result = run(tasks);
+    const c = result.tasks.get('c')!;
+    expect(c.start).toEqual(MONDAY);
+    expect(c.startWorkingMinutes).toBe(0);
+    expect(profile(result, 'c')).toEqual([[2, 3, 1, 1]]);
+    expectEffortConserved(result, tasks);
+  });
+});
+
+describe('a plan without shares', () => {
+  const bob: Resource = { id: 'bob', name: 'Bob', availability: 0.5 };
+  const away: Resource = {
+    id: 'carla',
+    name: 'Carla',
+    availabilityOverrides: [
+      { from: '2026-09-07', to: '2026-09-08', availability: 0 },
+      { from: '2026-09-10', to: '2026-09-10', availability: 0 },
+    ],
+  };
+  const tasks = [
+    task('free', 2, { resourceId: undefined }),
+    task('one', 2),
+    task('two', 3, { startConstraint: new Date(2026, 8, 8, 8, 0) }),
+    task('after', 1, { predecessors: ['one'], startConstraint: undefined }),
+    task('half', 1.25, { resourceId: 'bob' }),
+    task('late', 1, { resourceId: 'bob', predecessors: ['half'] }),
+    task('back', 2, { resourceId: 'carla' }),
+    task('held', 1, { resourceId: 'carla', predecessors: ['free'] }),
+  ];
+  const result = run(tasks, [alice, bob, away]);
+
+  it('starts every task on the first minute it works', () => {
+    for (const { id } of tasks) {
+      const scheduled = result.tasks.get(id)!;
+      expect(scheduled.startWorkingMinutes, id).toBe(scheduled.segments[0].startWorkingMinutes);
+      expect(scheduled.start, id).toEqual(scheduled.segments[0].start);
+    }
+    expectEffortConserved(result, tasks);
+  });
+
+  it('puts those starts where the plan always had them', () => {
+    const startDay = (id: string) => result.tasks.get(id)!.startWorkingMinutes / MINUTES_PER_DAY;
+    expect(Object.fromEntries(tasks.map(({ id }) => [id, startDay(id)]))).toEqual({
+      free: 0,
+      one: 0,
+      two: 1,
+      after: 3,
+      half: 0,
+      late: 2.5,
+      back: 2,
+      held: 2,
+    });
   });
 });
 
@@ -336,12 +483,7 @@ describe('an unassigned task with a share', () => {
   });
 
   it('pauses on a period at zero', () => {
-    const tasks = [
-      task('a', 2, {
-        resourceId: undefined,
-        shareOverrides: [{ from: '2026-09-08', to: '2026-09-08', share: 0 }],
-      }),
-    ];
+    const tasks = [task('a', 2, { resourceId: undefined, shareOverrides: [period(1, 1, 0)] })];
     const result = run(tasks);
     expect(profile(result, 'a')).toEqual([
       [0, 1, 1, 1],
@@ -358,12 +500,13 @@ describe('a share that never lets the task finish', () => {
   });
 
   it('is refused when its positive periods are too short for the effort', () => {
-    const periods = [{ from: '2026-09-08', to: '2026-09-08', share: 1 }];
+    const periods = [period(1, 1, 1)];
     expect(() => run([task('a', 2, { share: 0, shareOverrides: periods })])).toThrow(
       /share of zero/,
     );
-    expect(run([task('a', 1, { share: 0, shareOverrides: periods })]).tasks.get('a')!)
-      .toMatchObject({ startWorkingMinutes: days(1), endWorkingMinutes: days(2) });
+    const a = run([task('a', 1, { share: 0, shareOverrides: periods })]).tasks.get('a')!;
+    expect(a).toMatchObject({ startWorkingMinutes: 0, endWorkingMinutes: days(2) });
+    expect(a.segments[0].startWorkingMinutes).toBe(days(1));
   });
 
   it('is refused for an unassigned task too, and with other work still running', () => {
@@ -374,12 +517,12 @@ describe('a share that never lets the task finish', () => {
 
   it('does not trip the convergence bound on a long run of periods', () => {
     // One period a day for a year, alternating: every edge is an event.
-    const shareOverrides = Array.from({ length: 365 }, (_, index) => {
-      const day = new Date(Date.UTC(2026, 8, 7 + index)).toISOString().slice(0, 10);
-      return { from: day, to: day, share: index % 2 === 0 ? 0 : 0.5 };
-    });
+    const shareOverrides = Array.from({ length: 365 }, (_, index) =>
+      period(index, index, index % 2 === 0 ? 0 : 0.5),
+    );
     const tasks = [task('a', 60, { shareOverrides })];
     const result = run(tasks);
     expectEffortConserved(result, tasks);
   });
 });
+

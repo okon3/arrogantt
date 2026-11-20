@@ -39,6 +39,7 @@ import {
   slackByRow,
   solve,
   subtreeOf,
+  trimSharePeriods,
   type ChainState,
   type MarkedChain,
   type Project,
@@ -253,6 +254,9 @@ export function GanttChart({
     (notify = true) => {
       applyingRef.current = true;
       const solved = solve(projectRef.current);
+      // Here, so the cut lands in the history step of whatever edit shortened
+      // the task — and before the chain below re-solves the engine tasks.
+      trimSharePeriods(projectRef.current, solved);
       solvedRef.current = solved;
       // Measured after the schedule and from it, so the two can never disagree
       // about the plan they describe — or, over the limit, kept and called old.
@@ -354,6 +358,10 @@ export function GanttChart({
       // Before anything is replaced: a project the engine refuses must leave
       // the open one, and the `applying` flag, exactly as they were.
       const solved = solve(next);
+      // A hand-written file may reach past a task's end. Cut here, on the
+      // project the caller goes on to snapshot, or the first solve after it
+      // would change the model with no edit to answer for it.
+      trimSharePeriods(next, solved);
       applyingRef.current = true;
       projectRef.current = next;
       solvedRef.current = solved;
@@ -1269,12 +1277,14 @@ export function GanttChart({
       solved: () => solvedRef.current,
       // The one write that is not an edit: a drag shows each step re-solved,
       // and only its release — or nothing, on Escape — reaches `onChange`.
-      // The drag hands back the list it found, so nothing of this is left.
-      preview: (taskId, periods) => {
-        const task = projectRef.current.tasks.find((candidate) => candidate.id === taskId);
-        if (!task) return;
-        if (periods?.length) task.shareOverrides = periods;
-        else delete task.shareOverrides;
+      // The drag hands back the lists it found, so nothing of this is left.
+      preview: (periods) => {
+        for (const task of projectRef.current.tasks) {
+          if (!periods.has(task.id)) continue;
+          const list = periods.get(task.id);
+          if (list?.length) task.shareOverrides = list;
+          else delete task.shareOverrides;
+        }
         applySolution(false);
       },
       commit: (taskId, periods) => setPacePeriodsRef.current?.(taskId, periods),

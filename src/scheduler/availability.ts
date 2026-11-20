@@ -77,25 +77,48 @@ export function capacityAt(
 }
 
 /**
- * A task's share periods projected onto the working-minute axis.
- *
- * Through `capacityIntervals` on purpose: a share period is a resource's
- * override under another name, and one projection cannot give the two a
- * different answer on overlaps or on days nobody works.
+ * Where day 0 of a task's share periods opens on the working-minute axis: the
+ * working day holding its anchor. The engine and every reader of a period
+ * count from here, or a period would be drawn on a day it does not act on.
  */
-export function shareIntervals(task: Task, calendar: WorkingCalendar): CapacityInterval[] {
-  return capacityIntervals(
-    {
-      id: task.id,
-      name: task.name,
-      availabilityOverrides: (task.shareOverrides ?? []).map(({ from, to, share }) => ({
-        from,
-        to,
-        availability: share,
-      })),
-    },
-    calendar,
+export function dayZeroStart(anchor: number, minutesPerDay: number): number {
+  return Math.floor(anchor / minutesPerDay) * minutesPerDay;
+}
+
+/**
+ * A task's share periods projected onto the working-minute axis, once it is
+ * anchored: a period is a run of working days counted from the anchor's day,
+ * so it has no place on the axis before that.
+ *
+ * Resolved between the periods' own edges, never day by day: disjoint
+ * intervals whatever overlaps (last declared wins), at a cost that does not
+ * grow with how far out a period reaches.
+ */
+export function shareIntervals(
+  task: Task,
+  anchor: number,
+  minutesPerDay: number,
+): CapacityInterval[] {
+  const periods = task.shareOverrides ?? [];
+  const zero = dayZeroStart(anchor, minutesPerDay);
+  const cuts = [...new Set(periods.flatMap((period) => [period.fromDay, period.toDay + 1]))].sort(
+    (a, b) => a - b,
   );
+  const intervals: CapacityInterval[] = [];
+  for (let index = 0; index + 1 < cuts.length; index++) {
+    const day = cuts[index];
+    let share: number | undefined;
+    for (const period of periods) {
+      if (period.fromDay <= day && day <= period.toDay) share = period.share;
+    }
+    if (share === undefined) continue;
+    const from = zero + day * minutesPerDay;
+    const to = zero + cuts[index + 1] * minutesPerDay;
+    const last = intervals[intervals.length - 1];
+    if (last && last.to === from && last.availability === share) last.to = to;
+    else intervals.push({ from, to, availability: share });
+  }
+  return intervals;
 }
 
 /**

@@ -26,6 +26,11 @@ calendar logic. `WorkingCalendar` owns every conversion.
 - **Effort 0 = milestone.** Closes the moment it is reachable, cascades into a
   following milestone, consumes no capacity. No separate concept, nothing extra
   in the file; a summary is never one.
+- **A task's start is its anchor**: the first instant it is ready (start
+  constraint and predecessors met) and its resource has capacity above zero;
+  unassigned, the ready instant. Not the first minute it works: a task paused
+  on its first days, or left nothing by others' fixed shares, waits **inside**
+  its span. Without shares the two are the same instant.
 - **Solved start is shown everywhere and handed back on save**, so a start is
   accepted as a constraint only when it differs from the solved one
   (`constraintStart` in `project.ts`). Otherwise a rename walks the constraint
@@ -151,7 +156,15 @@ arrival or capacity edge can move the clock. Measured, not derived:
 ## Task share
 
 The per-task twin of availability: `Task.share` + `Task.shareOverrides`,
-resolved by `shareAt` through the same projection as a person's periods.
+resolved by `shareAt`.
+
+- **A period is days of the task, not dates**: `{ fromDay, toDay }`, inclusive
+  working-day ordinals. Day 0 is the working day holding the anchor, day k the
+  k-th working day after it — weekends and shutdowns are not counted. So a
+  period **moves with the task** whatever moves its start.
+- Day 0 runs from the anchor, every other day from its opening, each to its
+  close (`dayZeroStart`, `shareIntervals`). A task anchored at 13:00 has a
+  half day 0.
 
 - **Exact, not a cap**: a task at a share runs at share × the person's current
   capacity even when alone. What nobody claims stays free, and the load lanes
@@ -162,8 +175,7 @@ resolved by `shareAt` through the same projection as a person's periods.
 - **A period replaces the default; overlapping periods: last declared wins**
   — engine only: `parseTaskShare` never lets two periods of one task share a
   day. No default = fixed only inside the periods, an ordinary task outside.
-- **Share 0 = pause**: no segment, capacity goes to the others. A period on a
-  weekend or shutdown costs nothing.
+- **Share 0 = pause**: no segment, capacity goes to the others.
 - **Unassigned**: share of a full rate; still never contends — each unassigned
   task is allocated on its own.
 - `soloRate` = share × capacity while a share is fixed, so scaled-down shares
@@ -171,9 +183,14 @@ resolved by `shareAt` through the same projection as a person's periods.
 - **Event times are snapped to the whole minute beside them** (`MINUTE_SNAP`,
   in the loop, share or no share): effort ÷ rate lands a hair off, and a hair
   past a day boundary is dated on its wrong side.
-- Period edges are ordinary events, counted in the iteration bound. A task whose
-  share is zero once the last edge has passed never finishes: `schedule()`
-  throws `Scheduler stalled: task "…" is left at a share of zero…`.
+- Period edges are ordinary events, but exist only once the task is anchored:
+  they join the event list then. The iteration bound counts them from the
+  number of periods, before any is placed.
+- A task whose share is zero once the last edge has passed never finishes:
+  `schedule()` throws `Scheduler stalled: task "…" is left at a share of zero…`.
+- **A period never reaches past its task's end** — a rule of the view
+  (`trimSharePeriods`, [view.md](view.md)), not of the engine: days past the
+  end are inert, so cutting them needs no second solve.
 
 ## Cost — a reading of the schedule
 

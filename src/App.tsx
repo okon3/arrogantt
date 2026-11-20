@@ -10,7 +10,7 @@ import { CircleHelp } from 'lucide-react';
 // ?inline: as a data URI the mark survives even a lone single-file index.html,
 // where a URL beside the page would have nothing to point at.
 import markUrl from './assets/favicon.svg?inline';
-import type { CalendarSpec, ShareOverride } from './scheduler';
+import { dayIndexOfString, type CalendarSpec, type ShareOverride } from './scheduler';
 import { GanttChart } from './gantt/GanttChart';
 import { INITIAL_SCALE_LABEL } from './gantt/zoomLevels';
 import type { GanttHandle } from './gantt/ganttHandle';
@@ -24,7 +24,13 @@ import { ExportDialog } from './gantt/ExportDialog';
 import { HelpDialog } from './gantt/HelpDialog';
 import { ResourceDialog } from './gantt/ResourceDialog';
 import { TaskDialog } from './gantt/TaskDialog';
-import { seededSharePeriod } from './gantt/taskShare';
+import {
+  datePeriods,
+  seededSharePeriod,
+  taskDays,
+  undatePeriods,
+  type DatedSharePeriod,
+} from './gantt/taskShare';
 import type { Person } from './gantt/cost';
 import type { TaskDetails, TaskPatch } from './gantt/ganttHandle';
 import { createAgentApi } from './gantt/agentApi';
@@ -212,8 +218,14 @@ export default function App() {
     details: TaskDetails;
     /** The day a pace period is to be started on, when the row menu asked for one. */
     paceFrom?: Date;
-    /** A period on `day` at the share the task runs at there, as solved when the dialog opened. */
-    newPacePeriod(day: string): ShareOverride;
+    /**
+     * The task's periods to and from the dates they fall on, and a new one at
+     * the share the task runs at — all against the plan as solved when the
+     * dialog opened.
+     */
+    pacePeriods: DatedSharePeriod[];
+    paceDays(periods: DatedSharePeriod[]): ShareOverride[];
+    newPacePeriod(day: string): DatedSharePeriod;
     /** Measured when the dialog opens, since the figure costs a search. */
     slack: MeasuredSlack | null;
     resources: Person[];
@@ -565,10 +577,21 @@ export default function App() {
     const details = handle?.getTaskDetails(id);
     if (!handle || !details) return;
     const solved = handle.getSolved();
+    const scheduled = solved.schedule.tasks.get(id);
+    if (!scheduled) return;
+    const days = taskDays(scheduled, solved.calendar);
     setOpenTask({
       details,
-      newPacePeriod: (day) =>
-        seededSharePeriod(details, solved.schedule.tasks.get(id), day, solved.calendar),
+      pacePeriods: datePeriods(details.shareOverrides ?? [], days),
+      paceDays: (periods) => undatePeriods(periods, days),
+      newPacePeriod: (day) => {
+        const pointed = dayIndexOfString(day);
+        // A period is days of the task: a day outside it stands for the nearest one inside.
+        const ordinal =
+          days.nearestOrdinal(pointed) ?? (pointed < days.dayOf(0) ? 0 : days.last);
+        const seeded = seededSharePeriod(details, scheduled, ordinal, solved.calendar.minutesPerDay);
+        return datePeriods([seeded], days)[0];
+      },
       // From the grid there is no day to point at: the task's solved start, as
       // for a creation from the same menu.
       ...(pace ? { paceFrom: pace.from ?? details.start } : {}),
@@ -1154,6 +1177,8 @@ export default function App() {
         <TaskDialog
           task={openTask.details}
           paceFrom={openTask.paceFrom}
+          pacePeriods={openTask.pacePeriods}
+          paceDays={openTask.paceDays}
           newPacePeriod={openTask.newPacePeriod}
           slack={openTask.slack}
           resources={openTask.resources}

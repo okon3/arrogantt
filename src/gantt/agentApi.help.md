@@ -65,9 +65,12 @@ A `getPlan()` task:
   the task has none**, never an empty string or `null`: check with `'description'
   in task`, not `=== undefined`.
 - `share` / `shareOverrides` — on a leaf, the exact share of its person's
-  capacity it is fixed at (`0..1`) and the periods `[{ from, to, share, label? }]`
-  that replace it. **Each absent when not set**, and always on a summary. The
-  periods of one task never overlap.
+  capacity it is fixed at (`0..1`) and the periods
+  `[{ fromDay, toDay, share, label? }]` that replace it: working days of the
+  task, day 0 being the one its `start` falls on. **Each absent when not set**,
+  and always on a summary. The periods of one task never overlap.
+- `start` is the first moment the task can run: ready, with its person at work.
+  A task paused on its first days still starts there, and waits inside its bar.
 
 - `parentId` is the only structural truth; `depth` is there to print an outline.
 - `isSummary` — has children. Its effort, dates and resource roll up from the
@@ -267,9 +270,21 @@ description, rather than reporting it as an empty string or `null`: check with
 `share` fixes a leaf at an **exact** share of its person's capacity — `0.2` runs
 at 20% even when alone, and the rest of the person stays free for their other
 tasks. From 0.01 (1%) up to 1; `null` unfixes it. `shareOverrides` is a list of
-periods `[{ from, to, share, label? }]`, days as `YYYY-MM-DD`, both required,
-`from` not after `to`, `share` 0 or from 0.01 to 1: a period **replaces** the default
-and **`share: 0` pauses the task** — its effort is unchanged. **Two periods of
+periods `[{ fromDay, toDay, share, label? }]`, `share` 0 or from 0.01 to 1: a
+period **replaces** the default and **`share: 0` pauses the task** — its effort
+is unchanged.
+
+**A period is days of the task, not dates**: `fromDay` and `toDay` are whole
+numbers, 0 or more, `fromDay` not after `toDay`, both inclusive. **Day 0 is the
+working day the task's solved `start` falls on** — the first day it is ready
+and its person is at work — and day `k` is the `k`-th working day after it;
+weekends and shutdowns are not counted. So `{ fromDay: 2, toDay: 4 }` is the
+task's third to fifth working day, wherever the plan puts them: **periods move
+with the task** when its start moves, for any reason. The dated shape
+`{ from, to }` is refused. **A period never reaches past its task's end**:
+after every write, a `toDay` past the task's last working day is cut back to
+it and a period starting after it is removed, so `getTask()` right after
+`updateTask()` may show less than was written. **Two periods of
 one task may not share a day** (adjacent is fine): the call throws, naming the
 two, and writes nothing — unlike a person's `availabilityOverrides`, where the
 last declared wins. A period needs no

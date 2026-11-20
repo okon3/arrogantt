@@ -2,7 +2,9 @@ import {
   dayIndexOf,
   dayIndexOfString,
   dayStringOf,
+  dayZeroStart,
   isDayString,
+  type DayRange,
   type ScheduledTask,
   type ShareOverride,
   type WorkingCalendar,
@@ -12,15 +14,13 @@ import {
  * A leaf's pace: the exact share of its person's capacity it runs at, by
  * default and for chosen periods. The per-task twin of a person's
  * `availability` / `availabilityOverrides`, in the same unit — a fraction in
- * the model and the file, a percentage only in the form.
+ * the model and the file, a percentage only in the form. Unlike a person's,
+ * its periods are days of the task, not of the calendar: they move with it.
  */
 export interface TaskShare {
   share?: number;
   shareOverrides?: ShareOverride[];
 }
-
-const isRealDay = (value: unknown): value is string =>
-  isDayString(value) && dayStringOf(dayIndexOfString(value)) === value;
 
 const isFraction = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
@@ -28,6 +28,12 @@ const isFraction = (value: unknown): value is number =>
 /** The smallest share that is not a pause: below it a task stretches past any date. */
 export const MIN_SHARE = 0.01;
 const TOO_SMALL = 'a share below 1% is not allowed (0 in a period pauses the task)';
+
+/** Past this a pause would date the task's end beyond what a `Date` holds. */
+export const MAX_PERIOD_DAY = 10_000;
+
+const isPeriodDay = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= MAX_PERIOD_DAY;
 
 /**
  * The one gate on a task's share settings: the file parser, the agent API and
@@ -57,31 +63,38 @@ export function parseTaskShare(share: unknown, overrides: unknown): TaskShare {
     const periods = overrides.map((entry: unknown, index) => {
       const period = `Share period ${index + 1}`;
       if (typeof entry !== 'object' || entry === null) {
-        throw new Error(`${period}: expected { from, to, share }`);
+        throw new Error(`${period}: expected { fromDay, toDay, share }`);
       }
-      const { from, to, share: value, label } = entry as Record<string, unknown>;
-      if (!from || !to) throw new Error(`${period} has no start or end`);
-      if (!isRealDay(from) || !isRealDay(to)) {
-        throw new Error(`${period} has a malformed date: expected YYYY-MM-DD`);
+      const { fromDay, toDay, share: value, label } = entry as Record<string, unknown>;
+      if ('from' in entry || 'to' in entry) {
+        throw new Error(
+          `${period} is dated ("from"/"to"): periods are now day offsets from the task's start — { fromDay, toDay, share }, day 0 being the task's first working day`,
+        );
       }
-      if (from > to) throw new Error(`${period} ends before it starts`);
+      if (!isPeriodDay(fromDay) || !isPeriodDay(toDay)) {
+        throw new Error(
+          `${period} needs whole "fromDay" and "toDay": working days of the task, 0 (its first) to ${MAX_PERIOD_DAY}`,
+        );
+      }
+      if (fromDay > toDay) throw new Error(`${period} ends before it starts`);
       if (!isFraction(value)) {
         throw new Error(`${period} needs a numeric "share", 0 (paused) to 1`);
       }
       if (value !== 0 && value < MIN_SHARE) throw new Error(`${period}: ${TOO_SMALL}`);
-      const override: ShareOverride = { from, to, share: value };
+      const override: ShareOverride = { fromDay, toDay, share: value };
       if (typeof label === 'string' && label.length > 0) override.label = label;
       return override;
     });
     // Sorted by start, any overlap in the list shows up between two neighbours.
     const byStart = periods
       .map((period, index) => ({ period, number: index + 1 }))
-      .sort((a, b) => (a.period.from < b.period.from ? -1 : a.period.from > b.period.from ? 1 : 0));
+      .sort((a, b) => a.period.fromDay - b.period.fromDay);
     for (let position = 1; position < byStart.length; position++) {
       const pair = [byStart[position - 1], byStart[position]];
-      if (pair[1].period.from > pair[0].period.to) continue;
+      if (pair[1].period.fromDay > pair[0].period.toDay) continue;
       const [first, second] = pair.sort((a, b) => a.number - b.number);
-      const span = ({ from, to }: ShareOverride) => (from === to ? from : `${from} to ${to}`);
+      const span = ({ fromDay, toDay }: ShareOverride) =>
+        fromDay === toDay ? `day ${fromDay}` : `days ${fromDay} to ${toDay}`;
       throw new Error(
         `Share periods ${first.number} and ${second.number} overlap (${span(first.period)} and ${span(second.period)}): the periods of one task may not share a day`,
       );
@@ -91,34 +104,148 @@ export function parseTaskShare(share: unknown, overrides: unknown): TaskShare {
   return parsed;
 }
 
+/**
+ * A task's working days as its periods count them, read off the plan it was
+ * solved in. Days are calendar day indices, ordinals count from the task's
+ * day 0; every answer goes through working minutes, so a closed day is never
+ * counted here either.
+ */
+export interface TaskDays {
+  /** The ordinal of the working day the task ends on. */
+  last: number;
+  /** The calendar day working day `ordinal` falls on. */
+  dayOf(ordinal: number): number;
+  /**
+   * The first of the task's working days on or after `day`. Before day 0 it is
+   * never above 0, and no further back than the plan's first day: the axis
+   * ends there.
+   */
+  ordinalFrom(day: number): number;
+  /** Which of the task's working days `day` is; undefined on a closed day or before day 0. */
+  ordinalOf(day: number): number | undefined;
+  /** As `ordinalOf`, a closed day answering the working day nearest to it; undefined outside the task. */
+  nearestOrdinal(day: number): number | undefined;
+  /** The working day a working minute falls in. */
+  ordinalAt(workingMinutes: number): number;
+}
+
+export function taskDays(
+  scheduled: Pick<ScheduledTask, 'startWorkingMinutes' | 'endWorkingMinutes'>,
+  calendar: WorkingCalendar,
+): TaskDays {
+  const perDay = calendar.minutesPerDay;
+  const zero = dayZeroStart(scheduled.startWorkingMinutes, perDay);
+  // An end on a day boundary closes the day before it.
+  const last = Math.max(0, Math.ceil((scheduled.endWorkingMinutes - zero) / perDay) - 1);
+  const dayOf = (ordinal: number) =>
+    dayIndexOf(calendar.fromWorkingMinutes(zero + ordinal * perDay, 'start'));
+  // A closed day collapses onto the opening of the next working one.
+  const ordinalFrom = (day: number) => (calendar.dayStartInWorkingMinutes(day) - zero) / perDay;
+  const ordinalOf = (day: number) => {
+    const ordinal = ordinalFrom(day);
+    return ordinalFrom(day + 1) > ordinal && ordinal >= 0 ? ordinal : undefined;
+  };
+  return {
+    last,
+    dayOf,
+    ordinalFrom,
+    ordinalOf,
+    nearestOrdinal: (day) => {
+      if (day < dayOf(0) || day > dayOf(last)) return undefined;
+      const exact = ordinalOf(day);
+      if (exact !== undefined) return exact;
+      // Inside the task a closed day has a working day of the task on both sides.
+      const next = ordinalFrom(day);
+      return dayOf(next) - day < day - dayOf(next - 1) ? next : next - 1;
+    },
+    ordinalAt: (workingMinutes) => Math.floor((workingMinutes - zero) / perDay),
+  };
+}
+
+/**
+ * The periods as they may stand on a task whose last working day is `last`:
+ * none reaches past it, and one starting after it is dropped. Days past a
+ * task's end are inert, so this never moves the schedule it was read from.
+ * Answers the list itself when nothing reaches past.
+ */
+export function trimToTask(periods: ShareOverride[], last: number): ShareOverride[] {
+  if (periods.every((period) => period.toDay <= last)) return periods;
+  return periods.flatMap((period) =>
+    period.fromDay > last ? [] : [period.toDay > last ? { ...period, toDay: last } : period],
+  );
+}
+
+/** A period on the dates the plan currently puts it: what a form shows, never what is stored. */
+export type DatedSharePeriod = DayRange & { share: number };
+
+export function datePeriods(periods: ShareOverride[], days: TaskDays): DatedSharePeriod[] {
+  return periods.map(({ fromDay, toDay, ...rest }) => ({
+    from: dayStringOf(days.dayOf(fromDay)),
+    to: dayStringOf(days.dayOf(toDay)),
+    ...rest,
+  }));
+}
+
+const isRealDay = (value: unknown): value is string =>
+  isDayString(value) && dayStringOf(dayIndexOfString(value)) === value;
+
+/**
+ * Dated periods back as days of the task: the inverse of `datePeriods` on the
+ * same plan. A closed day at either end gives way to the working day inside
+ * the period. Throws with a user-facing message; `parseTaskShare` still has to
+ * pass what comes out.
+ */
+export function undatePeriods(dated: DatedSharePeriod[], days: TaskDays): ShareOverride[] {
+  return dated.map(({ from, to, ...rest }, index) => {
+    const period = `Share period ${index + 1}`;
+    if (!from || !to) throw new Error(`${period} has no start or end`);
+    if (!isRealDay(from) || !isRealDay(to)) {
+      throw new Error(`${period} has a malformed date: expected YYYY-MM-DD`);
+    }
+    if (from > to) throw new Error(`${period} ends before it starts`);
+    // By the date, not the ordinal: the axis has no day before the plan's first.
+    if (dayIndexOfString(from) < days.dayOf(0)) {
+      throw new Error(
+        `${period} starts before the task does (${dayStringOf(days.dayOf(0))}): a period is days of the task, and moves with it`,
+      );
+    }
+    const fromDay = days.ordinalFrom(dayIndexOfString(from));
+    const toDay = days.ordinalFrom(dayIndexOfString(to) + 1) - 1;
+    if (toDay < fromDay) throw new Error(`${period} covers no working day`);
+    return { fromDay, toDay, ...rest };
+  });
+}
+
 const clampShare = (share: number) => Math.min(1, Math.max(MIN_SHARE, share));
 
 /**
- * The share a new period on `day` starts at so that adding it moves nothing:
- * the one already fixed there, else what the task was solved at — its rate as
- * a fraction of what the person had to give, which is what a period at that
- * share solves back to. On a day it does not run (closed, absence, outside the
- * bar) the nearest stretch where it does answers; with no stretch at all, 1.
+ * The share a new period on the task's working day `ordinal` starts at so that
+ * adding it moves nothing: the one already fixed there, else what the task was
+ * solved at — its rate as a fraction of what the person had to give, which is
+ * what a period at that share solves back to. On a day it does not run
+ * (absence, past its end) the nearest stretch where it does answers; with no
+ * stretch at all, 1.
  *
  * Not rounded: a seed moved to a round figure would move the plan.
  */
 export function seedShare(
   task: TaskShare,
   scheduled: ScheduledTask | undefined,
-  day: number,
-  calendar: Pick<WorkingCalendar, 'dayStartInWorkingMinutes'>,
+  ordinal: number,
+  minutesPerDay: number,
 ): number {
-  const fixed = shareOnDay(task, dayStringOf(day));
+  const fixed = shareOnDay(task, ordinal);
   if (fixed !== undefined) return fixed;
-  const from = calendar.dayStartInWorkingMinutes(day);
-  const to = calendar.dayStartInWorkingMinutes(day + 1);
+  if (!scheduled) return 1;
+  const zero = dayZeroStart(scheduled.startWorkingMinutes, minutesPerDay);
+  const from = zero + ordinal * minutesPerDay;
+  const to = from + minutesPerDay;
   // Where no share is fixed `soloRate` is the person's capacity, recorded by
   // the engine: nothing here resolves a calendar or an availability again.
   const fraction = (segment: ScheduledTask['segments'][number]) =>
-    shareOnDay(task, dayStringOf(dayIndexOf(segment.start))) ?? segment.rate / segment.soloRate;
-  const running = (scheduled?.segments ?? []).filter(
-    (segment) => segment.rate > 0 && segment.soloRate > 0,
-  );
+    shareOnDay(task, Math.floor((segment.startWorkingMinutes - zero) / minutesPerDay)) ??
+    segment.rate / segment.soloRate;
+  const running = scheduled.segments.filter((segment) => segment.rate > 0 && segment.soloRate > 0);
   let minutes = 0;
   let work = 0;
   let nearest: { distance: number; share: number } | undefined;
@@ -144,10 +271,14 @@ export function seedShare(
 export function seededSharePeriod(
   task: TaskShare,
   scheduled: ScheduledTask | undefined,
-  day: string,
-  calendar: Pick<WorkingCalendar, 'dayStartInWorkingMinutes'>,
+  ordinal: number,
+  minutesPerDay: number,
 ): ShareOverride {
-  return { from: day, to: day, share: seedShare(task, scheduled, dayIndexOfString(day), calendar) };
+  return {
+    fromDay: ordinal,
+    toDay: ordinal,
+    share: seedShare(task, scheduled, ordinal, minutesPerDay),
+  };
 }
 
 /** The settings as a copy to hand out, or nothing where they are `inert`: a summary, a milestone. */
@@ -165,14 +296,10 @@ export function hasShare(task: TaskShare): boolean {
   return task.share !== undefined || task.shareOverrides !== undefined;
 }
 
-function shareOnDay(task: TaskShare, day: string): number | undefined {
+/** The share fixed on the task's working day `ordinal`, or undefined: its period's, else the default. */
+export function shareOnDay(task: TaskShare, ordinal: number): number | undefined {
   const period = (task.shareOverrides ?? []).find(
-    (candidate) => candidate.from <= day && day <= candidate.to,
+    (candidate) => candidate.fromDay <= ordinal && ordinal <= candidate.toDay,
   );
   return period ? period.share : task.share;
-}
-
-/** The share fixed on the day `date` falls on, or undefined: its period's, else the default. */
-export function shareInForce(task: TaskShare, date: Date): number | undefined {
-  return shareOnDay(task, dayStringOf(dayIndexOf(date)));
 }

@@ -76,7 +76,11 @@ interface SimTask {
   /** Working minutes; undefined while predecessors are still pending. */
   ready: number | undefined;
   pendingPredecessors: number;
-  startedAt: number | undefined;
+  /**
+   * Working minutes: the first instant the task was ready with capacity on its
+   * resource. Its reported start, and where its share periods count from.
+   */
+  anchor: number | undefined;
   finishedAt: number | undefined;
   segments: { start: number; end: number; rate: number; soloRate: number }[];
 }
@@ -102,16 +106,22 @@ export function schedule(
     overrides.set(resource.id, intervals);
     for (const interval of intervals) capacityEdges.push(interval.from, interval.to);
   }
-  // A share period redivides a resource with no task starting or finishing,
-  // exactly as an absence does, so its edges join the same list.
-  const sharePeriods = new Map<TaskId, CapacityInterval[]>();
-  for (const task of tasks) {
-    const intervals = shareIntervals(task, calendar);
-    if (intervals.length === 0) continue;
-    sharePeriods.set(task.id, intervals);
-    for (const interval of intervals) capacityEdges.push(interval.from, interval.to);
-  }
   capacityEdges.sort((a, b) => a - b);
+  const knownEdges = capacityEdges.length;
+  const sharePeriods = new Map<TaskId, CapacityInterval[]>();
+  const periodCount = tasks.reduce((sum, task) => sum + (task.shareOverrides?.length ?? 0), 0);
+
+  // A share period redivides a resource with no task starting or finishing,
+  // exactly as an absence does, so its edges join the same list — but only
+  // here: a period is counted from the anchor.
+  const anchorAt = (state: SimTask, at: number): void => {
+    state.anchor = at;
+    const intervals = shareIntervals(state.task, at, calendar.minutesPerDay);
+    if (intervals.length === 0) return;
+    sharePeriods.set(state.task.id, intervals);
+    for (const interval of intervals) capacityEdges.push(interval.from, interval.to);
+    capacityEdges.sort((a, b) => a - b);
+  };
 
   const capacityOf = (resourceId: ResourceId, at: number): number => {
     const resource = resourceById.get(resourceId);
@@ -136,7 +146,7 @@ export function schedule(
             : 0
           : undefined,
       pendingPredecessors,
-      startedAt: undefined,
+      anchor: undefined,
       finishedAt: undefined,
       segments: [],
     });
@@ -153,7 +163,7 @@ export function schedule(
 
   const finish = (state: SimTask, at: number): void => {
     state.finishedAt = at;
-    state.startedAt ??= at;
+    state.anchor ??= at;
     remainingCount--;
     for (const successorId of successors.get(state.task.id) ?? []) {
       const successor = states.get(successorId)!;
@@ -185,8 +195,10 @@ export function schedule(
   // Each iteration consumes at least one completion, one arrival, or one absence
   // or share-period edge; the bound turns any future logic error into a clear
   // failure instead of a hang. It has to count those edges too, or a team with
-  // a lot of holiday would trip a convergence error that is not one.
-  const maxIterations = 4 * states.size + 2 * capacityEdges.length + 16;
+  // a lot of holiday would trip a convergence error that is not one. A task's
+  // periods are not on the axis yet: n of them cut it into fewer than 2n
+  // intervals, so into fewer than 4n edges.
+  const maxIterations = 4 * states.size + 2 * (knownEdges + 4 * periodCount) + 16;
 
   for (let iteration = 0; remainingCount > 0; iteration++) {
     if (iteration > maxIterations) {
@@ -244,6 +256,9 @@ export function schedule(
       // full rate, so a share on one takes nothing from the next.
       const pools = key === null ? group.map((state) => [state]) : [group];
       const capacity = key === null ? 1 : capacityOf(key, clock);
+      if (capacity > 0) {
+        for (const state of group) if (state.anchor === undefined) anchorAt(state, clock);
+      }
       for (const pool of pools) {
         for (const { task } of pool) {
           shares.set(task.id, shareAt(task, sharePeriods.get(task.id) ?? [], clock));
@@ -297,7 +312,6 @@ export function schedule(
       const rate = rates.get(state.task.id)!;
       if (rate <= 0) continue;
       const soloRate = soloRates.get(state.task.id)!;
-      state.startedAt ??= clock;
       const last = state.segments[state.segments.length - 1];
       // Events on other resources split the timeline without changing this rate;
       // merging keeps the rendered bar from fragmenting into meaningless slices.
@@ -319,7 +333,7 @@ export function schedule(
 
   const scheduled = new Map<TaskId, ScheduledTask>();
   for (const [id, state] of states) {
-    const startMinutes = state.startedAt ?? 0;
+    const startMinutes = state.anchor ?? 0;
     const endMinutes = state.finishedAt ?? startMinutes;
     scheduled.set(id, {
       id,
@@ -340,7 +354,7 @@ export function schedule(
     });
   }
 
-  const starts = [...states.values()].map((state) => state.startedAt ?? 0);
+  const starts = [...states.values()].map((state) => state.anchor ?? 0);
   const ends = [...states.values()].map((state) => state.finishedAt ?? 0);
   return {
     tasks: scheduled,

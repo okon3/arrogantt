@@ -8,7 +8,7 @@ import type { TaskDetails, TaskPatch } from './ganttHandle';
 import { PercentCell, PeriodRowList } from './PeriodRowList';
 import { CRITICAL_CHAIN_LIMIT, type MeasuredSlack } from './project';
 import { DESCRIPTION_LIMIT } from './serialization';
-import { hasShare, parseTaskShare } from './taskShare';
+import { hasShare, parseTaskShare, type DatedSharePeriod } from './taskShare';
 
 const dayFormat = new Intl.DateTimeFormat('en-GB', {
   day: '2-digit',
@@ -27,6 +27,8 @@ const toPercentInput = (share: number | undefined) =>
 export function TaskDialog({
   task,
   paceFrom,
+  pacePeriods,
+  paceDays,
   newPacePeriod,
   slack,
   resources,
@@ -39,8 +41,12 @@ export function TaskDialog({
   task: TaskDetails;
   /** Opens with one unsaved pace period on this day, its percent focused. */
   paceFrom?: Date;
-  /** The period a new row starts as on `day`: one day, at the share the task already runs at. */
-  newPacePeriod(day: string): ShareOverride;
+  /** The task's periods on the dates the plan put them when the dialog opened. */
+  pacePeriods: DatedSharePeriod[];
+  /** Those rows back as days of the task, against the same plan; throws what Save shows. */
+  paceDays(periods: DatedSharePeriod[]): ShareOverride[];
+  /** The period a new row starts as on `day`, or on the task's day nearest to it: one day, at the share the task already runs at. */
+  newPacePeriod(day: string): DatedSharePeriod;
   /** Null when the plan is past the size the app will measure. */
   slack: MeasuredSlack | null;
   resources: Resource[];
@@ -61,8 +67,8 @@ export function TaskDialog({
   const [disabled, setDisabled] = useState(task.disabled);
   const [description, setDescription] = useState(task.description ?? '');
   const [sharePercent, setSharePercent] = useState(toPercentInput(task.share));
-  const [sharePeriods, setSharePeriods] = useState<ShareOverride[]>(() => [
-    ...(task.shareOverrides ?? []),
+  const [sharePeriods, setSharePeriods] = useState<DatedSharePeriod[]>(() => [
+    ...pacePeriods,
     ...(paceFrom ? [newPacePeriod(toDayInput(paceFrom))] : []),
   ]);
   const pace = useRef<HTMLDivElement>(null);
@@ -129,7 +135,7 @@ export function TaskDialog({
       // The file's gate, so the dialog cannot store what Save would refuse.
       pace = parseTaskShare(
         shareEdited && shareTyped !== '' ? Number(shareTyped) / 100 : undefined,
-        paced ? sharePeriods : undefined,
+        paced ? paceDays(sharePeriods) : undefined,
       );
     } catch (problem) {
       setError((problem as Error).message);
@@ -399,7 +405,7 @@ export function TaskDialog({
               </span>
               by default (empty: not fixed)
             </span>
-            <PeriodRowList<ShareOverride>
+            <PeriodRowList<DatedSharePeriod>
               periods={sharePeriods}
               workingWeekdays={workingDays}
               emptyMessage="No periods: the pace above holds for the whole task."
@@ -413,7 +419,8 @@ export function TaskDialog({
               onChange={setSharePeriods}
             />
             <span className="taskinfo__hint">
-              The exact share of the person's capacity the task runs at; 0% pauses it.
+              The exact share of the person's capacity the task runs at; 0% pauses it. A period is
+              days of the task, shown on the dates the plan gives them now: it moves with the task.
             </span>
           </div>
         )}

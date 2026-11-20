@@ -1,9 +1,8 @@
 import { gantt } from 'dhtmlx-gantt';
 import { X } from 'lucide-static';
-import { dateOfDay, dayIndexOf, type ShareOverride } from '../scheduler';
+import { dateOfDay, dayIndexOf, dayStringOf, type ShareOverride } from '../scheduler';
 import {
   addPeriod,
-  dragSpan,
   levelShare,
   moveEdge,
   nearestMidnight,
@@ -12,11 +11,10 @@ import {
   samePeriods,
   setLevel,
   shareLabel,
-  type DaySpan,
   type PeriodBox,
 } from './pacePeriods';
 import { isMilestone, type Project, type ProjectTask, type SolvedProject } from './project';
-import { parseTaskShare, seedShare } from './taskShare';
+import { parseTaskShare, seedShare, taskDays, type TaskDays } from './taskShare';
 
 /**
  * A task's pace periods, set and adjusted on its bar: the DOM and dhtmlx half.
@@ -28,16 +26,18 @@ interface Options {
   project(): Project;
   solved(): SolvedProject;
   /**
-   * Shows `periods` on the task while a drag is under way: the plan is
-   * re-solved and redrawn, and nobody is told — no undo step, no draft.
-   * `undefined` is the task with none, which is how a drag puts back a model
-   * that held none.
+   * Shows each task named with the periods given while a drag is under way:
+   * the plan is re-solved and redrawn, and nobody is told — no undo step, no
+   * draft. The model then holds them as that solve trimmed them to their
+   * tasks. `undefined` is a task with none.
    */
-  preview(taskId: string, periods: ShareOverride[] | undefined): void;
+  preview(periods: PeriodsByTask): void;
   /** The edit itself: one undo step. */
   commit(taskId: string, periods: ShareOverride[]): void;
   reject(message: string): void;
 }
+
+type PeriodsByTask = ReadonlyMap<string, ShareOverride[] | undefined>;
 
 type DragPart = 'from' | 'to' | 'level';
 
@@ -47,10 +47,15 @@ interface Drag {
   part: DragPart;
   /** The model's own list at the press, which Escape puts back as it was. */
   original: ShareOverride[] | undefined;
-  /** The list on screen: the last one previewed. */
+  /**
+   * Every task's list at the press. Each preview starts from these: the solve
+   * behind it trims whatever task it shortens, the dragged one or another on
+   * the same person, and the next move may lengthen that task again.
+   */
+  atPress: PeriodsByTask;
+  /** The last list previewed, as the gesture made it: before the trim to the task. */
   shown: ShareOverride[];
   previewed: boolean;
-  spanAtPress: DaySpan;
   startY: number;
   startShare: number;
   barHeight: number;
@@ -98,17 +103,24 @@ export function installPaceHandles(options: Options): () => void {
     return task && isPaceable(task) ? task : undefined;
   };
 
-  const spanOf = (taskId: string): DaySpan | undefined => {
-    const scheduled = options.solved().schedule.tasks.get(taskId);
-    // The dates the schedule carries, not its minutes converted again.
-    return scheduled && { from: dayIndexOf(scheduled.start), to: dayIndexOf(scheduled.end) };
+  /** The task's working days as the plan on screen counts them. */
+  const daysOf = (taskId: string): TaskDays | undefined => {
+    const solved = options.solved();
+    const scheduled = solved.schedule.tasks.get(taskId);
+    return scheduled && taskDays(scheduled, solved.calendar);
   };
 
-  const classOf = (taskId: string, box: PeriodBox) =>
+  /** The period under the drag as the gesture last made it; none once an edge passed the other. */
+  const draggedPeriod = (current: Drag): ShareOverride | undefined =>
+    current.shown.length === (current.original ?? []).length
+      ? current.shown[current.index]
+      : undefined;
+
+  const classOf = (taskId: string, box: PeriodBox, dragging: boolean) =>
     'pace-period' +
     (box.tiny ? ' pace-period--tiny' : '') +
     (taskId === hotTask ? ' pace-period--hot' : '') +
-    (drag?.taskId === taskId && drag.index === box.index ? ' pace-period--dragging' : '');
+    (dragging ? ' pace-period--dragging' : '');
 
   const paint = () => {
     const { min_date: from, max_date: to } = gantt.getState();
@@ -119,13 +131,19 @@ export function installPaceHandles(options: Options): () => void {
         if (!task.shareOverrides || !isPaceable(task)) continue;
         // A row inside a closed branch has no place on the chart.
         if (!gantt.isTaskExists(task.id) || !gantt.isTaskVisible(task.id)) continue;
+        const days = daysOf(task.id);
+        if (!days) continue;
         const bar = gantt.getTaskPosition(gantt.getTask(task.id));
         const boxes = periodBoxes(
           task.shareOverrides,
           rendered,
           { top: bar.top, height: bar.height, rowHeight: bar.rowHeight ?? bar.height },
           dayX,
+          days.dayOf,
         );
+        // By its first day, which a trim never moves: the model's list can be
+        // shorter than the gesture's, and a position would name another period.
+        const draggedFrom = drag?.taskId === task.id ? draggedPeriod(drag)?.fromDay : undefined;
         for (const box of boxes) {
           const key = `${task.id}:${box.index}`;
           live.add(key);
@@ -140,7 +158,11 @@ export function installPaceHandles(options: Options): () => void {
           }
           node.dataset.paceTask = task.id;
           node.dataset.paceIndex = String(box.index);
-          node.className = classOf(task.id, box);
+          node.className = classOf(
+            task.id,
+            box,
+            task.shareOverrides[box.index].fromDay === draggedFrom,
+          );
           node.style.left = `${box.left}px`;
           node.style.top = `${box.top}px`;
           node.style.width = `${box.width}px`;
@@ -160,12 +182,12 @@ export function installPaceHandles(options: Options): () => void {
   };
 
   /** Validated by the gate the dialog and the file use, then handed over. */
-  const commit = (taskId: string, periods: ShareOverride[], original: ShareOverride[] | undefined) => {
+  const commit = (taskId: string, periods: ShareOverride[], ended?: Drag) => {
     let parsed: ShareOverride[];
     try {
       parsed = parseTaskShare(undefined, periods).shareOverrides ?? [];
     } catch (problem) {
-      options.preview(taskId, original);
+      if (ended) restore(ended);
       options.reject((problem as Error).message);
       return;
     }
@@ -180,21 +202,31 @@ export function installPaceHandles(options: Options): () => void {
       return setLevel(base, current.index, share);
     }
     const date = dateUnder(event);
-    const live = spanOf(current.taskId);
-    if (!date || !live) return current.shown;
-    const span = dragSpan(current.spanAtPress, live, base[current.index]);
-    return moveEdge(base, current.index, current.part, nearestMidnight(date), span);
+    const days = daysOf(current.taskId);
+    if (!date || !days) return current.shown;
+    // The first working day past the midnight the edge is dropped on opens the
+    // period; the one before it closes it.
+    const opening = days.ordinalFrom(nearestMidnight(date));
+    const day = current.part === 'from' ? opening : opening - 1;
+    return moveEdge(base, current.index, current.part, day);
   };
 
   const showTip = (event: MouseEvent, current: Drag) => {
+    // As it stands on the task: the solve behind the preview may have cut it
+    // back to the task's end, or left none of it.
+    const dragged = draggedPeriod(current);
     const period =
-      current.shown.length === (current.original ?? []).length
-        ? current.shown[current.index]
-        : undefined;
+      dragged &&
+      paceable(current.taskId)?.shareOverrides?.find(
+        (candidate) => candidate.fromDay === dragged.fromDay,
+      );
+    const days = daysOf(current.taskId);
+    const date = (ordinal: number) => dayStringOf(days!.dayOf(ordinal));
     tip.hidden = false;
-    tip.textContent = period
-      ? `${period.from} → ${period.to} · ${shareLabel(period.share)}`
-      : 'Release to remove';
+    tip.textContent =
+      period && days
+        ? `${date(period.fromDay)} → ${date(period.toDay)} · ${shareLabel(period.share)}`
+        : 'Release to remove';
     tip.style.left = `${event.clientX + 14}px`;
     tip.style.top = `${event.clientY - 30}px`;
   };
@@ -215,28 +247,29 @@ export function installPaceHandles(options: Options): () => void {
     if (!samePeriods(next, drag.shown)) {
       drag.shown = next;
       drag.previewed = true;
-      options.preview(drag.taskId, next);
+      options.preview(new Map(drag.atPress).set(drag.taskId, next));
     }
     showTip(event, drag);
   }
 
   /** Puts the model back exactly as the press found it. */
-  const restore = (ended: Drag) => {
-    if (ended.previewed) options.preview(ended.taskId, ended.original);
+  function restore(ended: Drag) {
+    if (ended.previewed) options.preview(ended.atPress);
     else paint();
-  };
+  }
 
   function onUp(event: MouseEvent) {
     if (!drag) return;
     event.stopPropagation();
-    // What was last shown is what is kept: the span is read live, and a list
-    // recomputed here could differ from the one on screen.
     const ended = drag;
     endDrag();
     swallowClick = true;
     setTimeout(() => (swallowClick = false), 0);
-    if (samePeriods(ended.shown, ended.original ?? [])) restore(ended);
-    else commit(ended.taskId, ended.shown, ended.original);
+    // What is on screen is what is kept: the model's list, trimmed to the task
+    // by the solve that drew it — not the gesture's, which may reach past it.
+    const kept = paceable(ended.taskId)?.shareOverrides ?? [];
+    if (!ended.previewed || samePeriods(kept, ended.original ?? [])) restore(ended);
+    else commit(ended.taskId, kept, ended);
   }
 
   function onKey(event: KeyboardEvent) {
@@ -263,13 +296,12 @@ export function installPaceHandles(options: Options): () => void {
     const index = Number(owner.dataset.paceIndex);
     const task = paceable(taskId);
     const period = task?.shareOverrides?.[index];
-    const span = spanOf(taskId);
-    if (!task || !period || !span) return;
+    if (!task || !period) return;
     const part = handle.dataset.pacePart as DragPart | 'delete';
     if (part === 'delete') {
       swallowClick = true;
       setTimeout(() => (swallowClick = false), 0);
-      commit(taskId, removePeriod(task.shareOverrides!, index), task.shareOverrides);
+      commit(taskId, removePeriod(task.shareOverrides!, index));
       return;
     }
     drag = {
@@ -277,9 +309,9 @@ export function installPaceHandles(options: Options): () => void {
       index,
       part,
       original: task.shareOverrides,
+      atPress: new Map(options.project().tasks.map((other) => [other.id, other.shareOverrides])),
       shown: task.shareOverrides!,
       previewed: false,
-      spanAtPress: span,
       startY: event.clientY,
       startShare: period.share,
       barHeight: owner.offsetHeight || 1,
@@ -312,18 +344,17 @@ export function installPaceHandles(options: Options): () => void {
     const task = paceable(taskId);
     const date = dateUnder(event);
     if (!task || !date) return;
-    const span = spanOf(task.id);
-    if (!span) return;
+    // A closed day inside the bar stands for the working day beside it.
+    const day = daysOf(task.id)?.nearestOrdinal(dayIndexOf(date));
+    if (day === undefined) return;
     const solved = options.solved();
-    const day = dayIndexOf(date);
     const periods = task.shareOverrides ?? [];
     const next = addPeriod(
       periods,
       day,
-      seedShare(task, solved.schedule.tasks.get(task.id), day, solved.calendar),
-      span,
+      seedShare(task, solved.schedule.tasks.get(task.id), day, solved.calendar.minutesPerDay),
     );
-    if (next !== periods) commit(task.id, next, task.shareOverrides);
+    if (next !== periods) commit(task.id, next);
   };
 
   const setHot = (taskId: string | null) => {

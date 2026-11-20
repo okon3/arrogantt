@@ -15,7 +15,13 @@ import {
   type ProjectTask,
   type SolvedProject,
 } from './project';
-import { hasShare, leafShare, shareInForce, type TaskShare } from './taskShare';
+import {
+  datePeriods,
+  hasShare,
+  shareOnDay,
+  taskDays,
+  type DatedSharePeriod,
+} from './taskShare';
 
 /**
  * Everything the hover has to answer, resolved before any of it is rendered.
@@ -52,8 +58,11 @@ export interface BarFacts {
   shared: boolean;
   /** Effective state: a leaf's own flag or inherited, a summary once every leaf under it is. */
   disabled: boolean;
-  /** The share settings pacing the task; absent when it has none, on a summary and on a milestone. */
-  pace?: TaskShare;
+  /**
+   * The share settings pacing the task, its periods on the dates the plan puts
+   * them; absent when it has none, on a summary and on a milestone.
+   */
+  pace?: { share?: number; shareOverrides?: DatedSharePeriod[] };
   /** Ran below a share it was fixed at: the fixed shares on its person exceed their capacity. */
   reduced?: boolean;
   /**
@@ -95,7 +104,7 @@ function rateRange(rates: number[]): string | null {
 const shortDate = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit' });
 
 /** What the task is fixed at: its default, then each period in declared order. */
-function paceLabel(pace: TaskShare): string {
+function paceLabel(pace: NonNullable<BarFacts['pace']>): string {
   const parts = pace.share === undefined ? [] : [`Fixed at ${percent(pace.share)}`];
   for (const period of pace.shareOverrides ?? []) {
     const from = shortDate.format(dateOfDay(dayIndexOfString(period.from)));
@@ -233,6 +242,7 @@ export function barFactsOf(
   const row = chain?.rows.get(task.id);
   const contendedOn = resources.find((entry) => entry.id === row?.contendedResourceId);
   const paced = hasShare(task) && !isMilestone(task, solved.summaryIds);
+  const days = taskDays(scheduled, solved.calendar);
   return {
     name: task.name,
     isSummary: solved.summaryIds.has(task.id),
@@ -254,14 +264,23 @@ export function barFactsOf(
     contended: isContended(scheduled),
     shared: isShared(scheduled),
     disabled: solved.disabledIds.has(task.id),
-    ...(paced ? { pace: leafShare(task, false) } : {}),
+    ...(paced
+      ? {
+          pace: {
+            ...(task.share === undefined ? {} : { share: task.share }),
+            ...(task.shareOverrides
+              ? { shareOverrides: datePeriods(task.shareOverrides, days) }
+              : {}),
+          },
+        }
+      : {}),
     // Judged per segment: outside its fixed periods the task splits like any other.
     reduced:
       paced &&
       scheduled.segments.some(
         (segment) =>
           segment.rate < segment.soloRate - RATE_EPSILON &&
-          shareInForce(task, segment.start) !== undefined,
+          shareOnDay(task, days.ordinalAt(segment.startWorkingMinutes)) !== undefined,
       ),
     chain: chain
       ? {

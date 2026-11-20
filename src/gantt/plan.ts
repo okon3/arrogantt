@@ -18,7 +18,7 @@ export interface PlanTask {
   description?: string;
   /** Exact share of its person's capacity a leaf is fixed at, `0..1`; absent when not fixed. */
   share?: number;
-  /** Periods (`YYYY-MM-DD`, inclusive) that replace it; `share: 0` pauses. Absent when none. */
+  /** Periods that replace it, in working days of the task from the one `start` falls on (0), inclusive; `share: 0` pauses. Absent when none. */
   shareOverrides?: ShareOverride[];
   /** The only structural truth. Null at top level. */
   parentId: string | null;

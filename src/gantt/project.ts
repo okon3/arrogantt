@@ -17,7 +17,7 @@ import {
   type TaskCriticality,
 } from '../scheduler';
 import { taskCosts, type Person, type TaskCost } from './cost';
-import { leafShare } from './taskShare';
+import { leafShare, taskDays, trimToTask } from './taskShare';
 
 /**
  * A task as the user edits it.
@@ -62,7 +62,8 @@ export interface ProjectTask {
   share?: number;
   /**
    * Periods where the share differs from the default; `share: 0` pauses.
-   * Absent when empty, for the same reason as `disabled`.
+   * Working days of the task counted from its solved start, so they move with
+   * it. Absent when empty, for the same reason as `disabled`.
    */
   shareOverrides?: ShareOverride[];
 }
@@ -482,6 +483,34 @@ export function solve(project: Project): SolvedProject {
     costs: taskCosts(project, { hierarchy, schedule: result, disabledIds, calendar }),
     currency: project.currency ?? null,
   };
+}
+
+/**
+ * Cuts every leaf's share periods back to the task as it was just solved: a
+ * period never reaches past its task's end.
+ *
+ * Writes the model and `solved.engineTasks` alike. Days past a task's end are
+ * inert, so `solved` still describes the trimmed plan and nothing is solved
+ * again — but the critical chain re-solves those engine tasks with a task made
+ * longer, where a period left hanging past the end would act.
+ */
+export function trimSharePeriods(project: Project, solved: SolvedProject): void {
+  const engineById = new Map(solved.engineTasks.map((task) => [task.id, task]));
+  for (const task of project.tasks) {
+    const scheduled = solved.schedule.tasks.get(task.id);
+    const engineTask = engineById.get(task.id);
+    // On a summary or a milestone the periods are inert and stay as declared.
+    if (!task.shareOverrides || !scheduled || !engineTask?.shareOverrides) continue;
+    const trimmed = trimToTask(task.shareOverrides, taskDays(scheduled, solved.calendar).last);
+    if (trimmed === task.shareOverrides) continue;
+    if (trimmed.length > 0) {
+      task.shareOverrides = trimmed;
+      engineTask.shareOverrides = trimmed.map((period) => ({ ...period }));
+    } else {
+      delete task.shareOverrides;
+      delete engineTask.shareOverrides;
+    }
+  }
 }
 
 /**

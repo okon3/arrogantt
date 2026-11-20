@@ -19,6 +19,10 @@
   its level up or down to change the percentage. A new period starts at the
   pace the task already has there, so adding it moves nothing. The periods
   of one task can no longer overlap.
+- Pace periods belong to their task and move with it: drag the bar, change
+  its start, or let whatever comes before it push it, and its periods stay
+  on the same days of the task. A period never runs past the end of its
+  task: when the task gets shorter the period is cut back with it.
 
 ## v1.6 — 2026-09-23
 

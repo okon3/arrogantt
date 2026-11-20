@@ -141,7 +141,7 @@ export interface TaskDetails {
   disabled: boolean;
   /** Fixed share of its person's capacity, `0..1`; absent when not fixed, and on a summary. */
   share?: number;
-  /** Periods replacing it (`share: 0` pauses); absent when none, and on a summary. */
+  /** Periods replacing it, in working days of the task (`share: 0` pauses); absent when none, and on a summary. */
   shareOverrides?: ShareOverride[];
   /** Money over the priced part of the effort; null when no rate priced any of it. */
   cost: number | null;

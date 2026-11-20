@@ -32,12 +32,17 @@
   2000 characters. Optional and additive — v2 stays v2. Written only when
   present: an empty description is normalized to absent, the same bargain
   `disabled: false` makes below.
-- `tasks[].share?: number` and `tasks[].shareOverrides?: [{ from, to, share,
-  label? }]`: the exact share of its person's capacity a leaf runs at, and the
-  periods that replace it (semantics: [scheduling.md](scheduling.md)).
-  Fractions, like `availability`; `share: 0` in a period is a pause. **Two
-  periods of one task may not share a day** (adjacent is fine), unlike a
+- `tasks[].share?: number` and `tasks[].shareOverrides?: [{ fromDay, toDay,
+  share, label? }]`: the exact share of its person's capacity a leaf runs at,
+  and the periods that replace it (semantics: [scheduling.md](scheduling.md)).
+  Fractions, like `availability`; `share: 0` in a period is a pause.
+- **A period holds no date**: `fromDay`/`toDay` are whole numbers from 0 to
+  `MAX_PERIOD_DAY`, inclusive working days of the task. Day 0 is the working
+  day the task's solved start falls on; closed days are not counted.
+- **Two periods of one task may not share a day** (adjacent is fine), unlike a
   person's `availabilityOverrides`, where the last declared wins.
+- A period reaching past its task's end loads, and is cut back to the end on
+  load: the app never writes one.
 - Both optional and additive — v2 stays v2. Written only when set (an empty
   list is normalized to absent) and never on a summary, like `resourceId`. On a
   milestone they are kept and inert. **A build that predates them drops both
@@ -73,9 +78,11 @@ versions, a negative or non-numeric daily rate, a rate period with no numeric
 `dailyRate`, a rate period with a malformed `YYYY-MM-DD` day, a `currency` that
 is blank, padded, not a string, or over 8 characters, a task `share` that is
 not a finite number from `MIN_SHARE` (1%) up to 1 (a default of zero never
-finishes — a pause is a period), a share period with a missing, malformed or
-impossible day, with `from` after `to`, or whose `share` is not 0 or a finite
-number from `MIN_SHARE` up to 1, two share periods of one task with a day in
+finishes — a pause is a period), a share period whose `fromDay` or `toDay` is not
+a whole number from 0 to `MAX_PERIOD_DAY`, with `fromDay` after `toDay`,
+carrying a `from` or `to` (the dated shape of an unreleased draft: refused,
+never converted), or whose `share` is not 0 or a finite number from
+`MIN_SHARE` up to 1, two share periods of one task with a day in
 common (the error names both). Parse before load — a bad
 file leaves the open project untouched.
 

@@ -1,22 +1,11 @@
-import {
-  dateOfDay,
-  dayIndexOf,
-  dayIndexOfString,
-  dayStringOf,
-  type ShareOverride,
-} from '../scheduler';
+import { dateOfDay, dayIndexOf, type ShareOverride } from '../scheduler';
 
 /**
  * What a gesture on a bar's pace periods stands for: the pure half of
- * `paceHandles.ts`. Days are day indices, a span is inclusive at both ends,
- * and every function answers a new list — the caller's is never touched.
+ * `paceHandles.ts`. A period's days are working days of its task, counted
+ * from the task's day 0 and inclusive at both ends, and every function answers
+ * a new list — the caller's is never touched.
  */
-
-/** A task's solved start and end days, inclusive. */
-export interface DaySpan {
-  from: number;
-  to: number;
-}
 
 /** Narrower than this a period keeps its ticks and lets the pointer through. */
 export const MIN_INTERACTIVE_PX = 14;
@@ -37,70 +26,36 @@ export function nearestMidnight(date: Date): number {
 }
 
 /**
- * The periods as they may stand on a task spanning `from..to`: one wholly
- * outside is dropped, one partly outside is trimmed to it.
- */
-export function clipToSpan(periods: ShareOverride[], from: number, to: number): ShareOverride[] {
-  return periods.flatMap((period) => {
-    const first = Math.max(dayIndexOfString(period.from), from);
-    const last = Math.min(dayIndexOfString(period.to), to);
-    if (last < first) return [];
-    return [{ ...period, from: dayStringOf(first), to: dayStringOf(last) }];
-  });
-}
-
-/**
- * How far the edges of `period` may be dragged: over the task's span as it is
- * solved now, so an edge follows a bar its own period makes longer, and never
- * short of where the period already stands.
- *
- * The start the drag began with stays reachable too. A pause dragged over a
- * bar's first days pushes the solved start past itself, and a clamp read live
- * alone would throw the edge back, re-solve, and let it through again.
- */
-export function dragSpan(atPress: DaySpan, live: DaySpan, period: ShareOverride): DaySpan {
-  return {
-    from: Math.min(atPress.from, live.from, dayIndexOfString(period.from)),
-    to: Math.max(live.to, dayIndexOfString(period.to)),
-  };
-}
-
-/**
- * The list with one edge of period `index` dropped on the midnight `boundary`.
+ * The list with one edge of period `index` moved onto the task's working day
+ * `day`: the period's first day for `from`, its last for `to`.
  *
  * Past its own other edge the period has no day left and is removed — that is
  * the delete gesture, and it never reaches a neighbour. Otherwise the edge
- * stops at the day beside the neighbouring period and inside `span`.
+ * stops at the day beside the neighbouring period, and at day 0. Nothing stops
+ * it at the task's end: only the solve of this very list knows where that is,
+ * and `trimToTask` cuts it there.
  */
 export function moveEdge(
   periods: ShareOverride[],
   index: number,
   edge: 'from' | 'to',
-  boundary: number,
-  span: DaySpan,
+  day: number,
 ): ShareOverride[] {
   const period = periods[index];
   const without = periods.filter((_, position) => position !== index);
-  let from = dayIndexOfString(period.from);
-  let to = dayIndexOfString(period.to);
+  let { fromDay, toDay } = period;
   if (edge === 'from') {
-    if (boundary > to) return without;
-    const neighbours = without.map((other) => dayIndexOfString(other.to)).filter((day) => day < to);
-    from = Math.max(boundary, ...neighbours.map((day) => day + 1));
+    if (day > toDay) return without;
+    const neighbours = without.map((other) => other.toDay).filter((last) => last < toDay);
+    fromDay = Math.max(0, day, ...neighbours.map((last) => last + 1));
   } else {
-    if (boundary - 1 < from) return without;
-    const neighbours = without
-      .map((other) => dayIndexOfString(other.from))
-      .filter((day) => day > from);
-    to = Math.min(boundary - 1, ...neighbours.map((day) => day - 1));
+    if (day < fromDay) return without;
+    const neighbours = without.map((other) => other.fromDay).filter((first) => first > fromDay);
+    toDay = Math.min(day, ...neighbours.map((first) => first - 1));
   }
-  const [clipped] = clipToSpan(
-    [{ ...period, from: dayStringOf(from), to: dayStringOf(to) }],
-    span.from,
-    span.to,
+  return periods.map((other, position) =>
+    position === index ? { ...period, fromDay, toDay } : other,
   );
-  if (!clipped) return without;
-  return periods.map((other, position) => (position === index ? clipped : other));
 }
 
 /**
@@ -117,19 +72,12 @@ export function setLevel(periods: ShareOverride[], index: number, share: number)
 }
 
 /**
- * The list with a one-day period on `day`, or the list itself where none may
- * go: outside the task's span, or on a day a period already holds.
+ * The list with a one-day period on the task's working day `day`, or the
+ * list itself where a period already holds it.
  */
-export function addPeriod(
-  periods: ShareOverride[],
-  day: number,
-  share: number,
-  span: DaySpan,
-): ShareOverride[] {
-  if (day < span.from || day > span.to) return periods;
-  const date = dayStringOf(day);
-  if (periods.some((period) => period.from <= date && date <= period.to)) return periods;
-  return [...periods, { from: date, to: date, share }];
+export function addPeriod(periods: ShareOverride[], day: number, share: number): ShareOverride[] {
+  if (periods.some((period) => period.fromDay <= day && day <= period.toDay)) return periods;
+  return [...periods, { fromDay: day, toDay: day, share }];
 }
 
 export function removePeriod(periods: ShareOverride[], index: number): ShareOverride[] {
@@ -141,8 +89,8 @@ export function samePeriods(a: ShareOverride[], b: ShareOverride[]): boolean {
     a.length === b.length &&
     a.every(
       (period, index) =>
-        period.from === b[index].from &&
-        period.to === b[index].to &&
+        period.fromDay === b[index].fromDay &&
+        period.toDay === b[index].toDay &&
         period.share === b[index].share &&
         period.label === b[index].label,
     )
@@ -163,19 +111,22 @@ export interface PeriodBox {
 /**
  * Where each period sits over its bar, in the data area's pixels.
  *
- * `firstDay..endDay` is the rendered range, `endDay` exclusive: a period is
- * clipped to it, since `dayX` extrapolates past the range and would stretch
- * the scrollable area. One wholly outside gets no box.
+ * A box runs over the calendar days from the period's first working day to its
+ * last (`dayOf`), so across a weekend it spans it. `firstDay..endDay` is the
+ * rendered range, `endDay` exclusive: a period is clipped to it, since `dayX`
+ * extrapolates past the range and would stretch the scrollable area. One
+ * wholly outside gets no box.
  */
 export function periodBoxes(
   periods: ShareOverride[],
   rendered: { firstDay: number; endDay: number },
   bar: { top: number; height: number; rowHeight: number },
   dayX: (day: number) => number,
+  dayOf: (ordinal: number) => number,
 ): PeriodBox[] {
   return periods.flatMap((period, index) => {
-    const start = Math.max(dayIndexOfString(period.from), rendered.firstDay);
-    const end = Math.min(dayIndexOfString(period.to) + 1, rendered.endDay);
+    const start = Math.max(dayOf(period.fromDay), rendered.firstDay);
+    const end = Math.min(dayOf(period.toDay) + 1, rendered.endDay);
     if (end <= start) return [];
     const left = dayX(start);
     const width = dayX(end) - left;
@@ -194,7 +145,7 @@ export function periodBoxes(
   });
 }
 
-/** What the readout and the drag tip say of a share. */
+/** What the drag tip says of a share. */
 export function shareLabel(share: number): string {
   return share === 0 ? 'paused' : `${Math.round(share * 100)}%`;
 }

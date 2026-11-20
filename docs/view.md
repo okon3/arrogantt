@@ -205,12 +205,18 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   - Percent in the form, fraction in the model. The default goes back **only
     if retyped**: the field shows a rounded figure, and writing it back would
     change a share nobody touched. Empty = not fixed.
-  - `save()` runs `parseTaskShare`, the gate the file and the agent API use;
-    it refuses periods sharing a day, so an overlapped row (`overlapRefused`)
-    says what Save will refuse, not *overridden*.
+  - **The rows show dates, the model holds days of the task**: `datePeriods`
+    on open, `undatePeriods` on Save, both against the solve the dialog opened
+    on (`taskDays`). A start edited in the same Save moves the periods with it.
+  - A closed day at either end of a row gives way to the working day inside
+    it; a row starting before the task, or covering no working day, is refused.
+  - `save()` then runs `parseTaskShare`, the gate the file and the agent API
+    use; it refuses periods sharing a day, so an overlapped row
+    (`overlapRefused`) says what Save will refuse, not *overridden*.
   - Row menu *Set pace from here…* (leaf with effort) opens the dialog with one
-    **unsaved** period on the pointed day, unsnapped (grid: the solved start),
-    percent focused. Nothing is written before Save. Label wraps to line two.
+    **unsaved** period on the pointed day (grid: the solved start), percent
+    focused. A day outside the task, here and from *Add period*, stands for the
+    task's nearest day. Nothing is written before Save. Label wraps to line two.
   - **A new period starts at the share the task already has there**, unrounded
     (`seedShare`): adding one moves nothing. Same function for *Add period*,
     the row menu and the bar; the dialog seeds from the solve it opened on.
@@ -334,6 +340,17 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 
 ## Pace periods on the bar
 
+- **A period never reaches past its task's end** (`trimSharePeriods`): after
+  every solve in `applySolution` and `loadProject`, a `toDay` past the task's
+  last working day is cut to it and a period starting after it is removed.
+  - Inside the edit's own `applySolution`, before `onChange`: the cut is in
+    the history step of whatever shortened the task, on every path — dialog,
+    drag, grid, agent API.
+  - On load it cuts the project the caller then snapshots, so a file reaching
+    past an end opens clean, not dirty.
+  - It writes `solved.engineTasks` too: the critical chain re-solves them.
+- **A period is placed from the solved start**: `taskDays` turns its ordinals
+  into calendar days; its box spans those days' columns, a weekend included.
 - Double-click on a leaf's bar adds a one-day period; edges drag in whole
   days, the level grip in tenths (0 = paused); × or an edge past the other
   removes it. Summaries and milestones get nothing. No modifier key.
@@ -346,16 +363,19 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - Below `MIN_INTERACTIVE_PX` a period is two ticks and takes no pointer.
 - **The grip is the period's share of the person, not the rate drawn**: on a
   part-time person the fill under a period at 100% stops short of the grip.
-- **An edge stops at the task's solved span, read live, and at the day beside
-  the neighbouring period** (`dragSpan`, `moveEdge`). A double-click outside
-  the bar or inside a period adds nothing.
-- **A period already outside its bar is not pulled in**: `clipToSpan` is
-  called from the drag clamp only.
+- **An edge snaps to working days and stops at day 0 and at the day beside
+  the neighbouring period** (`moveEdge`). Nothing clamps it at the task's end:
+  the preview's own solve finds the end and the trim cuts there.
+- A double-click on a closed day inside the bar takes the working day nearest
+  to it; outside the bar or inside a period it adds nothing.
 - **A drag previews by re-solving without `onChange`** (`preview`, in
   `GanttChart`'s init effect); its release is one `updateTask` through
   `onSetPacePeriods`, like the dialog's Save.
-- Escape, or a release where the drag began, puts the task's own list back.
-  Every key is swallowed mid-drag.
+- **Every move starts from every task's list at the press** (`atPress`), the
+  trim applied to the preview only: a level raised and lowered again in one
+  drag gives back what it cut, on the dragged task and on its neighbours.
+- The release keeps the model's lists — the trimmed ones. Escape, or a release
+  where the drag began, puts every list back. Every key is swallowed mid-drag.
 - **Periods of one task do not overlap**, on every path in (`parseTaskShare`).
 
 ## Dependencies
@@ -387,6 +407,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   the bar template reads the row's `shared` flag. A gap between segments calls
   for the profile **only on a task carrying share settings** (its pause reads
   as empty track); a full-rate bar across its person's absence stays plain.
+  A wait before the first segment always does: the bar opens on the anchor.
 
 ## Resource load lanes (*Resource load*)
 
