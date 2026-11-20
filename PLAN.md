@@ -13,7 +13,9 @@ ha ricreato `## Unreleased`, non ancora rilasciato.
 report prima di ricevere task veri. **Goal J** (task
 completato come misura della stima) ha le domande di prodotto chiuse ma e'
 **sospeso dall'utente**: materiale pronto per un'analisi di dettaglio piu'
-avanti, non lavoro in corso. **Goal K** (polish di UI/UX) e' **chiuso, recensito e potato**; quel che
+avanti, non lavoro in corso. **Goal L** (pausa e percentuale per task) e
+**«Congelare il passato»** sono due esperimenti del 2026-11-20, **sospesi
+dall'utente**: le branch esistono, niente e' unito. **Goal K** (polish di UI/UX) e' **chiuso, recensito e potato**; quel che
 non va riproposto sta sotto `## Decisioni chiuse`. Tre conseguenze per chi
 entra adesso: **le due barre stanno su `--surface-sunken`** (chi tocca un
 controllo che vive li' sopra ha un fondo diverso da quello per cui era stato
@@ -163,6 +165,158 @@ dichiara assoluto. La spec deve sciogliere, in quest'ordine: la seconda
 passata che produce il termine di paragone, l'occupazione fissa nel
 simulatore, la riscrittura dell'invariante di conservazione, e solo dopo
 proporre le fette.
+
+## Goal L — il ritmo di un task: pausa e percentuale     [sospeso dall'utente]
+Richiesta dell'utente, 2026-11-20: «un modo di mettere in "pausa" un'attivita'
+per un certo periodo». Provata lo stesso giorno come **esperimento** su una
+branch a se', vista funzionare, e **sospesa dall'utente** prima di unirla:
+vuole ragionare su una soluzione piu' estesa. **Niente parte da qui senza che
+l'utente lo riapra.**
+
+**La direzione che l'utente ha in mente, con le sue parole**: «un'altra
+soluzione piu' estesa che permette di modificare l'effort di un task a
+piacimento, potendolo bloccare a percentuali precise (tra cui 0% che di fatto
+e' come metterlo in pausa)». Letta dall'hub come **quota per task, variabile
+nel tempo**: in un periodo il task avanza a una percentuale fissata invece che
+alla quota che gli lascia la divisione in parti uguali; a 0% e' la pausa.
+**Lettura confermata dall'utente il 2026-11-20.**
+
+**I tre casi d'uso, dall'utente (2026-11-20).**
+- **Manutenzione**: un'attivita' fissa al 20% del tempo di una persona, che
+  toglie tempo alle altre e serve a ricordare che quella persona ha anche
+  quello da fare.
+- **Priorita' tra attivita' in parallelo**: dare piu' o meno quota a una
+  rispetto alle altre.
+- **Solo per un periodo, non per tutta la durata**: «per un'attivita' imposto,
+  dalla timeline, 3 giorni in cui va al 20% invece che al 50% che sarebbe
+  ottenuto dal calcolo normale».
+
+**Forma proposta dall'hub — proposta, non decisa.** Il gemello per task della
+disponibilita' di una persona: una quota di default opzionale piu' periodi che
+la **sostituiscono** (`{from, to, share}`, l'ultimo dichiarato vince). La pausa
+dell'esperimento ne e' il caso `share: 0`. Il loop risolve il tempo e passa la
+quota gia' risolta al candidato, cosi' la policy continua a non vedere
+calendari: e' la risposta al muro annotato sotto. **La fine resta derivata**:
+la manutenzione porta un effort (20% × il periodo voluto) e finisce quando lo
+ha consumato — una manutenzione «da data a data» sarebbe una fine in ingresso.
+
+**Risposte dell'utente, 2026-11-20 — chiuse.**
+- **La quota e' un valore esatto**, non una regola di contesa: un task al 20%
+  resta al 20% anche quando e' l'unico della persona, che risulta libera per
+  il resto. Una regola sola; la pausa ne e' il caso zero. La priorita' tra
+  task in parallelo si ottiene cosi', **finche' corrono insieme** — rimasto
+  solo, il task fissato non accelera, ed e' accettato.
+- **La percentuale e' della capacita' della persona in quel momento**, non
+  della giornata piena: a disponibilita' 50%, un 20% vale 10% di giornata.
+- **Quote che sommano oltre il 100%** sulla stessa persona si riducono in
+  proporzione e i task senza quota si fermano; lo dice il tooltip. Nessun
+  rifiuto al salvataggio.
+- **La manutenzione dichiara un effort** e la fine resta derivata. Niente
+  date fisse: quelle sarebbero Goal J.
+- **Prima il modal del task, poi subito il gesto sulla timeline**: due fette
+  in quest'ordine, la seconda non e' facoltativa.
+
+**Fette proposte dall'hub, da confermare alla riapertura.** (1) motore: quota
+risolta per periodo e passata al candidato, bordi come eventi, riduzione
+proporzionale; (2) modello, formato file, agent API; (3) sezione nel modal e
+resa sulla barra; (4) gesto sulla timeline. La branch dell'esperimento e' il
+punto di partenza della (1), da riscrivere da «pausa» a «quota».
+
+**Cosa ha fatto l'esperimento** (branch `worktree-agent-ad7d9dc965e014b91`,
+commit `c972509` motore e `a58c37b` vista/file/API, da `09ed9d6`; 24 file,
++460; 640 test, build e lint puliti sul secondo commit):
+- `Task.pauses?: DayRange[]` nel motore; `pauseIntervals` in `availability.ts`
+  proietta i giorni sull'asse dei minuti lavorativi come `capacityIntervals`.
+  In `simulate.ts` un task in pausa **non e' candidato**: niente quota, niente
+  segmento, non diluisce la divisione; i bordi delle pause sono eventi.
+- `ProjectTask.pauses?` (solo foglie, assente se vuoto), campo opzionale in
+  `.gantt` v2 senza cambio di versione, sezione «Pauses» nel modal con
+  `DayRangeList`, `updateTask({ pauses })` nell'agent API.
+- Sul grafico: `drawsProfile` in `segmentBar.ts` fa disegnare il profilo a una
+  barra con un buco interno, cosi' il tratto fermo e' traccia vuota.
+- Visto nell'app: due task da 6 giorni sulla stessa persona; con uno in pausa
+  25-27/11 l'altro sale al 100% in quei giorni e chiude il 03/12 invece
+  dell'08/12. Un undo toglie le pause, save e riapertura le conservano.
+
+**Problemi incontrati, da non riscoprire.**
+- **La policy di allocazione non riceve il tempo** (`AllocationRequest` porta
+  risorsa, capacita' e candidati): una regola che dipende dal periodo non sta
+  nel solo `allocation.ts`, nonostante il commento della seam lo suggerisca.
+  L'esperimento ha filtrato i candidati nel loop. **Una percentuale per task
+  variabile nel tempo sbatte sullo stesso muro** e va decisa li'.
+- **Le assenze cambiano aspetto**: `drawsProfile` vale anche per un task fermo
+  per un override a zero della persona, che prima era una barra piena.
+  Effetto non chiesto.
+- **Una build vecchia cancella le pause**: il parser ignora in silenzio le
+  chiavi sconosciute di un task, quindi apre il file, non le vede e al Save le
+  toglie. Vale per **qualunque** campo nuovo sul task.
+- Una pausa senza fine non chiuderebbe mai il task: `from` e `to` obbligatori.
+- La figura PNG e la stampa non disegnano profili: li' il buco non si vede.
+- `from` dopo `to` non e' rifiutato (`expandRanges` lo tollera), come gia' per
+  `availabilityOverrides`.
+- Il primo dei due commit non e' stato provato da solo; tema chiaro non visto.
+
+**Domande che la soluzione estesa apre — nessuna e' decisa.**
+- **Chiusa**: «modificare l'effort a piacimento» e' la quota, non l'effort
+  totale. La conservazione `Σ(rate × durata) = effort` resta com'e'.
+- Un task **senza risorsa** oggi non contende mai e va a quota piena: una
+  percentuale su di lui cosa vuol dire. Tecnica, la decide la spec.
+- Una quota di default a 0% senza periodi non chiuderebbe mai il task: va
+  rifiutata, come la pausa senza fine.
+- Come si disegna sulla barra un tratto a quota fissata, e come si legge nel
+  pannello di carico la parte di persona lasciata libera.
+
+## Congelare il passato — esperimento                    [sospeso dall'utente]
+Richiesta dell'utente, 2026-11-20: «le attivita' che sono precedenti ad oggi
+dovrebbero essere congelate». Provata come esperimento su una branch a se' e
+**sospesa dall'utente** insieme a Goal L. Non ha lettera di goal: **non e'
+ancora deciso che cosa sia**, e una delle letture e' Goal J.
+
+**Le tre letture, dall'analisi del 2026-11-20.** (A) blocco di modifica lato
+vista; (B) risultati fissati per data dentro il motore — **sconsigliata**: il
+piano dipenderebbe dal giorno in cui si apre il file e viola «la fine e'
+sempre derivata»; (C) il piano deve rispecchiare cio' che e' successo, cioe'
+**Goal J**. Con J costruito, la richiesta diventa «i completati sono bloccati»
+piu' un'azione «segna completato tutto cio' che finisce prima di oggi».
+**Manca l'episodio concreto**: chiesto all'utente, non ancora risposto.
+
+**Fatto letto nel codice che ridimensiona il problema**: il motore non ha
+orologio (l'unico `new Date()` in `src/scheduler/` e' un fallback in
+`scheduleOrigin`) e la simulazione e' causale — una modifica con effetto da
+oggi in poi non sposta il passato. Il passato si muove solo toccando qualcosa
+datato nel passato.
+
+**Cosa ha fatto l'esperimento** — la lettura A (branch
+`worktree-agent-a947b9a250e6db43b`, commit `934aa38`, da `09ed9d6`; 14 file,
++348; 629 test, build e lint puliti):
+- `isPastTask(solved, id, today)` in `src/gantt/pastLock.ts`: passato = fine
+  risolta prima della mezzanotte locale di oggi; un summary lo e' se lo sono
+  tutte le sue foglie. «Oggi» resta nella vista, il motore non e' toccato.
+- Un solo controllo, `assertNotPastLocked` in `GanttChart.tsx`, su dieci punti:
+  `updateTask` (solo se cambia effort, start, risorsa o disabled),
+  `deleteTask`, `setParent`, `addLink`/`removeLink` sul target, piu'
+  `onBeforeEditStart`, `onBeforeTaskDrag`, `onRowDragStart`,
+  `onBeforeLinkAdd`, `onLinkDblClick`. Nome, colore e descrizione liberi.
+- Lucchetto sulla status bar, default acceso, preferenza di vista in
+  `localStorage['arrogantt.pastLock.v1']`; `setPastLocked`/`isPastLocked`
+  nell'agent API. Righe passate attenuate, cursore `not-allowed` sulla barra.
+
+**Problemi incontrati — il blocco lato vista si aggira.**
+- **Aggiungere un figlio a un task passato** lo trasforma in summary e il suo
+  schedule sparisce (`+` in griglia, sottotask dal menu, `addTask` con
+  `parentId`, `setParent` di un task futuro sotto una foglia passata). Il
+  buco piu' serio.
+- **Spostare un gruppo vivo con figli passati** cambia i predecessori che i
+  figli ereditano, quindi sposta anche il passato.
+- **Disponibilita' passate, calendario e risorse** restano modificabili e
+  muovono il passato: fuori perimetro per scelta.
+- Riordinare righe future attorno a righe passate: non misurato se cambia la
+  contesa.
+- Al centro di una barra corta il drag diventa modifica del `progress`: un
+  drag «riuscito» li' non dice nulla sul blocco.
+- **Non guidati**: tasto Canc, doppio clic reale su un link, toggle disabled
+  da menu e da griglia, drag di un link verso un task passato, rilettura
+  della preferenza dopo un reload.
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
