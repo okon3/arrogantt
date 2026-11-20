@@ -50,7 +50,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 
 - Five zoom levels (days → quarters). Quarters are a custom scale unit.
 - Ctrl+wheel and trackpad pinch zoom: app-bound `wheel` listener, one step per
-  gesture burst.
+  gesture burst. The date under the pointer stays under it, as far as the
+  range has room to scroll; the status-bar buttons zoom about the viewport.
 - **The window widens whenever the plan no longer fits.** An edit only ever
   grows it; a zoom or *Fit* recomputes it. Not per edit.
 - **The widened window is pinned on the plan plus the widest task name**, so

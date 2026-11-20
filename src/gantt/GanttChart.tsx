@@ -1322,8 +1322,21 @@ export function GanttChart({
       const now = event.timeStamp || Date.now();
       if (now - lastZoomStep < WHEEL_ZOOM_COOLDOWN) return;
       lastZoomStep = now;
+      // The date under the pointer stays under it: the zoom is about where the
+      // user is looking, not about the middle of the viewport.
+      const viewport = gantt.$task.getBoundingClientRect();
+      const overTimeline = event.clientX >= viewport.left && event.clientX <= viewport.right;
+      const pointed = overTimeline
+        ? gantt.dateFromPos(event.clientX - gantt.$task_data.getBoundingClientRect().left)
+        : null;
       if (event.deltaY < 0) gantt.ext.zoom.zoomIn();
       else gantt.ext.zoom.zoomOut();
+      if (pointed) {
+        gantt.scrollTo(
+          Math.max(0, gantt.posFromDate(pointed) - (event.clientX - viewport.left)),
+          null,
+        );
+      }
     };
     container.addEventListener('wheel', zoomOnWheel, { passive: false, capture: true });
 
