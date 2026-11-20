@@ -1,5 +1,11 @@
-import { equalSplit, type AllocationPolicy } from './allocation';
-import { capacityAt, capacityIntervals, type CapacityInterval } from './availability';
+import { splitCapacity, type AllocationPolicy } from './allocation';
+import {
+  capacityAt,
+  capacityIntervals,
+  shareAt,
+  shareIntervals,
+  type CapacityInterval,
+} from './availability';
 import { DEFAULT_CALENDAR, WorkingCalendar, type CalendarSpec } from './calendar';
 import { assertAcyclic, buildSuccessorIndex } from './topology';
 import type {
@@ -73,7 +79,7 @@ export function schedule(
   const origin = scheduleOrigin(tasks, options.origin);
 
   const calendar = new WorkingCalendar(origin, options.calendar ?? DEFAULT_CALENDAR);
-  const allocate = options.allocate ?? equalSplit;
+  const allocate = options.allocate ?? splitCapacity;
   const resourceById = new Map(resources.map((resource) => [resource.id, resource]));
 
   const overrides = new Map<ResourceId, CapacityInterval[]>();
@@ -82,6 +88,15 @@ export function schedule(
     const intervals = capacityIntervals(resource, calendar);
     if (intervals.length === 0) continue;
     overrides.set(resource.id, intervals);
+    for (const interval of intervals) capacityEdges.push(interval.from, interval.to);
+  }
+  // A share period redivides a resource with no task starting or finishing,
+  // exactly as an absence does, so its edges join the same list.
+  const sharePeriods = new Map<TaskId, CapacityInterval[]>();
+  for (const task of tasks) {
+    const intervals = shareIntervals(task, calendar);
+    if (intervals.length === 0) continue;
+    sharePeriods.set(task.id, intervals);
     for (const interval of intervals) capacityEdges.push(interval.from, interval.to);
   }
   capacityEdges.sort((a, b) => a - b);
@@ -156,9 +171,9 @@ export function schedule(
 
   let clock = Math.min(...initialReady);
   // Each iteration consumes at least one completion, one arrival, or one absence
-  // edge; the bound turns any future logic error into a clear failure instead of
-  // a hang. It has to count the capacity edges too, or a team with a lot of
-  // holiday would trip a convergence error that is not one.
+  // or share-period edge; the bound turns any future logic error into a clear
+  // failure instead of a hang. It has to count those edges too, or a team with
+  // a lot of holiday would trip a convergence error that is not one.
   const maxIterations = 4 * states.size + 2 * capacityEdges.length + 16;
 
   for (let iteration = 0; remainingCount > 0; iteration++) {
@@ -210,19 +225,30 @@ export function schedule(
 
     const rates = new Map<TaskId, number>();
     const soloRates = new Map<TaskId, number>();
+    const shares = new Map<TaskId, number | undefined>();
     for (const [key, group] of groups) {
       const resource = key === null ? undefined : resourceById.get(key);
-      // Unassigned tasks have no owner to share, so each one gets a full rate.
-      const capacity = key === null ? group.length : capacityOf(key, clock);
-      const granted = allocate({
-        resource,
-        capacity,
-        candidates: group.map((state) => ({ id: state.task.id, remaining: state.remaining })),
-      });
-      const solo = key === null ? 1 : capacity;
-      for (const state of group) {
-        rates.set(state.task.id, granted.get(state.task.id) ?? 0);
-        soloRates.set(state.task.id, solo);
+      // Unassigned tasks have no owner to share: each is a pool of its own at a
+      // full rate, so a share on one takes nothing from the next.
+      const pools = key === null ? group.map((state) => [state]) : [group];
+      const capacity = key === null ? 1 : capacityOf(key, clock);
+      for (const pool of pools) {
+        for (const { task } of pool) {
+          shares.set(task.id, shareAt(task, sharePeriods.get(task.id) ?? [], clock));
+        }
+        const granted = allocate({
+          resource,
+          capacity,
+          candidates: pool.map((state) => ({
+            id: state.task.id,
+            remaining: state.remaining,
+            share: shares.get(state.task.id),
+          })),
+        });
+        for (const { task } of pool) {
+          rates.set(task.id, granted.get(task.id) ?? 0);
+          soloRates.set(task.id, (shares.get(task.id) ?? 1) * capacity);
+        }
       }
     }
 
@@ -236,6 +262,14 @@ export function schedule(
       if (rate > 0) step = Math.min(step, state.remaining / rate);
     }
     if (!Number.isFinite(step)) {
+      // No edge is left, so the zero in force is the task's default — work that
+      // is never done. Named apart from the stall below, which is a person's.
+      const halted = active.find((state) => shares.get(state.task.id) === 0);
+      if (halted) {
+        throw new Error(
+          `Scheduler stalled: task "${halted.task.id}" is left at a share of zero and can never finish`,
+        );
+      }
       // Everyone active is away and nothing will ever change: a task assigned to
       // a resource that is off forever would otherwise spin here.
       throw new Error('Scheduler stalled: no active task received capacity');

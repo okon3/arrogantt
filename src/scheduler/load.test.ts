@@ -49,6 +49,24 @@ describe('one person, one task', () => {
   });
 });
 
+describe('a task at a fixed share', () => {
+  it('leaves the rest of the person free', () => {
+    // The task's solo rate is its share, not what Alice has: the lane must
+    // still read her whole capacity, or the unused 80% would vanish.
+    const lane = load([
+      { id: 'a', name: 'A', effort: days(1), startConstraint: MONDAY, resourceId: 'alice', share: 0.2 },
+    ]).get('alice')!;
+    expect(lane.segments).toHaveLength(1);
+    expect(lane.segments[0]).toMatchObject({
+      endWorkingMinutes: days(5),
+      committed: 0.2,
+      capacity: 1,
+    });
+    expect(lane.committedMinutes).toBeCloseTo(days(1), 6);
+    expect(lane.idleMinutes).toBeCloseTo(days(4), 6);
+  });
+});
+
 describe('two tasks on one person', () => {
   it('reads as fully committed, not as half of each', () => {
     const lane = load([

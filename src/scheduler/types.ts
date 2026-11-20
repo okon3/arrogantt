@@ -79,11 +79,11 @@ export interface AllocationSegment {
   /**
    * The rate the task would have had with the resource to itself, so `rate`
    * below it means contention and `rate` equal to it means the resource simply
-   * has less to give — part-time, or a reduced period.
+   * has less to give — part-time, a reduced period, or the task's own share.
    *
    * Recorded rather than re-derived: the capacity is the calendar's and the
    * policy's business, and a caller reconstructing it would be a second copy of
-   * both. 1 for an unassigned task, which never contends.
+   * both. Its share, or 1, for an unassigned task, which never contends.
    */
   soloRate: number;
 }

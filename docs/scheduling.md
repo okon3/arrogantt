@@ -148,6 +148,29 @@ arrival or capacity edge can move the clock. Measured, not derived:
 - Working week and daily hours are **global** — per-person hours would break the
   shared axis.
 
+## Task share
+
+The per-task twin of availability: `Task.share` + `Task.shareOverrides`,
+resolved by `shareAt` through the same projection as a person's periods.
+
+- **Exact, not a cap**: a task at a share runs at share × the person's current
+  capacity even when alone. What nobody claims stays free, and the load lanes
+  show it as idle.
+- **Fixed first, the rest split equally** among tasks with no share. Shares
+  over 100% are scaled down in proportion; tasks with no share then **stop**
+  (no segment) until the sum drops below 100% — at exactly 100% too.
+- **A period replaces the default; overlapping periods: last declared wins.**
+  No default = fixed only inside the periods, an ordinary task outside.
+- **Share 0 = pause**: no segment, capacity goes to the others. A period on a
+  weekend or shutdown costs nothing.
+- **Unassigned**: share of a full rate; still never contends — each unassigned
+  task is allocated on its own.
+- `soloRate` = share × capacity while a share is fixed, so scaled-down shares
+  read as contention and a task alone at its share does not.
+- Period edges are ordinary events, counted in the iteration bound. A task whose
+  share is zero once the last edge has passed never finishes: `schedule()`
+  throws `Scheduler stalled: task "…" is left at a share of zero…`.
+
 ## Cost — a reading of the schedule
 
 `src/gantt/cost.ts`, view-side only: the engine never learns that a task costs
@@ -207,6 +230,7 @@ A working-minute on a day boundary = two wall-clock instants: 17:00 that day /
 
 ## Extending
 
-`allocation.ts` is the seam: it receives already-resolved capacity. Per-task
-fixed/capped allocation goes there, not in the loop. The scheduler tests document
+`allocation.ts` is the seam: it receives already-resolved capacity and each
+candidate's already-resolved share, never time. The loop resolves both at the
+clock; how they divide is the policy's alone. The scheduler tests document
 the semantics, including the invariant Σ(rate × duration) = effort per task.

@@ -1,6 +1,6 @@
 import type { WorkingCalendar } from './calendar';
 import { dayIndexOfString, expandRanges, isDayString } from './dayRange';
-import type { Resource } from './types';
+import type { Resource, Task } from './types';
 
 /**
  * The share of a full working day a resource can give on a calendar day.
@@ -74,4 +74,41 @@ export function capacityAt(
 ): number {
   const covering = intervals.find((interval) => at >= interval.from && at < interval.to);
   return covering ? covering.availability : resource.availability ?? 1;
+}
+
+/**
+ * A task's share periods projected onto the working-minute axis.
+ *
+ * Through `capacityIntervals` on purpose: a share period is a resource's
+ * override under another name, and one projection cannot give the two a
+ * different answer on overlaps or on days nobody works.
+ */
+export function shareIntervals(task: Task, calendar: WorkingCalendar): CapacityInterval[] {
+  return capacityIntervals(
+    {
+      id: task.id,
+      name: task.name,
+      availabilityOverrides: (task.shareOverrides ?? []).map(({ from, to, share }) => ({
+        from,
+        to,
+        availability: share,
+      })),
+    },
+    calendar,
+  );
+}
+
+/**
+ * The share of its resource's capacity a task is fixed at, at a working minute.
+ * Undefined where neither a period nor a default fixes one: the task then takes
+ * whatever the split leaves it.
+ */
+export function shareAt(
+  task: Task,
+  intervals: CapacityInterval[],
+  at: number,
+): number | undefined {
+  const covering = intervals.find((interval) => at >= interval.from && at < interval.to);
+  const share = covering ? covering.availability : task.share;
+  return share === undefined ? undefined : Math.min(1, Math.max(0, share));
 }

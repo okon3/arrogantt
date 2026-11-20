@@ -86,7 +86,7 @@ export function resourceLoad(
       : calendar.fromWorkingMinutes(minutes, edge);
 
   /** Every allocation segment of the plan, tagged with whose it is. */
-  const booked = new Map<ResourceId, (LoadShare & { from: number; to: number; solo: number })[]>();
+  const booked = new Map<ResourceId, (LoadShare & { from: number; to: number })[]>();
   const known = new Set(resources.map((resource) => resource.id));
   for (const task of tasks) {
     if (!task.resourceId || !known.has(task.resourceId)) continue;
@@ -97,7 +97,6 @@ export function resourceLoad(
         rate: segment.rate,
         from: segment.startWorkingMinutes,
         to: segment.endWorkingMinutes,
-        solo: segment.soloRate,
       });
     }
     booked.set(task.resourceId, entries);
@@ -122,14 +121,9 @@ export function resourceLoad(
       const from = edges[index];
       const to = edges[index + 1];
       const active = entries.filter((entry) => entry.from <= from && entry.to >= to);
-      // Where somebody is working, what they would have had alone is the very
-      // capacity the simulation divided, so it is read back rather than resolved
-      // again. Concurrent segments agree on it by construction: it is one
-      // resource at one instant — which stops being true the day `allocation.ts`
-      // grows a per-task cap, since a capped task would carry a smaller solo
-      // rate than the one beside it and the first entry would no longer speak
-      // for the resource. Read the maximum then, or resolve the capacity again.
-      const capacity = active.length > 0 ? active[0].solo : capacityAt(resource, intervals, from);
+      // Resolved again rather than read off a segment's solo rate: a task at a
+      // fixed share carries its own, smaller one, which is not the resource's.
+      const capacity = capacityAt(resource, intervals, from);
       const committed = active.reduce((total, entry) => total + entry.rate, 0);
       committedMinutes += committed * (to - from);
       idleMinutes += Math.max(0, capacity - committed) * (to - from);
