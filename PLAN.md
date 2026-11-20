@@ -13,9 +13,10 @@ ha ricreato `## Unreleased`, non ancora rilasciato.
 report prima di ricevere task veri. **Goal J** (task
 completato come misura della stima) ha le domande di prodotto chiuse ma e'
 **sospeso dall'utente**: materiale pronto per un'analisi di dettaglio piu'
-avanti, non lavoro in corso. **Goal L** (pausa e percentuale per task) e
-**«Congelare il passato»** sono due esperimenti del 2026-11-20, **sospesi
-dall'utente**: le branch esistono, niente e' unito. **Goal K** (polish di UI/UX) e' **chiuso, recensito e potato**; quel che
+avanti, non lavoro in corso. **Goal L** (quota e pausa per task) e'
+**costruito e unito** il 2026-11-20, bullet sotto `## Unreleased`.
+**«Congelare il passato»** resta un esperimento **sospeso dall'utente**: la
+branch esiste, niente e' unito. **Goal K** (polish di UI/UX) e' **chiuso, recensito e potato**; quel che
 non va riproposto sta sotto `## Decisioni chiuse`. Tre conseguenze per chi
 entra adesso: **le due barre stanno su `--surface-sunken`** (chi tocca un
 controllo che vive li' sopra ha un fondo diverso da quello per cui era stato
@@ -166,110 +167,42 @@ passata che produce il termine di paragone, l'occupazione fissa nel
 simulatore, la riscrittura dell'invariante di conservazione, e solo dopo
 proporre le fette.
 
-## Goal L — il ritmo di un task: pausa e percentuale     [sospeso dall'utente]
-Richiesta dell'utente, 2026-11-20: «un modo di mettere in "pausa" un'attivita'
-per un certo periodo». Provata lo stesso giorno come **esperimento** su una
-branch a se', vista funzionare, e **sospesa dall'utente** prima di unirla:
-vuole ragionare su una soluzione piu' estesa. **Niente parte da qui senza che
-l'utente lo riapra.**
+## Goal L — il ritmo di un task: quota e pausa                     [costruito]
+Riaperto dall'utente il 2026-11-20 e costruito lo stesso giorno. Un task
+foglia corre a una **quota esatta** della capacita' della sua persona, di
+default e/o per periodi (`share`, `shareOverrides`); 0% in un periodo e' la
+pausa. Gemello per task della disponibilita': un periodo sostituisce il
+default, l'ultimo dichiarato vince. Semantica in `docs/scheduling.md`, formato
+in `docs/file-format.md`, vista in `docs/view.md`.
 
-**La direzione che l'utente ha in mente, con le sue parole**: «un'altra
-soluzione piu' estesa che permette di modificare l'effort di un task a
-piacimento, potendolo bloccare a percentuali precise (tra cui 0% che di fatto
-e' come metterlo in pausa)». Letta dall'hub come **quota per task, variabile
-nel tempo**: in un periodo il task avanza a una percentuale fissata invece che
-alla quota che gli lascia la divisione in parti uguali; a 0% e' la pausa.
-**Lettura confermata dall'utente il 2026-11-20.**
+**Risposte dell'utente, vincolanti**: la quota e' **esatta, non un tetto**
+(rimasto solo, il task non accelera); e' **della capacita' della persona in
+quel momento**; quote **oltre il 100% si riducono in proporzione** e i task
+senza quota si fermano, **nessun rifiuto al salvataggio**; **la fine resta
+derivata** (la manutenzione dichiara un effort); **modal prima, gesto sulla
+timeline subito dopo**.
 
-**I tre casi d'uso, dall'utente (2026-11-20).**
-- **Manutenzione**: un'attivita' fissa al 20% del tempo di una persona, che
-  toglie tempo alle altre e serve a ricordare che quella persona ha anche
-  quello da fare.
-- **Priorita' tra attivita' in parallelo**: dare piu' o meno quota a una
-  rispetto alle altre.
-- **Solo per un periodo, non per tutta la durata**: «per un'attivita' imposto,
-  dalla timeline, 3 giorni in cui va al 20% invece che al 50% che sarebbe
-  ottenuto dal calcolo normale».
+**Deciso dall'hub, tecnico**: task senza risorsa = quota del tasso pieno;
+default a 0 rifiutato (non finirebbe mai), `from`/`to` obbligatori e
+`from <= to`; su una milestone i campi sono conservati e ignorati; il gesto e'
+una voce del menu di riga («Set pace from here…») che apre il modal con un
+periodo non salvato sul giorno puntato — un drag confliggerebbe con dhtmlx.
 
-**Forma proposta dall'hub — proposta, non decisa.** Il gemello per task della
-disponibilita' di una persona: una quota di default opzionale piu' periodi che
-la **sostituiscono** (`{from, to, share}`, l'ultimo dichiarato vince). La pausa
-dell'esperimento ne e' il caso `share: 0`. Il loop risolve il tempo e passa la
-quota gia' risolta al candidato, cosi' la policy continua a non vedere
-calendari: e' la risposta al muro annotato sotto. **La fine resta derivata**:
-la manutenzione porta un effort (20% × il periodo voluto) e finisce quando lo
-ha consumato — una manutenzione «da data a data» sarebbe una fine in ingresso.
+- [x] L1 [engine] — quota risolta nel loop e passata alla policy; bordi dei
+      periodi come eventi; riduzione proporzionale; tempi degli eventi
+      agganciati al minuto intero (`MINUTE_SNAP`). — f6b2b90, ff81c2f
+- [x] L2 [feature] — modello, `.gantt` v2, agent API, sezione «Pace» nel
+      modal, barra e tooltip; un solo validatore (`parseTaskShare`). — 9af67ee
+- [x] L3 [feature] — gesto dal menu di riga sulla timeline. — d5b8ecf
 
-**Risposte dell'utente, 2026-11-20 — chiuse.**
-- **La quota e' un valore esatto**, non una regola di contesa: un task al 20%
-  resta al 20% anche quando e' l'unico della persona, che risulta libera per
-  il resto. Una regola sola; la pausa ne e' il caso zero. La priorita' tra
-  task in parallelo si ottiene cosi', **finche' corrono insieme** — rimasto
-  solo, il task fissato non accelera, ed e' accettato.
-- **La percentuale e' della capacita' della persona in quel momento**, non
-  della giornata piena: a disponibilita' 50%, un 20% vale 10% di giornata.
-- **Quote che sommano oltre il 100%** sulla stessa persona si riducono in
-  proporzione e i task senza quota si fermano; lo dice il tooltip. Nessun
-  rifiuto al salvataggio.
-- **La manutenzione dichiara un effort** e la fine resta derivata. Niente
-  date fisse: quelle sarebbero Goal J.
-- **Prima il modal del task, poi subito il gesto sulla timeline**: due fette
-  in quest'ordine, la seconda non e' facoltativa.
-
-**Fette proposte dall'hub, da confermare alla riapertura.** (1) motore: quota
-risolta per periodo e passata al candidato, bordi come eventi, riduzione
-proporzionale; (2) modello, formato file, agent API; (3) sezione nel modal e
-resa sulla barra; (4) gesto sulla timeline. La branch dell'esperimento e' il
-punto di partenza della (1), da riscrivere da «pausa» a «quota».
-
-**Cosa ha fatto l'esperimento** (branch `worktree-agent-ad7d9dc965e014b91`,
-commit `c972509` motore e `a58c37b` vista/file/API, da `09ed9d6`; 24 file,
-+460; 640 test, build e lint puliti sul secondo commit):
-- `Task.pauses?: DayRange[]` nel motore; `pauseIntervals` in `availability.ts`
-  proietta i giorni sull'asse dei minuti lavorativi come `capacityIntervals`.
-  In `simulate.ts` un task in pausa **non e' candidato**: niente quota, niente
-  segmento, non diluisce la divisione; i bordi delle pause sono eventi.
-- `ProjectTask.pauses?` (solo foglie, assente se vuoto), campo opzionale in
-  `.gantt` v2 senza cambio di versione, sezione «Pauses» nel modal con
-  `DayRangeList`, `updateTask({ pauses })` nell'agent API.
-- Sul grafico: `drawsProfile` in `segmentBar.ts` fa disegnare il profilo a una
-  barra con un buco interno, cosi' il tratto fermo e' traccia vuota.
-- Visto nell'app: due task da 6 giorni sulla stessa persona; con uno in pausa
-  25-27/11 l'altro sale al 100% in quei giorni e chiude il 03/12 invece
-  dell'08/12. Un undo toglie le pause, save e riapertura le conservano.
-
-**Problemi incontrati, da non riscoprire.**
-- **La policy di allocazione non riceve il tempo** (`AllocationRequest` porta
-  risorsa, capacita' e candidati): una regola che dipende dal periodo non sta
-  nel solo `allocation.ts`, nonostante il commento della seam lo suggerisca.
-  L'esperimento ha filtrato i candidati nel loop. **Una percentuale per task
-  variabile nel tempo sbatte sullo stesso muro** e va decisa li'.
-- **Le assenze cambiano aspetto**: `drawsProfile` vale anche per un task fermo
-  per un override a zero della persona, che prima era una barra piena.
-  Effetto non chiesto.
-- **Una build vecchia cancella le pause**: il parser ignora in silenzio le
-  chiavi sconosciute di un task, quindi apre il file, non le vede e al Save le
-  toglie. Vale per **qualunque** campo nuovo sul task.
-- Una pausa senza fine non chiuderebbe mai il task: `from` e `to` obbligatori.
-- La figura PNG e la stampa non disegnano profili: li' il buco non si vede.
-- `from` dopo `to` non e' rifiutato (`expandRanges` lo tollera), come gia' per
-  `availabilityOverrides`.
-- Il primo dei due commit non e' stato provato da solo; tema chiaro non visto.
-
-**Domande che la soluzione estesa apre — nessuna e' decisa.**
-- **Chiusa**: «modificare l'effort a piacimento» e' la quota, non l'effort
-  totale. La conservazione `Σ(rate × durata) = effort` resta com'e'.
-- Un task **senza risorsa** oggi non contende mai e va a quota piena: una
-  percentuale su di lui cosa vuol dire. Tecnica, la decide la spec.
-- Una quota di default a 0% senza periodi non chiuderebbe mai il task: va
-  rifiutata, come la pausa senza fine.
-- Come si disegna sulla barra un tratto a quota fissata, e come si legge nel
-  pannello di carico la parte di persona lasciata libera.
+**Fuori perimetro, non costruito**: CSV, figura PNG e stampa non mostrano la
+quota ne' il buco della pausa. Una build vecchia che salva il file perde i
+campi (vale per ogni campo nuovo sul task).
 
 ## Congelare il passato — esperimento                    [sospeso dall'utente]
 Richiesta dell'utente, 2026-11-20: «le attivita' che sono precedenti ad oggi
 dovrebbero essere congelate». Provata come esperimento su una branch a se' e
-**sospesa dall'utente** insieme a Goal L. Non ha lettera di goal: **non e'
+**sospesa dall'utente**. Non ha lettera di goal: **non e'
 ancora deciso che cosa sia**, e una delle letture e' Goal J.
 
 **Le tre letture, dall'analisi del 2026-11-20.** (A) blocco di modifica lato
@@ -539,6 +472,8 @@ misurato. Le lezioni durevoli stanno in `.claude/orchestrate.md`, non qui.
 | I3 | feature | lettura diretta | 139 | 138 | 50+/4- | 1 (hub) |
 | I4 | docs | hub | - | - | 0 | - |
 | goal review I | review | - | - | 87 (fable) | 0 | - |
+| L1 | engine | browser | 160 (2 giri) | 180 | - | 1 |
+| L2, L3 | feature | browser | 226, 102 | - | - | 0 |
 
 Sopra ~300k per meno di ~50 righe di `src/` e' un difetto di processo e va
 all'utente coi numeri, non nel Log come successo a zero round.
