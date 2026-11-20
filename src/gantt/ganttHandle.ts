@@ -1,4 +1,4 @@
-import type { CalendarSpec } from '../scheduler';
+import type { CalendarSpec, ShareOverride } from '../scheduler';
 import type { PlanColumnName } from './columns';
 import type { Person } from './cost';
 import type { MeasuredSlack, Project, SolvedProject } from './project';
@@ -139,6 +139,10 @@ export interface TaskDetails {
   contended: boolean;
   /** The task's own flag — not the effective (inherited) state a group shows. */
   disabled: boolean;
+  /** Fixed share of its person's capacity, `0..1`; absent when not fixed, and on a summary. */
+  share?: number;
+  /** Periods replacing it (`share: 0` pauses); absent when none, and on a summary. */
+  shareOverrides?: ShareOverride[];
   /** Money over the priced part of the effort; null when no rate priced any of it. */
   cost: number | null;
   /** Person-days no rate priced. */
@@ -166,4 +170,8 @@ export interface TaskPatch {
    * text rather than writing it — see `GanttChart.updateTask`.
    */
   description?: string;
+  /** Optional: absent leaves it alone, `null` clears it. Ignored on a summary. */
+  share?: number | null;
+  /** Optional: absent leaves them alone, `[]` clears. Ignored on a summary. */
+  shareOverrides?: ShareOverride[];
 }

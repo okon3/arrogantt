@@ -1,8 +1,21 @@
 import { formatDays } from './format';
 import { escapeHtml } from './html';
 import { isShared } from './segmentBar';
-import { isContended, type Resource, type ScheduledTask } from '../scheduler';
-import { peopleUnder, type MarkedChain, type ProjectTask, type SolvedProject } from './project';
+import {
+  dateOfDay,
+  dayIndexOfString,
+  isContended,
+  type Resource,
+  type ScheduledTask,
+} from '../scheduler';
+import {
+  isMilestone,
+  peopleUnder,
+  type MarkedChain,
+  type ProjectTask,
+  type SolvedProject,
+} from './project';
+import { hasShare, leafShare, shareInForce, type TaskShare } from './taskShare';
 
 /**
  * Everything the hover has to answer, resolved before any of it is rendered.
@@ -39,6 +52,10 @@ export interface BarFacts {
   shared: boolean;
   /** Effective state: a leaf's own flag or inherited, a summary once every leaf under it is. */
   disabled: boolean;
+  /** The share settings pacing the task; absent when it has none, on a summary and on a milestone. */
+  pace?: TaskShare;
+  /** Ran below a share it was fixed at: the fixed shares on its person exceed their capacity. */
+  reduced?: boolean;
   /**
    * What the chart is marking, or null when it is marking nothing.
    *
@@ -48,6 +65,8 @@ export interface BarFacts {
    */
   chain: { isCritical: boolean; contendedOn: string | null; stale: boolean } | null;
 }
+
+const RATE_EPSILON = 1e-9;
 
 /** The weekday matters on a Gantt: it is why a bar ends where it does. */
 const longDate = new Intl.DateTimeFormat('en-GB', {
@@ -73,6 +92,22 @@ function rateRange(rates: number[]): string | null {
   return low === high ? percent(low) : `${percent(low)}–${percent(high)}`;
 }
 
+const shortDate = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit' });
+
+/** What the task is fixed at: its default, then each period in declared order. */
+function paceLabel(pace: TaskShare): string {
+  const parts = pace.share === undefined ? [] : [`Fixed at ${percent(pace.share)}`];
+  for (const period of pace.shareOverrides ?? []) {
+    const from = shortDate.format(dateOfDay(dayIndexOfString(period.from)));
+    const to = shortDate.format(dateOfDay(dayIndexOfString(period.to)));
+    const span = from === to ? from : `${from}–${to}`;
+    const what = period.share === 0 ? 'paused' : `at ${percent(period.share)}`;
+    const why = period.label ? ` <em>${escapeHtml(period.label)}</em>` : '';
+    parts.push(`${span} ${what}${why}`);
+  }
+  return parts.join(', ');
+}
+
 /** The person, with the share of a day they give the plan when it is not all of it. */
 function resourceLabel(resource: BarFacts['resource']): string {
   if (!resource) return '&mdash;';
@@ -89,10 +124,16 @@ function resourceLabel(resource: BarFacts['resource']): string {
  * with, this would be a second sentence about the same fact.
  */
 function stretchNote(facts: BarFacts, namesContention: boolean): string {
+  if (facts.reduced) {
+    return 'The shares fixed on this resource add up to more than its capacity, so they were reduced proportionally.';
+  }
   if (facts.contended) {
     return namesContention
       ? ''
       : 'The resource is split with other tasks in progress, so the duration exceeds the effort.';
+  }
+  if (facts.pace && facts.elapsedDays > facts.effortDays) {
+    return 'Held to its fixed share, so the duration exceeds the effort.';
   }
   if (facts.shared) {
     return 'The resource does not work full time in this period, so the duration exceeds the effort.';
@@ -130,6 +171,7 @@ export function renderBarTooltip(facts: BarFacts): string {
     rows.push(['Resource', resourceLabel(facts.resource)]);
     const rate = rateRange(facts.rates);
     if (rate) rows.push(['Share', rate]);
+    if (facts.pace) rows.push(['Pace', paceLabel(facts.pace)]);
   }
 
   const namesContention = Boolean(facts.chain?.isCritical && facts.chain.contendedOn);
@@ -190,6 +232,7 @@ export function barFactsOf(
   const assigned = resources.find((entry) => entry.id === task.resourceId);
   const row = chain?.rows.get(task.id);
   const contendedOn = resources.find((entry) => entry.id === row?.contendedResourceId);
+  const paced = hasShare(task) && !isMilestone(task, solved.summaryIds);
   return {
     name: task.name,
     isSummary: solved.summaryIds.has(task.id),
@@ -211,6 +254,15 @@ export function barFactsOf(
     contended: isContended(scheduled),
     shared: isShared(scheduled),
     disabled: solved.disabledIds.has(task.id),
+    ...(paced ? { pace: leafShare(task, false) } : {}),
+    // Judged per segment: outside its fixed periods the task splits like any other.
+    reduced:
+      paced &&
+      scheduled.segments.some(
+        (segment) =>
+          segment.rate < segment.soloRate - RATE_EPSILON &&
+          shareInForce(task, segment.start) !== undefined,
+      ),
     chain: chain
       ? {
           isCritical: row?.isCritical ?? false,

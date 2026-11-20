@@ -32,6 +32,14 @@
   2000 characters. Optional and additive — v2 stays v2. Written only when
   present: an empty description is normalized to absent, the same bargain
   `disabled: false` makes below.
+- `tasks[].share?: number` and `tasks[].shareOverrides?: [{ from, to, share,
+  label? }]`: the exact share of its person's capacity a leaf runs at, and the
+  periods that replace it (semantics: [scheduling.md](scheduling.md)).
+  Fractions, like `availability`; `share: 0` in a period is a pause.
+- Both optional and additive — v2 stays v2. Written only when set (an empty
+  list is normalized to absent) and never on a summary, like `resourceId`. On a
+  milestone they are kept and inert. **A build that predates them drops both
+  keys on its next save**, silently: it reads only the task keys it knows.
 - Version 1 still loads: `daysOff` → availability overrides at zero.
 - `resources[].availability?: number`: a person's share of a full working day,
   `0..1`. Optional, default `1` (full time). Written only when present. The
@@ -61,7 +69,10 @@ predecessors, circular hierarchy, availability outside 0..1, colour not
 runs past 2000 characters, a calendar the engine cannot serve, future
 versions, a negative or non-numeric daily rate, a rate period with no numeric
 `dailyRate`, a rate period with a malformed `YYYY-MM-DD` day, a `currency` that
-is blank, padded, not a string, or over 8 characters. Parse before load — a bad
+is blank, padded, not a string, or over 8 characters, a task `share` that is
+not a finite number above 0 and up to 1 (a default of zero never finishes — a
+pause is a period), a share period with a missing, malformed or impossible day,
+with `from` after `to`, or with no finite `share` in `0..1`. Parse before load — a bad
 file leaves the open project untouched.
 
 A written `disabled: false` is accepted and **normalized to absent**: two
@@ -74,6 +85,7 @@ can't be scheduled (last case: a person left at zero capacity) throws `Scheduler
 stalled` with the model already replaced — stale grid, edits dying on unknown
 tasks, next save overwriting the user's work. Hence `validateResources` and
 `validateCalendar` run on **every** path in: load, dialog, agent API.
+`parseTaskShare` (`taskShare.ts`) is the same single gate for a task's share.
 
 **The gate also holds on the way out: what the app writes, the app can reopen.**
 `serializeForFile` (Save, `toText()`) re-parses the text it just produced with

@@ -181,4 +181,52 @@ describe('renderBarTooltip', () => {
     expect(html).toContain('contended on Marco');
     expect(html).not.toContain('split with other tasks');
   });
+
+  it('says what a task is fixed at, by default and period by period', () => {
+    const html = renderBarTooltip(
+      facts({
+        elapsedDays: 9,
+        shared: true,
+        pace: {
+          share: 0.2,
+          shareOverrides: [
+            { from: '2026-09-16', to: '2026-09-17', share: 0, label: '<Audit>' },
+            { from: '2026-09-18', to: '2026-09-18', share: 0.5 },
+          ],
+        },
+      }),
+    );
+    expect(html).toContain('<dt>Pace</dt>');
+    expect(html).toContain('Fixed at 20%');
+    expect(html).toContain('16/09–17/09 paused <em>&lt;Audit&gt;</em>');
+    expect(html).toContain('18/09 at 50%');
+    expect(html).toContain('Held to its fixed share');
+    expect(html).not.toContain('does not work full time');
+  });
+
+  it('blames a pause for the stretch even when every segment ran at full rate', () => {
+    const html = renderBarTooltip(
+      facts({
+        elapsedDays: 5,
+        pace: { shareOverrides: [{ from: '2026-09-16', to: '2026-09-17', share: 0 }] },
+      }),
+    );
+    expect(html).not.toContain('Fixed at');
+    expect(html).toContain('Held to its fixed share');
+  });
+
+  it('says the fixed shares were reduced when they exceed the person', () => {
+    const html = renderBarTooltip(
+      facts({ elapsedDays: 6, shared: true, contended: true, reduced: true, pace: { share: 0.8 } }),
+    );
+    expect(html).toContain('reduced proportionally');
+    expect(html).not.toContain('split with other tasks');
+    expect(html).not.toContain('Held to its fixed share');
+  });
+
+  it('says nothing about pace on a task that fixes none', () => {
+    const html = renderBarTooltip(facts({ elapsedDays: 6, shared: true, contended: true }));
+    expect(html).not.toContain('Pace');
+    expect(html).toContain('split with other tasks');
+  });
 });

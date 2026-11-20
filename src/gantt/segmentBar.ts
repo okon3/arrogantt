@@ -11,6 +11,26 @@ export function isShared(scheduled: ScheduledTask): boolean {
 }
 
 /**
+ * Whether the bar draws the allocation profile rather than a plain fill.
+ *
+ * `paced`: the task carries share settings of its own. Only then does a gap
+ * between segments call for the profile, so a stretch the task is stopped by
+ * its own 0% reads as empty track — while a full-rate bar spanning its
+ * person's absence stays the plain fill it has always been.
+ */
+export function drawsProfile(scheduled: ScheduledTask, paced: boolean): boolean {
+  return (
+    isShared(scheduled) ||
+    (paced &&
+      scheduled.segments.some(
+        (segment, index) =>
+          index > 0 &&
+          segment.startWorkingMinutes > scheduled.segments[index - 1].endWorkingMinutes,
+      ))
+  );
+}
+
+/**
  * Renders the allocation profile inside the task bar.
  *
  * Drawn as one continuous SVG path rather than a block per regime: separate
@@ -32,9 +52,8 @@ export function renderSegments(
   stroke: string,
 ): string {
   const spanMs = scheduled.end.getTime() - scheduled.start.getTime();
-  if (!isShared(scheduled) || spanMs <= 0 || scheduled.segments.length === 0) {
-    return '';
-  }
+  // Whether to draw at all is `drawsProfile`'s verdict, taken by the caller.
+  if (spanMs <= 0 || scheduled.segments.length === 0) return '';
 
   const origin = scheduled.start.getTime();
   const asPercent = (date: Date) => ((date.getTime() - origin) / spanMs) * 100;
@@ -55,8 +74,8 @@ export function renderSegments(
     const top = 100 - segment.rate * 100;
 
     path += ` L ${from.toFixed(2)},${top.toFixed(2)} L ${to.toFixed(2)},${top.toFixed(2)}`;
-    // Genuine idle time — reachable once allocation can be capped — drops the
-    // outline to the floor so the pause stays visible.
+    // Idle time inside the span drops the outline to the floor, so the stop
+    // stays visible.
     if (idleAhead) path += ` L ${to.toFixed(2)},100 L ${asPercent(next.start).toFixed(2)},100`;
 
     if (((to - from) / 100) * barWidthPx >= MIN_LABEL_WIDTH_PX) {

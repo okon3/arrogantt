@@ -22,7 +22,8 @@ import {
   type ResourcePatch,
 } from './resources';
 import { DESCRIPTION_LIMIT, HEX_COLOR, serializeForFile } from './serialization';
-import type { AvailabilityOverride, CalendarSpec } from '../scheduler';
+import { parseTaskShare } from './taskShare';
+import type { AvailabilityOverride, CalendarSpec, ShareOverride } from '../scheduler';
 
 /**
  * An adapter over `GanttHandle`, for a script driving the page.
@@ -62,9 +63,14 @@ export interface TaskInput {
   disabled?: boolean;
   /** Free text, up to 2000 characters. `null` or `''` removes it. */
   description?: string | null;
+  /** Exact share of its person's capacity, above 0 and up to 1. `null` unfixes it. Leaves only. */
+  share?: number | null;
+  /** `[{ from, to, share }]`, days as `YYYY-MM-DD`; `share: 0` pauses. Replaces the list; `null` or `[]` clears. Leaves only. */
+  shareOverrides?: ShareOverride[] | null;
 }
 
-export interface NewTaskInput extends Omit<TaskInput, 'description'> {
+export interface NewTaskInput
+  extends Omit<TaskInput, 'description' | 'share' | 'shareOverrides'> {
   parentId?: string | null;
   /**
    * Placed straight below this row as its sibling, rather than at the end of a
@@ -357,8 +363,12 @@ export function createAgentApi(host: AgentHost): AgentApi {
       // reads the dhtmlx row, and description is deliberately never written onto
       // one (I2): accepting the field here would be the exact write-the-caller-
       // believes-happened case updateTask's own summary check refuses below.
-      if (patch && 'description' in patch && (patch as { description?: unknown }).description !== undefined) {
-        throw new Error('addTask does not set a description: call updateTask(id, { description })');
+      // The share settings never reach a dhtmlx row either.
+      for (const field of ['description', 'share', 'shareOverrides']) {
+        if ((patch as Record<string, unknown> | undefined)?.[field] !== undefined) {
+          const article = field === 'description' ? 'a ' : '';
+          throw new Error(`addTask does not set ${article}${field}: call updateTask(id, { ${field} })`);
+        }
       }
       return chart().addTask({
         name: patch?.name,
@@ -386,7 +396,12 @@ export function createAgentApi(host: AgentHost): AgentApi {
             `"${id}" is a summary task: ${derived.join(', ')} is derived from its children`,
           );
         }
+        if (patch.share !== undefined || patch.shareOverrides !== undefined) {
+          throw new Error(`"${id}" is a summary task: a share is fixed on its leaves, one by one`);
+        }
       }
+      // The file's own gate, so a script cannot write what Save would refuse.
+      const pace = parseTaskShare(patch.share ?? undefined, patch.shareOverrides ?? undefined);
       requireTaskFields(patch);
       requireKnownResource(patch.resourceId);
       chart().updateTask(id, {
@@ -406,6 +421,9 @@ export function createAgentApi(host: AgentHost): AgentApi {
             : patch.description === null || patch.description === ''
               ? ''
               : validatedDescription(patch.description),
+        share: patch.share === undefined ? undefined : (pace.share ?? null),
+        shareOverrides:
+          patch.shareOverrides === undefined ? undefined : (pace.shareOverrides ?? []),
       });
     },
 

@@ -11,6 +11,7 @@ import { parseWallClock, serializeDate } from './dates';
 import { buildPlan } from './plan';
 import type { Project, ProjectTask, SolvedProject } from './project';
 import { validateResources } from './resources';
+import { parseTaskShare } from './taskShare';
 
 export const FILE_FORMAT = 'gantt-effort-split';
 export const FILE_VERSION = 2;
@@ -95,6 +96,9 @@ export function serializeProject(project: Project, solved?: SolvedProject): stri
         // inert, and a reader took it for an assignment. Dropped here rather
         // than on parse, which refuses rather than repairs.
         resourceId: parentIds.has(task.id) ? undefined : task.resourceId,
+        // Leaves only, and just as inert on a summary.
+        share: parentIds.has(task.id) ? undefined : task.share,
+        shareOverrides: parentIds.has(task.id) ? undefined : task.shareOverrides,
         solved: reportFor(task.id),
       })),
     },
@@ -298,6 +302,11 @@ export function deserializeProject(text: string): Project {
         `tasks[${index}].description`,
       );
       if (description.length > 0) task.description = description;
+    }
+    try {
+      Object.assign(task, parseTaskShare(record.share, record.shareOverrides));
+    } catch (problem) {
+      throw new ProjectFileError(`tasks[${index}]: ${(problem as Error).message}`);
     }
     if (record.color !== undefined) {
       // Now that the colour comes from a free picker rather than a fixed list,

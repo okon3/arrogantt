@@ -10,6 +10,9 @@
   It comes out with the CSV export and is readable by a script.
 - Close the gaps in a group from its right-click menu: linked tasks inside
   move up to start right after what they wait for.
+- Set a task's pace in its detail dialog: fix it at an exact share of its
+  person's time, for the whole task or for chosen periods, and the rest of
+  their time goes to their other tasks. A period at 0% pauses the task.
 
 ## v1.6 — 2026-09-23
 

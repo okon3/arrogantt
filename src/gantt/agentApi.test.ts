@@ -230,3 +230,82 @@ describe('agent API task fields', () => {
     expect(handle.updateTask).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('agent API task share', () => {
+  const period = { from: '2026-09-09', to: '2026-09-10', share: 0 };
+  const sent = (handle: { updateTask: { mock: { calls: unknown[][] } } }) =>
+    handle.updateTask.mock.calls[0][1] as { share?: unknown; shareOverrides?: unknown };
+
+  it('reports the settings getTask carries, and omits the keys without them', () => {
+    const paced = harness(details({ share: 0.2, shareOverrides: [period] })).api.getTask('t1');
+    expect(paced).toMatchObject({ share: 0.2, shareOverrides: [period] });
+    const plain = harness().api.getTask('t1');
+    expect('share' in plain).toBe(false);
+    expect('shareOverrides' in plain).toBe(false);
+  });
+
+  it('writes a share and its periods through updateTask', () => {
+    const { api, handle } = harness();
+    api.updateTask('t1', { share: 0.2, shareOverrides: [period] });
+    expect(sent(handle)).toMatchObject({ share: 0.2, shareOverrides: [period] });
+  });
+
+  it('patches one and leaves the other alone', () => {
+    const { api, handle } = harness();
+    api.updateTask('t1', { share: 0.5 });
+    expect(sent(handle).share).toBe(0.5);
+    expect(sent(handle).shareOverrides).toBeUndefined();
+  });
+
+  it('leaves both alone when the caller omits them', () => {
+    const { api, handle } = harness(details({ share: 0.2 }));
+    api.updateTask('t1', { name: 'Altro' });
+    expect(sent(handle).share).toBeUndefined();
+    expect(sent(handle).shareOverrides).toBeUndefined();
+  });
+
+  it('clears the share on null, and the periods on null or an empty list', () => {
+    for (const cleared of [null, []]) {
+      const { api, handle } = harness(details({ share: 0.2, shareOverrides: [period] }));
+      api.updateTask('t1', { share: null, shareOverrides: cleared });
+      expect(sent(handle).share).toBeNull();
+      expect(sent(handle).shareOverrides).toEqual([]);
+    }
+  });
+
+  it('refuses what the file would refuse, without calling the handle', () => {
+    const { api, handle } = harness();
+    expect(() => api.updateTask('t1', { share: 0 })).toThrow(/period at 0/);
+    expect(() => api.updateTask('t1', { share: 1.2 })).toThrow(/Invalid share/);
+    expect(() => api.updateTask('t1', { share: NaN })).toThrow(/Invalid share/);
+    expect(() => api.updateTask('t1', { share: '0.5' as never })).toThrow(/Invalid share/);
+    expect(() =>
+      api.updateTask('t1', { shareOverrides: [{ ...period, from: '2026-09-11' }] }),
+    ).toThrow(/ends before it starts/);
+    expect(() =>
+      api.updateTask('t1', { shareOverrides: [{ from: period.from, share: 0 } as never] }),
+    ).toThrow(/no start or end/);
+    expect(() =>
+      api.updateTask('t1', { shareOverrides: [{ ...period, share: Infinity }] }),
+    ).toThrow(/numeric "share"/);
+    expect(handle.updateTask).not.toHaveBeenCalled();
+  });
+
+  it('refuses either on a summary, which the handle would silently ignore', () => {
+    const { api, handle } = harness(details({ isSummary: true }));
+    expect(() => api.updateTask('t1', { share: 0.5 })).toThrow(/summary task/);
+    expect(() => api.updateTask('t1', { shareOverrides: [period] })).toThrow(/summary task/);
+    expect(handle.updateTask).not.toHaveBeenCalled();
+  });
+
+  it('refuses addTask when either is passed, naming the remedy', () => {
+    const { api, handle } = harness();
+    expect(() => api.addTask({ share: 0.5 } as never)).toThrow(
+      /addTask does not set share.*updateTask/,
+    );
+    expect(() => api.addTask({ shareOverrides: [period] } as never)).toThrow(
+      /addTask does not set shareOverrides.*updateTask/,
+    );
+    expect(handle.addTask).not.toHaveBeenCalled();
+  });
+});

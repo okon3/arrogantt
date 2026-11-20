@@ -64,6 +64,9 @@ A `getPlan()` task:
 - `description` — the task's own free text, up to 2000 characters. **Absent when
   the task has none**, never an empty string or `null`: check with `'description'
   in task`, not `=== undefined`.
+- `share` / `shareOverrides` — on a leaf, the exact share of its person's
+  capacity it is fixed at (`0..1`) and the periods `[{ from, to, share, label? }]`
+  that replace it. **Each absent when not set**, and always on a summary.
 
 - `parentId` is the only structural truth; `depth` is there to print an outline.
 - `isSummary` — has children. Its effort, dates and resource roll up from the
@@ -187,8 +190,8 @@ which is exactly the task a planner has to move.
 
 | Call | Notes |
 | --- | --- |
-| `addTask(patch?) → id` | `{ name, nominalDays, start, resourceId, color, disabled, parentId, after }`, all optional. The start is normalised to the opening of a working day. **Does not take `description`** — throws, naming `updateTask`, if one is passed. |
-| `updateTask(id, patch)` | Any subset of `{ name, nominalDays, start, resourceId, color, progress, disabled, description }`. Throws on `nominalDays`, `start` or `resourceId` for a summary, and on a `description` over 2000 characters. Here and in `addTask`, `nominalDays` must be a number of 0 or more and `color` a `#rrggbb`: anything else throws before it is written. |
+| `addTask(patch?) → id` | `{ name, nominalDays, start, resourceId, color, disabled, parentId, after }`, all optional. The start is normalised to the opening of a working day. **Does not take `description`, `share` or `shareOverrides`** — throws, naming `updateTask`, if one is passed. |
+| `updateTask(id, patch)` | Any subset of `{ name, nominalDays, start, resourceId, color, progress, disabled, description, share, shareOverrides }`. Throws on `nominalDays`, `start`, `resourceId`, `share` or `shareOverrides` for a summary, and on a `description` over 2000 characters. Here and in `addTask`, `nominalDays` must be a number of 0 or more and `color` a `#rrggbb`: anything else throws before it is written. |
 | `deleteTask(id)` | Takes the subtree with it and clears dependencies on any of it. |
 | `setParent(id, parentId \| null)` | `null` moves it to the top level. Refuses a parent from inside `id`'s own subtree, and a move that would close a dependency cycle (a group's dependencies are inherited by what is inside it). |
 | `link(from, to)` | Finish-to-start. **Refuses a cycle before mutating.** |
@@ -259,6 +262,21 @@ before anything is written — the same two checks the file format gates a load
 on, so a script cannot write a value that a later Save would then refuse. `getTask()` **omits the key** on a task with no
 description, rather than reporting it as an empty string or `null`: check with
 `'description' in task`.
+
+`share` fixes a leaf at an **exact** share of its person's capacity — `0.2` runs
+at 20% even when alone, and the rest of the person stays free for their other
+tasks. Above 0 and up to 1; `null` unfixes it. `shareOverrides` is a list of
+periods `[{ from, to, share, label? }]`, days as `YYYY-MM-DD`, both required,
+`from` not after `to`, `share` from 0 to 1: a period **replaces** the default
+(the last declared wins on overlap, as for a person's `availabilityOverrides`)
+and **`share: 0` pauses the task** — its effort is unchanged. A period needs no
+default: the task is then fixed only inside it. The list replaces the stored
+one; `null` or `[]` clears it; either field left out is left alone. A default
+of `0` is refused (the task would never finish — use a period). Shares fixed on
+one person adding up to more than 1 are scaled down in proportion. Leaves only;
+on a milestone they are stored and do nothing. On `updateTask` only, like
+`description`. Checked by the file format's own gate, so anything malformed
+throws before it is written.
 
 **`getTask()`'s `cost`, `uncostedDays` and `dailyRates` are the same figures as
 `getPlan().tasks[i]`'s** — one rule prices a row, and both calls read it the

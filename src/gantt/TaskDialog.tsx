@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import type { Resource } from '../scheduler';
+import type { Resource, ShareOverride } from '../scheduler';
 import { setAutofocus } from './autofocus';
 import { costCellText, currencyLabel, rateCellText } from './costCells';
 import { Dialog } from './Dialog';
 import { formatDays } from './format';
 import type { TaskDetails, TaskPatch } from './ganttHandle';
+import { PercentCell, PeriodRowList } from './PeriodRowList';
 import { CRITICAL_CHAIN_LIMIT, type MeasuredSlack } from './project';
 import { DESCRIPTION_LIMIT } from './serialization';
+import { hasShare, parseTaskShare } from './taskShare';
 
 const dayFormat = new Intl.DateTimeFormat('en-GB', {
   day: '2-digit',
@@ -17,12 +19,16 @@ const dayFormat = new Intl.DateTimeFormat('en-GB', {
 const pad = (value: number) => String(value).padStart(2, '0');
 const toDayInput = (date: Date) =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+/** Empty = not fixed. Trimmed of float noise: 0.07 is 7, not 7.000000000000001. */
+const toPercentInput = (share: number | undefined) =>
+  share === undefined ? '' : String(Number((share * 100).toFixed(4)));
 
 /** Mounted only while open, so the draft initialises from props without an effect. */
 export function TaskDialog({
   task,
   slack,
   resources,
+  workingDays,
   colors,
   onCancel,
   onSave,
@@ -32,6 +38,8 @@ export function TaskDialog({
   /** Null when the plan is past the size the app will measure. */
   slack: MeasuredSlack | null;
   resources: Resource[];
+  /** The calendar's working weekdays, for the day count beside a pace period. */
+  workingDays: number[];
   colors: { key: string; label: string }[];
   onCancel(): void;
   onSave(patch: TaskPatch): void;
@@ -46,7 +54,18 @@ export function TaskDialog({
   const [progress, setProgress] = useState(String(Math.round(task.progress * 100)));
   const [disabled, setDisabled] = useState(task.disabled);
   const [description, setDescription] = useState(task.description ?? '');
+  const [sharePercent, setSharePercent] = useState(toPercentInput(task.share));
+  const [sharePeriods, setSharePeriods] = useState<ShareOverride[]>(task.shareOverrides ?? []);
   const [error, setError] = useState<string | null>(null);
+
+  // Read off the field being edited rather than off the task, so the dialog
+  // changes register while the zero is typed: that is the whole of what makes
+  // "effort 0" and "milestone" one concept rather than two. An empty field is not
+  // a zero — `Number('')` is — and would otherwise announce a milestone the user
+  // is in the middle of not typing.
+  const isMilestone = !task.isSummary && effort.trim() !== '' && Number(effort) === 0;
+  /** Only work can be paced: not a summary, which is never scheduled, nor an instant. */
+  const paced = !task.isSummary && !isMilestone;
 
   const save = () => {
     const trimmed = name.trim();
@@ -81,6 +100,22 @@ export function TaskDialog({
       );
       return;
     }
+    // Only while the section is on screen. The default goes back only if it
+    // was retyped: the field shows a rounded percentage, and writing that back
+    // would change a share nobody touched.
+    const shareTyped = sharePercent.trim();
+    const shareEdited = paced && shareTyped !== toPercentInput(task.share);
+    let pace: ReturnType<typeof parseTaskShare> = {};
+    try {
+      // The file's gate, so the dialog cannot store what Save would refuse.
+      pace = parseTaskShare(
+        shareEdited && shareTyped !== '' ? Number(shareTyped) / 100 : undefined,
+        paced ? sharePeriods : undefined,
+      );
+    } catch (problem) {
+      setError((problem as Error).message);
+      return;
+    }
     onSave({
       name: trimmed,
       nominalDays: days,
@@ -90,15 +125,10 @@ export function TaskDialog({
       progress: percentage / 100,
       disabled,
       description: descriptionToSave,
+      share: shareEdited ? (pace.share ?? null) : undefined,
+      shareOverrides: paced ? (pace.shareOverrides ?? []) : undefined,
     });
   };
-
-  // Read off the field being edited rather than off the task, so the dialog
-  // changes register while the zero is typed: that is the whole of what makes
-  // "effort 0" and "milestone" one concept rather than two. An empty field is not
-  // a zero — `Number('')` is — and would otherwise announce a milestone the user
-  // is in the middle of not typing.
-  const isMilestone = !task.isSummary && effort.trim() !== '' && Number(effort) === 0;
 
   const fromChildren = (
     <span className="taskinfo__derived taskinfo__derived--cell">from subtasks</span>
@@ -327,6 +357,46 @@ export function TaskDialog({
             onChange={(event) => setDescription(event.target.value)}
           />
         </label>
+
+        {paced && (
+          <div className="taskinfo__field taskinfo__field--wide taskinfo__pace">
+            <span className="taskinfo__label">Pace</span>
+            {/* The People table's own percent field and the Status row's inline
+                layout, reused as they stand: the same 68px box the period rows
+                below put their percentage in. */}
+            <span className="taskinfo__checkbox">
+              <span className="dialog__field people__field">
+                <input
+                  className="dialog__control ranges__pct taskinfo__pace-default"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={5}
+                  aria-label="Default share"
+                  value={sharePercent}
+                  onChange={(event) => setSharePercent(event.target.value)}
+                />
+                <span className="dialog__suffix">%</span>
+              </span>
+              by default (empty: not fixed)
+            </span>
+            <PeriodRowList<ShareOverride>
+              periods={sharePeriods}
+              workingWeekdays={workingDays}
+              emptyMessage="No periods: the pace above holds for the whole task."
+              newPeriod={(today) => ({ from: today, to: today, share: 0 })}
+              labelPlaceholder={(period) => (period.share === 0 ? 'Pause' : 'Reason')}
+              countSuffix={(period) => (period.share === 0 ? ' paused' : '')}
+              valueCell={(period, update) => (
+                <PercentCell value={period.share} onChange={(share) => update({ share })} />
+              )}
+              onChange={setSharePeriods}
+            />
+            <span className="taskinfo__hint">
+              The exact share of the person's capacity the task runs at; 0% pauses it.
+            </span>
+          </div>
+        )}
       </div>
 
       <h3 className="dialog__subhead">Computed</h3>
@@ -389,12 +459,18 @@ export function TaskDialog({
                 effort.
               </p>
             )
-          : task.shared && (
-              <p className="taskinfo__note">
-                The resource does not work full time in this period, so the duration exceeds the
-                effort.
-              </p>
-            )}
+          : hasShare(task)
+            ? task.elapsedDays > task.effortDays && (
+                <p className="taskinfo__note">
+                  Held to its fixed share, so the duration exceeds the effort.
+                </p>
+              )
+            : task.shared && (
+                <p className="taskinfo__note">
+                  The resource does not work full time in this period, so the duration exceeds the
+                  effort.
+                </p>
+              )}
         {slack === null ? (
           <p className="taskinfo__note">
             Past {CRITICAL_CHAIN_LIMIT} tasks the float is not measured: it costs a re-solve of the

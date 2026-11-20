@@ -11,11 +11,13 @@ import {
   type Resource,
   type Schedule,
   type ScheduledTask,
+  type ShareOverride,
   type ResourceLoad,
   type Task,
   type TaskCriticality,
 } from '../scheduler';
 import { taskCosts, type Person, type TaskCost } from './cost';
+import { leafShare } from './taskShare';
 
 /**
  * A task as the user edits it.
@@ -52,6 +54,17 @@ export interface ProjectTask {
    * it for the dirty comparison to disagree about.
    */
   disabled?: boolean;
+  /**
+   * Exact share (above 0, up to 1) of its person's capacity a leaf runs at;
+   * absent = not fixed. Ignored on a summary, like `resourceId`, and inert on
+   * a milestone, which has no work to pace.
+   */
+  share?: number;
+  /**
+   * Periods where the share differs from the default; `share: 0` pauses.
+   * Absent when empty, for the same reason as `disabled`.
+   */
+  shareOverrides?: ShareOverride[];
 }
 
 export interface Project {
@@ -444,6 +457,9 @@ export function solve(project: Project): SolvedProject {
     // Effort stays conserved — its segments simply all run at 1.
     resourceId: disabledIds.has(task.id) ? undefined : task.resourceId,
     predecessors: effectivePredecessors(task),
+    // Not on a milestone: an instant has no work to pace, and a period at zero
+    // must not hold a date back.
+    ...leafShare(task, task.nominalDays === 0),
   }));
 
   const result = schedule(engineTasks, project.resources, { origin, calendar: project.calendar });

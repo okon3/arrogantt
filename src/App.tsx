@@ -199,6 +199,7 @@ export default function App() {
     /** Measured when the dialog opens, since the figure costs a search. */
     slack: MeasuredSlack | null;
     resources: Person[];
+    workingDays: number[];
   } | null>(null);
   const [calendarSnapshot, setCalendarSnapshot] = useState<CalendarSpec>(DEFAULT_CALENDAR);
   // Snapshotted when the dialog opens: the chart owns the live project, and
@@ -549,6 +550,7 @@ export default function App() {
       details,
       slack: handle.getTaskSlack(id),
       resources: handle.getResources(),
+      workingDays: handle.getCalendar().workingDays,
     });
   }, []);
 
@@ -1127,6 +1129,7 @@ export default function App() {
           task={openTask.details}
           slack={openTask.slack}
           resources={openTask.resources}
+          workingDays={openTask.workingDays}
           colors={COLOR_OPTIONS}
           onCancel={() => setOpenTask(null)}
           onSave={saveTaskDetails}

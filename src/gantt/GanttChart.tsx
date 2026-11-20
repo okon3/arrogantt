@@ -10,7 +10,8 @@ import { gantt } from 'dhtmlx-gantt';
 import 'dhtmlx-gantt/codebase/dhtmlxgantt.css';
 import { barFactsOf, renderBarTooltip } from './barTooltip';
 import { reportedCost } from './cost';
-import { isShared } from './segmentBar';
+import { drawsProfile, isShared } from './segmentBar';
+import { hasShare, leafShare } from './taskShare';
 import {
   registerQuarterUnit,
   ZOOM_LEVELS,
@@ -273,8 +274,9 @@ export function GanttChart({
         const inherited = effectiveColorOf(projectRef.current.tasks, solved.hierarchy, task.id);
         ganttTask.is_summary = summary;
         ganttTask.bar_color = inherited ?? '';
-        ganttTask.color = barBackground(inherited, scheduled, summary);
-        ganttTask.shared = isShared(scheduled);
+        const profiled = drawsProfile(scheduled, hasShare(task));
+        ganttTask.color = barBackground(inherited, profiled, summary);
+        ganttTask.shared = profiled;
         ganttTask.disabled = solved.disabledIds.has(task.id);
         ganttTask.resource_classes = resourceClassesOf(solved, task.id);
         const cost = solved.costs.get(task.id)!;
@@ -417,6 +419,7 @@ export function GanttChart({
           shared: isShared(scheduled),
           contended: isContended(scheduled),
           disabled: task.disabled === true,
+          ...leafShare(task, summary),
           cost: reportedCost(cost),
           uncostedDays: cost.uncostedDays,
           dailyRates: [...cost.dailyRates],
@@ -473,6 +476,10 @@ export function GanttChart({
           // an omitted one from it, so most saves hand back a date nobody chose.
           task.start = constraintStart(task, patch.start, solvedRef.current);
           task.resourceId = patch.resourceId;
+          if (patch.share === null) delete task.share;
+          else if (patch.share !== undefined) task.share = patch.share;
+          if (patch.shareOverrides?.length) task.shareOverrides = patch.shareOverrides;
+          else if (patch.shareOverrides) delete task.shareOverrides;
         }
         // Not derived from the leaves — a summary can be disabled on its own,
         // same as a leaf. Undefined means the caller left it alone; only `true`

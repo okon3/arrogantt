@@ -2,6 +2,27 @@ import { Layers, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { countWorkingDaysInRange, coverageByLaterRanges, type DayRange } from '../scheduler';
 
+/** The percent cell of a `--pct` row: a fraction in the model, a percentage in the form. */
+export function PercentCell({ value, onChange }: { value: number; onChange(value: number): void }) {
+  return (
+    <span className="dialog__field">
+      <input
+        className="dialog__control ranges__pct"
+        type="number"
+        min={0}
+        max={100}
+        step={5}
+        value={Math.round(value * 100)}
+        onChange={(event) => {
+          const next = Number(event.target.value);
+          onChange(Number.isFinite(next) ? Math.min(100, Math.max(0, next)) / 100 : 0);
+        }}
+      />
+      <span className="dialog__suffix">%</span>
+    </span>
+  );
+}
+
 /**
  * The row template shared by every period-row list that edits a value beside
  * its dates (availability, rate — `DayRangeList` has no such value and stays

@@ -10,9 +10,9 @@ import {
 } from './project';
 import { resourceClass, shade } from './colors';
 import { reportedCost } from './cost';
-import { isShared } from './segmentBar';
+import { drawsProfile } from './segmentBar';
+import { hasShare } from './taskShare';
 import type { LoadLane } from './loadPanel';
-import type { ScheduledTask } from '../scheduler';
 
 /** dhtmlx link type for finish-to-start. */
 export const FINISH_TO_START = '0';
@@ -45,6 +45,7 @@ export function toGanttData(project: Project, solved: SolvedProject, chain: Mark
       // Priced by the same walk that reaches every row `plan.ts` reports on
       // (`cost.ts:taskCosts`), so the grid and getPlan() read one figure.
       const cost = solved.costs.get(task.id)!;
+      const profiled = scheduled ? drawsProfile(scheduled, hasShare(task)) : false;
       return {
         id: task.id,
         text: task.name,
@@ -73,8 +74,8 @@ export function toGanttData(project: Project, solved: SolvedProject, chain: Mark
         bar_color: inherited ?? '',
         // dhtmlx paints `color` straight onto the bar background, which must stay
         // pale on a shared task: there the colour belongs to the profile inside.
-        color: barBackground(inherited, scheduled, summary),
-        shared: scheduled ? isShared(scheduled) : false,
+        color: barBackground(inherited, profiled, summary),
+        shared: profiled,
         // Effective state, from the solved project — a leaf's own flag or an
         // inherited one, and a summary once every leaf under it is.
         disabled: solved.disabledIds.has(task.id),
@@ -109,12 +110,12 @@ export function toGanttData(project: Project, solved: SolvedProject, chain: Mark
  */
 export function barBackground(
   color: string | undefined,
-  scheduled: ScheduledTask | undefined,
+  profiled: boolean,
   summary: boolean,
 ): string {
   if (!color) return '';
   if (summary) return shade(color, 0.55);
-  return scheduled && isShared(scheduled) ? '' : color;
+  return profiled ? '' : color;
 }
 
 /**

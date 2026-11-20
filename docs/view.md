@@ -198,6 +198,14 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
     writes — the dialog, the agent API and the parser.
   - Whitespace-only reads as empty in the dialog and removes the text; the
     agent API stores what it is given, `''` and `null` apart.
+- **Pace (`.taskinfo__pace`) is the task's twin of a person's availability**:
+  an optional default share plus periods, on `PeriodRowList` and `PercentCell`
+  as People's list is. Leaves with effort only — hidden on a summary and while
+  the effort field reads 0, and a hidden section writes nothing.
+  - Percent in the form, fraction in the model. The default goes back **only
+    if retyped**: the field shows a rounded figure, and writing it back would
+    change a share nobody touched. Empty = not fixed.
+  - `save()` runs `parseTaskShare`, the gate the file and the agent API use.
 - **Row heights are stable, not incidental** (`TaskDialog.tsx`, `.taskinfo__*`
   in App.css): anything matching a control's height uses
   `--dialog-control-h` on `.dialog` (`dialog.css`), set to the taller of the
@@ -239,6 +247,11 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   last edit.
 - Uses dhtmlx's own tooltip extension: one delegated listener, survives
   redraws and smart rendering.
+- A task with share settings gets a `Pace` row (default, then each period) and
+  its stretch is blamed on the fixed share, never on a part-time person.
+  *Reduced proportionally* is judged per segment — below `soloRate` where a
+  share is in force — so a split outside a fixed period stays plain contention.
+  An unfixed task stopped by others' shares gets no wording of its own.
 
 ## Highlight (person)
 
@@ -336,6 +349,10 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   the rendered range.
 - Allocation profile = single SVG path inside the bar. Both it and the bands
   place own elements in the data area.
+- `drawsProfile` decides profile vs plain fill, once, where the row is written;
+  the bar template reads the row's `shared` flag. A gap between segments calls
+  for the profile **only on a task carrying share settings** (its pause reads
+  as empty track); a full-rate bar across its person's absence stays plain.
 
 ## Resource load lanes (*Resource load*)
 

@@ -1,7 +1,8 @@
 import { reportedCost } from './cost';
 import { serializeDate } from './dates';
-import { isContended } from '../scheduler';
+import { isContended, type ShareOverride } from '../scheduler';
 import type { SolvedProject } from './project';
+import { leafShare } from './taskShare';
 
 /**
  * One task as a script reads it.
@@ -15,6 +16,10 @@ export interface PlanTask {
   name: string;
   /** The task's own free text, absent when it has none: the model's own spelling. */
   description?: string;
+  /** Exact share of its person's capacity a leaf is fixed at, `0..1`; absent when not fixed. */
+  share?: number;
+  /** Periods (`YYYY-MM-DD`, inclusive) that replace it; `share: 0` pauses. Absent when none. */
+  shareOverrides?: ShareOverride[];
   /** The only structural truth. Null at top level. */
   parentId: string | null;
   /** Derived from `parentId` for printing an outline. Carries no information. */
@@ -102,6 +107,7 @@ export function buildPlan(solved: SolvedProject): Plan {
         id: task.id,
         name: task.name,
         ...(task.description === undefined ? {} : { description: task.description }),
+        ...leafShare(task, summaryIds.has(task.id)),
         parentId: parentId ?? null,
         depth,
         isSummary: summaryIds.has(task.id),

@@ -4,7 +4,7 @@ import { Info, Ban } from 'lucide-static';
 import { formatDays } from './format';
 import { costCellText, rateCellText, type CellText } from './costCells';
 import { escapeHtml } from './html';
-import { isShared, renderSegments } from './segmentBar';
+import { renderSegments } from './segmentBar';
 import { DEFAULT_BAR_COLOR, avatarColorOf, initialsOf, shade } from './colors';
 import { peopleUnder, type Project, type SolvedProject } from './project';
 import { MILESTONE_TYPE } from './ganttRows';
@@ -422,7 +422,8 @@ export function installRowTemplates(ctx: RowContext): void {
   // beside it, where a one-day bar can still show it in full.
   gantt.templates.task_text = (_start, _end, task) => {
     const scheduled = ctx.solved().schedule.tasks.get(String(task.id));
-    if (!scheduled || !isShared(scheduled)) return '';
+    // The row's flag, not a second verdict: whoever wrote it knew the task.
+    if (!scheduled || !task.shared) return '';
     // Which percentage labels fit depends on the zoom level, so ask dhtmlx for
     // the bar's actual pixel width rather than guessing from a percentage.
     const width = Number(gantt.getTaskPosition(task).width) || 0;
