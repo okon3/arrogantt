@@ -10,7 +10,7 @@ import {
   serializeForFile,
   serializeProject,
 } from './serialization';
-import { hasShare, parseTaskShare, shareInForce } from './taskShare';
+import { hasShare, parseTaskShare, shareInForce, sharePeriodAt } from './taskShare';
 
 const at = (dayOffset: number) => new Date(2026, 8, 7 + dayOffset, 8, 0);
 const period = { from: '2026-09-09', to: '2026-09-10', share: 0 };
@@ -308,5 +308,19 @@ describe('against the schedule the engine returns', () => {
       { from: '2026-09-08', to: '2026-09-08', share: 1 },
     ]);
     expect(() => solve(project([leaf({ ...pace, resourceId: undefined })]))).not.toThrow();
+  });
+});
+
+describe('a period seeded from a pointed day', () => {
+  it('lands on the local calendar day, whatever the hour', () => {
+    const paused = { from: '2026-09-09', to: '2026-09-09', share: 0 };
+    expect(sharePeriodAt(new Date(2026, 8, 9, 0, 0))).toEqual(paused);
+    expect(sharePeriodAt(new Date(2026, 8, 9, 23, 30))).toEqual(paused);
+  });
+
+  it('is left on a closed day, and passes the gate as it stands', () => {
+    const saturday = sharePeriodAt(new Date(2026, 8, 12, 14, 0));
+    expect(saturday.from).toBe('2026-09-12');
+    expect(parseTaskShare(undefined, [saturday]).shareOverrides).toEqual([saturday]);
   });
 });

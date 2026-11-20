@@ -31,6 +31,7 @@ import {
   constraintStart,
   effectiveColorOf,
   isChainMeasurable,
+  isMilestone,
   rejectionForLink,
   rejectionForParent,
   reorderTasks,
@@ -130,6 +131,7 @@ export function GanttChart({
     x: number;
     y: number;
     isSummary: boolean;
+    isMilestone: boolean;
     /** The day the pointer was over, when it was over the timeline. */
     start?: Date;
     /** The task's own flag, not the effective (inherited) state. */
@@ -1040,6 +1042,7 @@ export function GanttChart({
         x: event.clientX,
         y: event.clientY,
         isSummary: solvedRef.current.summaryIds.has(id),
+        isMilestone: task !== undefined && isMilestone(task, solvedRef.current.summaryIds),
         start: dateUnder(anchor, event.clientX),
         disabled: task?.disabled === true,
       });

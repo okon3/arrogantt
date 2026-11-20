@@ -206,6 +206,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
     if retyped**: the field shows a rounded figure, and writing it back would
     change a share nobody touched. Empty = not fixed.
   - `save()` runs `parseTaskShare`, the gate the file and the agent API use.
+  - Row menu *Set pace from here…* (leaf with effort) opens the dialog with one
+    **unsaved** period on the pointed day, unsnapped (grid: the solved start),
+    percent focused. Nothing is written before Save. Label wraps to line two.
 - **Row heights are stable, not incidental** (`TaskDialog.tsx`, `.taskinfo__*`
   in App.css): anything matching a control's height uses
   `--dialog-control-h` on `.dialog` (`dialog.css`), set to the taller of the

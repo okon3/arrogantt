@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Resource, ShareOverride } from '../scheduler';
 import { setAutofocus } from './autofocus';
 import { costCellText, currencyLabel, rateCellText } from './costCells';
@@ -8,7 +8,7 @@ import type { TaskDetails, TaskPatch } from './ganttHandle';
 import { PercentCell, PeriodRowList } from './PeriodRowList';
 import { CRITICAL_CHAIN_LIMIT, type MeasuredSlack } from './project';
 import { DESCRIPTION_LIMIT } from './serialization';
-import { hasShare, parseTaskShare } from './taskShare';
+import { hasShare, parseTaskShare, sharePeriodAt, sharePeriodOn } from './taskShare';
 
 const dayFormat = new Intl.DateTimeFormat('en-GB', {
   day: '2-digit',
@@ -26,6 +26,7 @@ const toPercentInput = (share: number | undefined) =>
 /** Mounted only while open, so the draft initialises from props without an effect. */
 export function TaskDialog({
   task,
+  paceFrom,
   slack,
   resources,
   workingDays,
@@ -35,6 +36,8 @@ export function TaskDialog({
   onDelete,
 }: {
   task: TaskDetails;
+  /** Opens with one unsaved pace period on this day, its percent focused. */
+  paceFrom?: Date;
   /** Null when the plan is past the size the app will measure. */
   slack: MeasuredSlack | null;
   resources: Resource[];
@@ -55,7 +58,20 @@ export function TaskDialog({
   const [disabled, setDisabled] = useState(task.disabled);
   const [description, setDescription] = useState(task.description ?? '');
   const [sharePercent, setSharePercent] = useState(toPercentInput(task.share));
-  const [sharePeriods, setSharePeriods] = useState<ShareOverride[]>(task.shareOverrides ?? []);
+  const [sharePeriods, setSharePeriods] = useState<ShareOverride[]>(() => [
+    ...(task.shareOverrides ?? []),
+    ...(paceFrom ? [sharePeriodAt(paceFrom)] : []),
+  ]);
+  const pace = useRef<HTMLDivElement>(null);
+  // An effect, not `autofocus`: it runs after Dialog's own `showModal()`, which
+  // is what hands the name field the focus this takes over.
+  useEffect(() => {
+    if (!paceFrom) return;
+    const seeded = [...(pace.current?.querySelectorAll<HTMLInputElement>('.ranges__row .ranges__pct') ?? [])].at(-1);
+    seeded?.scrollIntoView({ block: 'center' });
+    seeded?.focus();
+    seeded?.select();
+  }, [paceFrom]);
   const [error, setError] = useState<string | null>(null);
 
   // Read off the field being edited rather than off the task, so the dialog
@@ -359,7 +375,7 @@ export function TaskDialog({
         </label>
 
         {paced && (
-          <div className="taskinfo__field taskinfo__field--wide taskinfo__pace">
+          <div className="taskinfo__field taskinfo__field--wide taskinfo__pace" ref={pace}>
             <span className="taskinfo__label">Pace</span>
             {/* The People table's own percent field and the Status row's inline
                 layout, reused as they stand: the same 68px box the period rows
@@ -384,7 +400,7 @@ export function TaskDialog({
               periods={sharePeriods}
               workingWeekdays={workingDays}
               emptyMessage="No periods: the pace above holds for the whole task."
-              newPeriod={(today) => ({ from: today, to: today, share: 0 })}
+              newPeriod={sharePeriodOn}
               labelPlaceholder={(period) => (period.share === 0 ? 'Pause' : 'Reason')}
               countSuffix={(period) => (period.share === 0 ? ' paused' : '')}
               valueCell={(period, update) => (

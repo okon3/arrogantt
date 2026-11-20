@@ -704,6 +704,17 @@
   color: var(--warn);
 }
 
+/* The task dialog is too narrow for the label track: there it takes a line of
+   its own under the dates, and the count the elastic track it leaves. */
+.taskinfo__pace .ranges__row--pct {
+  grid-template-columns: 120px 12px 120px 68px 1fr 28px; /* date → date pct count remove */
+}
+
+.taskinfo__pace .ranges__label {
+  grid-row: 2;
+  grid-column: 1 / -1;
+}
+
 .people__absences {
   font: inherit;
   width: 100%;

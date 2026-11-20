@@ -67,6 +67,13 @@ export function parseTaskShare(share: unknown, overrides: unknown): TaskShare {
   return parsed;
 }
 
+/** The period a new row starts as: one day, paused — the percent is what the user came to type. */
+export const sharePeriodOn = (day: string): ShareOverride => ({ from: day, to: day, share: 0 });
+
+/** The same, on the local calendar day `date` falls on — a day pointed at on the timeline. */
+export const sharePeriodAt = (date: Date): ShareOverride =>
+  sharePeriodOn(dayStringOf(dayIndexOf(date)));
+
 /** The settings as a copy to hand out, or nothing where they are `inert`: a summary, a milestone. */
 export function leafShare(task: TaskShare, inert: boolean): TaskShare {
   if (inert) return {};

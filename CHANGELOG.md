@@ -13,6 +13,8 @@
 - Set a task's pace in its detail dialog: fix it at an exact share of its
   person's time, for the whole task or for chosen periods, and the rest of
   their time goes to their other tasks. A period at 0% pauses the task.
+  Right-click a bar and pick "Set pace from here" to start a period on the
+  day you point at.
 
 ## v1.6 — 2026-09-23
 

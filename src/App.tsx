@@ -196,6 +196,8 @@ export default function App() {
   // Snapshotted on open, like the other dialogs: the chart owns the live task.
   const [openTask, setOpenTask] = useState<{
     details: TaskDetails;
+    /** The day a pace period is to be started on, when the row menu asked for one. */
+    paceFrom?: Date;
     /** Measured when the dialog opens, since the figure costs a search. */
     slack: MeasuredSlack | null;
     resources: Person[];
@@ -542,12 +544,15 @@ export default function App() {
     });
   }, []);
 
-  const openTaskDetails = useCallback((id: string) => {
+  const openTaskDetails = useCallback((id: string, pace?: { from?: Date }) => {
     const handle = chart.current;
     const details = handle?.getTaskDetails(id);
     if (!handle || !details) return;
     setOpenTask({
       details,
+      // From the grid there is no day to point at: the task's solved start, as
+      // for a creation from the same menu.
+      ...(pace ? { paceFrom: pace.from ?? details.start } : {}),
       slack: handle.getTaskSlack(id),
       resources: handle.getResources(),
       workingDays: handle.getCalendar().workingDays,
@@ -1070,6 +1075,7 @@ export default function App() {
             setRowMenu(null);
             if (action === 'toggle-disabled') toggleDisabled(rowMenu.taskId, rowMenu.disabled);
             else if (action === 'close-gaps') chart.current?.closeGaps(rowMenu.taskId);
+            else if (action === 'pace') openTaskDetails(rowMenu.taskId, { from: rowMenu.start });
             else createFromMenu(rowMenu, action);
           }}
         />
@@ -1127,6 +1133,7 @@ export default function App() {
       {openTask && (
         <TaskDialog
           task={openTask.details}
+          paceFrom={openTask.paceFrom}
           slack={openTask.slack}
           resources={openTask.resources}
           workingDays={openTask.workingDays}
