@@ -20,6 +20,23 @@ export interface Task {
   resourceId?: ResourceId;
   /** Finish-to-start predecessors. */
   predecessors?: TaskId[];
+  /**
+   * Exact share of its resource's current capacity the task runs at, instead of
+   * whatever the split would leave it. Exact, not a cap: alone on the resource
+   * it still runs at this share. Unassigned: share of a full rate.
+   */
+  share?: number;
+  /**
+   * Periods where the share differs from the default, or is fixed where there
+   * is no default. Same rules as a resource's overrides: a period replaces the
+   * default, the last declared wins. `share: 0` pauses the task.
+   */
+  shareOverrides?: ShareOverride[];
+}
+
+export interface ShareOverride extends DayRange {
+  /** 0 to 1. 0 means paused. */
+  share: number;
 }
 
 /**
