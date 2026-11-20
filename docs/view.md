@@ -365,7 +365,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   bar and again after each redraw (dhtmlx replaces the node). Screen only.
 - No readout on the period: the bar's own labels say the rate, the drag tip
   the period's dates and share.
-- Below `MIN_INTERACTIVE_PX` a period is two ticks and takes no pointer.
+- Below `NARROW_PX` a period's edge strips sit outside it: draggable at
+  every zoom, never overlapping.
 - **The grip is the period's share of the person, not the rate drawn**: on a
   part-time person the fill under a period at 100% stops short of the grip.
 - **An edge snaps to working days and stops at day 0 and at the day beside

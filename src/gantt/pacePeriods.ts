@@ -7,8 +7,8 @@ import { dateOfDay, dayIndexOf, type ShareOverride } from '../scheduler';
  * a new list — the caller's is never touched.
  */
 
-/** Narrower than this a period keeps its ticks and lets the pointer through. */
-export const MIN_INTERACTIVE_PX = 14;
+/** Narrower than this a period has no room for its handles, which move outside it. */
+export const NARROW_PX = 28;
 
 /** A drag of the level grip moves the share in tenths. */
 const SHARE_STEPS = 10;
@@ -139,7 +139,7 @@ export function periodBoxes(
         width,
         height: bar.height,
         share: period.share,
-        tiny: width < MIN_INTERACTIVE_PX,
+        tiny: width < NARROW_PX,
       },
     ];
   });

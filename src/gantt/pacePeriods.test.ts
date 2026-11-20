@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { dayIndexOfString, type ShareOverride } from '../scheduler';
 import {
-  MIN_INTERACTIVE_PX,
+  NARROW_PX,
   addPeriod,
   levelShare,
   moveEdge,
@@ -172,8 +172,8 @@ describe('periodBoxes', () => {
     ]);
   });
 
-  it('calls a period too narrow to aim at tiny', () => {
-    const narrow = (index: number) => (index - rendered.firstDay) * (MIN_INTERACTIVE_PX - 1);
+  it('calls a period with no room for its handles tiny', () => {
+    const narrow = (index: number) => (index - rendered.firstDay) * (NARROW_PX - 1);
     expect(periodBoxes([period(2, 2)], rendered, bar, narrow, plain)[0].tiny).toBe(true);
     expect(periodBoxes([period(2, 3)], rendered, bar, narrow, plain)[0].tiny).toBe(false);
   });

@@ -1248,20 +1248,31 @@ html:root[data-gantt-theme='dark'] {
   display: none;
 }
 
-/* Too narrow to aim at: a tick per edge, and the pointer passes through. */
-.pace-period--tiny .pace-edge {
-  pointer-events: none;
+/* No room inside: the edge strips sit outside the period, so the two never
+   overlap and each stays draggable at any zoom. */
+.pace-period--tiny .pace-edge--from {
+  left: -9px;
 }
 
-.pace-period--tiny .pace-edge::before {
-  left: 4px;
-  width: 1px;
-  box-shadow: none;
+.pace-period--tiny .pace-edge--from::before {
+  left: 7px;
 }
 
-.pace-period--tiny .pace-level,
+.pace-period--tiny .pace-edge--to {
+  right: -9px;
+}
+
+.pace-period--tiny .pace-edge--to::before {
+  left: 0;
+}
+
+.pace-period--tiny .pace-level {
+  left: 0;
+  right: 0;
+}
+
 .pace-period--tiny .pace-x {
-  display: none;
+  left: calc(100% + 12px);
 }
 
 /* On `body`, beside the pointer while a handle is dragged; above the bar
