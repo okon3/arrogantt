@@ -167,14 +167,11 @@ export class WorkingCalendar {
     return worked;
   }
 
-  private minuteOfDayAfterWorking(minutes: number, edge: 'start' | 'end'): number {
+  private minuteOfDayAfterWorking(minutes: number): number {
     let remaining = minutes;
     for (const window of this.windows) {
       const span = window.to - window.from;
-      // A break is a boundary like the night: what ends on it ends before it.
-      if (remaining < span || (edge === 'end' && remaining === span)) {
-        return window.from + remaining;
-      }
+      if (remaining < span) return window.from + remaining;
       remaining -= span;
     }
     // Exactly at the end of the day: report the closing edge rather than rolling over,
@@ -209,7 +206,7 @@ export class WorkingCalendar {
     }
     return dateAtDayIndex(
       this.dayOfNthWorkingDay(wholeDays),
-      this.minuteOfDayAfterWorking(remainder, edge),
+      this.minuteOfDayAfterWorking(remainder),
     );
   }
 
