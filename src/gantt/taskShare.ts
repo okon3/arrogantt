@@ -23,6 +23,10 @@ const isRealDay = (value: unknown): value is string =>
 const isFraction = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
 
+/** The smallest share that is not a pause: below it a task stretches past any date. */
+export const MIN_SHARE = 0.01;
+const TOO_SMALL = 'a share below 1% is not allowed (0 in a period pauses the task)';
+
 /**
  * The one gate on a task's share settings: the file parser, the agent API and
  * the task dialog all come through here, and Save re-parses what it wrote.
@@ -40,6 +44,7 @@ export function parseTaskShare(share: unknown, overrides: unknown): TaskShare {
     if (!isFraction(share)) {
       throw new Error('Invalid share: expected a number above 0 and up to 1 (100%)');
     }
+    if (share < MIN_SHARE) throw new Error(`Invalid share: ${TOO_SMALL}`);
     parsed.share = share;
   }
   if (overrides !== undefined) {
@@ -58,6 +63,7 @@ export function parseTaskShare(share: unknown, overrides: unknown): TaskShare {
       if (!isFraction(value)) {
         throw new Error(`${period} needs a numeric "share", 0 (paused) to 1`);
       }
+      if (value !== 0 && value < MIN_SHARE) throw new Error(`${period}: ${TOO_SMALL}`);
       const override: ShareOverride = { from, to, share: value };
       if (typeof label === 'string' && label.length > 0) override.label = label;
       return override;

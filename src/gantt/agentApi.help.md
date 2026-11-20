@@ -265,9 +265,9 @@ description, rather than reporting it as an empty string or `null`: check with
 
 `share` fixes a leaf at an **exact** share of its person's capacity — `0.2` runs
 at 20% even when alone, and the rest of the person stays free for their other
-tasks. Above 0 and up to 1; `null` unfixes it. `shareOverrides` is a list of
+tasks. From 0.01 (1%) up to 1; `null` unfixes it. `shareOverrides` is a list of
 periods `[{ from, to, share, label? }]`, days as `YYYY-MM-DD`, both required,
-`from` not after `to`, `share` from 0 to 1: a period **replaces** the default
+`from` not after `to`, `share` 0 or from 0.01 to 1: a period **replaces** the default
 (the last declared wins on overlap, as for a person's `availabilityOverrides`)
 and **`share: 0` pauses the task** — its effort is unchanged. A period needs no
 default: the task is then fixed only inside it. The list replaces the stored

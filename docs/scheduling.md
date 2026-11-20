@@ -167,6 +167,9 @@ resolved by `shareAt` through the same projection as a person's periods.
   task is allocated on its own.
 - `soloRate` = share × capacity while a share is fixed, so scaled-down shares
   read as contention and a task alone at its share does not.
+- **Event times are snapped to the whole minute beside them** (`MINUTE_SNAP`,
+  in the loop, share or no share): effort ÷ rate lands a hair off, and a hair
+  past a day boundary is dated on its wrong side.
 - Period edges are ordinary events, counted in the iteration bound. A task whose
   share is zero once the last edge has passed never finishes: `schedule()`
   throws `Scheduler stalled: task "…" is left at a share of zero…`.
@@ -213,6 +216,8 @@ A working-minute on a day boundary = two wall-clock instants: 17:00 that day /
 08:00 next working day. Hence `fromWorkingMinutes(minutes, edge)`: bar end uses
 `'end'`, start uses `'start'`; wrong edge makes whole-day tasks look a day long.
 
+- **A break inside the day is the same boundary**: a minute on it is the
+  break's opening with `'end'`, its closing with `'start'`.
 - `ScheduledTask` exposes both `Date`s and raw working minutes. **Test adjacency
   on working minutes, never dates** — contiguous instants render as different
   dates.

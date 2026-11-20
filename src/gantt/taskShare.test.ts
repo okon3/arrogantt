@@ -29,6 +29,17 @@ const leaf = (patch: Partial<ProjectTask> = {}): ProjectTask => ({
 });
 
 describe('parseTaskShare, the one gate', () => {
+  it('refuses a share below 1% that is not a pause, default and period alike', () => {
+    expect(() => parseTaskShare(1e-12, undefined)).toThrow(/below 1%/);
+    expect(() => parseTaskShare(undefined, [{ ...period, share: 0.009 }])).toThrow(
+      /Share period 1: a share below 1%/,
+    );
+    expect(parseTaskShare(0.01, [{ ...period, share: 0.01 }, period])).toEqual({
+      share: 0.01,
+      shareOverrides: [{ ...period, share: 0.01 }, period],
+    });
+  });
+
   it('answers the normal form: nothing fixed, nothing written', () => {
     expect(parseTaskShare(undefined, undefined)).toEqual({});
     expect(parseTaskShare(undefined, [])).toEqual({});

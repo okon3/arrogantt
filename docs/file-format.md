@@ -70,9 +70,10 @@ runs past 2000 characters, a calendar the engine cannot serve, future
 versions, a negative or non-numeric daily rate, a rate period with no numeric
 `dailyRate`, a rate period with a malformed `YYYY-MM-DD` day, a `currency` that
 is blank, padded, not a string, or over 8 characters, a task `share` that is
-not a finite number above 0 and up to 1 (a default of zero never finishes — a
-pause is a period), a share period with a missing, malformed or impossible day,
-with `from` after `to`, or with no finite `share` in `0..1`. Parse before load — a bad
+not a finite number from `MIN_SHARE` (1%) up to 1 (a default of zero never
+finishes — a pause is a period), a share period with a missing, malformed or
+impossible day, with `from` after `to`, or whose `share` is not 0 or a finite
+number from `MIN_SHARE` up to 1. Parse before load — a bad
 file leaves the open project untouched.
 
 A written `disabled: false` is accepted and **normalized to absent**: two

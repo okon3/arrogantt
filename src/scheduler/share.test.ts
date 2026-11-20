@@ -95,6 +95,22 @@ describe('fixed and unfixed tasks on one person', () => {
     expectEffortConserved(result, tasks);
   });
 
+  it('leaves two fixed shares under 100% as they are, the rest free', () => {
+    const tasks = [task('a', 1, { share: 0.2 }), task('b', 3, { share: 0.3 })];
+    const result = run(tasks);
+    expect(profile(result, 'a')).toEqual([[0, 5, 0.2, 0.2]]);
+    expect(profile(result, 'b')).toEqual([[0, 10, 0.3, 0.3]]);
+    expectEffortConserved(result, tasks);
+  });
+
+  it('takes both the share and the remainder from a part-time capacity', () => {
+    const tasks = [task('a', 1, { share: 0.2 }), task('b', 4)];
+    const result = run(tasks, [{ ...alice, availability: 0.5 }]);
+    expect(profile(result, 'a')).toEqual([[0, 10, 0.1, 0.1]]);
+    expect(profile(result, 'b')).toEqual([[0, 10, 0.4, 0.5]]);
+    expectEffortConserved(result, tasks);
+  });
+
   it('splits the remainder equally between several unfixed tasks', () => {
     const tasks = [task('a', 1, { share: 0.2 }), task('b', 2), task('c', 2)];
     const result = run(tasks);
@@ -139,6 +155,45 @@ describe('fixed and unfixed tasks on one person', () => {
       ],
     });
     expect(rates.has('c')).toBe(false);
+  });
+});
+
+describe('an event a hair off a whole minute', () => {
+  const wholeMinutes = (result: Schedule) => {
+    for (const scheduled of result.tasks.values()) {
+      for (const segment of scheduled.segments) {
+        expect(Number.isInteger(segment.startWorkingMinutes)).toBe(true);
+        expect(Number.isInteger(segment.endWorkingMinutes)).toBe(true);
+      }
+      expect(Number.isInteger(scheduled.startWorkingMinutes)).toBe(true);
+      expect(Number.isInteger(scheduled.endWorkingMinutes)).toBe(true);
+    }
+  };
+
+  it('ends on the evening it reaches, not the next morning', () => {
+    // 1 - 0.8 is not 0.2: B's day of work divides into a hair over five days.
+    const tasks = [task('a', 5, { share: 0.8 }), task('b', 1)];
+    const result = run(tasks);
+    expect(result.tasks.get('b')!.end).toEqual(new Date(2026, 8, 11, 17, 0));
+    wholeMinutes(result);
+    expectEffortConserved(result, tasks);
+  });
+
+  it('starts and ends on the minute when shares over 100% are scaled down', () => {
+    const start = new Date(2026, 10, 23, 8, 0);
+    const tasks = [
+      task('a', 6, { share: 0.8, startConstraint: start }),
+      task('b', 6, { share: 0.6, startConstraint: start }),
+      task('c', 1, { startConstraint: start }),
+    ];
+    const result = schedule(tasks, [alice], { origin: start, calendar: DEFAULT_CALENDAR });
+    expect(result.tasks.get('a')!.end).toEqual(new Date(2026, 11, 7, 12, 0));
+    // The same working minute seen from its other side: after the lunch break.
+    expect(result.tasks.get('c')!.start).toEqual(new Date(2026, 11, 7, 13, 0));
+    expect(result.tasks.get('b')!.end).toEqual(new Date(2026, 11, 9, 17, 0));
+    expect(result.tasks.get('c')!.end).toEqual(new Date(2026, 11, 9, 17, 0));
+    wholeMinutes(result);
+    expectEffortConserved(result, tasks);
   });
 });
 

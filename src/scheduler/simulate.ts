@@ -22,6 +22,18 @@ import type {
 const EPSILON = 1e-9;
 
 /**
+ * Working minutes within which an event time is the whole minute beside it.
+ * Dividing effort by a rate lands a hair off a minute it should hit exactly;
+ * far wider than that drift, far narrower than any time a plan can mean.
+ */
+const MINUTE_SNAP = 1e-7;
+
+function snapToMinute(minutes: number): number {
+  const whole = Math.round(minutes);
+  return Math.abs(minutes - whole) < MINUTE_SNAP ? whole : minutes;
+}
+
+/**
  * Whether the task was stretched by sharing its resource with another task.
  *
  * Distinct from "ran below full rate", which part-time and a reduced period also
@@ -275,6 +287,12 @@ export function schedule(
       throw new Error('Scheduler stalled: no active task received capacity');
     }
 
+    // Every instant the schedule reports is a clock value, so the dust is
+    // removed here, once: a minute a hair past a day boundary would otherwise
+    // be dated on the wrong side of it.
+    const snapped = snapToMinute(clock + step);
+    const next = snapped > clock ? snapped : clock + step;
+
     for (const state of active) {
       const rate = rates.get(state.task.id)!;
       if (rate <= 0) continue;
@@ -284,14 +302,15 @@ export function schedule(
       // Events on other resources split the timeline without changing this rate;
       // merging keeps the rendered bar from fragmenting into meaningless slices.
       if (last && last.end === clock && last.rate === rate && last.soloRate === soloRate) {
-        last.end = clock + step;
+        last.end = next;
       } else {
-        state.segments.push({ start: clock, end: clock + step, rate, soloRate });
+        state.segments.push({ start: clock, end: next, rate, soloRate });
       }
+      // The unsnapped step: it is what the remaining effort was divided by.
       state.remaining -= rate * step;
     }
 
-    clock += step;
+    clock = next;
 
     for (const state of active) {
       if (state.finishedAt === undefined && state.remaining <= EPSILON) finish(state, clock);
