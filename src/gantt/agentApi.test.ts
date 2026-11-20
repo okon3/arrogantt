@@ -207,3 +207,26 @@ describe('agent API setCurrency', () => {
     expect(handle.setCurrency).not.toHaveBeenCalled();
   });
 });
+
+describe('agent API task fields', () => {
+  it.each([NaN, -3, Infinity, '2'])('refuses nominalDays %s before writing', (nominalDays) => {
+    const { api, handle } = harness();
+    expect(() => api.updateTask('t1', { nominalDays: nominalDays as number })).toThrow(/nominalDays/);
+    expect(() => api.addTask({ nominalDays: nominalDays as number })).toThrow(/nominalDays/);
+    expect(handle.updateTask).not.toHaveBeenCalled();
+    expect(handle.addTask).not.toHaveBeenCalled();
+  });
+
+  it('refuses a colour the file format would not reopen', () => {
+    const { api, handle } = harness();
+    expect(() => api.updateTask('t1', { color: 'red' })).toThrow(/#rrggbb/);
+    expect(handle.updateTask).not.toHaveBeenCalled();
+  });
+
+  it('still takes a milestone, a hex colour and a cleared colour', () => {
+    const { api, handle } = harness();
+    api.updateTask('t1', { nominalDays: 0, color: '#AABBCC' });
+    api.updateTask('t1', { color: null });
+    expect(handle.updateTask).toHaveBeenCalledTimes(2);
+  });
+});

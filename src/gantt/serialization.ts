@@ -161,6 +161,7 @@ function requireNumber(value: unknown, context: string): number {
 }
 
 export const DESCRIPTION_LIMIT = 2000;
+export const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 function requireDescription(value: unknown, context: string): string {
   if (typeof value !== 'string') {
@@ -303,7 +304,7 @@ export function deserializeProject(text: string): Project {
       // the only guarantee left is the notation: anything else reaches the DOM
       // as a style the browser drops without a word.
       const color = requireString(record.color, `tasks[${index}].color`);
-      if (!/^#[0-9a-f]{6}$/i.test(color)) {
+      if (!HEX_COLOR.test(color)) {
         throw new ProjectFileError(`tasks[${index}]: invalid color "${color}", expected #rrggbb`);
       }
       task.color = color;

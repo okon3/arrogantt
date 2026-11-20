@@ -4,7 +4,13 @@ import { validateCurrency, type Person } from './cost';
 import { parseWallClock, serializeDate } from './dates';
 import type { GanttHandle, TaskDetails } from './ganttHandle';
 import { buildPlan, type Plan } from './plan';
-import { loadByResource, rejectionForLink, slackByRow, subtreeOf } from './project';
+import {
+  loadByResource,
+  rejectionForLink,
+  rejectionForParent,
+  slackByRow,
+  subtreeOf,
+} from './project';
 import {
   nextResourceId,
   releasedBy,
@@ -15,7 +21,7 @@ import {
   withResourceUpdated,
   type ResourcePatch,
 } from './resources';
-import { DESCRIPTION_LIMIT, serializeForFile } from './serialization';
+import { DESCRIPTION_LIMIT, HEX_COLOR, serializeForFile } from './serialization';
 import type { AvailabilityOverride, CalendarSpec } from '../scheduler';
 
 /**
@@ -201,6 +207,27 @@ function validatedDescription(value: unknown): string {
   return value;
 }
 
+/**
+ * The two task fields a plain-JS caller can get wrong where the model takes
+ * them as given: a `NaN` effort stalls the scheduler from inside the write, a
+ * negative one reloads as a milestone, and a colour the parser refuses makes
+ * every later Save fail.
+ */
+function requireTaskFields(patch: { nominalDays?: unknown; color?: unknown } | undefined): void {
+  const { nominalDays, color } = patch ?? {};
+  if (
+    nominalDays !== undefined &&
+    (typeof nominalDays !== 'number' || !Number.isFinite(nominalDays) || nominalDays < 0)
+  ) {
+    throw new Error(`nominalDays: expected a number of 0 or more, received ${String(nominalDays)}`);
+  }
+  if (color !== undefined && color !== null && color !== '') {
+    if (typeof color !== 'string' || !HEX_COLOR.test(color)) {
+      throw new Error(`color: expected #rrggbb, received ${JSON.stringify(color)}`);
+    }
+  }
+}
+
 export function createAgentApi(host: AgentHost): AgentApi {
   const chart = (): GanttHandle => {
     const handle = host.handle();
@@ -321,6 +348,7 @@ export function createAgentApi(host: AgentHost): AgentApi {
     isDirty: host.dirty,
 
     addTask: (patch) => {
+      requireTaskFields(patch);
       requireKnownResource(patch?.resourceId);
       // The handle would fall back to the end of the plan, which is a placement
       // the caller did not ask for and would not notice.
@@ -359,6 +387,7 @@ export function createAgentApi(host: AgentHost): AgentApi {
           );
         }
       }
+      requireTaskFields(patch);
       requireKnownResource(patch.resourceId);
       chart().updateTask(id, {
         name: patch.name ?? current.name,
@@ -396,6 +425,8 @@ export function createAgentApi(host: AgentHost): AgentApi {
           throw new Error(`"${parentId}" is under "${id}": it cannot become its parent`);
         }
       }
+      const problem = rejectionForParent(chart().getProject(), id, parentId);
+      if (problem) throw new Error(problem);
       chart().setParent(id, parentId);
     },
 

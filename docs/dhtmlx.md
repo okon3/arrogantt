@@ -249,6 +249,9 @@ library. Each bullet is a constraint or a fact; how it was found is in git.
 - **`onLinkDblClick` fires in Community, and `return false` suppresses the
   vendor modal.** Deletion is dhtmlx's own `gantt.confirm`
   ([verification.md](verification.md)).
+- **Refuse a move in `onBeforeTaskMove`**: it fires for a row drag and for
+  `moveTask` alike, and `false` cancels. A re-parent can close a dependency
+  cycle (inherited summary links), so it is trial-solved there, like a link.
 - **`onAfterTaskMove` reports only the new parent**: read order back off the
   grid (`getChildren`, not `eachTask`; closed branches still have an order).
 - **`$task_data` moves with the scroll; don't add the scroll to it.** Pointer →

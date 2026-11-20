@@ -188,9 +188,9 @@ which is exactly the task a planner has to move.
 | Call | Notes |
 | --- | --- |
 | `addTask(patch?) → id` | `{ name, nominalDays, start, resourceId, color, disabled, parentId, after }`, all optional. The start is normalised to the opening of a working day. **Does not take `description`** — throws, naming `updateTask`, if one is passed. |
-| `updateTask(id, patch)` | Any subset of `{ name, nominalDays, start, resourceId, color, progress, disabled, description }`. Throws on `nominalDays`, `start` or `resourceId` for a summary, and on a `description` over 2000 characters. |
+| `updateTask(id, patch)` | Any subset of `{ name, nominalDays, start, resourceId, color, progress, disabled, description }`. Throws on `nominalDays`, `start` or `resourceId` for a summary, and on a `description` over 2000 characters. Here and in `addTask`, `nominalDays` must be a number of 0 or more and `color` a `#rrggbb`: anything else throws before it is written. |
 | `deleteTask(id)` | Takes the subtree with it and clears dependencies on any of it. |
-| `setParent(id, parentId \| null)` | `null` moves it to the top level. Refuses a parent from inside `id`'s own subtree. |
+| `setParent(id, parentId \| null)` | `null` moves it to the top level. Refuses a parent from inside `id`'s own subtree, and a move that would close a dependency cycle (a group's dependencies are inherited by what is inside it). |
 | `link(from, to)` | Finish-to-start. **Refuses a cycle before mutating.** |
 | `unlink(from, to)` | |
 

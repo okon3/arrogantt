@@ -822,6 +822,38 @@ export function rejectionForLink(project: Project, from: string, to: string): st
 }
 
 /**
+ * Why `id` cannot move under `parentId` (null = top level), or null.
+ *
+ * The twin of `rejectionForLink`, and a trial `solve()` for the same reason: a
+ * summary's dependencies are inherited by its leaves, so a re-parent can close
+ * a cycle that exists only once they are pushed down.
+ */
+export function rejectionForParent(
+  project: Project,
+  id: string,
+  parentId: string | null,
+): string | null {
+  const prospective: Project = {
+    ...project,
+    tasks: project.tasks.map((task) =>
+      task.id === id ? { ...task, parentId: parentId ?? undefined } : task,
+    ),
+  };
+  try {
+    solve(prospective);
+  } catch (cause) {
+    if (cause instanceof CyclicDependencyError) {
+      return `Moving "${id}" there creates a dependency cycle: ${cause.cycle.join(' → ')}`;
+    }
+    if (cause instanceof TaskCycleError) {
+      return `"${id}" cannot move inside its own subtree`;
+    }
+    throw cause;
+  }
+  return null;
+}
+
+/**
  * No people: inventing names the user has to delete is worse than starting bare.
  *
  * The currency is the one field a new project does declare: most plans price in

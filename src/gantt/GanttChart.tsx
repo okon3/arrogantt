@@ -31,6 +31,7 @@ import {
   effectiveColorOf,
   isChainMeasurable,
   rejectionForLink,
+  rejectionForParent,
   reorderTasks,
   slackByRow,
   solve,
@@ -339,9 +340,12 @@ export function GanttChart({
       const scroll = options?.keepViewport ? gantt.getScrollState() : undefined;
       const selected = options?.keepViewport ? gantt.getSelectedId() : undefined;
       const collapsed = options?.keepViewport ? collapsedBranches() : undefined;
+      // Before anything is replaced: a project the engine refuses must leave
+      // the open one, and the `applying` flag, exactly as they were.
+      const solved = solve(next);
       applyingRef.current = true;
       projectRef.current = next;
-      solvedRef.current = solve(next);
+      solvedRef.current = solved;
       // An undo keeps the marking it had — over the limit as a stale one — since
       // it is the same plan a step back, and dropping it would leave a big plan
       // with nothing marked after every Ctrl+Z. A file, a draft or a new project
@@ -1151,6 +1155,20 @@ export function GanttChart({
         pullOrderFromView();
         applySolution();
         return true;
+      }, undefined),
+      // Refused before the move for the reason a link is: onAfterTaskMove writes
+      // the parent into the model and re-solves, and a parent's dependencies are
+      // inherited — a move can close a cycle no link ever drew.
+      gantt.attachEvent('onBeforeTaskMove', (id, parent) => {
+        if (applyingRef.current) return true;
+        const problem = rejectionForParent(
+          projectRef.current,
+          String(id),
+          parent !== undefined && String(parent) !== '0' ? String(parent) : null,
+        );
+        if (!problem) return true;
+        rejectRef.current?.(problem);
+        return false;
       }, undefined),
       gantt.attachEvent('onAfterTaskMove', (id, parent) => {
         if (applyingRef.current) return true;

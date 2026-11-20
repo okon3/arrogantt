@@ -16,6 +16,7 @@ import {
   isMilestone,
   loadByResource,
   rejectionForLink,
+  rejectionForParent,
   reorderTasks,
   resourcesByTask,
   slackByRow,
@@ -1083,5 +1084,33 @@ describe('resourcesByTask', () => {
         { id: 'c', name: 'C', nominalDays: 1, start: at(0), parentId: 'p', resourceId: 'alice' },
       ]),
     ).toEqual({ p: ['alice'], c: ['alice'] });
+  });
+});
+
+describe('rejectionForParent', () => {
+  const task = (id: string, predecessors?: string[], parentId?: string): ProjectTask => ({
+    id,
+    name: id.toUpperCase(),
+    nominalDays: 1,
+    start: at(0),
+    predecessors,
+    parentId,
+  });
+
+  it('accepts a move that closes nothing', () => {
+    expect(rejectionForParent(project([task('s'), task('a', [], 's'), task('b')]), 'b', 's')).toBeNull();
+  });
+
+  it('refuses a second task joining the summary both wait for', () => {
+    // Waiting for a group is waiting for every leaf in it: with a and b both
+    // inside s and both waiting for s, each would wait for the other.
+    const tasks = [task('s'), task('x', [], 's'), task('a', ['s'], 's'), task('b', ['s'])];
+    expect(rejectionForParent(project(tasks), 'b', null)).toBeNull();
+    expect(rejectionForParent(project(tasks), 'b', 's')).toMatch(/cycle/);
+  });
+
+  it('refuses a parent from inside the subtree', () => {
+    const tasks = [task('s'), task('a', [], 's')];
+    expect(rejectionForParent(project(tasks), 's', 'a')).toMatch(/subtree/);
   });
 });
