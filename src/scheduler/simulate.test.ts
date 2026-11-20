@@ -32,6 +32,16 @@ describe('single task', () => {
     expect(result.tasks.get('a')!.end).toEqual(day(3, 17));
   });
 
+  it('ends before the lunch break and lets its successor start after it', () => {
+    const result = run([
+      { id: 'a', name: 'A', effort: days(0.5), startConstraint: MONDAY, resourceId: 'alice' },
+      { id: 'b', name: 'B', effort: days(0.5), predecessors: ['a'], resourceId: 'alice' },
+    ]);
+    expect(result.tasks.get('a')!.end).toEqual(day(0, 12));
+    expect(result.tasks.get('b')!.start).toEqual(day(0, 13));
+    expect(result.tasks.get('b')!.end).toEqual(day(0, 17));
+  });
+
   it('skips the weekend', () => {
     const result = run([
       { id: 'a', name: 'A', effort: days(6), startConstraint: MONDAY, resourceId: 'alice' },

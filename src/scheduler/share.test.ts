@@ -187,8 +187,8 @@ describe('an event a hair off a whole minute', () => {
       task('c', 1, { startConstraint: start }),
     ];
     const result = schedule(tasks, [alice], { origin: start, calendar: DEFAULT_CALENDAR });
-    // A minute on the lunch break is dated on its closing side, end or start.
-    expect(result.tasks.get('a')!.end).toEqual(new Date(2026, 11, 7, 13, 0));
+    expect(result.tasks.get('a')!.end).toEqual(new Date(2026, 11, 7, 12, 0));
+    // The same working minute seen from its other side: after the lunch break.
     expect(result.tasks.get('c')!.start).toEqual(new Date(2026, 11, 7, 13, 0));
     expect(result.tasks.get('b')!.end).toEqual(new Date(2026, 11, 9, 17, 0));
     expect(result.tasks.get('c')!.end).toEqual(new Date(2026, 11, 9, 17, 0));
