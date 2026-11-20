@@ -57,6 +57,8 @@ export interface GanttHandle {
    */
   measureCriticalChain(): void;
   updateTask(id: string, patch: TaskPatch): void;
+  /** Pulls a summary's linked leaves back to their predecessors. One undo step; none when nothing moves. */
+  closeGaps(summaryId: string): void;
   /** Takes the task's subtree with it, and clears dependencies on any of them. */
   deleteTask(id: string): void;
   getResources(): Person[];

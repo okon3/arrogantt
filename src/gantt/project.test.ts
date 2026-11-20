@@ -8,6 +8,7 @@ import {
   chainAfterEdit,
   chainOnRequest,
   chainStateOf,
+  closeGaps,
   constraintStart,
   disabledByTask,
   effectiveColorOf,
@@ -579,6 +580,69 @@ describe('colour inheritance', () => {
     );
     const rebuilt = buildHierarchy(moved);
     expect(effectiveColorOf(moved, rebuilt, 'leaf')).toBeUndefined();
+  });
+});
+
+describe('closeGaps', () => {
+  const startOf = (tasks: ProjectTask[], id: string) =>
+    tasks.find((task) => task.id === id)!.start;
+  const solvedStart = (tasks: ProjectTask[], id: string) =>
+    solve(project(tasks)).schedule.tasks.get(id)!.startWorkingMinutes;
+  const solvedEnd = (tasks: ProjectTask[], id: string) =>
+    solve(project(tasks)).schedule.tasks.get(id)!.endWorkingMinutes;
+  const close = (tasks: ProjectTask[], id: string) => {
+    const plan = project(tasks);
+    return closeGaps(plan, solve(plan), id);
+  };
+
+  it('closes the gap between linked tasks and leaves an unlinked one alone', () => {
+    const tasks: ProjectTask[] = [
+      { id: 'p', name: 'P', nominalDays: 0, start: at(0) },
+      { id: 'a', name: 'A', nominalDays: 1, start: at(0), parentId: 'p', resourceId: 'alice' },
+      { id: 'b', name: 'B', nominalDays: 1, start: at(7), parentId: 'p', resourceId: 'alice', predecessors: ['a'] },
+      { id: 'c', name: 'C', nominalDays: 1, start: at(14), parentId: 'p', resourceId: 'alice', predecessors: ['b'] },
+      { id: 'u', name: 'U', nominalDays: 1, start: at(3), parentId: 'p', resourceId: 'bob' },
+    ];
+    const closed = close(tasks, 'p');
+    expect(solvedStart(closed, 'b')).toBe(solvedEnd(closed, 'a'));
+    expect(solvedStart(closed, 'c')).toBe(solvedEnd(closed, 'b'));
+    expect(startOf(closed, 'u')).toEqual(at(3));
+    expect(startOf(closed, 'a')).toEqual(at(0));
+  });
+
+  it('counts a predecessor inherited from an ancestor summary, through nested summaries', () => {
+    const tasks: ProjectTask[] = [
+      { id: 'p', name: 'P', nominalDays: 0, start: at(0) },
+      { id: 'a', name: 'A', nominalDays: 2, start: at(0), parentId: 'p', resourceId: 'alice' },
+      { id: 'q', name: 'Q', nominalDays: 0, start: at(0), parentId: 'p', predecessors: ['a'] },
+      { id: 'q1', name: 'Q1', nominalDays: 1, start: at(10), parentId: 'q', resourceId: 'bob' },
+    ];
+    const closed = close(tasks, 'p');
+    expect(startOf(closed, 'q1')).toEqual(at(0));
+    expect(solvedStart(closed, 'q1')).toBe(solvedEnd(closed, 'a'));
+  });
+
+  it('keeps a leaf held by a predecessor outside the subtree right after it', () => {
+    const tasks: ProjectTask[] = [
+      { id: 'before', name: 'Before', nominalDays: 3, start: at(0), resourceId: 'bob' },
+      { id: 'p', name: 'P', nominalDays: 0, start: at(0) },
+      { id: 'a', name: 'A', nominalDays: 1, start: at(1), parentId: 'p', resourceId: 'alice' },
+      { id: 'b', name: 'B', nominalDays: 1, start: at(14), parentId: 'p', resourceId: 'alice', predecessors: ['before'] },
+    ];
+    const closed = close(tasks, 'p');
+    expect(startOf(closed, 'b')).toEqual(at(1));
+    expect(solvedStart(closed, 'b')).toBe(solvedEnd(closed, 'before'));
+  });
+
+  it('answers the same tasks when nothing would move', () => {
+    const tasks: ProjectTask[] = [
+      { id: 'p', name: 'P', nominalDays: 0, start: at(0) },
+      { id: 'a', name: 'A', nominalDays: 1, start: at(0), parentId: 'p' },
+      { id: 'b', name: 'B', nominalDays: 1, start: at(0), parentId: 'p', predecessors: ['a'] },
+      { id: 'u', name: 'U', nominalDays: 1, start: at(5), parentId: 'p' },
+    ];
+    expect(close(tasks, 'p')).toBe(tasks);
+    expect(close(tasks, 'a')).toBe(tasks);
   });
 });
 

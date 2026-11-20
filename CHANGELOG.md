@@ -5,6 +5,8 @@
 - Give a task a description: free text in its detail dialog, for groups as
   well as single tasks, where the title alone does not carry what you mean.
   It comes out with the CSV export and is readable by a script.
+- Close the gaps in a group from its right-click menu: linked tasks inside
+  move up to start right after what they wait for.
 
 ## v1.6 — 2026-09-23
 

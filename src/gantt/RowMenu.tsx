@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { ListPlus, CornerDownRight, Milestone, Ban, CircleCheck } from 'lucide-react';
+import { ListPlus, CornerDownRight, Milestone, Ban, CircleCheck, FoldHorizontal } from 'lucide-react';
 
 /** What a creation from the menu means, resolved against the row it opened on. */
-export type RowMenuAction = 'sibling' | 'child' | 'milestone' | 'toggle-disabled';
+export type RowMenuAction = 'sibling' | 'child' | 'milestone' | 'toggle-disabled' | 'close-gaps';
 
 export interface RowMenuTarget {
   taskId: string;
@@ -30,6 +30,7 @@ const ITEMS: { action: RowMenuAction; label: string; icon: typeof ListPlus }[] =
   { action: 'milestone', label: 'New milestone below', icon: Milestone },
   // Overridden per render below — its icon depends on the target's state.
   { action: 'toggle-disabled', label: 'Disable', icon: Ban },
+  { action: 'close-gaps', label: 'Close gaps', icon: FoldHorizontal },
 ];
 
 /**
@@ -116,7 +117,7 @@ export function RowMenu({
     <dialog ref={dialog} open className="rowmenu" aria-label={`Actions for ${target.name}`}>
       <p className="rowmenu__anchor">{target.name}</p>
       <ul className="rowmenu__items">
-        {ITEMS.map(({ action, label, icon: Icon }) => {
+        {ITEMS.filter(({ action }) => action !== 'close-gaps' || target.isSummary).map(({ action, label, icon: Icon }) => {
           const ActionIcon = action === 'toggle-disabled' ? (target.disabled ? CircleCheck : Ban) : Icon;
           return (
             <li key={action}>

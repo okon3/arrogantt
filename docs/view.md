@@ -177,6 +177,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   start. **Never today.**
 - Menu closes on Esc or outside click, and that click does nothing else. Del
   and Ctrl+Z are held off while open.
+- *Close gaps* (summaries only, `closeGaps`): every leaf below with an effective
+  predecessor declares the subtree's earliest declared start, so it re-solves to
+  its predecessors' finish. Unlinked leaves are anchors and keep theirs.
 
 ## Details dialog
 

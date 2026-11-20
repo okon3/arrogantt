@@ -234,6 +234,34 @@ export function constraintStart(task: ProjectTask, offered: Date, solved: Solved
   return solved.calendar.startOfWorkingDay(offered);
 }
 
+/**
+ * The tasks with every linked leaf under `summaryId` asking to start at the
+ * subtree's earliest declared start, so the next solve pulls each one back to
+ * its predecessors' finish.
+ *
+ * A leaf with no predecessor keeps its start: it is an anchor the user placed,
+ * and pulling unlinked work of one person onto the same day would split their
+ * capacity instead of queuing it. Answers `project.tasks` itself when nothing
+ * would move, so a caller can tell a no-op from an edit.
+ */
+export function closeGaps(project: Project, solved: SolvedProject, summaryId: string): ProjectTask[] {
+  const leafIds = new Set(solved.hierarchy.leavesUnder(summaryId));
+  const leaves = project.tasks.filter((task) => leafIds.has(task.id));
+  if (!solved.summaryIds.has(summaryId) || leaves.length === 0) return project.tasks;
+  const floor = projectOrigin(leaves);
+  const linked = new Set(
+    solved.engineTasks
+      .filter((task) => leafIds.has(task.id) && (task.predecessors?.length ?? 0) > 0)
+      .map((task) => task.id),
+  );
+  const moving = leaves.filter(
+    (task) => linked.has(task.id) && task.start.getTime() !== floor.getTime(),
+  );
+  if (moving.length === 0) return project.tasks;
+  const moved = new Set(moving.map((task) => task.id));
+  return project.tasks.map((task) => (moved.has(task.id) ? { ...task, start: floor } : task));
+}
+
 export function effectiveColorOf(
   tasks: ProjectTask[],
   hierarchy: Hierarchy,

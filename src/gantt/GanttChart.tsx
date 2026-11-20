@@ -26,6 +26,7 @@ import {
   chainAfterEdit,
   chainOnRequest,
   chainStateOf,
+  closeGaps,
   constraintStart,
   effectiveColorOf,
   isChainMeasurable,
@@ -489,8 +490,14 @@ export function GanttChart({
         applyingRef.current = false;
         applySolution();
       },
+      closeGaps: (summaryId) => {
+        const tasks = closeGaps(projectRef.current, solvedRef.current, summaryId);
+        if (tasks === projectRef.current.tasks) return;
+        projectRef.current.tasks = tasks;
+        applySolution();
+      },
       getResources: () => projectRef.current.resources,
-      setResources: (resources, releasedResourceIds, currency) => {
+      setResources:(resources, releasedResourceIds, currency) => {
         projectRef.current.resources = resources;
         const released = new Set(releasedResourceIds);
         for (const task of projectRef.current.tasks) {

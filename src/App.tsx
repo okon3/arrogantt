@@ -1067,6 +1067,7 @@ export default function App() {
           onPick={(action) => {
             setRowMenu(null);
             if (action === 'toggle-disabled') toggleDisabled(rowMenu.taskId, rowMenu.disabled);
+            else if (action === 'close-gaps') chart.current?.closeGaps(rowMenu.taskId);
             else createFromMenu(rowMenu, action);
           }}
         />
