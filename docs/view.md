@@ -406,6 +406,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   Count is `nowrap`. **The label is the only `1fr` track.** A field's unit
   sits inside the field (`.dialog__field`/`.dialog__suffix`); the rate row is
   the exception, its currency declared once for the dialog.
+- **A period-row a later row overlaps says so on a line under it**
+  (`coverageByLaterRanges`, last declared wins): passive, never refused or
+  reordered; days counted as working days, like the row's own count.
 - **The People table (`.people__table`) is `table-layout: fixed` with a
   `<colgroup>`**, tracks sized against header and widest content. The
   expanded panel (`.people__offPanel`) spans the table's content box and hosts

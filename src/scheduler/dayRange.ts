@@ -56,6 +56,32 @@ export function expandRanges(ranges: DayRange[] | undefined): Set<number> {
 }
 
 /**
+ * For each range, how much of it a later range in the list overlaps. Where
+ * period lists resolve "last declared wins", that is the part of each period
+ * that has no effect. `days` counts only `workingWeekdays`; `all` is judged on
+ * calendar days. Ranges are read the way `expandRanges` reads them.
+ */
+export function coverageByLaterRanges(
+  ranges: DayRange[],
+  workingWeekdays: number[],
+): { days: number; all: boolean }[] {
+  const allowed = new Set(workingWeekdays);
+  return ranges.map((range, index) => {
+    const own = expandRanges([range]);
+    const later = expandRanges(ranges.slice(index + 1));
+    let covered = 0;
+    let days = 0;
+    for (const day of own) {
+      if (!later.has(day)) continue;
+      covered++;
+      // 1970-01-01 was a Thursday.
+      if (allowed.has((((day + 4) % 7) + 7) % 7)) days++;
+    }
+    return { days, all: own.size > 0 && covered === own.size };
+  });
+}
+
+/**
  * Working days a range covers, given which weekdays are worked.
  *
  * Used to tell the user what an absence actually costs: a period falling

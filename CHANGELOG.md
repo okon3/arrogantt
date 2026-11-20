@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- See when a person's availability or rate period is overridden by one added
+  below it: the earlier row says on how many days, or that it no longer
+  applies at all.
 - Give a task a description: free text in its detail dialog, for groups as
   well as single tasks, where the title alone does not carry what you mean.
   It comes out with the CSV export and is readable by a script.

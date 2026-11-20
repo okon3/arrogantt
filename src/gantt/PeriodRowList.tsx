@@ -1,6 +1,6 @@
-import { X } from 'lucide-react';
+import { Layers, X } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { countWorkingDaysInRange, type DayRange } from '../scheduler';
+import { countWorkingDaysInRange, coverageByLaterRanges, type DayRange } from '../scheduler';
 
 /**
  * The row template shared by every period-row list that edits a value beside
@@ -51,6 +51,8 @@ export function PeriodRowList<T extends DayRange>({
     onChange([...periods, newPeriod(iso)]);
   };
 
+  const coverage = coverageByLaterRanges(periods, workingWeekdays);
+
   return (
     <div className="ranges">
       {periods.length === 0 && <p className="ranges__empty">{emptyMessage}</p>}
@@ -58,6 +60,7 @@ export function PeriodRowList<T extends DayRange>({
       {periods.map((period, index) => {
         const working = countWorkingDaysInRange(period, workingWeekdays);
         const suffix = countSuffix ? countSuffix(period) : '';
+        const covered = coverage[index];
         return (
           <div className="ranges__row ranges__row--pct" key={index}>
             <input
@@ -95,6 +98,14 @@ export function PeriodRowList<T extends DayRange>({
             >
               <X size={14} />
             </button>
+            {(covered.all || covered.days > 0) && (
+              <p className="ranges__covered">
+                <Layers size={12} aria-hidden />
+                {covered.all
+                  ? 'Fully overridden by a later period'
+                  : `Overridden on ${covered.days} ${covered.days === 1 ? 'day' : 'days'} by a later period`}
+              </p>
+            )}
           </div>
         );
       })}
