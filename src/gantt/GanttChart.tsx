@@ -21,6 +21,7 @@ import {
 import { fitRangeToPlan, repinRangeToScale, appliedScrollX } from './timelineGeometry';
 import { installLinkHover } from './linkHover';
 import { installPaceHandles } from './paceHandles';
+import { installRolledLinks } from './rolledLinks';
 import { mountOverlays, nonWorkingSpans, paintBands, placeTodayLine } from './timelineOverlays';
 import { isContended, type ShareOverride } from '../scheduler';
 import { renderLoadPanel, scrollLoadPanel, type LoadLane } from './loadPanel';
@@ -1301,6 +1302,7 @@ export function GanttChart({
     });
 
     const detachLinkHover = installLinkHover(container);
+    const detachRolledLinks = installRolledLinks();
 
     loadProject(projectRef.current);
 
@@ -1367,6 +1369,7 @@ export function GanttChart({
       overlays.detach();
       detachPaceHandles();
       detachLinkHover();
+      detachRolledLinks();
       gantt.ext.zoom.detachEvent(zoomHandler);
       container.removeEventListener('wheel', zoomOnWheel, true);
       container.removeEventListener('contextmenu', openRowMenu);

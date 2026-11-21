@@ -367,6 +367,32 @@ html:root[data-gantt-theme='dark'] {
   border-left-color: var(--link-ink);
 }
 
+/* Dependencies with an end inside a closed branch, redrawn onto that branch's
+   bar (rolledLinks.ts). Dashed: it stands for a link, it is not one. Sized to
+   nothing and overflowing, so the layer never takes the pointer from a bar. */
+.rolled-links {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+  opacity: var(--link-rest);
+}
+
+.rolled-links__line {
+  fill: none;
+  stroke: var(--ink-faint);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  pointer-events: stroke;
+}
+
+.rolled-links__head {
+  fill: var(--ink-faint);
+}
+
 /* Removes the dependency pointed at (linkHover.ts). The pace period's own
    button, centred on the point linkHover.ts gives it. */
 .link-x {

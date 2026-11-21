@@ -412,6 +412,13 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - **A link pointed at offers a × on the middle of its longest stretch** that
   removes it at once, no question: undo is the way back. It does not follow
   the pointer. Double-click and its vendor confirm stay.
+- **A link with an end inside a closed branch is redrawn onto that branch's
+  bar**, dashed (`rolledLinks.ts`): the topmost closed ancestor stands for the
+  hidden task, several links between the same two rows draw once, and the
+  native `title` names them. A layer of our own in `$task_data`, never links
+  added to dhtmlx, which `syncLinks` would read back as dependencies. It
+  leaves a bar through its edge, not its side, so no label needs lifting.
+  Not interactive: nothing to hover, nothing to remove.
 - **A label is lifted only over an arrow that is drawn**: `gantt-bar--no-arrow`
   (`task_class`) levels it when no outgoing link has a visible target.
 - The link handle sits above the task label (`.gantt_link_control
