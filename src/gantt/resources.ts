@@ -1,4 +1,5 @@
 import { isDayString, type AvailabilityOverride } from '../scheduler';
+import { HEX_COLOR } from './colors';
 import type { Person, RateOverride } from './cost';
 
 /**
@@ -20,6 +21,8 @@ export interface ResourcePatch {
   /** `null` clears the default rate; absent leaves it. */
   dailyRate?: number | null;
   rateOverrides?: RateOverride[];
+  /** `null` clears it; absent leaves it. */
+  color?: string | null;
 }
 
 /** `r{n+1}`, ignoring any id that does not follow the pattern. */
@@ -50,6 +53,8 @@ function applied(resource: Person, patch: ResourcePatch): Person {
   if (overrides.length > 0) next.availabilityOverrides = overrides;
   if (dailyRate !== undefined) next.dailyRate = dailyRate;
   if (rateOverrides.length > 0) next.rateOverrides = rateOverrides;
+  const color = patch.color === null ? undefined : patch.color ?? resource.color;
+  if (color !== undefined) next.color = color;
   return next;
 }
 
@@ -115,6 +120,10 @@ export function validateResources(resources: Person[]): string | null {
       if (period.availability < 0 || period.availability > 1) {
         return `A period of "${name}" has a share outside 0..1`;
       }
+    }
+    // Reaches the DOM as a style: anything else the browser drops without a word.
+    if (resource.color !== undefined && !HEX_COLOR.test(String(resource.color))) {
+      return `Invalid colour for "${name}": expected #rrggbb`;
     }
     if (resource.dailyRate !== undefined) {
       if (!Number.isFinite(resource.dailyRate) || resource.dailyRate < 0) {

@@ -1,5 +1,7 @@
 export const DEFAULT_BAR_COLOR = '#3b74d6';
 
+export const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
 /**
  * One consumer: `TaskDialog`'s colour swatches (`App.tsx` passes this straight
  * through). The hex is stored as-is on the task — this array only supplies
@@ -14,9 +16,9 @@ export const DEFAULT_BAR_COLOR = '#3b74d6';
  * lightness against a single fixed ink: `needsDarkInk` below picks whichever
  * of white or a near-black reads best on each tint, so a tint just has to
  * clear 4.5:1 against *one* of the two. `DEFAULT_BAR_COLOR` is first and
- * unchanged: it's what a save omits as "no colour" (`GanttChart.tsx`) and
- * what `planFigure.ts` falls back to, so moving it would silently repaint
- * every existing project.
+ * unchanged: it is what a bar with no colour of its own or its person's is
+ * painted, on the chart and in `planFigure.ts`, so moving it would silently
+ * repaint every existing project.
  */
 export const COLOR_OPTIONS = [
   { key: DEFAULT_BAR_COLOR, label: 'Blue' },
@@ -116,7 +118,11 @@ const AVATAR_COLORS = [
   '#a55f71',
 ];
 
-export function avatarColorOf(name: string): string {
+export function avatarColorOf(person: { name: string; color?: string }): string {
+  // Their own colour when they have one: a person reads as one colour, on
+  // their face, their lane and the bars that are theirs alone.
+  if (person.color) return person.color;
+  const { name } = person;
   let hash = 0;
   for (let index = 0; index < name.length; index++) {
     hash = (hash * 31 + name.charCodeAt(index)) % 100_000;

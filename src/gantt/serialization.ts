@@ -6,6 +6,7 @@ import {
   type DayRange,
 } from '../scheduler';
 import { validateCalendar } from './calendarRules';
+import { HEX_COLOR } from './colors';
 import { validateCurrency, type Person, type RateOverride } from './cost';
 import { parseWallClock, serializeDate } from './dates';
 import { buildPlan } from './plan';
@@ -165,7 +166,7 @@ function requireNumber(value: unknown, context: string): number {
 }
 
 export const DESCRIPTION_LIMIT = 2000;
-export const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+export { HEX_COLOR };
 
 function requireDescription(value: unknown, context: string): string {
   if (typeof value !== 'string') {
@@ -231,6 +232,9 @@ export function deserializeProject(text: string): Project {
     if (overrides.length > 0) resource.availabilityOverrides = overrides;
     if (record.dailyRate !== undefined) {
       resource.dailyRate = requireNumber(record.dailyRate, `resources[${index}].dailyRate`);
+    }
+    if (record.color !== undefined) {
+      resource.color = requireString(record.color, `resources[${index}].color`);
     }
     if (record.rateOverrides !== undefined) {
       const context = `resources[${index}].rateOverrides`;

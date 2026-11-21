@@ -5,7 +5,7 @@ import { costCellText, rateCellText } from './costCells';
 import { parseWallClock } from './dates';
 import { formatDays } from './format';
 import { buildPlan, type PlanTask } from './plan';
-import { effectiveColorOf, type Project, type SolvedProject } from './project';
+import { barColors, type Project, type SolvedProject } from './project';
 
 /**
  * The whole plan as one self-contained SVG, drawn from the schedule rather than
@@ -260,7 +260,7 @@ function bar(task: PlanTask, top: number, geometry: Geometry, color: string): st
 
 /** The colour of the bar, following the chart: a summary's is its leaves'. */
 function colorOf(task: PlanTask, project: Project, solved: SolvedProject): string {
-  return effectiveColorOf(project.tasks, solved.hierarchy, task.id) ?? DEFAULT_BAR_COLOR;
+  return barColors(project, solved.hierarchy)(task.id) ?? DEFAULT_BAR_COLOR;
 }
 
 function timeAxis(geometry: Geometry, top: number, bottom: number): string {

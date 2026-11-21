@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { countWorkingDaysInRange } from '../scheduler';
 import { AvailabilityList } from './AvailabilityList';
+import { COLOR_OPTIONS, avatarColorOf } from './colors';
+import { ColorSwatches } from './ColorSwatches';
 import type { Person } from './cost';
 import { validateCurrency } from './cost';
 import { Dialog } from './Dialog';
@@ -111,7 +113,7 @@ export function ResourceDialog({
   return (
     <Dialog
       title="People"
-      width={728}
+      width={772}
       className="people"
       onDismiss={onCancel}
       error={error}
@@ -151,6 +153,7 @@ export function ResourceDialog({
 
       <table className="people__table">
         <colgroup>
+          <col style={{ width: 44 }} />
           <col />
           <col style={{ width: 88 }} />
           <col style={{ width: 88 }} />
@@ -160,6 +163,7 @@ export function ResourceDialog({
         </colgroup>
         <thead>
           <tr>
+            <th />
             <th>Name</th>
             <th>Availability</th>
             <th>Daily rate</th>
@@ -171,6 +175,18 @@ export function ResourceDialog({
         <tbody>
           {drafts.flatMap((draft, index) => [
             <tr key={draft.id}>
+              <td>
+                {/* The face the chart shows for them; their colour is set in
+                    the panel this opens. */}
+                <button
+                  type="button"
+                  className="people__face"
+                  style={{ background: avatarColorOf({ name: draft.name, color: draft.color }) }}
+                  title="Colour"
+                  aria-label="Colour"
+                  onClick={() => setExpanded(expanded === draft.id ? null : draft.id)}
+                />
+              </td>
               <td>
                 <input
                   className="dialog__control"
@@ -228,9 +244,17 @@ export function ResourceDialog({
             </tr>,
             expanded === draft.id ? (
               <tr key={`${draft.id}-off`} className="people__offRow">
-                <td colSpan={6}>
+                <td colSpan={7}>
                   <div className="people__offPanel">
-                    <h3 className="dialog__subhead dialog__subhead--flush">Availability periods</h3>
+                    <h3 className="dialog__subhead dialog__subhead--flush">Colour</h3>
+                    <ColorSwatches
+                      value={draft.color}
+                      auto={avatarColorOf({ name: draft.name })}
+                      autoTitle="No colour of their own: an automatic one on their avatar, and their tasks keep the default"
+                      colors={COLOR_OPTIONS}
+                      onChange={(color) => update(index, { color })}
+                    />
+                    <h3 className="dialog__subhead">Availability periods</h3>
                     <AvailabilityList
                       periods={draft.periods}
                       workingWeekdays={workingWeekdays}
@@ -254,7 +278,7 @@ export function ResourceDialog({
           ])}
           {drafts.length === 0 && (
             <tr>
-              <td colSpan={6} className="people__empty">
+              <td colSpan={7} className="people__empty">
                 No people yet. Add one to be able to assign tasks.
               </td>
             </tr>

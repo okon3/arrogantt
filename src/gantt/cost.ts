@@ -32,6 +32,8 @@ export interface Person extends Resource {
   /** Money per working day of effort. Absent = no rate: cost unknown, never 0. */
   dailyRate?: number;
   rateOverrides?: RateOverride[];
+  /** `#rrggbb`: their avatar, and the bar of a task that is theirs alone and has no colour set. */
+  color?: string;
 }
 
 /**

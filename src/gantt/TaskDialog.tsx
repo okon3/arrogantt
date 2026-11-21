@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Resource, ShareOverride } from '../scheduler';
 import { setAutofocus } from './autofocus';
+import { ColorSwatches } from './ColorSwatches';
 import { costCellText, currencyLabel, rateCellText } from './costCells';
 import { Dialog } from './Dialog';
 import { formatDays } from './format';
@@ -62,7 +63,7 @@ export function TaskDialog({
   const [effort, setEffort] = useState(String(task.nominalDays));
   const [start, setStart] = useState(toDayInput(task.start));
   const [resourceId, setResourceId] = useState(task.resourceId);
-  const [color, setColor] = useState(task.color);
+  const [color, setColor] = useState(task.color ?? '');
   const [progress, setProgress] = useState(String(Math.round(task.progress * 100)));
   const [disabled, setDisabled] = useState(task.disabled);
   const [description, setDescription] = useState(task.description ?? '');
@@ -297,35 +298,16 @@ export function TaskDialog({
         <div className="taskinfo__field taskinfo__field--wide">
           <span className="taskinfo__label">Colour</span>
           {task.ownsColor ? (
-            <div className="taskinfo__colors">
-              <input
-                type="color"
-                className="taskinfo__picker"
-                value={color}
-                aria-label="Bar colour"
-                onChange={(event) => setColor(event.target.value)}
-              />
-              {colors.map((option) => (
-                <button
-                  key={option.key}
-                  type="button"
-                  className={`taskinfo__swatch${
-                    option.key.toLowerCase() === color.toLowerCase()
-                      ? ' taskinfo__swatch--on'
-                      : ''
-                  }`}
-                  style={{ background: option.key }}
-                  title={option.label}
-                  onClick={() => setColor(option.key)}
-                />
-              ))}
-              {/* The bar is the only place the colour is ever seen, so the
-                  preview is shaped like one. */}
-              <span className="taskinfo__preview" style={{ background: color }} />
-            </div>
+            <ColorSwatches
+              value={color}
+              auto={task.autoColor}
+              autoTitle="No colour of its own: its person's when it has one alone, else the default"
+              colors={colors}
+              onChange={setColor}
+            />
           ) : (
             <span className="taskinfo__derived taskinfo__derived--cell">
-              inherited from the parent task
+              follows its top-level task, or its person where that has none
             </span>
           )}
         </div>

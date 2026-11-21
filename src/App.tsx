@@ -106,7 +106,7 @@ const unchangedPatch = (details: TaskDetails): TaskPatch => ({
   nominalDays: details.nominalDays,
   start: details.start,
   resourceId: details.resourceId || undefined,
-  color: details.ownsColor ? details.color : undefined,
+  color: details.color,
   progress: details.progress,
 });
 

@@ -13,6 +13,8 @@ const details = (overrides: Partial<TaskDetails> = {}): TaskDetails => ({
   end: new Date(2026, 8, 8, 17, 0),
   resourceId: 'r1',
   color: '#3b82f6',
+  paintedColor: '#3b82f6',
+  autoColor: '#3b74d6',
   ownsColor: true,
   progress: 0,
   isSummary: false,

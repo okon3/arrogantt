@@ -410,6 +410,7 @@ export function createAgentApi(host: AgentHost): AgentApi {
         start: patch.start ? asDate(patch.start, 'start') : current.start,
         resourceId:
           patch.resourceId === undefined ? current.resourceId || undefined : patch.resourceId || undefined,
+        // `null` and '' both clear it: the bar then follows its person, or the default.
         color: patch.color === undefined ? current.color : patch.color || undefined,
         progress: patch.progress ?? current.progress,
         disabled: patch.disabled ?? current.disabled,

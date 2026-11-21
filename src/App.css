@@ -948,6 +948,34 @@
   cursor: pointer;
 }
 
+/* "No colour": text, since any swatch here would be read as one. */
+.taskinfo__auto {
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--ink-muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.taskinfo__auto--on {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+/* The person's avatar as the chart draws it, standing in for their colour. */
+.people__face {
+  display: block;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
 .taskinfo__swatch {
   width: 20px;
   height: 20px;

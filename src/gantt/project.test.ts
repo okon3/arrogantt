@@ -4,6 +4,7 @@ import { validateCurrency } from './cost';
 import {
   CRITICAL_CHAIN_LIMIT,
   TaskCycleError,
+  barColors,
   buildHierarchy,
   chainAfterEdit,
   chainOnRequest,
@@ -11,7 +12,6 @@ import {
   closeGaps,
   constraintStart,
   disabledByTask,
-  effectiveColorOf,
   emptyProject,
   isMilestone,
   loadByResource,
@@ -565,22 +565,83 @@ describe('colour inheritance', () => {
     expect(hierarchy.rootOf('lone')).toBe('lone');
   });
 
+  const colorOf = barColors({ tasks, resources: [] }, hierarchy);
+
   it('gives every descendant the root colour, overriding its own', () => {
-    expect(effectiveColorOf(tasks, hierarchy, 'mid')).toBe('#2f9e6e');
+    expect(colorOf('mid')).toBe('#2f9e6e');
     // The leaf carries #c0533f but inherits regardless.
-    expect(effectiveColorOf(tasks, hierarchy, 'leaf')).toBe('#2f9e6e');
+    expect(colorOf('leaf')).toBe('#2f9e6e');
   });
 
   it('leaves a task without a coloured root undefined', () => {
-    expect(effectiveColorOf(tasks, hierarchy, 'lone')).toBeUndefined();
+    expect(colorOf('lone')).toBeUndefined();
   });
 
   it('recolours a branch when it is re-parented', () => {
     const moved = tasks.map((task) =>
       task.id === 'mid' ? { ...task, parentId: undefined } : task,
     );
-    const rebuilt = buildHierarchy(moved);
-    expect(effectiveColorOf(moved, rebuilt, 'leaf')).toBeUndefined();
+    const rebuilt = barColors({ tasks: moved, resources: [] }, buildHierarchy(moved));
+    expect(rebuilt('leaf')).toBeUndefined();
+  });
+});
+
+describe("a person's colour", () => {
+  const resources = [
+    { id: 'alice', name: 'Alice', color: '#147b38' },
+    { id: 'bob', name: 'Bob', color: '#db4824' },
+    { id: 'carla', name: 'Carla' },
+  ];
+  const leaf = (id: string, extra: Partial<ProjectTask> = {}): ProjectTask => ({
+    id,
+    name: id,
+    nominalDays: 1,
+    start: at(0),
+    ...extra,
+  });
+  const tasks: ProjectTask[] = [
+    leaf('hers', { resourceId: 'alice' }),
+    leaf('chosen', { resourceId: 'alice', color: '#6a5db6' }),
+    leaf('nobody'),
+    leaf('plain', { resourceId: 'carla' }),
+    leaf('solo', { nominalDays: 0 }),
+    leaf('s1', { parentId: 'solo', resourceId: 'alice' }),
+    leaf('s2', { parentId: 'solo', resourceId: 'alice' }),
+    leaf('mixed', { nominalDays: 0 }),
+    leaf('m1', { parentId: 'mixed', resourceId: 'alice' }),
+    leaf('m2', { parentId: 'mixed', resourceId: 'bob' }),
+    leaf('part', { nominalDays: 0 }),
+    leaf('p1', { parentId: 'part', resourceId: 'alice' }),
+    leaf('p2', { parentId: 'part' }),
+    leaf('group', { nominalDays: 0, color: '#6a5db6' }),
+    leaf('g1', { parentId: 'group', resourceId: 'bob' }),
+  ];
+  const colorOf = barColors({ tasks, resources }, buildHierarchy(tasks));
+
+  it('paints a task that is theirs and has no colour set', () => {
+    expect(colorOf('hers')).toBe('#147b38');
+  });
+
+  it('gives way to a colour set on the task, or on the group above it', () => {
+    expect(colorOf('chosen')).toBe('#6a5db6');
+    expect(colorOf('g1')).toBe('#6a5db6');
+  });
+
+  it('paints a group only when every task under it belongs to the same person', () => {
+    expect(colorOf('solo')).toBe('#147b38');
+    expect(colorOf('mixed')).toBeUndefined();
+    // One task with nobody on it is enough: the group is not hers alone.
+    expect(colorOf('part')).toBeUndefined();
+  });
+
+  it('still paints each task of a mixed group in the colour of its own person', () => {
+    expect(colorOf('m1')).toBe('#147b38');
+    expect(colorOf('m2')).toBe('#db4824');
+  });
+
+  it('leaves the default to a task with nobody, or with a person who has none', () => {
+    expect(colorOf('nobody')).toBeUndefined();
+    expect(colorOf('plain')).toBeUndefined();
   });
 });
 

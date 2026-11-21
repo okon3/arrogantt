@@ -31,7 +31,7 @@ import {
   chainStateOf,
   closeGaps,
   constraintStart,
-  effectiveColorOf,
+  barColors,
   isChainMeasurable,
   isMilestone,
   rejectionForLink,
@@ -267,6 +267,7 @@ export function GanttChart({
         markCriticalRef.current,
         chainRef.current,
       );
+      const colorOf = barColors(projectRef.current, solved.hierarchy);
       for (const task of projectRef.current.tasks) {
         const scheduled = solved.schedule.tasks.get(task.id);
         if (!scheduled || !gantt.isTaskExists(task.id)) continue;
@@ -285,9 +286,10 @@ export function GanttChart({
         ganttTask.resource_id = task.resourceId ?? '';
         ganttTask.rolled_effort_days = solved.calendar.minutesToDays(scheduled.effortMinutes);
         const summary = solved.summaryIds.has(task.id);
-        const inherited = effectiveColorOf(projectRef.current.tasks, solved.hierarchy, task.id);
+        const inherited = colorOf(task.id);
         ganttTask.is_summary = summary;
         ganttTask.bar_color = inherited ?? '';
+        ganttTask.own_color = task.color ?? '';
         const profiled = drawsProfile(scheduled, hasShare(task));
         ganttTask.color = barBackground(inherited, profiled, summary);
         ganttTask.shared = profiled;
@@ -426,8 +428,18 @@ export function GanttChart({
           // reading it out would report an assignment nobody is working —
           // buildPlan already answers null for the same reason.
           resourceId: summary ? '' : task.resourceId ?? '',
-          color:
-            effectiveColorOf(projectRef.current.tasks, solved.hierarchy, id) ?? DEFAULT_BAR_COLOR,
+          color: task.color,
+          paintedColor: barColors(projectRef.current, solved.hierarchy)(id) ?? DEFAULT_BAR_COLOR,
+          autoColor:
+            barColors(
+              {
+                resources: projectRef.current.resources,
+                tasks: projectRef.current.tasks.map((each) =>
+                  each.id === id ? { ...each, color: undefined } : each,
+                ),
+              },
+              solved.hierarchy,
+            )(id) ?? DEFAULT_BAR_COLOR,
           ownsColor: task.parentId === undefined,
           progress: task.progress ?? 0,
           isSummary: summary,
@@ -474,19 +486,14 @@ export function GanttChart({
         const task = projectRef.current.tasks.find((candidate) => candidate.id === id);
         if (!task || !gantt.isTaskExists(id)) return;
         task.name = patch.name;
-        // No progress and no progress are the same thing, and the dialog opens
-        // on the colour the bar is painted — which for a task that has none is
-        // the app's default. Both come back on every save, so writing them
-        // through would turn what the view had to invent to show the task into
-        // something the task declares: a plan whose bars all became explicitly
-        // default-coloured, and an edit that changed nothing reporting itself
-        // as unsaved work. It is the bargain `constraintStart` makes for the
-        // start, for the two other fields the dialog cannot show as empty.
+        // No progress and zero progress are the same thing, and the dialog
+        // cannot show the field as empty: a zero coming back on every save is
+        // what the view invented to show the task, not something it declares.
         task.progress = patch.progress || undefined;
         // Same rules the grid enforces: a summary derives its effort, start and
         // resource from the leaves, and a subtask inherits its parent's colour.
         if (task.parentId === undefined) {
-          task.color = patch.color === DEFAULT_BAR_COLOR ? undefined : patch.color;
+          task.color = patch.color || undefined;
         }
         if (!solvedRef.current.summaryIds.has(id)) {
           task.nominalDays = patch.nominalDays;
@@ -611,6 +618,7 @@ export function GanttChart({
               elapsed_days: effort,
               is_summary: false,
               bar_color: task?.color ?? '',
+              own_color: task?.color ?? '',
               shared: false,
               disabled: task?.disabled ?? false,
               // Overwritten by the applySolution() onAfterTaskAdd triggers —
@@ -908,7 +916,7 @@ export function GanttChart({
       // Subtasks display an inherited colour; writing it back would freeze a copy
       // that stops following the parent.
       if (task.parentId === undefined) {
-        task.color = (ganttTask.bar_color as string | undefined) || undefined;
+        task.color = (ganttTask.own_color as string | undefined) || undefined;
       }
       // Effort, start and resource of a summary are rolled up from its children,
       // so writing them back would overwrite the user's leaf data with derived
@@ -1170,7 +1178,7 @@ export function GanttChart({
             resourceId: assigned !== undefined && knownResource(assigned) ? assigned : undefined,
             // Only a top-level task owns a colour; a subtask inherits its
             // parent's, and a copy frozen here would stop following it.
-            color: parent ? undefined : (item.bar_color as string | undefined) || undefined,
+            color: parent ? undefined : (item.own_color as string | undefined) || undefined,
             // Never stored as false — see updateTask's own comment.
             disabled: item.disabled === true ? true : undefined,
           });

@@ -53,6 +53,11 @@
   People dialog never adds it to a resource whose file had none
   (`resourceDrafts.ts`); the agent API's `updateResource` does, through
   `applied()` in `resources.ts`.
+- `resources[].color?: "#rrggbb"`: the person's colour. Optional and additive.
+  It paints their avatar and lane, and the bar of a task that has no colour
+  of its own or its branch's and is theirs alone. A task's own `color` is
+  written whenever one is set, the default blue included: absent means
+  "follow the person, else the default", which is what older files say.
 - `resources[].dailyRate?: number` and `resources[].rateOverrides?:
   [{ from, to, dailyRate, label? }]`: a person's default daily rate and the
   periods that replace it (last declared wins on overlap, the mirror of

@@ -103,7 +103,7 @@ function resourceAvatar(resources: Resource[], id: string | undefined): string {
   const percentage = Math.round(availability * 100);
   const title = personLabel(resource);
   return (
-    `<span class="gantt-avatar" style="background:${avatarColorOf(resource.name)}"` +
+    `<span class="gantt-avatar" style="background:${avatarColorOf(resource)}"` +
     // Whoever the pointer is on drives the highlight, and App reads it off
     // this attribute — the same one the toolbar's avatars carry.
     ` data-resource-id="${escapeHtml(resource.id)}"` +
@@ -148,7 +148,7 @@ function resourceStack(solved: SolvedProject, resources: Resource[], taskId: str
   // overlap, and four faces of them printed as one word; the colour survives a
   // sliver, the initials do not, and the title still names everybody.
   const faces = shown.map(
-    (person) => `<span class="gantt-avatar" style="background:${avatarColorOf(person.name)}"></span>`,
+    (person) => `<span class="gantt-avatar" style="background:${avatarColorOf(person)}"></span>`,
   );
   if (hidden > 0) {
     faces.push(`<span class="gantt-avatar gantt-avatar--more">+${hidden}</span>`);

@@ -156,7 +156,7 @@ export function Toolbar({
                 className={`toolbar__person${on ? ' toolbar__person--on' : ''}`}
                 // Inline, like the avatars in the grid: the same person must
                 // carry the same colour in both places.
-                style={{ background: avatarColorOf(person.name) }}
+                style={{ background: avatarColorOf(person) }}
                 aria-pressed={on}
                 title={on ? `Stop highlighting ${person.name}` : `Highlight ${person.name}`}
                 // Hovering highlights this person for as long as the pointer

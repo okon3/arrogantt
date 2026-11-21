@@ -22,6 +22,12 @@ describe('validateResources', () => {
     expect(validateResources([person('r1', 'Marta'), person('r2', 'Bruno', 0.5)])).toBeNull();
   });
 
+  it('accepts a colour in #rrggbb and refuses any other notation', () => {
+    expect(validateResources([{ ...person('r1', 'Marta'), color: '#147b38' }])).toBeNull();
+    expect(validateResources([{ ...person('r1', 'Marta'), color: 'green' }])).toMatch(/colour/);
+    expect(validateResources([{ ...person('r1', 'Marta'), color: '#1b3' }])).toMatch(/colour/);
+  });
+
   it('refuses a person with no name', () => {
     expect(validateResources([person('r1', '   ')])).toBe('Every person needs a name');
   });
@@ -266,6 +272,13 @@ describe('the transformations', () => {
     expect('dailyRate' in cleared[0]).toBe(false);
     const left = withResourceUpdated(previous, 'r1', {});
     expect(left[0].dailyRate).toBe(600);
+  });
+
+  it('clears the colour with null, leaves it with undefined', () => {
+    const previous = [{ ...person('r1', 'Marta'), color: '#147b38' }];
+    expect('color' in withResourceUpdated(previous, 'r1', { color: null })[0]).toBe(false);
+    expect(withResourceUpdated(previous, 'r1', {})[0].color).toBe('#147b38');
+    expect(withResourceUpdated(previous, 'r1', { color: '#db4824' })[0].color).toBe('#db4824');
   });
 
   it('omits an empty rate override list rather than storing it', () => {

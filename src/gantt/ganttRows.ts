@@ -1,6 +1,6 @@
 import { gantt } from 'dhtmlx-gantt';
 import {
-  effectiveColorOf,
+  barColors,
   isMilestone,
   loadByResource,
   type MarkedChain,
@@ -37,11 +37,12 @@ export function typeOf(task: ProjectTask, solved: SolvedProject): string {
 
 export function toGanttData(project: Project, solved: SolvedProject, chain: MarkedChain | null) {
   const formatDate = gantt.date.date_to_str(gantt.config.date_format);
+  const colorOf = barColors(project, solved.hierarchy);
   return {
     data: project.tasks.map((task) => {
       const scheduled = solved.schedule.tasks.get(task.id);
       const summary = solved.summaryIds.has(task.id);
-      const inherited = effectiveColorOf(project.tasks, solved.hierarchy, task.id);
+      const inherited = colorOf(task.id);
       // Priced by the same walk that reaches every row `plan.ts` reports on
       // (`cost.ts:taskCosts`), so the grid and getPlan() read one figure.
       const cost = solved.costs.get(task.id)!;
@@ -70,8 +71,11 @@ export function toGanttData(project: Project, solved: SolvedProject, chain: Mark
           ? solved.calendar.minutesToDays(scheduled.effortMinutes)
           : task.nominalDays,
         is_summary: summary,
-        // The colour actually shown, inherited from the top-level ancestor.
+        // The colour actually shown: the branch's, else its one person's.
         bar_color: inherited ?? '',
+        // The model's own field, which is what a row hands back: the shown
+        // colour written back would turn a person's colour into a chosen one.
+        own_color: task.color ?? '',
         // dhtmlx paints `color` straight onto the bar background, which must stay
         // pale on a shared task: there the colour belongs to the profile inside.
         color: barBackground(inherited, profiled, summary),

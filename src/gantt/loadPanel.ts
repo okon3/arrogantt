@@ -92,7 +92,7 @@ function laneLabel(lane: LoadLane, width: number): HTMLElement {
   label.style.width = `${width}px`;
 
   const avatar = element('span', 'gantt-avatar');
-  avatar.style.background = avatarColorOf(lane.resource.name);
+  avatar.style.background = avatarColorOf(lane.resource);
   avatar.textContent = initialsOf(lane.resource.name);
   // The same attribute the grid's and the toolbar's avatars carry, so hovering
   // one here highlights that person's work on the chart above.
@@ -138,7 +138,7 @@ function laneTrack(lane: LoadLane, geometry: LoadGeometry, tip: HTMLElement): HT
   committed.setAttribute('d', stepPath(lane.load.segments, (s) => s.committed, geometry.posOf));
   // Inline, because a rule in a stylesheet outranks an SVG presentation
   // attribute and every lane carries its own person's colour.
-  committed.setAttribute('style', `fill:${avatarColorOf(lane.resource.name)}`);
+  committed.setAttribute('style', `fill:${avatarColorOf(lane.resource)}`);
   svg.append(capacity, committed);
   scroller.append(svg);
 

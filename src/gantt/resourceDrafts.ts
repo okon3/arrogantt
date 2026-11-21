@@ -22,6 +22,8 @@ export interface DraftResource {
   /** Money per working day, as typed. Blank = absent; the rules live in
       `validateResources`, so an unparseable entry must reach it. */
   dailyRate: string;
+  /** `#rrggbb`, or empty for none. */
+  color: string;
   periods: AvailabilityOverride[];
   ratePeriods: RateOverride[];
 }
@@ -33,6 +35,7 @@ export function toDraft(resources: Person[]): DraftResource[] {
     availability: String(Math.round((resource.availability ?? 1) * 100)),
     availabilityDeclared: resource.availability !== undefined,
     dailyRate: resource.dailyRate === undefined ? '' : String(resource.dailyRate),
+    color: resource.color ?? '',
     periods: resource.availabilityOverrides ?? [],
     ratePeriods: resource.rateOverrides ?? [],
   }));
@@ -65,6 +68,7 @@ export function toResources(drafts: DraftResource[]): Person[] {
       ...(draft.periods.length > 0 ? { availabilityOverrides: draft.periods } : {}),
       ...(draft.dailyRate.trim() !== '' ? { dailyRate: Number(draft.dailyRate) } : {}),
       ...(draft.ratePeriods.length > 0 ? { rateOverrides: draft.ratePeriods } : {}),
+      ...(draft.color ? { color: draft.color } : {}),
     };
   });
 }
@@ -80,6 +84,7 @@ export function blankDraft(current: DraftResource[]): DraftResource {
     // not disagree.
     availabilityDeclared: true,
     dailyRate: '',
+    color: '',
     periods: [],
     ratePeriods: [],
   };

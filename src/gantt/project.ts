@@ -276,13 +276,30 @@ export function closeGaps(project: Project, solved: SolvedProject, summaryId: st
   return project.tasks.map((task) => (moved.has(task.id) ? { ...task, start: floor } : task));
 }
 
-export function effectiveColorOf(
-  tasks: ProjectTask[],
+/**
+ * The colour each row is painted, or undefined for the app's default.
+ *
+ * What was chosen comes first: the colour set on the row's top-level task,
+ * which its whole branch carries. Failing that, the colour of the person the
+ * row is for — a leaf's own, a summary's when every leaf under it is the same
+ * person's. A row shared between people, or with nobody on it, has none.
+ *
+ * A resolver rather than a lookup: every caller asks for many rows of one plan.
+ */
+export function barColors(
+  project: Pick<Project, 'tasks' | 'resources'>,
   hierarchy: Hierarchy,
-  id: string,
-): string | undefined {
-  const root = hierarchy.rootOf(id);
-  return tasks.find((task) => task.id === root)?.color || undefined;
+): (id: string) => string | undefined {
+  const tasks = new Map(project.tasks.map((task) => [task.id, task]));
+  const personColor = new Map(project.resources.map((person) => [person.id, person.color]));
+  return (id) => {
+    const chosen = tasks.get(hierarchy.rootOf(id))?.color;
+    if (chosen) return chosen;
+    const people = new Set(hierarchy.leavesUnder(id).map((leaf) => tasks.get(leaf)?.resourceId));
+    if (people.size !== 1) return undefined;
+    const [only] = people;
+    return only === undefined ? undefined : personColor.get(only);
+  };
 }
 
 /**

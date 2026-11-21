@@ -237,13 +237,16 @@ full rate. **An id no resource carries is refused before anything is written**,
 like a cyclic `link`: assigned to a person the project does not have, a task
 would be scheduled against no capacity at all. `color` is `#rrggbb` and only a
 top-level task owns one — a subtask inherits its parent's, so the whole subtree
-stays one visual block.
+stays one visual block. `color: null` clears it. A bar with no colour of its
+own or its branch's takes its person's (`addResource({ color })`) when it is
+theirs alone — for a summary, when every leaf under it is — and the app's
+default otherwise.
 
-`getTask()` answers with the colour the bar is **painted**, which for a task
-that carries none is the app's default, and with a `progress` of `0` for a task
-that has none. Handing either straight back declares nothing, on the same
-bargain `start` makes: a default is what the view had to invent to show the
-task, not something the task says.
+`getTask()` answers with `color`, what the task itself declares (absent when
+nothing), `paintedColor`, what the bar shows, and `autoColor`, what it would
+show with nothing declared. Hand back `color`, never `paintedColor`: that would
+declare what was only inherited. `progress` is `0` for a task that has none,
+and handing that back declares nothing.
 
 `disabled: true` marks placeholder work — positioned but weightless, same
 semantics as `getPlan()`'s field above. `false` clears it (never stored),
@@ -306,8 +309,8 @@ to cross-reference `getPlan()` just to know what its `cost` is in.
 
 | Call | Notes |
 | --- | --- |
-| `addResource(patch) → id` | `{ name, availability?, availabilityOverrides?, dailyRate?, rateOverrides? }` |
-| `updateResource(id, patch)` | Same shape. An omitted field is left alone; `dailyRate: null` clears it. |
+| `addResource(patch) → id` | `{ name, availability?, availabilityOverrides?, dailyRate?, rateOverrides?, color? }`. `color` is `#rrggbb`: their avatar, and their own tasks' bars. |
+| `updateResource(id, patch)` | Same shape. An omitted field is left alone; `dailyRate: null` and `color: null` clear theirs. |
 | `removeResource(id, { releaseTasks })` | `releaseTasks: true` is **required** while tasks are still assigned; their assignment is dropped. |
 | `setAvailability(id, overrides)` | Replaces the whole ordered list. |
 

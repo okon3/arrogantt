@@ -32,7 +32,11 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   `colors.ts`; `segmentBar.ts` emits `seg-pct--dark`), rather than capping the
   palette for one fixed ink.
 - **`AVATAR_COLORS` is kept clear of the task palette** by a CIEDE2000 floor,
-  not a lightness or chroma band.
+  not a lightness or chroma band. It is the fallback: a person with a colour
+  of their own (People, the face opens the panel) wears it everywhere.
+- **"Auto" in the swatch row is no colour** (`ColorSwatches`, shared by the
+  task and the person): the default blue is a choice like any other and is
+  stored.
 - **Dark `--on-accent` is near-black, not white**: accents lighten in dark.
   Every accent-filled button reads its ink from that variable.
 - dhtmlx's own dark theme is taken for the parts we don't skin, base colours
@@ -327,9 +331,15 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - **Critical chain = outline, never fill.** **Off by default**; toggle in the
   status bar. Links are never drawn as the chain.
 - Task names sit **beside** bars.
-- **A summary carries its colour as it is**, the default blue when it has
-  none (`barBackground`; the figure's `colorOf` follows): its thin shape sets
-  it apart from its leaves, not a second shade.
+- **A bar's colour is chosen, then its person's, then the default**
+  (`barColors`, `project.ts`; the figure follows): the colour set on the
+  row's top-level task wins for the whole branch; failing that a leaf takes
+  its person's, and a summary's only when every leaf under it is one person's.
+- **A summary carries that colour as it is**: its thin shape sets it apart
+  from its leaves, not a second shade.
+- **The row carries two colours**: `bar_color` is what is painted, `own_color`
+  mirrors the model and is what `pullFromView` reads back. Reading the painted
+  one would turn a person's colour into a chosen one on the next edit.
 - **Bar shape = `--radius-bar`**, the app's small-radius family. The summary
   takes its own smaller radius, sized to its height; the milestone diamond
   restates its own; the today scale chip stays a pill (a chip, not a bar).
