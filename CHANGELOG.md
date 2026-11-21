@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.7 — 2026-11-21
 
 - Give a person a colour in People (click their face): their avatar takes
   it, and so does every task that is theirs alone and has no colour of its
