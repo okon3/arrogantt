@@ -73,6 +73,8 @@ export interface BarFacts {
    * and not for a pointer crossing a bar.
    */
   chain: { isCritical: boolean; contendedOn: string | null; stale: boolean } | null;
+  /** Dependencies the chart is not drawing, their other end being inside a closed group. */
+  hiddenLinks?: { waitsFor: string[]; leadsTo: string[] };
 }
 
 const RATE_EPSILON = 1e-9;
@@ -194,6 +196,13 @@ export function renderBarTooltip(facts: BarFacts): string {
         ? 'from its subtask'
         : `from its ${facts.descendantCount} subtasks`;
     notes.push(`Summary: effort and dates roll up ${subtasks}.`);
+  }
+  const names = (list: string[]) => list.map(escapeHtml).join(', ');
+  if (facts.hiddenLinks?.waitsFor.length) {
+    notes.push(`Waits for, inside a closed group: ${names(facts.hiddenLinks.waitsFor)}.`);
+  }
+  if (facts.hiddenLinks?.leadsTo.length) {
+    notes.push(`Followed by, inside a closed group: ${names(facts.hiddenLinks.leadsTo)}.`);
   }
   const stretch = stretchNote(facts, namesContention);
   if (stretch) notes.push(stretch);

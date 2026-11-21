@@ -29,6 +29,17 @@ describe('renderBarTooltip', () => {
     expect(html).toContain('Marco');
   });
 
+  it('names the dependencies the chart is not drawing', () => {
+    const html = renderBarTooltip(
+      facts({ hiddenLinks: { waitsFor: ['Analisi'], leadsTo: ['Sviluppo <1>', 'Test'] } }),
+    );
+    expect(html).toContain('Waits for, inside a closed group: Analisi.');
+    expect(html).toContain('Followed by, inside a closed group: Sviluppo &lt;1&gt;, Test.');
+    expect(renderBarTooltip(facts({ hiddenLinks: { waitsFor: [], leadsTo: [] } }))).not.toContain(
+      'closed group',
+    );
+  });
+
   it('escapes a name, since the tooltip is inserted as HTML', () => {
     const html = renderBarTooltip(facts({ name: '<img src=x onerror=alert(1)>' }));
     expect(html).not.toContain('<img');

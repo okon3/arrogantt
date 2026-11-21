@@ -1,8 +1,9 @@
 import { gantt } from 'dhtmlx-gantt';
 import type { GridColumn } from 'dhtmlx-gantt';
-import { Info, Ban } from 'lucide-static';
+import { ArrowRight, Info, Ban } from 'lucide-static';
 import { formatDays } from './format';
 import { costCellText, rateCellText, type CellText } from './costCells';
+import { hiddenLinksOf } from './hiddenLinks';
 import { escapeHtml } from './html';
 import { renderSegments } from './segmentBar';
 import { DEFAULT_BAR_COLOR, avatarColorOf, initialsOf, shade } from './colors';
@@ -53,6 +54,7 @@ function sizedIcon(svg: string, size: number): string {
 
 const INFO_ICON = sizedIcon(Info, 15);
 const BAN_ICON = sizedIcon(Ban, 15);
+const ARROW_ICON = sizedIcon(ArrowRight, 11);
 
 /**
  * Options for the resource cell.
@@ -436,5 +438,16 @@ export function installRowTemplates(ctx: RowContext): void {
     const color = String(task.bar_color || DEFAULT_BAR_COLOR);
     return renderSegments(scheduled, width, color, shade(color));
   };
-  gantt.templates.rightside_text = (_start, _end, task) => escapeHtml(String(task.text ?? ''));
+  // A dependency whose other end is folded away draws no arrow, so the bar
+  // says how many: into it on its left, out of it on its right. The tooltip
+  // names them (barTooltip.ts).
+  gantt.templates.leftside_text = (_start, _end, task) => {
+    const waiting = hiddenLinksOf(String(task.id)).waitsFor.length;
+    return waiting ? `<span class="gantt-hidden-links">${waiting}${ARROW_ICON}</span>` : '';
+  };
+  gantt.templates.rightside_text = (_start, _end, task) => {
+    const leading = hiddenLinksOf(String(task.id)).leadsTo.length;
+    const mark = leading ? `<span class="gantt-hidden-links">${ARROW_ICON}${leading}</span>` : '';
+    return mark + escapeHtml(String(task.text ?? ''));
+  };
 }

@@ -19,9 +19,9 @@ import {
   WHEEL_ZOOM_COOLDOWN,
 } from './zoomLevels';
 import { fitRangeToPlan, repinRangeToScale, appliedScrollX } from './timelineGeometry';
+import { hiddenLinksOf } from './hiddenLinks';
 import { installLinkHover } from './linkHover';
 import { installPaceHandles } from './paceHandles';
-import { installRolledLinks } from './rolledLinks';
 import { mountOverlays, nonWorkingSpans, paintBands, placeTodayLine } from './timelineOverlays';
 import { isContended, type ShareOverride } from '../scheduler';
 import { renderLoadPanel, scrollLoadPanel, type LoadLane } from './loadPanel';
@@ -821,8 +821,8 @@ export function GanttChart({
       const task = project.tasks.find((candidate) => candidate.id === id);
       const scheduled = id === null ? undefined : solvedRef.current.schedule.tasks.get(id);
       if (!task || !scheduled) return undefined;
-      return renderBarTooltip(
-        barFactsOf(
+      return renderBarTooltip({
+        ...barFactsOf(
           task,
           scheduled,
           solvedRef.current,
@@ -830,7 +830,8 @@ export function GanttChart({
           chainRef.current,
           subtreeOf(project.tasks, task.id).size - 1,
         ),
-      );
+        hiddenLinks: hiddenLinksOf(task.id),
+      });
     };
     // The extension's own tooltip covers everything carrying a task id, the grid
     // rows included — where the columns already say all of this and the avatars
@@ -1302,7 +1303,6 @@ export function GanttChart({
     });
 
     const detachLinkHover = installLinkHover(container);
-    const detachRolledLinks = installRolledLinks();
 
     loadProject(projectRef.current);
 
@@ -1369,7 +1369,6 @@ export function GanttChart({
       overlays.detach();
       detachPaceHandles();
       detachLinkHover();
-      detachRolledLinks();
       gantt.ext.zoom.detachEvent(zoomHandler);
       container.removeEventListener('wheel', zoomOnWheel, true);
       container.removeEventListener('contextmenu', openRowMenu);

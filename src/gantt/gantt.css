@@ -367,30 +367,32 @@ html:root[data-gantt-theme='dark'] {
   border-left-color: var(--link-ink);
 }
 
-/* Dependencies with an end inside a closed branch, redrawn onto that branch's
-   bar (rolledLinks.ts). Dashed: it stands for a link, it is not one. Sized to
-   nothing and overflowing, so the layer never takes the pointer from a bar. */
-.rolled-links {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 1px;
-  height: 1px;
+/* How many dependencies of the bar are not drawn, their other end being inside
+   a closed group (gridColumns.ts, hiddenLinks.ts). Beside the bar, in the
+   label's own ink: a count, not a control. */
+.gantt-hidden-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  margin-right: 5px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+  vertical-align: middle;
+}
+
+.gantt_side_content.gantt_left .gantt-hidden-links {
+  margin-right: 0;
+}
+
+/* A summary's side content is its bar's height and clips: enough for the
+   uppercase name, which keeps its ink inside, not for a digit and an arrow. */
+.gantt_task_line.gantt-bar--summary .gantt_side_content {
   overflow: visible;
-  pointer-events: none;
-  opacity: var(--link-rest);
 }
 
-.rolled-links__line {
-  fill: none;
-  stroke: var(--ink-faint);
-  stroke-width: 2;
-  stroke-dasharray: 4 3;
-  pointer-events: stroke;
-}
-
-.rolled-links__head {
-  fill: var(--ink-faint);
+.gantt_task_line.gantt-bar--summary .gantt_side_content.gantt_left {
+  line-height: 8px;
 }
 
 /* Removes the dependency pointed at (linkHover.ts). The pace period's own
