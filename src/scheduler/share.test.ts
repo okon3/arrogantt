@@ -393,6 +393,23 @@ describe('a share period is counted in the working days of its task', () => {
     ]);
     expectEffortConserved(result, tasks);
   });
+
+  it('cuts at its own edges when an absence lies further on', () => {
+    // The absence is on the event list first, and later than the period.
+    const tasks = [task('a', 2, { shareOverrides: [period(1, 1, 0.5)] })];
+    const result = run(tasks, [
+      {
+        ...alice,
+        availabilityOverrides: [{ from: '2026-09-21', to: '2026-09-21', availability: 0 }],
+      },
+    ]);
+    expect(profile(result, 'a')).toEqual([
+      [0, 1, 1, 1],
+      [1, 2, 0.5, 0.5],
+      [2, 2.5, 1, 1],
+    ]);
+    expectEffortConserved(result, tasks);
+  });
 });
 
 describe('a task that waits inside its own span', () => {
@@ -452,6 +469,18 @@ describe('a plan without shares', () => {
       expect(scheduled.start, id).toEqual(scheduled.segments[0].start);
     }
     expectEffortConserved(result, tasks);
+  });
+
+  it('works from its start on a day with next to no capacity', () => {
+    const thin = [task('a', 1)];
+    const a = run(thin, [
+      {
+        ...alice,
+        availabilityOverrides: [{ from: '2026-09-07', to: '2026-09-07', availability: 1e-10 }],
+      },
+    ]).tasks.get('a')!;
+    expect(a.startWorkingMinutes).toBe(0);
+    expect(a.segments[0].startWorkingMinutes).toBe(0);
   });
 
   it('puts those starts where the plan always had them', () => {

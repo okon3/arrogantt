@@ -34,7 +34,11 @@ export interface AllocationRequest {
  */
 export type AllocationPolicy = (request: AllocationRequest) => Map<TaskId, number>;
 
-/** Float drift below which the capacity left after the fixed shares counts as none. */
+/**
+ * Float drift below which what the fixed shares leave counts as none. Measured
+ * on the shares, not on the capacity they divide: a person with any capacity
+ * anchors a task, so that capacity has to be granted too.
+ */
 const NOTHING_LEFT = 1e-9;
 
 /**
@@ -56,10 +60,10 @@ export const splitCapacity: AllocationPolicy = ({ capacity, candidates }) => {
     if (candidate.share! > 0) rates.set(candidate.id, candidate.share! * scale * capacity);
   }
   const unfixed = candidates.length - fixed.length;
-  const left = (1 - claimed) * capacity;
+  const left = 1 - claimed;
   if (unfixed === 0 || left <= NOTHING_LEFT) return rates;
   for (const candidate of candidates) {
-    if (candidate.share === undefined) rates.set(candidate.id, left / unfixed);
+    if (candidate.share === undefined) rates.set(candidate.id, (left * capacity) / unfixed);
   }
   return rates;
 };
