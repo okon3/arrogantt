@@ -1,14 +1,5 @@
 # Changelog
 
-## Unreleased
-
-- Fix a task's dates: type an End in its detail dialog and the bar runs from
-  its start to that day, whatever the plan does around it. Record that
-  something finished early, or add work that was done in the background (set
-  its default pace to 0%) without the rest of the plan stretching. Clear the End to
-  hand the task back to the scheduler. Dragging a fixed bar moves it whole,
-  and dragging one of its edges changes that date.
-
 ## v1.7 — 2026-11-21
 
 - Give a person a colour in People (click their face): their avatar takes
@@ -43,6 +34,14 @@
   its level up or down to change the percentage. A new period starts at the
   pace the task already has there, so adding it moves nothing. The periods
   of one task can no longer overlap.
+- Set a task's end yourself: type an End in its detail dialog and the bar
+  runs from its start to that day, whatever the plan does around it. For
+  work that finished early, or for a date that is simply given. A pin beside
+  the name marks it. Clear the End and the scheduler works it out again.
+  Drag the bar to move it whole, or one of its edges to change that date.
+- Add work that was done in the background: give a task with a set end a
+  default pace of 0% and it sits on the plan without taking time from the
+  tasks beside it.
 - Pace periods belong to their task and move with it: drag the bar, change
   its start, or let whatever comes before it push it, and its periods stay
   on the same days of the task. A period never runs past the end of its

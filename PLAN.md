@@ -17,7 +17,7 @@ avanti, non lavoro in corso. **Goal L** (quota e pausa per task) e'
 **costruito e unito** il 2026-11-21 (periodi relativi al task, maniglie
 sulla barra), bullet sotto `## Unreleased`; goal review non ancora corsa.
 **«Congelare il passato»** e' diventato **date fisse** (`fixedEnd`), costruito
-il 2026-11-21 sulla branch `fixed-dates`, non ancora unito ne' rilasciato. **Goal K** (polish di UI/UX) e' **chiuso, recensito e potato**; quel che
+e unito il 2026-11-21, rilasciato nella `v1.7`; goal review non corsa. **Goal K** (polish di UI/UX) e' **chiuso, recensito e potato**; quel che
 non va riproposto sta sotto `## Decisioni chiuse`. Tre conseguenze per chi
 entra adesso: **le due barre stanno su `--surface-sunken`** (chi tocca un
 controllo che vive li' sopra ha un fondo diverso da quello per cui era stato
