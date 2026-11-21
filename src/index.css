@@ -73,6 +73,12 @@
   --shadow-raised: 0 1px 2px rgb(24 28 40 / 6%);
   --shadow-dialog: 0 18px 48px rgb(24 28 40 / 16%);
 
+  /* Motion says where something came from or what an edit moved, never
+     decorates: hover stays instant, a control used all day must not wait. */
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+
   /* Dialog spacing — the only scale dialog.css draws gaps and padding from. */
   --space-1: 4px;
   --space-2: 8px;
@@ -168,4 +174,16 @@ body {
 button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+  }
+}
+
+@keyframes refused {
+  25% { translate: -4px 0; }
+  75% { translate: 4px 0; }
 }

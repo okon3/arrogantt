@@ -50,6 +50,15 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   against the sunken background), and `--surface` for borderless pills that
   would otherwise vanish into it.
 
+## Motion
+
+- **Motion carries information or is absent**: entries (dialogs, menus, the
+  dirty dot), press feedback, a refusal's shake. **Hover stays instant**:
+  buttons transition `scale` alone, never their colour.
+- Durations and curve only from `--motion-fast`, `--motion-base`, `--ease-out`;
+  `prefers-reduced-motion: reduce` zeroes both durations, so nothing moves.
+- Entries only: dialogs and menus unmount on close, so there is no exit to time.
+
 ## Zoom and timeline range
 
 - Five zoom levels (days → quarters). Quarters are a custom scale unit.

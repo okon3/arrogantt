@@ -204,3 +204,34 @@
   border-color: var(--danger-line);
   background: var(--danger-soft);
 }
+
+/* Entry only: the dialog is unmounted on close, so there is no exit to time. */
+.dialog[open],
+.dialog[open]::backdrop {
+  transition:
+    opacity var(--motion-base) var(--ease-out),
+    scale var(--motion-base) var(--ease-out);
+}
+
+@starting-style {
+  .dialog[open] {
+    opacity: 0;
+    scale: 0.98;
+  }
+
+  .dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+.dialog__btn {
+  transition: scale var(--motion-fast) var(--ease-out);
+}
+
+.dialog__btn:active:not(:disabled) {
+  scale: 0.97;
+}
+
+.dialog__error {
+  animation: refused var(--motion-base) var(--ease-out);
+}
