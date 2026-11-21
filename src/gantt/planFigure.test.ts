@@ -38,7 +38,7 @@ function attributes(svg: string, pattern: RegExp): Record<string, string> {
 // existed — the byte-identical proof that the legacy path (no `columns`)
 // still draws the same SVG once the option is added.
 const PIN_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="1050" height="166" viewBox="0 0 1050 166" font-family="system-ui, sans-serif"><rect width="1050" height="166" fill="#fff" /><text x="16" y="30" font-size="14" font-weight="600" fill="#1f2430">pin.gantt</text><text x="1034" y="30" font-size="11" fill="#6b7280" text-anchor="end">07/09/2026 → 08/09/2026</text><text x="380" y="55" font-size="11" fill="#6b7280">Sep 2026</text><line x1="16" y1="60" x2="1034" y2="60" stroke="#dfe2e8" /><text x="379" y="73" font-size="10" fill="#99a0ab">7</text><text x="708" y="73" font-size="10" fill="#99a0ab">8</text><line x1="16" y1="78" x2="1034" y2="78" stroke="#edeef1" /><text x="16" y="94" font-size="12" font-weight="600" fill="#1f2430">Fase</text><rect x="485.67" y="86" width="452.38" height="8" rx="4" fill="#55637a" /><line x1="16" y1="102" x2="1034" y2="102" stroke="#edeef1" /><text x="28" y="118" font-size="12" fill="#1f2430">Analisi</text><text x="266" y="118" font-size="11" fill="#6b7280">Marta Rossi</text><rect x="485.67" y="108" width="452.38" height="12" rx="6" fill="#3b74d6" /><line x1="16" y1="126" x2="1034" y2="126" stroke="#edeef1" /><text x="16" y="142" font-size="12" fill="#1f2430">Consegna</text><polygon points="938.04,132.5 943.54,138 938.04,143.5 932.54,138" fill="#3b74d6" /><line x1="16" y1="150" x2="1034" y2="150" stroke="#edeef1" /><line x1="376" y1="42" x2="376" y2="150" stroke="#dfe2e8" /></svg>';
+  '<svg xmlns="http://www.w3.org/2000/svg" width="1050" height="166" viewBox="0 0 1050 166" font-family="system-ui, sans-serif"><rect width="1050" height="166" fill="#fff" /><text x="16" y="30" font-size="14" font-weight="600" fill="#1f2430">pin.gantt</text><text x="1034" y="30" font-size="11" fill="#6b7280" text-anchor="end">07/09/2026 → 08/09/2026</text><text x="380" y="55" font-size="11" fill="#6b7280">Sep 2026</text><line x1="16" y1="60" x2="1034" y2="60" stroke="#dfe2e8" /><text x="379" y="73" font-size="10" fill="#99a0ab">7</text><text x="708" y="73" font-size="10" fill="#99a0ab">8</text><line x1="16" y1="78" x2="1034" y2="78" stroke="#edeef1" /><text x="16" y="94" font-size="12" font-weight="600" fill="#1f2430">Fase</text><rect x="485.67" y="86" width="452.38" height="8" rx="4" fill="#3b74d6" /><line x1="16" y1="102" x2="1034" y2="102" stroke="#edeef1" /><text x="28" y="118" font-size="12" fill="#1f2430">Analisi</text><text x="266" y="118" font-size="11" fill="#6b7280">Marta Rossi</text><rect x="485.67" y="108" width="452.38" height="12" rx="6" fill="#3b74d6" /><line x1="16" y1="126" x2="1034" y2="126" stroke="#edeef1" /><text x="16" y="142" font-size="12" fill="#1f2430">Consegna</text><polygon points="938.04,132.5 943.54,138 938.04,143.5 932.54,138" fill="#3b74d6" /><line x1="16" y1="150" x2="1034" y2="150" stroke="#edeef1" /><line x1="376" y1="42" x2="376" y2="150" stroke="#dfe2e8" /></svg>';
 
 describe('planFigure', () => {
   it('with no columns draws the legacy Name + Person outline, byte-identical to the pre-F8 build', () => {
@@ -120,14 +120,14 @@ describe('planFigure', () => {
     expect(svg).toContain('height="8"');
   });
 
-  it('carries the task colour, darkened on the summary above it', () => {
+  it('carries the task colour, on the summary above it as on the leaf', () => {
     const { svg } = figureOf([
       { id: 'p', name: 'Fase', nominalDays: 0, start: monday, color: '#2f9e6e' },
       { id: 'c', name: 'Foglia', nominalDays: 2, start: monday, resourceId: 'r1', parentId: 'p' },
     ]);
     // The leaf inherits its top-level ancestor's colour, as the chart's bars do.
     expect(svg).toContain('height="12" rx="6" fill="#2f9e6e"');
-    expect(svg).toContain('height="8" rx="4" fill="#1a573d"');
+    expect(svg).toContain('height="8" rx="4" fill="#2f9e6e"');
   });
 
   it('shades the days nobody works, weekends and shutdowns alike', () => {

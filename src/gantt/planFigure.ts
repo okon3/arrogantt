@@ -1,5 +1,5 @@
 import { dateOfDay, dayIndexOf } from '../scheduler';
-import { DEFAULT_BAR_COLOR, shade } from './colors';
+import { DEFAULT_BAR_COLOR } from './colors';
 import { PLAN_COLUMNS, type PlanColumnName } from './columns';
 import { costCellText, rateCellText } from './costCells';
 import { parseWallClock } from './dates';
@@ -80,7 +80,6 @@ const INK_FAINT = '#99a0ab';
 const LINE = '#edeef1';
 const LINE_STRONG = '#dfe2e8';
 const NON_WORKING = '#f5f6f9';
-const SUMMARY_COLOR = '#55637a';
 const TODAY = '#3b6fe0';
 
 /** Deterministic rather than `toLocaleString`, which depends on the ICU data present. */
@@ -259,11 +258,9 @@ function bar(task: PlanTask, top: number, geometry: Geometry, color: string): st
   );
 }
 
-/** The colour of the bar, following the chart: a summary takes a flatter shade. */
+/** The colour of the bar, following the chart: a summary's is its leaves'. */
 function colorOf(task: PlanTask, project: Project, solved: SolvedProject): string {
-  const own = effectiveColorOf(project.tasks, solved.hierarchy, task.id);
-  if (!task.isSummary) return own ?? DEFAULT_BAR_COLOR;
-  return own ? shade(own, 0.55) : SUMMARY_COLOR;
+  return effectiveColorOf(project.tasks, solved.hierarchy, task.id) ?? DEFAULT_BAR_COLOR;
 }
 
 function timeAxis(geometry: Geometry, top: number, bottom: number): string {

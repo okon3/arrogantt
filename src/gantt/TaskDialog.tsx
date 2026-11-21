@@ -208,22 +208,6 @@ export function TaskDialog({
         </>
       }
     >
-      <p className="dialog__hint taskinfo__intro">
-        {isMilestone ? (
-          <>
-            Effort <strong>0</strong>: a milestone, that is a date the plan reaches rather than
-            work it consumes. It occupies nobody and is a diamond on the chart. Setting an effort
-            above zero turns it back into a task.
-          </>
-        ) : (
-          <>
-            The <strong>end</strong> and the <strong>duration</strong> are not set directly: the
-            engine computes them from effort, start, calendar and the share of the resource the
-            task receives.
-          </>
-        )}
-      </p>
-
       <div className="taskinfo__grid">
         <label className="taskinfo__field taskinfo__field--wide">
           <span className="taskinfo__label">Name</span>
@@ -256,39 +240,27 @@ export function TaskDialog({
         </label>
 
         <label className="taskinfo__field">
-          <span className="taskinfo__label">Effort</span>
+          <span className="taskinfo__label">
+            Effort
+            {/* The only way to make a milestone, so the field has to say so:
+                there is no second control, because there is no second concept. */}
+            {!task.isSummary && <span className="taskinfo__hint"> · 0 = milestone</span>}
+          </span>
           {task.isSummary ? (
-            <>
-              {fromChildren}
-              {/* Reserved so the row's tallest cell is the same on a summary as
-                  on a leaf — never visible here, since a summary is never a
-                  milestone (isMilestone excludes it). */}
-              <span className="taskinfo__hint taskinfo__hint--reserved">0 = milestone</span>
-            </>
+            fromChildren
           ) : (
-            <>
-              <span className="dialog__field">
-                <input
-                  className="dialog__control taskinfo__amount"
-                  type="number"
-                  min={0}
-                  max={999}
-                  step={0.25}
-                  value={effort}
-                  onChange={(event) => setEffort(event.target.value)}
-                />
-                <span className="dialog__suffix">days</span>
-              </span>
-              {/* The only way to make a milestone, so the field has to say so:
-                  there is no second control, because there is no second concept.
-                  Rendered always and hidden by visibility (not removed), so the
-                  row doesn't shrink mid-typing. */}
-              <span
-                className={`taskinfo__hint${isMilestone ? ' taskinfo__hint--reserved' : ''}`}
-              >
-                0 = milestone
-              </span>
-            </>
+            <span className="dialog__field">
+              <input
+                className="dialog__control taskinfo__amount"
+                type="number"
+                min={0}
+                max={999}
+                step={0.25}
+                value={effort}
+                onChange={(event) => setEffort(event.target.value)}
+              />
+              <span className="dialog__suffix">days</span>
+            </span>
           )}
         </label>
 
@@ -358,31 +330,6 @@ export function TaskDialog({
           )}
         </div>
 
-        <label className="taskinfo__field taskinfo__field--wide">
-          <span className="taskinfo__label">Status</span>
-          <span className="taskinfo__checkbox">
-            <input
-              type="checkbox"
-              checked={disabled}
-              onChange={(event) => setDisabled(event.target.checked)}
-            />
-            Disabled
-          </span>
-          <span className="taskinfo__hint">
-            Stays on the plan but does not weigh: no capacity, out of roll-up and critical chain.
-          </span>
-        </label>
-
-        <label className="taskinfo__field taskinfo__field--wide">
-          <span className="taskinfo__label">Description</span>
-          <textarea
-            className="dialog__control taskinfo__description"
-            rows={4}
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-          />
-        </label>
-
         {paced && (
           <div className="taskinfo__field taskinfo__field--wide taskinfo__pace" ref={pace}>
             <span className="taskinfo__label">Pace</span>
@@ -424,98 +371,146 @@ export function TaskDialog({
             </span>
           </div>
         )}
+        <label className="taskinfo__field taskinfo__field--wide">
+          <span className="taskinfo__label">Description</span>
+          <textarea
+            className="dialog__control taskinfo__description"
+            rows={3}
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+          />
+        </label>
+
+        <label className="taskinfo__field taskinfo__field--wide">
+          <span className="taskinfo__checkbox">
+            <input
+              type="checkbox"
+              checked={disabled}
+              onChange={(event) => setDisabled(event.target.checked)}
+            />
+            Disabled
+            <span className="taskinfo__hint">
+              stays on the plan but does not weigh: no capacity, out of roll-up and critical chain
+            </span>
+          </span>
+        </label>
       </div>
 
-      <h3 className="dialog__subhead">Computed</h3>
-      <dl className="taskinfo__readonly">
-        <div>
-          <dt>End</dt>
-          <dd>{dayFormat.format(task.end)}</dd>
-        </div>
-        <div>
-          <dt>Duration</dt>
-          <dd className={task.shared ? 'gantt-stretched' : undefined}>
-            {formatDays(task.elapsedDays)} d
-          </dd>
-        </div>
-        <div>
-          <dt>Total effort</dt>
-          <dd>{formatDays(task.effortDays)} d</dd>
-        </div>
-        <div>
-          {/* The figure, whatever else is true of the task: criticality is a
-              different fact and it is stated below, in words. */}
-          <dt>Float</dt>
-          <dd className={slack?.isCritical ? 'taskinfo__critical' : undefined}>
-            {slack === null ? (
-              <span className="taskinfo__derived">&mdash;</span>
-            ) : (
-              `${formatDays(slack.floatDays)} d`
-            )}
-          </dd>
-        </div>
-        <div>
-          <dt>{currencyLabel('Rate', task.currency)}</dt>
-          <dd title={rateCell.title ?? undefined}>
-            {rateCell.derived ? (
-              <span className="taskinfo__derived">{rateCell.text}</span>
-            ) : (
-              rateCell.text
-            )}
-          </dd>
-        </div>
-        <div>
-          <dt>{currencyLabel('Cost', task.currency)}</dt>
-          <dd title={costCell.title ?? undefined}>
-            {costCell.derived ? (
-              <span className="taskinfo__derived">{costCell.text}</span>
-            ) : (
-              costCell.text
-            )}
-          </dd>
-        </div>
-      </dl>
-      <div className="taskinfo__notes">
-        {/* Contention is said once. Where the criticality note below already names
-            the person it is contended with, this would be the second sentence
-            about the same fact. */}
-        {task.contended
-          ? !namesContention && (
-              <p className="taskinfo__note">
-                The resource is split with other tasks in progress, so the duration exceeds the
-                effort.
-              </p>
-            )
-          : hasShare(task)
-            ? task.elapsedDays > task.effortDays && (
+      {/* Closed until asked for: what the engine derived is not what one opens
+          this dialog to edit. The two figures asked about most stay in sight. */}
+      <details className="taskinfo__computed">
+        <summary className="dialog__subhead">
+          Computed
+          <span className="taskinfo__brief">
+            ends {dayFormat.format(task.end)} · {formatDays(task.elapsedDays)} d
+          </span>
+        </summary>
+        <p className="dialog__hint">
+          {isMilestone ? (
+            <>
+              Effort <strong>0</strong>: a milestone, that is a date the plan reaches rather than
+              work it consumes. It occupies nobody and is a diamond on the chart. Setting an effort
+              above zero turns it back into a task.
+            </>
+          ) : (
+            <>
+              The <strong>end</strong> and the <strong>duration</strong> are not set directly: the
+              engine computes them from effort, start, calendar and the share of the resource the
+              task receives.
+            </>
+          )}
+        </p>
+
+        <dl className="taskinfo__readonly">
+          <div>
+            <dt>End</dt>
+            <dd>{dayFormat.format(task.end)}</dd>
+          </div>
+          <div>
+            <dt>Duration</dt>
+            <dd className={task.shared ? 'gantt-stretched' : undefined}>
+              {formatDays(task.elapsedDays)} d
+            </dd>
+          </div>
+          <div>
+            <dt>Total effort</dt>
+            <dd>{formatDays(task.effortDays)} d</dd>
+          </div>
+          <div>
+            {/* The figure, whatever else is true of the task: criticality is a
+                different fact and it is stated below, in words. */}
+            <dt>Float</dt>
+            <dd className={slack?.isCritical ? 'taskinfo__critical' : undefined}>
+              {slack === null ? (
+                <span className="taskinfo__derived">&mdash;</span>
+              ) : (
+                `${formatDays(slack.floatDays)} d`
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>{currencyLabel('Rate', task.currency)}</dt>
+            <dd title={rateCell.title ?? undefined}>
+              {rateCell.derived ? (
+                <span className="taskinfo__derived">{rateCell.text}</span>
+              ) : (
+                rateCell.text
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>{currencyLabel('Cost', task.currency)}</dt>
+            <dd title={costCell.title ?? undefined}>
+              {costCell.derived ? (
+                <span className="taskinfo__derived">{costCell.text}</span>
+              ) : (
+                costCell.text
+              )}
+            </dd>
+          </div>
+        </dl>
+        <div className="taskinfo__notes">
+          {/* Contention is said once. Where the criticality note below already names
+              the person it is contended with, this would be the second sentence
+              about the same fact. */}
+          {task.contended
+            ? !namesContention && (
                 <p className="taskinfo__note">
-                  Held to its fixed share, so the duration exceeds the effort.
-                </p>
-              )
-            : task.shared && (
-                <p className="taskinfo__note">
-                  The resource does not work full time in this period, so the duration exceeds the
+                  The resource is split with other tasks in progress, so the duration exceeds the
                   effort.
                 </p>
-              )}
-        {slack === null ? (
-          <p className="taskinfo__note">
-            Past {CRITICAL_CHAIN_LIMIT} tasks the float is not measured: it costs a re-solve of the
-            plan for every day probed. Ask for the critical chain from the status bar.
-          </p>
-        ) : slack.isCritical ? (
-          <p className="taskinfo__note">
-            <strong>Critical{namesContention ? ` — contended on ${contendedWith}` : ''}.</strong>{' '}
-            {namesContention
-              ? `Its share is split with other tasks in progress: ${whatCostsWhat}.`
-              : `${whatCostsWhat[0].toUpperCase()}${whatCostsWhat.slice(1)}.`}
-          </p>
-        ) : (
-          <p className="taskinfo__note">
-            Can slip up to {formatDays(slack.floatDays)} d without moving the project end.
-          </p>
-        )}
-      </div>
+              )
+            : hasShare(task)
+              ? task.elapsedDays > task.effortDays && (
+                  <p className="taskinfo__note">
+                    Held to its fixed share, so the duration exceeds the effort.
+                  </p>
+                )
+              : task.shared && (
+                  <p className="taskinfo__note">
+                    The resource does not work full time in this period, so the duration exceeds the
+                    effort.
+                  </p>
+                )}
+          {slack === null ? (
+            <p className="taskinfo__note">
+              Past {CRITICAL_CHAIN_LIMIT} tasks the float is not measured: it costs a re-solve of the
+              plan for every day probed. Ask for the critical chain from the status bar.
+            </p>
+          ) : slack.isCritical ? (
+            <p className="taskinfo__note">
+              <strong>Critical{namesContention ? ` — contended on ${contendedWith}` : ''}.</strong>{' '}
+              {namesContention
+                ? `Its share is split with other tasks in progress: ${whatCostsWhat}.`
+                : `${whatCostsWhat[0].toUpperCase()}${whatCostsWhat.slice(1)}.`}
+            </p>
+          ) : (
+            <p className="taskinfo__note">
+              Can slip up to {formatDays(slack.floatDays)} d without moving the project end.
+            </p>
+          )}
+        </div>
+      </details>
     </Dialog>
   );
 }

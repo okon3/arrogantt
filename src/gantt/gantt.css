@@ -234,7 +234,7 @@ html:root[data-gantt-theme='dark'] {
 }
 
 .gantt-bands__timeoff {
-  background: var(--danger-soft);
+  background: var(--band-timeoff);
 }
 
 /* Time off is painted twice, the tint above under the bars and the hatch here
@@ -243,7 +243,7 @@ html:root[data-gantt-theme='dark'] {
    the two. The bars carry no z-index of their own, so 1 is enough. */
 .gantt-bands__hatch {
   z-index: 1;
-  background: repeating-linear-gradient(45deg, transparent 0 4px, var(--danger-line) 4px 6px);
+  background: repeating-linear-gradient(45deg, transparent 0 4px, var(--band-timeoff-hatch) 4px 6px);
 }
 
 /* Sits above the bars and the time-off hatch on purpose — a line hidden behind
@@ -328,16 +328,62 @@ html:root[data-gantt-theme='dark'] {
   z-index: 3;
 }
 
-.gantt_task_link .gantt_line_wrapper div {
-  background: var(--line-strong);
+/* Dependencies recede at rest, so a plan with many of them still reads as
+   bars first. One comes forward under the pointer, and so do those of the
+   task pointed at (linkHover.ts raises them with a rule of its own). */
+.gantt-host .gantt_task_link {
+  --link-ink: var(--line-strong);
+  opacity: var(--link-rest);
 }
 
-.gantt_task_link:hover .gantt_line_wrapper div {
-  background: var(--accent);
+/* Dark only: on white the line grey is already as quiet as it can go and
+   still be followed. */
+.gantt-host {
+  --link-rest: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .gantt-host {
+    --link-rest: 0.6;
+  }
+}
+
+.gantt-host .gantt_task_link:hover {
+  --link-ink: var(--accent);
+  opacity: 1;
+}
+
+.gantt_task_link .gantt_line_wrapper div {
+  background: var(--link-ink);
 }
 
 .gantt_link_arrow_right {
-  border-left-color: var(--line-strong);
+  border-left-color: var(--link-ink);
+}
+
+/* Removes the dependency pointed at (linkHover.ts). The pace period's own
+   button, by the pointer rather than on the line: a line is 2px. */
+.link-x {
+  position: absolute;
+  z-index: 3;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--inverse-surface);
+  color: var(--inverse-ink);
+  cursor: pointer;
+}
+
+.link-x:hover {
+  background: var(--danger);
+}
+
+.link-x svg {
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin: 3px;
+  stroke-width: 3;
 }
 
 /* A shared task keeps a single continuous outline — the bar is one task, and
@@ -496,12 +542,9 @@ html:root[data-gantt-theme='dark'] {
   font-weight: 600;
 }
 
-/* A summary is a rollup, not work: flat and dark, so it reads as a bracket over
-   its children rather than as another assignable task. */
-/* Only a fallback: when the macro task has a colour of its own, dhtmlx sets the
-   variable inline and that shade wins. */
+/* A summary is a rollup, not work: a flat thin bracket over its children, in
+   their colour — its shape is what says it is not another assignable task. */
 .gantt_task_line.gantt-bar--summary {
-  --dhx-gantt-task-background: #55637a;
   /* No border of its own: the base rule derives it from whatever fill wins on
      the element, so a summary the user coloured is outlined in that colour. */
   /* Follows the bar family's radius, not a pill: at this element's own 10px
@@ -512,15 +555,6 @@ html:root[data-gantt-theme='dark'] {
   height: 10px !important;
   margin-top: 7px;
   box-shadow: none;
-}
-
-/* The slate above is a fallback, so it has to read against the page rather than
-   against a colour the user picked: on a dark surface "flat and dark" is a shade
-   lighter than the rows, not darker. */
-@media (prefers-color-scheme: dark) {
-  .gantt_task_line.gantt-bar--summary {
-    --dhx-gantt-task-background: #6b7789;
-  }
 }
 
 .gantt_task_line.gantt-bar--summary .gantt_task_progress {
@@ -1132,9 +1166,10 @@ html:root[data-gantt-theme='dark'] {
 }
 
 /* Pace-period handles (paceHandles.ts): a layer of our own over the bars.
-   Nothing here paints at rest — the chrome comes up with `--hot`, set while
-   the pointer is over the task's row, and with `--dragging`. The inverse pair
-   is the ink: a bar's fill is the user's and does not change with the scheme. */
+   At rest a period shows only a faint tick on each of its edges, enough to
+   say something is there; the chrome comes up with `--hot`, set while the
+   pointer is over the task's row, and with `--dragging`. The inverse pair is
+   the ink: a bar's fill is the user's and does not change with the scheme. */
 .pace-layer {
   position: absolute;
   left: 0;
@@ -1185,6 +1220,14 @@ html:root[data-gantt-theme='dark'] {
   top: 0;
   bottom: 0;
   width: 2px;
+}
+
+/* The tick at rest: inside the bar's height, where the handle overhangs it. */
+.pace-period:not(.pace-period--hot):not(.pace-period--dragging) .pace-edge::before {
+  top: 6px;
+  bottom: 6px;
+  opacity: 0.45;
+  box-shadow: none;
 }
 
 .pace-level {

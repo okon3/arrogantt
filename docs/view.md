@@ -226,14 +226,16 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   `--dialog-control-h` on `.dialog` (`dialog.css`), set to the taller of the
   browser's two native control heights. The floor lives on the row-matching
   rules, not on `.dialog__control`.
-  - **The "0 = milestone" hint is always rendered**, hidden with
-    `visibility: hidden` (`.taskinfo__hint--reserved`), so the row does not
-    shrink mid-edit.
+  - **The "0 = milestone" hint is part of the Effort label**, one line
+    whatever the field holds, so the row does not change height mid-edit.
   - **`.taskinfo__derived` carries only the semantics**; the height rule is
     the modifier `.taskinfo__derived--cell`, on spans standing in for a grid
     cell. `.taskinfo__checkbox` and `.taskinfo__amount` get the same
     `min-height`.
-  - **The intro hint reserves a min-height** for its normal/milestone swap.
+  - **Computed is a closed `<details>`**, opened on request; its summary line
+    carries the end and the duration. The explanation that end and duration
+    are derived (or what a milestone is) lives inside it. Order above it:
+    fields, Colour, Pace, Description, Disabled.
   - **Computed (`.taskinfo__readonly`) is a fixed 3-track grid**: End ·
     Duration · Total effort / Float · Rate · Cost, so no entry drifts with its
     content. Sized against `Total effort`, an 8-character currency label, a
@@ -325,6 +327,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - **Critical chain = outline, never fill.** **Off by default**; toggle in the
   status bar. Links are never drawn as the chain.
 - Task names sit **beside** bars.
+- **A summary carries its colour as it is**, the default blue when it has
+  none (`barBackground`; the figure's `colorOf` follows): its thin shape sets
+  it apart from its leaves, not a second shade.
 - **Bar shape = `--radius-bar`**, the app's small-radius family. The summary
   takes its own smaller radius, sized to its height; the milestone diamond
   restates its own; the today scale chip stays a pill (a chip, not a bar).
@@ -358,7 +363,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - **A layer over the bars (`.pace-layer`), not markup inside them**: dhtmlx
   replaces a bar's node on refresh and selection ([dhtmlx.md](dhtmlx.md)).
   `pacePeriods.ts` decides what a gesture means; `paceHandles.ts` is the DOM.
-- **Nothing paints at rest**: the chrome comes up with `pace-period--hot`, set
+- **At rest a period shows a faint tick on each edge** and nothing else: the
+  chrome comes up with `pace-period--hot`, set
   on `mousemove` over the task's timeline row (a period's body lets the
   pointer through, so `:hover` never matches), and during a drag.
 - **A bar's percent labels (`.seg-pct`) show on that same hover only**, for
@@ -387,6 +393,12 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 
 ## Dependencies
 
+- **Links recede at rest in dark** (`--link-rest`) and come forward in
+  `--accent` under the pointer, as do those of the task pointed at
+  (`linkHover.ts`, a stylesheet rule keyed on `link_id`: a class would not
+  survive a redraw). In light the line grey is left as it is.
+- **A link pointed at offers a × beside the pointer** that removes it at once,
+  no question: undo is the way back. Double-click and its vendor confirm stay.
 - The link handle sits above the task label (`.gantt_link_control
   { z-index: 3 }`, `gantt.css`): the label used to cover the dot.
 - Only finish-to-start links: a left-handle drag is rejected in
@@ -401,6 +413,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - Two registers: **non-working days** grey (calendar-driven); **time off**
   red, shutdown on every row, absence on that person's rows. Only zero periods
   count as time off.
+- Time off has tokens of its own (`--band-timeoff`, `--band-timeoff-hatch`),
+  the danger pair in light and a quieter mix of it in dark.
 - Bands positioned in **pixels**, exact at every zoom. Time off paints twice:
   tint under bars + hatch over them.
 - Only non-working days can be dropped, by **width** (below the hairline

@@ -795,13 +795,19 @@
   font-size: 12px;
 }
 
-/* p.dialog__hint's own text swaps (normal vs milestone); this pins the area's
-   height to the taller of the two so the row doesn't jump mid-typing. Measured
-   in the browser (both variants render at 48px at this dialog's width — not
-   derived), not from a line-height calculation — see docs/view.md § Details
-   dialog. */
-.taskinfo__intro {
-  min-height: 48px;
+/* What the engine derived, folded away until asked for. The summary keeps the
+   subhead's grammar and adds the two figures in plain ink beside it. */
+.taskinfo__computed > summary {
+  cursor: pointer;
+}
+
+.taskinfo__brief {
+  margin-left: var(--space-2);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Wrapped in .dialog__field (dialog.css), which occupies the grid track; this
@@ -857,13 +863,6 @@
 .taskinfo__hint {
   font-size: 11px;
   color: var(--ink-faint);
-}
-
-/* Same element, same text, kept in flow so its slot still holds the row's
-   height — a milestone typed mid-edit, or a summary's Effort cell, hides the
-   text rather than removing it. */
-.taskinfo__hint--reserved {
-  visibility: hidden;
 }
 
 /* Free text, so it grows the way a paragraph does — horizontal resize would

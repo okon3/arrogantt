@@ -40,6 +40,10 @@
      washes a saturated fill out instead of reading as a weekend over it — a
      plain black at low alpha darkens whatever it sits on instead. */
   --band-nonworking-over: rgb(0 0 0 / 7%);
+  /* Time off on the chart, apart from --danger so a scheme can quieten the
+     bands without quietening an error notice. */
+  --band-timeoff: var(--danger-soft);
+  --band-timeoff-hatch: var(--danger-line);
 
   /* A surface that stands against the ink rather than beside it: the brand
      expansion and the load tooltip are labels laid over the plan, and in dark
@@ -120,6 +124,9 @@
        scheme, not one shared with a second name. Merging them would tie the
        lane's veil back to the chart's, which light cannot afford. */
     --band-nonworking-over: rgb(0 0 0 / 18%);
+    /* On dark rows the full brick red is the loudest thing on the chart. */
+    --band-timeoff: color-mix(in srgb, var(--danger-soft) 55%, transparent);
+    --band-timeoff-hatch: color-mix(in srgb, var(--danger-line) 45%, transparent);
 
     --inverse-surface: #333944;
     --inverse-ink: #eef0f4;

@@ -8,7 +8,7 @@ import {
   type ProjectTask,
   type SolvedProject,
 } from './project';
-import { resourceClass, shade } from './colors';
+import { resourceClass } from './colors';
 import { reportedCost } from './cost';
 import { drawsProfile } from './segmentBar';
 import { hasShare } from './taskShare';
@@ -104,9 +104,9 @@ export function toGanttData(project: Project, solved: SolvedProject, chain: Mark
 /**
  * The background dhtmlx should paint, or empty to leave it to the stylesheet.
  *
- * A shared bar stays pale because its colour lives in the profile inside it, and
- * a summary takes a darkened shade so the macro task carries its own colour
- * without looking like one of the leaves below it.
+ * A shared bar stays pale because its colour lives in the profile inside it. A
+ * summary carries the colour as it is: its shape sets it apart from the leaves
+ * below it, not a second shade of what the user picked.
  */
 export function barBackground(
   color: string | undefined,
@@ -114,7 +114,7 @@ export function barBackground(
   summary: boolean,
 ): string {
   if (!color) return '';
-  if (summary) return shade(color, 0.55);
+  if (summary) return color;
   return profiled ? '' : color;
 }
 

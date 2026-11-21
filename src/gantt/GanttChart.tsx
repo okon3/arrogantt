@@ -19,6 +19,7 @@ import {
   WHEEL_ZOOM_COOLDOWN,
 } from './zoomLevels';
 import { fitRangeToPlan, repinRangeToScale, appliedScrollX } from './timelineGeometry';
+import { installLinkHover } from './linkHover';
 import { installPaceHandles } from './paceHandles';
 import { mountOverlays, nonWorkingSpans, paintBands, placeTodayLine } from './timelineOverlays';
 import { isContended, type ShareOverride } from '../scheduler';
@@ -1291,6 +1292,8 @@ export function GanttChart({
       reject: (message) => rejectRef.current?.(message),
     });
 
+    const detachLinkHover = installLinkHover(container);
+
     loadProject(projectRef.current);
 
     /**
@@ -1355,6 +1358,7 @@ export function GanttChart({
       gantt.ext.tooltips.tooltip.hide();
       overlays.detach();
       detachPaceHandles();
+      detachLinkHover();
       gantt.ext.zoom.detachEvent(zoomHandler);
       container.removeEventListener('wheel', zoomOnWheel, true);
       container.removeEventListener('contextmenu', openRowMenu);
