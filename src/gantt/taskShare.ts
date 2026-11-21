@@ -45,9 +45,17 @@ const isPeriodDay = (value: unknown): value is number =>
  * Two periods of one task may not share a day (adjacent is fine): a period is
  * then what the bar shows on its days, with no ordering rule behind it.
  */
-export function parseTaskShare(share: unknown, overrides: unknown): TaskShare {
+export function parseTaskShare(
+  share: unknown,
+  overrides: unknown,
+  /** The task's end is declared, so it closes whatever it runs at. */
+  fixedDates = false,
+): TaskShare {
   const parsed: TaskShare = {};
-  if (share !== undefined) {
+  if (share === 0 && fixedDates) {
+    // Work that weighed on nobody: the one task a default of zero can end.
+    parsed.share = 0;
+  } else if (share !== undefined) {
     // A default of zero never finishes: the scheduler would stall on it.
     if (share === 0) {
       throw new Error('A share of 0 would never finish the task: pause it with a period at 0 instead');

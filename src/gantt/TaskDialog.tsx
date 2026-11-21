@@ -148,9 +148,11 @@ export function TaskDialog({
     let pace: ReturnType<typeof parseTaskShare> = {};
     try {
       // The file's gate, so the dialog cannot store what Save would refuse.
+      // The share kept goes through it too: 0 holds only while the end is fixed.
       pace = parseTaskShare(
-        shareEdited && shareTyped !== '' ? Number(shareTyped) / 100 : undefined,
+        !shareEdited ? (paced ? task.share : undefined) : shareTyped !== '' ? Number(shareTyped) / 100 : undefined,
         paced ? paceDays(sharePeriods) : undefined,
+        fixed,
       );
     } catch (problem) {
       setError((problem as Error).message);
@@ -369,7 +371,7 @@ export function TaskDialog({
                 />
                 <span className="dialog__suffix">%</span>
               </span>
-              by default (empty: not fixed)
+              by default (empty: not fixed{fixed ? '; 0: weighs on nobody' : ''})
             </span>
             <PeriodRowList<DatedSharePeriod>
               periods={sharePeriods}

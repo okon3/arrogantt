@@ -432,7 +432,13 @@ export function createAgentApi(host: AgentHost): AgentApi {
         throw new Error(`fixedEnd: ${serializeDate(endKept)} comes before the start, ${serializeDate(start)}`);
       }
       // The file's own gate, so a script cannot write what Save would refuse.
-      const pace = parseTaskShare(patch.share ?? undefined, patch.shareOverrides ?? undefined);
+      // The share the task keeps goes through it too: one left at 0 is only
+      // sound while the end is fixed.
+      const pace = parseTaskShare(
+        patch.share === undefined ? current.share : (patch.share ?? undefined),
+        patch.shareOverrides ?? undefined,
+        Boolean(endKept),
+      );
       requireTaskFields(patch);
       requireKnownResource(patch.resourceId);
       chart().updateTask(id, {

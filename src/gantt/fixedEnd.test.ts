@@ -14,6 +14,7 @@ import {
   type ProjectTask,
 } from './project';
 import { deserializeProject, serializeForFile, serializeProject } from './serialization';
+import { parseTaskShare } from './taskShare';
 
 /** Monday 7 September 2026 is day 0. */
 const open = (dayOffset: number) => new Date(2026, 8, 7 + dayOffset, 8, 0);
@@ -162,6 +163,25 @@ describe('a fixed end in the file', () => {
   });
 });
 
+describe('a default share of zero', () => {
+  it('is a share only where the end is fixed', () => {
+    expect(parseTaskShare(0, undefined, true)).toEqual({ share: 0 });
+    expect(() => parseTaskShare(0, undefined)).toThrow(/would never finish/);
+  });
+
+  it('solves to a bar that takes nothing, and reopens from its file', () => {
+    const plan = project([leaf('extra', { fixedEnd: close(4), share: 0 }), leaf('b', { nominalDays: 3 })]);
+    const reopened = deserializeProject(serializeForFile(plan, solve(plan)));
+    expect(reopened.tasks[0]).toMatchObject({ share: 0, fixedEnd: close(4) });
+    expect(spanOf(solve(reopened), 'b')).toEqual([open(0), close(2)]);
+  });
+
+  it('is refused in a file with no fixed end beside it', () => {
+    const text = serializeProject(project([leaf('a', { share: 0 })]));
+    expect(() => deserializeProject(text)).toThrow(/would never finish/);
+  });
+});
+
 describe('agent API fixedEnd', () => {
   const details: TaskDetails = {
     id: 't1',
@@ -224,6 +244,19 @@ describe('agent API fixedEnd', () => {
     expect(() => api.updateTask('t1', { fixedEnd: '2026-09-08T17:00' })).toThrow(/comes before the start/);
     expect(() => api.updateTask('t1', { start: '2026-09-14T08:00' })).toThrow(/comes before the start/);
     expect(handle.updateTask).not.toHaveBeenCalled();
+  });
+
+  it('takes a share of zero with a fixed end, and keeps the end while the share is zero', () => {
+    const { api, handle } = harness();
+    api.updateTask('t1', { fixedEnd: '2026-09-11T17:00', share: 0 });
+    expect(handle.updateTask).toHaveBeenLastCalledWith('t1', expect.objectContaining({ share: 0 }));
+    expect(() => api.updateTask('t1', { share: 0 })).toThrow(/would never finish/);
+
+    const paused = harness({ ...details, fixedEnd: close(3), share: 0 });
+    expect(() => paused.api.updateTask('t1', { fixedEnd: null })).toThrow(/would never finish/);
+    expect(paused.handle.updateTask).not.toHaveBeenCalled();
+    paused.api.updateTask('t1', { fixedEnd: null, share: null });
+    expect(paused.handle.updateTask).toHaveBeenCalledTimes(1);
   });
 
   it('refuses it on a summary and on addTask', () => {

@@ -310,7 +310,10 @@ export function deserializeProject(text: string): Project {
       if (description.length > 0) task.description = description;
     }
     try {
-      Object.assign(task, parseTaskShare(record.share, record.shareOverrides));
+      Object.assign(
+        task,
+        parseTaskShare(record.share, record.shareOverrides, record.fixedEnd !== undefined),
+      );
     } catch (problem) {
       throw new ProjectFileError(`tasks[${index}]: ${(problem as Error).message}`);
     }

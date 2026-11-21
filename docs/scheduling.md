@@ -62,7 +62,8 @@ start to that end whatever happens around it.
   successors wait for the declared end.
 - **Still takes its part of its person** while it runs, by the ordinary split
   and its own share: the tasks beside it are slowed until it closes, then
-  freed. At a share of zero it takes nothing — work done in the background.
+  freed. At a share of zero it takes nothing — work done in the background;
+  `parseTaskShare` takes a default of zero on a fixed task and on no other.
 - **Anchored at its start even with its person away** (an ordinary task
   anchors at the first capacity). A share of zero to the end is not a stall.
 - An end at or before the start is a task of no length; it is **not** a

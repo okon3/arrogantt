@@ -87,7 +87,7 @@ versions, a negative or non-numeric daily rate, a rate period with no numeric
 `dailyRate`, a rate period with a malformed `YYYY-MM-DD` day, a `currency` that
 is blank, padded, not a string, or over 8 characters, a task `share` that is
 not a finite number from `MIN_SHARE` (1%) up to 1 (a default of zero never
-finishes — a pause is a period), a share period whose `fromDay` or `toDay` is not
+finishes — a pause is a period — and is a share only beside a `fixedEnd`), a share period whose `fromDay` or `toDay` is not
 a whole number from 0 to `MAX_PERIOD_DAY`, with `fromDay` after `toDay`,
 carrying a `from` or `to` (the dated shape of an unreleased draft: refused,
 never converted), or whose `share` is not 0 or a finite number from

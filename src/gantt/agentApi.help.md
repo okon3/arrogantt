@@ -278,8 +278,9 @@ dates**: it runs from its `start` to the close of that day whatever the plan
 does around it — record that something finished yesterday, or block out a
 workshop. No dependency holds it any longer, and what follows it waits for the
 declared end. It still takes its part of its person meanwhile, so the tasks
-beside it speed up once it closes; add `shareOverrides` at `share: 0` over its
-days for work that weighed on nobody. `nominalDays` is kept as the estimate and
+beside it speed up once it closes; pass `share: 0` with it for work that
+weighed on nobody — a default of zero is accepted on a fixed task only, and
+`fixedEnd: null` then throws unless the share is changed in the same call. `nominalDays` is kept as the estimate and
 unused. A closed day becomes the working day before; a day before the `start`
 throws. `null` hands the end back to the engine. It has no float and is absent
 from `getCriticalChain()`.
