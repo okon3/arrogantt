@@ -2,58 +2,28 @@
 
 ## v1.7 — 2026-11-21
 
-- Give a person a colour in People (click their face): their avatar takes
-  it, and so does every task that is theirs alone and has no colour of its
-  own. A colour set on a task or on its group still wins.
-- Take a colour off a task with "Auto" in its detail dialog.
-- A dependency on a task inside a closed group no longer goes unseen: a small
-  arrow sits beside the bar, and pointing at the bar draws the arrow to the
-  group and names the tasks it waits for or leads to.
+- Give a person a colour in People: their avatar and their tasks take it,
+  unless a task or its group has a colour of its own.
+- A group's bar takes the colour of its tasks. Grey joins the colours, and
+  "Auto" takes a colour off a task.
+- A dependency into a closed group shows as a small arrow beside the bar:
+  point at the bar to see where it goes.
 - Remove a dependency with the × that appears when you point at its arrow.
-  Pointing at a task brings its arrows forward, so a busy plan stays readable.
-- A task's pace periods leave a faint mark on its bar, so you can tell they
-  are there without pointing at it.
-- The task detail dialog is shorter: the computed figures are folded away
-  until you open them, with the end date and duration always in sight.
-- A group's bar takes the same colour as its tasks, blue included. Grey joins
-  the colours to pick from.
-- See when a person's availability or rate period is overridden by one added
-  below it: the earlier row says on how many days, or that it no longer
-  applies at all.
-- Give a task a description: free text in its detail dialog, for groups as
-  well as single tasks, where the title alone does not carry what you mean.
-  It comes out with the CSV export and is readable by a script.
-- Close the gaps in a group from its right-click menu: linked tasks inside
-  move up to start right after what they wait for.
-- Set a task's pace in its detail dialog: fix it at an exact share of its
-  person's time, for the whole task or for chosen periods, and the rest of
-  their time goes to their other tasks. A period at 0% pauses the task.
-  Right-click a bar and pick "Set pace from here" to start a period on the
-  day you point at. Or set and adjust periods directly on the bar:
-  double-click a day to start one, drag its edges to cover more days, drag
-  its level up or down to change the percentage. A new period starts at the
-  pace the task already has there, so adding it moves nothing. The periods
-  of one task can no longer overlap.
-- Set a task's end yourself: type an End in its detail dialog and the bar
-  runs from its start to that day, whatever the plan does around it. For
-  work that finished early, or for a date that is simply given. A pin beside
-  the name marks it. Clear the End and the scheduler works it out again.
-  Drag the bar to move it whole, or one of its edges to change that date.
-- Add work that was done in the background: give a task with a set end a
-  default pace of 0% and it sits on the plan without taking time from the
-  tasks beside it.
-- Pace periods belong to their task and move with it: drag the bar, change
-  its start, or let whatever comes before it push it, and its periods stay
-  on the same days of the task. A period never runs past the end of its
-  task: when the task gets shorter the period is cut back with it.
-- The percentages on a bar now show only while you point at it, so a plan
-  at rest reads as shapes instead of a wall of figures.
+- Close the gaps in a group from its right-click menu.
+- Give a task a description in its detail dialog. It comes out in the CSV.
+- Set a task's pace: an exact share of its person's time, for the whole task
+  or for periods (0% pauses it), in its dialog or by dragging on the bar.
+- Set a task's end yourself in its detail dialog: the bar keeps those dates
+  whatever the plan does. Drag it, or its edges, to change them.
+- Add work done in the background: with a set end and a pace of 0%, a task
+  takes no time from the ones beside it.
+- The task detail dialog is shorter: the computed figures are folded away.
+- In People, a period overridden by a later one says so.
 
 ## v1.6 — 2026-09-23
 
 - Hide the grid and choose its columns from the status bar, beside Collapse
-  and Expand: what changes the view sits under the chart, and the toolbar is
-  left to the file, the exports and the plan itself.
+  and Expand.
 - A disabled task now reads as disabled everywhere: its whole row in the grid
   goes quiet and its name is struck through, not just the name greyed.
 - Leave the disabled tasks out of an exported or printed picture, so what you
@@ -74,9 +44,8 @@
 ## v1.3 — 2026-09-18
 
 - Pick which columns the grid shows, remembered across a reload.
-- See what the plan costs: a daily rate per person, rolled up on every summary
-  and totalled in the status bar. Rates can change over time, and the CSV
-  export carries them.
+- See what the plan costs: a daily rate per person, changeable over time,
+  rolled up on every summary and totalled in the status bar.
 - Set the plan's currency in the People dialog.
 
 ## v1.2 — 2026-09-08

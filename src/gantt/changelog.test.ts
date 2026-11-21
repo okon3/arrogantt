@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { parseChangelog } from './changelog';
+import { CHANGELOG_ENTRIES } from './changelogEntries';
+
+describe('CHANGELOG.md', () => {
+  it('says each thing in two lines at most', () => {
+    const long = CHANGELOG_ENTRIES.flatMap((entry) =>
+      entry.notes.filter((note) => note.length > 160).map((note) => `${entry.version}: ${note}`),
+    );
+    expect(long).toEqual([]);
+  });
+});
 
 describe('parseChangelog', () => {
   it('parses entries newest first, as declared', () => {

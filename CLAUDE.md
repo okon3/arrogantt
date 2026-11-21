@@ -204,7 +204,8 @@ test, an assertion, a script or a lint rule comes first; a line here or in
 before adding.
 
 **Changelog.** A significant feature adds a bullet to `CHANGELOG.md` in the same
-commit — what a user can now do, never fixes, plumbing, internals or markdown
+commit — what a user can now do, in two lines at most (a test holds it; how it
+works is the help's job), never fixes, plumbing, internals or markdown
 markup (the dialog renders plain text). Bullets accumulate under `## Unreleased`,
 which stays first in the file; releasing = renaming that heading to
 `## v<next-minor> — <today>`, proposed at a natural wrap-up and always confirmed

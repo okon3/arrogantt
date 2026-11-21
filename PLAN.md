@@ -234,8 +234,8 @@ stima/consuntivo in questo giro** (resta Goal J).
 **Guidato nell'app con mouse CDP**: bordo destro, bordo sinistro, barra
 intera oltre un weekend. **Non guidato**: edit dello start in griglia, figura
 PNG/CSV/stampa, tema chiaro, convivenza con le maniglie del ritmo. Nessun
-critic e' corso. L'esperimento del blocco (branch
-`worktree-agent-a947b9a250e6db43b`) e' superato e non unito.
+critic e' corso. L'esperimento del blocco e' superato: branch e worktree
+cancellati (era il commit `934aa38`).
 
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
