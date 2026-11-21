@@ -204,14 +204,9 @@ test, an assertion, a script or a lint rule comes first; a line here or in
 before adding.
 
 **Changelog.** A significant feature adds a bullet to `CHANGELOG.md` in the same
-commit — what a user can now do, in two lines at most (a test holds it; how it
-works is the help's job), never fixes, plumbing, internals or markdown
-markup (the dialog renders plain text). Bullets accumulate under `## Unreleased`,
-which stays first in the file; releasing = renaming that heading to
-`## v<next-minor> — <today>`, proposed at a natural wrap-up and always confirmed
-by the user before the rename. Major bump only for a breaking change to the
-`.gantt` file format. Recent releases only: git is the full record. Parser
-rules: `src/gantt/changelog.test.ts`.
+commit, under `## Unreleased`; a release is always confirmed by the user. How a
+bullet is written, ordered and released: the `changelog` skill
+(`.claude/skills/changelog/SKILL.md`) — read it before touching the file.
 
 ## Conventions
 

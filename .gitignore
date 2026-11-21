@@ -28,6 +28,7 @@ dist-ssr
 # how this project is run, so pruning them has to be recoverable.
 .claude/*
 !.claude/orchestrate.md
+!.claude/skills/
 
 # Reference screenshots of other products: local material, never published.
 inspiration_ui/

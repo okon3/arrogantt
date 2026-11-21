@@ -2,23 +2,20 @@
 
 ## v1.7 — 2026-11-21
 
-- Give a person a colour in People: their avatar and their tasks take it,
-  unless a task or its group has a colour of its own.
-- A group's bar takes the colour of its tasks. Grey joins the colours, and
-  "Auto" takes a colour off a task.
-- A dependency into a closed group shows as a small arrow beside the bar:
-  point at the bar to see where it goes.
-- Remove a dependency with the × that appears when you point at its arrow.
-- Close the gaps in a group from its right-click menu.
-- Give a task a description in its detail dialog. It comes out in the CSV.
-- Set a task's pace: an exact share of its person's time, for the whole task
-  or for periods (0% pauses it), in its dialog or by dragging on the bar.
-- Set a task's end yourself in its detail dialog: the bar keeps those dates
-  whatever the plan does. Drag it, or its edges, to change them.
-- Add work done in the background: with a set end and a pace of 0%, a task
-  takes no time from the ones beside it.
-- The task detail dialog is shorter: the computed figures are folded away.
-- In People, a period overridden by a later one says so.
+- 📌 **Fixed dates.** Type an End in a task's dialog and its bar stays on
+  those dates whatever the plan does. Drag it, or its edges, to change them.
+- **Background work.** A task with fixed dates and a pace of 0% sits on the
+  plan without taking time from the ones beside it.
+- ⏱️ **Pace.** Run a task at an exact share of its person's time, for all of
+  it or for periods (0% pauses it), from its dialog or by dragging on the bar.
+- **Close the gaps** in a group from its right-click menu.
+- **Dependencies you can read.** One into a closed group shows as a small
+  arrow beside the bar, and the × on an arrow removes it.
+- 🎨 **A colour per person.** Pick one in People: their avatar and their
+  tasks take it, unless a task or its group has its own.
+- **Descriptions.** Free text on any task, in its dialog and in the CSV.
+- **Smaller touches.** A shorter task dialog, a group's bar in its tasks'
+  colour, grey among the colours, and overridden periods flagged in People.
 
 ## v1.6 — 2026-09-23
 

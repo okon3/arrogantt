@@ -25,7 +25,10 @@ export function ChangelogDialog({ onClose }: { onClose(): void }) {
           </h3>
           <ul>
             {entry.notes.map((note, index) => (
-              <li key={index}>{note}</li>
+              // `**name**` is the one piece of markup a note carries.
+              <li key={index}>
+                {note.split('**').map((part, at) => (at % 2 ? <strong key={at}>{part}</strong> : part))}
+              </li>
             ))}
           </ul>
         </section>
