@@ -21,7 +21,7 @@ import {
 import { fitRangeToPlan, repinRangeToScale, appliedScrollX } from './timelineGeometry';
 import { hiddenLinksOf } from './hiddenLinks';
 import { installLinkHover } from './linkHover';
-import { glideScrollX } from './motion';
+import { barRects, glideBars, glideScrollX } from './motion';
 import { installPaceHandles } from './paceHandles';
 import { installRolledLinks } from './rolledLinks';
 import { mountOverlays, nonWorkingSpans, paintBands, placeTodayLine } from './timelineOverlays';
@@ -308,10 +308,12 @@ export function GanttChart({
         ganttTask.daily_rates = [...cost.dailyRates];
       }
       writeChainOntoRows(projectRef.current, chainRef.current);
+      const drawn = barRects();
       // refreshData redraws from the mutated task objects without firing the
       // update events that would bounce straight back into this function.
       gantt.refreshData();
       fitRangeToPlan(solved.schedule);
+      glideBars(drawn);
       applyingRef.current = false;
       reportChainState();
       if (notify) changeRef.current?.();
@@ -385,6 +387,8 @@ export function GanttChart({
         markCriticalRef.current,
         options?.keepViewport ? chainRef.current : null,
       );
+      // Undo and redo only: a file or a new plan has nothing to slide from.
+      const drawn = options?.keepViewport ? barRects() : new Map<string, DOMRect>();
       gantt.clearAll();
       const data = toGanttData(next, solvedRef.current, chainRef.current);
       // Written into the data rather than onto the tasks afterwards, which would
@@ -404,6 +408,7 @@ export function GanttChart({
       if (scroll) gantt.scrollTo(scroll.x, scroll.y);
       // The row may be one of those the undone change had created.
       if (selected && gantt.isTaskExists(selected)) gantt.selectTask(selected);
+      glideBars(drawn);
       reportChainState();
     },
     [reportChainState, rebuildColumns],

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **The chart moves.** After an edit or an undo, the bars it shifted slide to
+  their new dates, so you see what it moved. Dialogs and menus ease in.
+
 ## v1.7 — 2026-11-21
 
 - 📌 **Fixed dates.** Type an End in a task's dialog and its bar stays on
