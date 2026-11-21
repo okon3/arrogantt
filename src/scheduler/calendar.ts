@@ -130,15 +130,17 @@ export class WorkingCalendar {
   /** Inverse of `workingDaysBefore`: the day index holding the nth working day. */
   private dayOfNthWorkingDay(n: number): number {
     // Start from the holiday-free estimate, then keep pushing it out by however
-    // many holidays the span swallowed. Each pass can only reveal holidays
-    // further along, so this settles in a couple of rounds.
+    // many holidays the span swallowed, the day landed on included. The target
+    // only ever grows and never passes the answer, so it settles on it; a
+    // landing on a holiday counts that holiday and therefore cannot settle.
+    // Nudging past such a landing by hand breaks the monotonicity and makes the
+    // search bounce between two closures.
     let target = n;
-    for (let pass = 0; pass < 64; pass++) {
+    for (let pass = 0; pass <= this.holidays.length; pass++) {
       const day = this.weeklyNthWorkingDay(target);
       const skipped = this.holidaysBefore(day + 1);
-      if (target === n + skipped && this.isWorkingDay(day)) return day;
+      if (target === n + skipped) return day;
       target = n + skipped;
-      if (!this.isWorkingDay(day)) target++;
     }
     throw new Error('Calendar could not resolve a working day: too many holidays');
   }
