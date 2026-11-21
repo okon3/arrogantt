@@ -21,6 +21,7 @@ import {
 import { fitRangeToPlan, repinRangeToScale, appliedScrollX } from './timelineGeometry';
 import { hiddenLinksOf } from './hiddenLinks';
 import { installLinkHover } from './linkHover';
+import { glideScrollX } from './motion';
 import { installPaceHandles } from './paceHandles';
 import { installRolledLinks } from './rolledLinks';
 import { mountOverlays, nonWorkingSpans, paintBands, placeTodayLine } from './timelineOverlays';
@@ -721,7 +722,15 @@ export function GanttChart({
       collapseAll: () => setEveryBranchOpen(false),
       expandAll: () => setEveryBranchOpen(true),
       collapsedBranches: () => collapsedBranches(),
-      scrollToToday: () => gantt.showDate(new Date()),
+      scrollToToday: (glide) => {
+        if (!glide) return gantt.showDate(new Date());
+        // showDate picks the target; it is undone before the frame paints.
+        const from = gantt.getScrollState().x;
+        gantt.showDate(new Date());
+        const to = gantt.getScrollState().x;
+        gantt.scrollTo(from, null);
+        glideScrollX(to);
+      },
       toggleGridCollapsed: () => {
         const grid = gantt.$grid;
         if (!grid) return;

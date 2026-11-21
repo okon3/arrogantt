@@ -58,6 +58,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - Durations and curve only from `--motion-fast`, `--motion-base`, `--ease-out`;
   `prefers-reduced-motion: reduce` zeroes both durations, so nothing moves.
 - Entries only: dialogs and menus unmount on close, so there is no exit to time.
+- **Today glides; Fit, zoom and the agent's `showToday()` jump**: a zoom moves
+  everything at once, and a script's screenshot must find the scroll landed.
 
 ## Zoom and timeline range
 

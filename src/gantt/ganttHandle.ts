@@ -101,7 +101,8 @@ export interface GanttHandle {
   expandAll(): void;
   /** The branches closed in the grid, by task id. View state, read-only. */
   collapsedBranches(): ReadonlySet<string>;
-  scrollToToday(): void;
+  /** `glide` animates the scroll; a script's screenshot needs it to land at once. */
+  scrollToToday(glide?: boolean): void;
   /**
    * Collapses the task grid to zero width, or restores it to the width it had
    * a moment before — exactly, even across a divider drag in between. View

@@ -1092,7 +1092,7 @@ export default function App() {
         onOpenColumnPicker={openColumnPicker}
         onCriticalChain={handleCriticalChain}
         onToggleLoad={() => setShowLoad((shown) => !shown)}
-        onToday={() => chart.current?.scrollToToday()}
+        onToday={() => chart.current?.scrollToToday(true)}
         onZoomIn={() => chart.current?.zoomIn()}
         onZoomOut={() => chart.current?.zoomOut()}
         onZoomToFit={() => chart.current?.zoomToFit()}
