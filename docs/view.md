@@ -197,7 +197,11 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   estimate. On the grid a fixed task's Effort cell is the work that went in:
   derived, so not editable. The bar's name carries a pin.
 - **Dragging a fixed bar moves it whole** (`moveFixed`): same working-day
-  length. Its edges are not draggable: `drag_resize` stays off.
+  length. **Its edges drag**, each to the working day it is left on.
+  `drag_resize` is on for that alone: `onBeforeTaskDrag` refuses a resize of
+  any other bar, and the stylesheet hides their handles.
+- `pullFromView` tells the two apart by the row: both ends off the solved
+  dates is a move, one is an edge.
 - A dependency drawn into a fixed task is kept and inert.
 - **The description is a dialog-only field**: a textarea last in the grid, on
   summaries as much as on leaves. It has no surface on the chart — no row

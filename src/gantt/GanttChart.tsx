@@ -769,9 +769,10 @@ export function GanttChart({
     // honest input, and `constraintStart` snaps it to the working day it fell
     // on — a scale the plan can always show.
     gantt.config.round_dnd_dates = false;
-    // The end date is computed, never typed or dragged, so the right bar handle
-    // would offer an edit the engine immediately overwrites.
-    gantt.config.drag_resize = false;
+    // On for the one kind of bar whose end is an input: a task with fixed
+    // dates. Everywhere else the end is computed, and `onBeforeTaskDrag`
+    // refuses an edit the engine would immediately overwrite.
+    gantt.config.drag_resize = true;
     gantt.config.drag_progress = true;
     gantt.config.drag_links = true;
     gantt.config.details_on_dblclick = false;
@@ -944,11 +945,26 @@ export function GanttChart({
       // and cost a second, invisible undo step.
       const offered = new Date(ganttTask.start_date as Date);
       if (task.fixedEnd) {
-        // The same double report: the second finds the day it already has.
-        Object.assign(
-          task,
-          moveFixed(task, offered, solvedRef.current, projectRef.current.calendar),
-        );
+        const scheduled = solvedRef.current.schedule.tasks.get(task.id);
+        const end = new Date(ganttTask.end_date as Date);
+        // Both ends off the solved ones is the bar carried whole; one is an
+        // edge dragged. The row is the only witness: dhtmlx reports the update
+        // before it says which drag it was. The second report finds the row
+        // on the solved dates, and writes the days it already has.
+        if (
+          scheduled &&
+          offered.getTime() !== scheduled.start.getTime() &&
+          end.getTime() !== scheduled.end.getTime()
+        ) {
+          Object.assign(
+            task,
+            moveFixed(task, offered, solvedRef.current, projectRef.current.calendar),
+          );
+        } else {
+          const { calendar } = solvedRef.current;
+          task.start = calendar.startOfWorkingDay(offered);
+          task.fixedEnd = fixedEndOn(calendar, task.start, end);
+        }
       } else {
         task.start = constraintStart(task, offered, solvedRef.current);
       }
@@ -1244,6 +1260,11 @@ export function GanttChart({
         applySolution();
         return true;
       }, undefined),
+      gantt.attachEvent(
+        'onBeforeTaskDrag',
+        (id, mode) => mode !== gantt.config.drag_mode.resize || Boolean(gantt.getTask(id).fixed),
+        undefined,
+      ),
       gantt.attachEvent('onAfterTaskDrag', (id) => {
         if (applyingRef.current) return true;
         pullFromView(id);

@@ -505,6 +505,21 @@ html:root[data-gantt-theme='dark'] {
   filter: saturate(0.3);
 }
 
+/* Only fixed dates have an edge to drag: the handles would otherwise show on
+   every bar and offer an end the engine computes. */
+.gantt_task_line:not(.gantt-bar--fixed):hover .gantt_task_drag {
+  display: none;
+}
+
+/* Inside the bar: where the vendor hangs them, the link dots cover them. */
+.gantt_task_line.gantt-bar--fixed .gantt_task_drag.task_left {
+  left: 0;
+}
+
+.gantt_task_line.gantt-bar--fixed .gantt_task_drag.task_right {
+  right: 0;
+}
+
 /* A zero-effort task is a point on the plan, and dhtmlx draws it as a square
    rotated 45°. The bar element itself is `visibility: hidden` there — only its
    content shows — so anything meant to be seen has to sit on the content, the

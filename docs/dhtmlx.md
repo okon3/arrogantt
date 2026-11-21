@@ -243,10 +243,13 @@ library. Each bullet is a constraint or a fact; how it was found is in git.
 - **`round_dnd_dates` defaults to true and rounds to the finest on-screen
   scale cell.** Off here; `constraintStart` snaps to the working day instead,
   after deciding the start is a constraint at all.
-- **One drag fires `onAfterTaskDrag` and `onAfterTaskUpdate`**, and by the
-  second `applySolution` has written the solved start onto the row.
+- **One drag fires `onAfterTaskUpdate`, then `onAfterTaskDrag`** — the update
+  first, before anything says which drag it was — and by the second
+  `applySolution` has written the solved dates onto the row.
   `pullFromView` accepts a start only while ≠ solved, or derived turns into
   input and the drag lands twice in undo.
+- **The resize handles hang outside the bar, under the link dots**, which
+  take the press. Moved inside the bar for the bars that have them.
 - **Dragging from the left handle creates a type-1 (start-to-start) link**,
   and `syncLinks` reads every link as finish-to-start. Refuse non-FS in
   `onBeforeLinkAdd`; the type is a view concept.

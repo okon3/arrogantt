@@ -6,7 +6,8 @@
   its start to that day, whatever the plan does around it. Record that
   something finished early, or add work that was done in the background (set
   its pace to 0%) without the rest of the plan stretching. Clear the End to
-  hand the task back to the scheduler. Dragging a fixed bar moves it whole.
+  hand the task back to the scheduler. Dragging a fixed bar moves it whole,
+  and dragging one of its edges changes that date.
 
 ## v1.7 — 2026-11-21
 
