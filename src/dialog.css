@@ -233,5 +233,6 @@
 }
 
 .dialog__error {
-  animation: refused var(--motion-base) var(--ease-out);
+  --refused-pad: var(--space-5);
+  animation: refused calc(var(--motion-base) * 2) linear;
 }

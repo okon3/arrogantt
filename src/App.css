@@ -1467,5 +1467,6 @@
 }
 
 .app__error {
-  animation: refused var(--motion-base) var(--ease-out);
+  --refused-pad: 12px;
+  animation: refused calc(var(--motion-base) * 2) linear;
 }

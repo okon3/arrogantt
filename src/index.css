@@ -183,7 +183,11 @@ button:focus-visible {
   }
 }
 
+/* Moves the text inside its own padding (--refused-pad, the element's side
+   padding): a translate pushes a full-width box past its scroller's edge. */
 @keyframes refused {
-  25% { translate: -4px 0; }
-  75% { translate: 4px 0; }
+  20% { padding-inline: calc(var(--refused-pad) - 5px) calc(var(--refused-pad) + 5px); }
+  40% { padding-inline: calc(var(--refused-pad) + 5px) calc(var(--refused-pad) - 5px); }
+  60% { padding-inline: calc(var(--refused-pad) - 3px) calc(var(--refused-pad) + 3px); }
+  80% { padding-inline: calc(var(--refused-pad) + 2px) calc(var(--refused-pad) - 2px); }
 }
