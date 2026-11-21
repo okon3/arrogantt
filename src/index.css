@@ -125,8 +125,8 @@
        lane's veil back to the chart's, which light cannot afford. */
     --band-nonworking-over: rgb(0 0 0 / 18%);
     /* On dark rows the full brick red is the loudest thing on the chart. */
-    --band-timeoff: color-mix(in srgb, var(--danger-soft) 55%, transparent);
-    --band-timeoff-hatch: color-mix(in srgb, var(--danger-line) 45%, transparent);
+    --band-timeoff: color-mix(in srgb, var(--danger-soft) 40%, transparent);
+    --band-timeoff-hatch: color-mix(in srgb, var(--danger-line) 28%, transparent);
 
     --inverse-surface: #333944;
     --inverse-ink: #eef0f4;

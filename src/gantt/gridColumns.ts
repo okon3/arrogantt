@@ -394,6 +394,12 @@ export function installRowTemplates(ctx: RowContext): void {
     const classes = [String(task.resource_classes ?? '')];
     if (task.is_summary) classes.push('gantt-bar--summary');
     else if (task.shared) classes.push('gantt-bar--shared');
+    // The vendor lifts the label of any task with an outgoing link, drawn or
+    // not: one into a closed branch lifts it over an arrow that is not there.
+    const drawn = (task.$source as (string | number)[] | undefined)?.some((linkId) =>
+      gantt.isTaskVisible(gantt.getLink(linkId).target),
+    );
+    if (!drawn) classes.push('gantt-bar--no-arrow');
     // Positioned but weightless — the engine guarantees a disabled task is
     // never also critical or shared, so this never has to compose with them.
     if (task.disabled) classes.push('gantt-bar--disabled');

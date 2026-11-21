@@ -33,6 +33,8 @@ export const COLOR_OPTIONS = [
   { key: '#147b38', label: 'Green' },
   { key: '#23a49e', label: 'Teal' },
   { key: '#327585', label: 'Petrol' },
+  // The one neutral, for a bar meant to recede; outside the ΔE figure above.
+  { key: '#6b7789', label: 'Grey' },
 ];
 
 /**

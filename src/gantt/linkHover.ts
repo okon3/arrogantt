@@ -1,7 +1,7 @@
 import { gantt } from 'dhtmlx-gantt';
 import { X } from 'lucide-static';
 
-/** Long enough to carry the pointer from a 2px line to the button beside it. */
+/** Long enough to carry the pointer along the line to the button on it. */
 const HIDE_DELAY_MS = 350;
 
 /**
@@ -52,10 +52,16 @@ export function installLinkHover(container: HTMLElement): () => void {
       pointed = link.getAttribute('link_id');
       if (!pointed) return;
       raise([pointed]);
+      // On the middle of the longest stretch, which is where the eye takes the
+      // arrow to be; the bounding box's centre can fall off an elbowed line.
+      const longest = [...link.querySelectorAll('.gantt_line_wrapper')]
+        .map((segment) => segment.getBoundingClientRect())
+        .sort((a, b) => b.width + b.height - (a.width + a.height))[0];
+      if (!longest) return;
       // `$task_data` moves with the scroll: no offset to add (docs/dhtmlx.md).
       const origin = gantt.$task_data.getBoundingClientRect();
-      remove.style.left = `${event.clientX - origin.left + 6}px`;
-      remove.style.top = `${event.clientY - origin.top - 20}px`;
+      remove.style.left = `${longest.left + longest.width / 2 - origin.left}px`;
+      remove.style.top = `${longest.top + longest.height / 2 - origin.top}px`;
       remove.hidden = false;
       return;
     }

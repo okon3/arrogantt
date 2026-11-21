@@ -8,7 +8,8 @@
   are there without pointing at it.
 - The task detail dialog is shorter: the computed figures are folded away
   until you open them, with the end date and duration always in sight.
-- A group's bar takes the same colour as its tasks, blue included.
+- A group's bar takes the same colour as its tasks, blue included. Grey joins
+  the colours to pick from.
 - See when a person's availability or rate period is overridden by one added
   below it: the earlier row says on how many days, or that it no longer
   applies at all.

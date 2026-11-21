@@ -95,7 +95,8 @@ library. Each bullet is a constraint or a fact; how it was found is in git.
   Anything of ours above a bar must let the pointer reach the handles.
 - **`.gantt_side_content.gantt_link_crossing` lifts the label on a task with
   an outgoing link** (vendor rule), which is why the handle is partly
-  reachable once a link exists and not before.
+  reachable once a link exists and not before. It reads the task's links, not
+  what is drawn: a link into a closed branch still lifts it.
 
 ## Rendering lifecycle
 

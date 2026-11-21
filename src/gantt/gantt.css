@@ -328,6 +328,12 @@ html:root[data-gantt-theme='dark'] {
   z-index: 3;
 }
 
+/* The vendor's lift is for an arrow leaving the bar; with none drawn (the
+   class is ours, gridColumns.ts) the label sits level with it. */
+.gantt_task_line.gantt-bar--no-arrow .gantt_side_content.gantt_link_crossing {
+  margin-top: 0;
+}
+
 /* Dependencies recede at rest, so a plan with many of them still reads as
    bars first. One comes forward under the pointer, and so do those of the
    task pointed at (linkHover.ts raises them with a rule of its own). */
@@ -362,9 +368,10 @@ html:root[data-gantt-theme='dark'] {
 }
 
 /* Removes the dependency pointed at (linkHover.ts). The pace period's own
-   button, by the pointer rather than on the line: a line is 2px. */
+   button, centred on the point linkHover.ts gives it. */
 .link-x {
   position: absolute;
+  margin: -8px 0 0 -8px;
   z-index: 3;
   width: 16px;
   height: 16px;
@@ -1215,17 +1222,16 @@ html:root[data-gantt-theme='dark'] {
   opacity: 0;
 }
 
+/* Inside the bar's height, where the strip that takes the pointer overhangs
+   it: the same tick at rest, pointed at and dragged, only brighter each time. */
 .pace-edge::before {
   left: 3.5px;
-  top: 0;
-  bottom: 0;
+  top: 6px;
+  bottom: 6px;
   width: 2px;
 }
 
-/* The tick at rest: inside the bar's height, where the handle overhangs it. */
 .pace-period:not(.pace-period--hot):not(.pace-period--dragging) .pace-edge::before {
-  top: 6px;
-  bottom: 6px;
   opacity: 0.45;
   box-shadow: none;
 }
@@ -1282,9 +1288,12 @@ html:root[data-gantt-theme='dark'] {
   opacity: 1;
 }
 
+/* The bar's own colour, lit: the accent is the app's, and a handle in it read
+   as something other than a part of the bar. `--pace-bar` is set per period
+   (paceHandles.ts); unmixed it would vanish on the fill it sits on. */
 .pace-period--dragging .pace-edge::before,
 .pace-period--dragging .pace-level::before {
-  background: var(--accent);
+  background: color-mix(in srgb, var(--pace-bar, var(--accent)) 55%, #fff);
 }
 
 .pace-period--dragging .pace-x {

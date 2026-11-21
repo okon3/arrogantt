@@ -367,6 +367,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   chrome comes up with `pace-period--hot`, set
   on `mousemove` over the task's timeline row (a period's body lets the
   pointer through, so `:hover` never matches), and during a drag.
+- **The edge is the same tick in all three states**, inside the bar's height:
+  faint, full, then the bar's own colour lit (`--pace-bar`) while dragged.
 - **A bar's percent labels (`.seg-pct`) show on that same hover only**, for
   every bar, paced or not: the shell puts `gantt-bar--hot` on the hot task's
   bar and again after each redraw (dhtmlx replaces the node). Screen only.
@@ -397,8 +399,11 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   `--accent` under the pointer, as do those of the task pointed at
   (`linkHover.ts`, a stylesheet rule keyed on `link_id`: a class would not
   survive a redraw). In light the line grey is left as it is.
-- **A link pointed at offers a × beside the pointer** that removes it at once,
-  no question: undo is the way back. Double-click and its vendor confirm stay.
+- **A link pointed at offers a × on the middle of its longest stretch** that
+  removes it at once, no question: undo is the way back. It does not follow
+  the pointer. Double-click and its vendor confirm stay.
+- **A label is lifted only over an arrow that is drawn**: `gantt-bar--no-arrow`
+  (`task_class`) levels it when no outgoing link has a visible target.
 - The link handle sits above the task label (`.gantt_link_control
   { z-index: 3 }`, `gantt.css`): the label used to cover the dot.
 - Only finish-to-start links: a left-handle drag is rejected in

@@ -1,6 +1,7 @@
 import { gantt } from 'dhtmlx-gantt';
 import { X } from 'lucide-static';
 import { dateOfDay, dayIndexOf, dayStringOf, type ShareOverride } from '../scheduler';
+import { DEFAULT_BAR_COLOR } from './colors';
 import {
   addPeriod,
   levelShare,
@@ -183,6 +184,10 @@ export function installPaceHandles(options: Options): () => void {
           // on either end sticks out of its task.
           const left = Math.max(box.left, bar.left);
           const right = Math.min(box.left + box.width, bar.left + bar.width);
+          node.style.setProperty(
+            '--pace-bar',
+            String(gantt.getTask(task.id).bar_color || DEFAULT_BAR_COLOR),
+          );
           node.style.left = `${left}px`;
           node.style.top = `${box.top}px`;
           node.style.width = `${Math.max(0, right - left)}px`;
