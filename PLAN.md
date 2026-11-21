@@ -14,7 +14,8 @@ report prima di ricevere task veri. **Goal J** (task
 completato come misura della stima) ha le domande di prodotto chiuse ma e'
 **sospeso dall'utente**: materiale pronto per un'analisi di dettaglio piu'
 avanti, non lavoro in corso. **Goal L** (quota e pausa per task) e'
-**costruito e unito** il 2026-11-20, bullet sotto `## Unreleased`.
+**costruito e unito** il 2026-11-21 (periodi relativi al task, maniglie
+sulla barra), bullet sotto `## Unreleased`; goal review non ancora corsa.
 **«Congelare il passato»** resta un esperimento **sospeso dall'utente**: la
 branch esiste, niente e' unito. **Goal K** (polish di UI/UX) e' **chiuso, recensito e potato**; quel che
 non va riproposto sta sotto `## Decisioni chiuse`. Tre conseguenze per chi
@@ -168,25 +169,33 @@ simulatore, la riscrittura dell'invariante di conservazione, e solo dopo
 proporre le fette.
 
 ## Goal L — il ritmo di un task: quota e pausa                     [costruito]
-Riaperto dall'utente il 2026-11-20 e costruito lo stesso giorno. Un task
-foglia corre a una **quota esatta** della capacita' della sua persona, di
-default e/o per periodi (`share`, `shareOverrides`); 0% in un periodo e' la
-pausa. Gemello per task della disponibilita': un periodo sostituisce il
-default, l'ultimo dichiarato vince. Semantica in `docs/scheduling.md`, formato
-in `docs/file-format.md`, vista in `docs/view.md`.
+Riaperto dall'utente il 2026-11-20, unito il 2026-11-21. Un task foglia
+corre a una **quota esatta** della capacita' della sua persona, di default
+e/o per periodi (`share`, `shareOverrides`); 0% in un periodo e' la pausa. Un
+periodo e' `{fromDay, toDay, share}`: **giorni lavorativi del task**, contati
+dal suo giorno 0 (l'ancora), non date di calendario. Sostituisce il default.
+Semantica in `docs/scheduling.md`, formato in `docs/file-format.md`, vista in
+`docs/view.md`.
 
 **Risposte dell'utente, vincolanti**: la quota e' **esatta, non un tetto**
 (rimasto solo, il task non accelera); e' **della capacita' della persona in
 quel momento**; quote **oltre il 100% si riducono in proporzione** e i task
 senza quota si fermano, **nessun rifiuto al salvataggio**; **la fine resta
 derivata** (la manutenzione dichiara un effort); **modal prima, gesto sulla
-timeline subito dopo**.
+timeline subito dopo**. Sul gesto: **i periodi seguono il task** («li metto
+sul singolo task, non sulla persona»); **un periodo nuovo nasce alla quota
+che il task ha gia' quel giorno**; **non supera mai la fine del task** (fine
+tirata indietro, cancellato se non resta nulla, dal vivo nel drag); **niente
+sovrapposizioni** sullo stesso task; **maniglie, × e tutte le percentuali
+solo in hover**; **bordi trascinabili a ogni zoom**; **maniglie nascoste
+mentre si trascina il task**; doppio clic sulla barra = periodo di un giorno.
 
 **Deciso dall'hub, tecnico**: task senza risorsa = quota del tasso pieno;
-default a 0 rifiutato (non finirebbe mai), `from`/`to` obbligatori e
-`from <= to`; su una milestone i campi sono conservati e ignorati; il gesto e'
-una voce del menu di riga («Set pace from here…») che apre il modal con un
-periodo non salvato sul giorno puntato — un drag confliggerebbe con dhtmlx.
+default a 0 rifiutato (non finirebbe mai); su una milestone i campi sono
+conservati e ignorati; lo start riportato e' l'ancora, per ogni task; il
+vecchio formato a date e' rifiutato per nome, senza migrazione (mai
+rilasciato); le maniglie sono un layer sopra dhtmlx (`paceHandles.ts`), la
+voce di menu «Set pace from here…» resta.
 
 - [x] L1 [engine] — quota risolta nel loop e passata alla policy; bordi dei
       periodi come eventi; riduzione proporzionale; tempi degli eventi
@@ -194,6 +203,17 @@ periodo non salvato sul giorno puntato — un drag confliggerebbe con dhtmlx.
 - [x] L2 [feature] — modello, `.gantt` v2, agent API, sezione «Pace» nel
       modal, barra e tooltip; un solo validatore (`parseTaskShare`). — 9af67ee
 - [x] L3 [feature] — gesto dal menu di riga sulla timeline. — d5b8ecf
+- [x] L4 [feature] — maniglie sulla barra: bordi, livello, ×, doppio clic;
+      core puro in `pacePeriods.ts`. — fb577ca, 6688b23, cecb3ba, 63b3089,
+      649914c
+- [x] L5 [engine] — periodi relativi al task, ancora, taglio a fine task
+      (`trimSharePeriods`). Critic: zero difetti di semantica, due ACTION
+      chiusi (soglia di `splitCapacity` sulle quote, test sul riordino dei
+      bordi). — baf5fd5, fcad21b
+
+**Non visto da nessuno**: tema chiaro; sensazione al mouse sul drag della
+quota; taglio contro undo e draft; a scala trimestri il drag di un bordo e'
+assoluto, non relativo al punto di presa.
 
 **Fuori perimetro, non costruito**: CSV, figura PNG e stampa non mostrano la
 quota ne' il buco della pausa. Una build vecchia che salva il file perde i
@@ -375,6 +395,9 @@ fatta**, e va rifatta se qualcuno riapre la questione.
 
 ## Da riproporre — nessuno le ha comprate
 
+- **Percentuali sulle barre come opzione di vista** (Goal L): proposta
+  dall'utente in alternativa al solo hover, non costruita.
+
 - **S5b, unificare la mappa riga** (corsia deep). Era in giacenza «finche' un
   goal non aggiunge campi di riga»: Goal I ne ha aggiunto uno, quindi la
   condizione e' soddisfatta e la proposta e' aperta.
@@ -474,6 +497,8 @@ misurato. Le lezioni durevoli stanno in `.claude/orchestrate.md`, non qui.
 | goal review I | review | - | - | 87 (fable) | 0 | - |
 | L1 | engine | browser | 160 (2 giri) | 180 | - | 1 |
 | L2, L3 | feature | browser | 226, 102 | - | - | 0 |
+| L4 (spike 243 + indagine 188) | feature | browser | 290 | - | - | 0 |
+| L5 | engine | browser | 366 | 175 | L4+L5: 1330+/100- | 1 (hub) |
 
 Sopra ~300k per meno di ~50 righe di `src/` e' un difetto di processo e va
 all'utente coi numeri, non nel Log come successo a zero round.
