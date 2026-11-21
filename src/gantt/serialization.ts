@@ -10,7 +10,7 @@ import { HEX_COLOR } from './colors';
 import { validateCurrency, type Person, type RateOverride } from './cost';
 import { parseWallClock, serializeDate } from './dates';
 import { buildPlan } from './plan';
-import type { Project, ProjectTask, SolvedProject } from './project';
+import { endsBeforeStart, type Project, type ProjectTask, type SolvedProject } from './project';
 import { validateResources } from './resources';
 import { parseTaskShare } from './taskShare';
 
@@ -100,6 +100,8 @@ export function serializeProject(project: Project, solved?: SolvedProject): stri
         // Leaves only, and just as inert on a summary.
         share: parentIds.has(task.id) ? undefined : task.share,
         shareOverrides: parentIds.has(task.id) ? undefined : task.shareOverrides,
+        fixedEnd:
+          parentIds.has(task.id) || !task.fixedEnd ? undefined : serializeDate(task.fixedEnd),
         solved: reportFor(task.id),
       })),
     },
@@ -311,6 +313,12 @@ export function deserializeProject(text: string): Project {
       Object.assign(task, parseTaskShare(record.share, record.shareOverrides));
     } catch (problem) {
       throw new ProjectFileError(`tasks[${index}]: ${(problem as Error).message}`);
+    }
+    if (record.fixedEnd !== undefined) {
+      task.fixedEnd = parseDate(record.fixedEnd, `tasks[${index}].fixedEnd`);
+      if (endsBeforeStart(task.start, task.fixedEnd)) {
+        throw new ProjectFileError(`tasks[${index}]: fixedEnd comes before start`);
+      }
     }
     if (record.color !== undefined) {
       // Now that the colour comes from a free picker rather than a fixed list,

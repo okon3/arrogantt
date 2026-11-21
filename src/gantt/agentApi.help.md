@@ -4,8 +4,8 @@ A single-user Gantt planner with an effort-splitting scheduler. Everything lives
 in the page: no backend, no accounts, no storage. A project is a `.gantt` file
 the browser downloads and reads back.
 
-**Effort and start date are inputs; the end date is always derived.** Nothing can
-write an end date. Give a task an effort in days and an earliest start, assign a
+**Effort and start date are inputs; the end date is derived** — unless a task
+declares one with `fixedEnd`, which fixes its dates. Give a task an effort in days and an earliest start, assign a
 person, and the engine works out when it actually finishes: two tasks on the same
 person at the same time each run at half rate, and someone at 50% or away on
 holiday stretches them further. The time axis is working minutes, so nights,
@@ -69,6 +69,9 @@ A `getPlan()` task:
   `[{ fromDay, toDay, share, label? }]` that replace it: working days of the
   task, day 0 being the one its `start` falls on. **Each absent when not set**,
   and always on a summary. The periods of one task never overlap.
+- `fixedEnd` — on a leaf whose dates were declared rather than solved: its
+  `end`. **Absent when the engine decides.** `effortDays` is then the work that
+  went in between the two dates, not the estimate.
 - `start` is the first moment the task can run: ready, with its person at work.
   A task paused on its first days still starts there, and waits inside its bar.
 
@@ -194,8 +197,8 @@ which is exactly the task a planner has to move.
 
 | Call | Notes |
 | --- | --- |
-| `addTask(patch?) → id` | `{ name, nominalDays, start, resourceId, color, disabled, parentId, after }`, all optional. The start is normalised to the opening of a working day. **Does not take `description`, `share` or `shareOverrides`** — throws, naming `updateTask`, if one is passed. |
-| `updateTask(id, patch)` | Any subset of `{ name, nominalDays, start, resourceId, color, progress, disabled, description, share, shareOverrides }`. Throws on `nominalDays`, `start`, `resourceId`, `share` or `shareOverrides` for a summary, and on a `description` over 2000 characters. Here and in `addTask`, `nominalDays` must be a number of 0 or more and `color` a `#rrggbb`: anything else throws before it is written. |
+| `addTask(patch?) → id` | `{ name, nominalDays, start, resourceId, color, disabled, parentId, after }`, all optional. The start is normalised to the opening of a working day. **Does not take `description`, `share`, `shareOverrides` or `fixedEnd`** — throws, naming `updateTask`, if one is passed. |
+| `updateTask(id, patch)` | Any subset of `{ name, nominalDays, start, resourceId, color, progress, disabled, description, share, shareOverrides, fixedEnd }`. Throws on `nominalDays`, `start`, `resourceId`, `share`, `shareOverrides` or `fixedEnd` for a summary, and on a `description` over 2000 characters. Here and in `addTask`, `nominalDays` must be a number of 0 or more and `color` a `#rrggbb`: anything else throws before it is written. |
 | `deleteTask(id)` | Takes the subtree with it and clears dependencies on any of it. |
 | `setParent(id, parentId \| null)` | `null` moves it to the top level. Refuses a parent from inside `id`'s own subtree, and a move that would close a dependency cycle (a group's dependencies are inherited by what is inside it). |
 | `link(from, to)` | Finish-to-start. **Refuses a cycle before mutating.** |
@@ -269,6 +272,17 @@ before anything is written — the same two checks the file format gates a load
 on, so a script cannot write a value that a later Save would then refuse. `getTask()` **omits the key** on a task with no
 description, rather than reporting it as an empty string or `null`: check with
 `'description' in task`.
+
+`fixedEnd` (`YYYY-MM-DDTHH:mm`, of which only the day counts) **fixes a leaf's
+dates**: it runs from its `start` to the close of that day whatever the plan
+does around it — record that something finished yesterday, or block out a
+workshop. No dependency holds it any longer, and what follows it waits for the
+declared end. It still takes its part of its person meanwhile, so the tasks
+beside it speed up once it closes; add `shareOverrides` at `share: 0` over its
+days for work that weighed on nobody. `nominalDays` is kept as the estimate and
+unused. A closed day becomes the working day before; a day before the `start`
+throws. `null` hands the end back to the engine. It has no float and is absent
+from `getCriticalChain()`.
 
 `share` fixes a leaf at an **exact** share of its person's capacity — `0.2` runs
 at 20% even when alone, and the rest of the person stays free for their other

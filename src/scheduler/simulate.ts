@@ -82,6 +82,8 @@ interface SimTask {
    */
   anchor: number | undefined;
   finishedAt: number | undefined;
+  /** Working minutes at which a task with a fixed end closes, done or not. */
+  fixedEnd: number | undefined;
   segments: { start: number; end: number; rate: number; soloRate: number }[];
 }
 
@@ -91,6 +93,9 @@ export function schedule(
   options: ScheduleOptions = {},
 ): Schedule {
   assertAcyclic(tasks);
+  // A fixed task waits for nothing, so what it declares it follows is dropped
+  // here, once, for the readiness count and the successor index alike.
+  tasks = tasks.map((task) => (task.fixedEnd ? { ...task, predecessors: undefined } : task));
 
   const origin = scheduleOrigin(tasks, options.origin);
 
@@ -138,7 +143,8 @@ export function schedule(
     const pendingPredecessors = task.predecessors?.length ?? 0;
     states.set(task.id, {
       task,
-      remaining: Math.max(0, task.effort),
+      // Never burnt down to nothing: only its date closes a fixed task.
+      remaining: task.fixedEnd ? Infinity : Math.max(0, task.effort),
       ready:
         pendingPredecessors === 0
           ? task.startConstraint
@@ -148,9 +154,13 @@ export function schedule(
       pendingPredecessors,
       anchor: undefined,
       finishedAt: undefined,
+      fixedEnd: task.fixedEnd ? calendar.toWorkingMinutes(task.fixedEnd) : undefined,
       segments: [],
     });
   }
+
+  const isDue = (state: SimTask, at: number): boolean =>
+    state.fixedEnd === undefined ? state.remaining <= EPSILON : state.fixedEnd <= at;
 
   if (states.size === 0) {
     return { tasks: new Map(), projectStart: calendar.origin, projectEnd: calendar.origin };
@@ -211,7 +221,8 @@ export function schedule(
     while (drained) {
       drained = false;
       for (const state of pending()) {
-        if (state.ready !== undefined && state.ready <= clock && state.remaining <= EPSILON) {
+        if (state.ready !== undefined && state.ready <= clock && isDue(state, clock)) {
+          // A fixed end at or before its start is a task of no length.
           finish(state, state.ready);
           drained = true;
         }
@@ -256,8 +267,11 @@ export function schedule(
       // full rate, so a share on one takes nothing from the next.
       const pools = key === null ? group.map((state) => [state]) : [group];
       const capacity = key === null ? 1 : capacityOf(key, clock);
-      if (capacity > 0) {
-        for (const state of group) if (state.anchor === undefined) anchorAt(state, clock);
+      for (const state of group) {
+        // A fixed task starts when it was said to, with its person away or not.
+        if (state.anchor === undefined && (capacity > 0 || state.fixedEnd !== undefined)) {
+          anchorAt(state, clock);
+        }
       }
       for (const pool of pools) {
         for (const { task } of pool) {
@@ -287,6 +301,7 @@ export function schedule(
     for (const state of active) {
       const rate = rates.get(state.task.id)!;
       if (rate > 0) step = Math.min(step, state.remaining / rate);
+      if (state.fixedEnd !== undefined) step = Math.min(step, state.fixedEnd - clock);
     }
     if (!Number.isFinite(step)) {
       // No edge is left, so the zero in force is the task's default — work that
@@ -327,7 +342,7 @@ export function schedule(
     clock = next;
 
     for (const state of active) {
-      if (state.finishedAt === undefined && state.remaining <= EPSILON) finish(state, clock);
+      if (state.finishedAt === undefined && isDue(state, clock)) finish(state, clock);
     }
   }
 
@@ -342,7 +357,10 @@ export function schedule(
       startWorkingMinutes: startMinutes,
       endWorkingMinutes: endMinutes,
       elapsedWorkingMinutes: endMinutes - startMinutes,
-      effortMinutes: state.task.effort,
+      effortMinutes:
+        state.fixedEnd === undefined
+          ? state.task.effort
+          : state.segments.reduce((sum, segment) => sum + segment.rate * (segment.end - segment.start), 0),
       segments: state.segments.map<AllocationSegment>((segment) => ({
         start: calendar.fromWorkingMinutes(segment.start, 'start'),
         end: calendar.fromWorkingMinutes(segment.end, 'end'),

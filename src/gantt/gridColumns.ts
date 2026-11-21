@@ -1,6 +1,6 @@
 import { gantt } from 'dhtmlx-gantt';
 import type { GridColumn } from 'dhtmlx-gantt';
-import { ArrowRight, Info, Ban } from 'lucide-static';
+import { ArrowRight, Info, Ban, Pin } from 'lucide-static';
 import { formatDays } from './format';
 import { costCellText, rateCellText, type CellText } from './costCells';
 import { hiddenLinksOf } from './hiddenLinks';
@@ -55,6 +55,7 @@ function sizedIcon(svg: string, size: number): string {
 const INFO_ICON = sizedIcon(Info, 15);
 const BAN_ICON = sizedIcon(Ban, 15);
 const ARROW_ICON = sizedIcon(ArrowRight, 11);
+const PIN_ICON = sizedIcon(Pin, 11);
 
 /**
  * Options for the resource cell.
@@ -189,7 +190,8 @@ const GRID_CELLS: Record<
     // One format for both branches, or a summary's 9g reads as a different
     // kind of figure from the 5g of the leaf under it.
     template: (task) =>
-      task.is_summary
+      // Rolled up on a summary, the work that went in on a task with fixed dates.
+      task.is_summary || task.fixed
         ? `<span class="gantt-derived">${formatDays(Number(task.rolled_effort_days))}d</span>`
         : `${formatDays(Number(task.nominal_days))}d`,
     editor: { type: 'number', map_to: 'nominal_days', min: 0, max: 999 },
@@ -405,6 +407,7 @@ export function installRowTemplates(ctx: RowContext): void {
     // Positioned but weightless — the engine guarantees a disabled task is
     // never also critical or shared, so this never has to compose with them.
     if (task.disabled) classes.push('gantt-bar--disabled');
+    if (task.fixed) classes.push('gantt-bar--fixed');
     // An outline, so it composes with whatever colour the bar carries: the
     // colour belongs to the user, and dhtmlx sets it inline anyway.
     if (task.critical) {
@@ -449,6 +452,8 @@ export function installRowTemplates(ctx: RowContext): void {
   gantt.templates.rightside_text = (_start, _end, task) => {
     const leading = hiddenLinksOf(String(task.id)).leadsTo.length;
     const mark = leading ? `<span class="gantt-hidden-links">${ARROW_ICON}</span>` : '';
-    return mark + escapeHtml(String(task.text ?? ''));
+    // Says the dates were declared: nothing else tells this bar from a solved one.
+    const pin = task.fixed ? `<span class="gantt-hidden-links gantt-fixed-mark">${PIN_ICON}</span>` : '';
+    return mark + pin + escapeHtml(String(task.text ?? ''));
   };
 }

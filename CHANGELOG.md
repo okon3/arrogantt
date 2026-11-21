@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Fix a task's dates: type an End in its detail dialog and the bar runs from
+  its start to that day, whatever the plan does around it. Record that
+  something finished early, or add work that was done in the background (set
+  its pace to 0%) without the rest of the plan stretching. Clear the End to
+  hand the task back to the scheduler. Dragging a fixed bar moves it whole.
+
 ## v1.7 — 2026-11-21
 
 - Give a person a colour in People (click their face): their avatar takes

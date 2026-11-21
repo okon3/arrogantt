@@ -80,6 +80,7 @@ export function toGanttData(project: Project, solved: SolvedProject, chain: Mark
         // pale on a shared task: there the colour belongs to the profile inside.
         color: barBackground(inherited, profiled, summary),
         shared: profiled,
+        fixed: !summary && task.fixedEnd !== undefined,
         // Effective state, from the solved project — a leaf's own flag or an
         // inherited one, and a summary once every leaf under it is.
         disabled: solved.disabledIds.has(task.id),

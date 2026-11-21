@@ -144,6 +144,8 @@ export interface TaskDetails {
   contended: boolean;
   /** The task's own flag — not the effective (inherited) state a group shows. */
   disabled: boolean;
+  /** The end the task is fixed at; absent when the engine decides it, and on a summary. */
+  fixedEnd?: Date;
   /** Fixed share of its person's capacity, `0..1`; absent when not fixed, and on a summary. */
   share?: number;
   /** Periods replacing it, in working days of the task (`share: 0` pauses); absent when none, and on a summary. */
@@ -179,4 +181,10 @@ export interface TaskPatch {
   share?: number | null;
   /** Optional: absent leaves them alone, `[]` clears. Ignored on a summary. */
   shareOverrides?: ShareOverride[];
+  /**
+   * Optional: absent leaves it alone, `null` hands the end back to the engine.
+   * Any instant of the day meant; kept as that working day's close, and never
+   * before the start's. Ignored on a summary.
+   */
+  fixedEnd?: Date | null;
 }

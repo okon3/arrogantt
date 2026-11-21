@@ -186,7 +186,7 @@ function visibleTasks(
 function isMilestone(task: PlanTask): boolean {
   // Never `start === end`, which a summary holding a single milestone satisfies
   // too — and that one is a bracket over a row, not a date.
-  return task.effortDays === 0 && !task.isSummary;
+  return task.effortDays === 0 && !task.isSummary && task.fixedEnd === undefined;
 }
 
 /** One cell's plain text; the drawing loop truncates and escapes it. */

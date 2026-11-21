@@ -35,8 +35,8 @@ pinned, so a server that refuses to start means an old one is still up.
 The engine does not know the view exists — the rendering library is replaceable,
 the scheduling semantics are not.
 
-**Effort and start are inputs; end is always derived.** Nothing in the UI may
-write an end date into the model. `simulate.ts` is a discrete-event simulation on
+**Effort and start are inputs; end is derived.** The one end the UI may write
+is `fixedEnd`, which makes the task a record the engine replays, not schedules. `simulate.ts` is a discrete-event simulation on
 a **working-minutes** axis (no calendar logic in the loop; `WorkingCalendar` owns
 conversions). Extension seam: `allocation.ts` — receives already-resolved
 capacity, never sees calendars. Read [docs/scheduling.md](docs/scheduling.md)
@@ -46,7 +46,10 @@ before changing the engine.
 
 If one fails, the semantics changed, not the test.
 
-- **Effort conserved**: Σ(rate × duration) over a task's segments = its effort.
+- **Effort conserved**: Σ(rate × duration) over a task's segments = its effort
+  (on a task with `fixedEnd` the effort is that sum: the estimate is ignored).
+- **A fixed task is moved by nothing**: no predecessor, no contention, no
+  absence changes its start or its end.
 - **A summary is never scheduled** (it would contend with its own children).
   Effort/dates/resource roll up from leaves; the file omits its `resourceId`.
 - **Dependencies are pushed down to leaves**, on both ends of a link.

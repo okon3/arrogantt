@@ -5,6 +5,7 @@ import { parseWallClock, serializeDate } from './dates';
 import type { GanttHandle, TaskDetails } from './ganttHandle';
 import { buildPlan, type Plan } from './plan';
 import {
+  endsBeforeStart,
   loadByResource,
   rejectionForLink,
   rejectionForParent,
@@ -41,7 +42,11 @@ import type { AvailabilityOverride, CalendarSpec, ShareOverride } from '../sched
  */
 
 /** `TaskDetails` with its dates as text, since a `Date` does not survive JSON. */
-export type TaskInfo = Omit<TaskDetails, 'start' | 'end'> & { start: string; end: string };
+export type TaskInfo = Omit<TaskDetails, 'start' | 'end' | 'fixedEnd'> & {
+  start: string;
+  end: string;
+  fixedEnd?: string;
+};
 
 export interface TaskInput {
   name?: string;
@@ -67,10 +72,16 @@ export interface TaskInput {
   share?: number | null;
   /** `[{ fromDay, toDay, share }]`, working days of the task counted from the one it starts on (0); `share: 0` pauses. Replaces the list; `null` or `[]` clears. Leaves only. */
   shareOverrides?: ShareOverride[] | null;
+  /**
+   * `YYYY-MM-DDTHH:mm` or a `Date`, of which only the day counts: the task then
+   * runs from `start` to the close of that day, whatever the plan does around
+   * it. `null` hands the end back to the engine. Leaves only.
+   */
+  fixedEnd?: string | Date | null;
 }
 
 export interface NewTaskInput
-  extends Omit<TaskInput, 'description' | 'share' | 'shareOverrides'> {
+  extends Omit<TaskInput, 'description' | 'share' | 'shareOverrides' | 'fixedEnd'> {
   parentId?: string | null;
   /**
    * Placed straight below this row as its sibling, rather than at the end of a
@@ -290,8 +301,13 @@ export function createAgentApi(host: AgentHost): AgentApi {
     getPlan: () => buildPlan(chart().getSolved()),
 
     getTask: (id) => {
-      const { start, end, ...rest } = details(id);
-      return { ...rest, start: serializeDate(start), end: serializeDate(end) };
+      const { start, end, fixedEnd, ...rest } = details(id);
+      return {
+        ...rest,
+        start: serializeDate(start),
+        end: serializeDate(end),
+        ...(fixedEnd ? { fixedEnd: serializeDate(fixedEnd) } : {}),
+      };
     },
 
     /**
@@ -364,7 +380,7 @@ export function createAgentApi(host: AgentHost): AgentApi {
       // one (I2): accepting the field here would be the exact write-the-caller-
       // believes-happened case updateTask's own summary check refuses below.
       // The share settings never reach a dhtmlx row either.
-      for (const field of ['description', 'share', 'shareOverrides']) {
+      for (const field of ['description', 'share', 'shareOverrides', 'fixedEnd']) {
         if ((patch as Record<string, unknown> | undefined)?.[field] !== undefined) {
           const article = field === 'description' ? 'a ' : '';
           throw new Error(`addTask does not set ${article}${field}: call updateTask(id, { ${field} })`);
@@ -399,6 +415,21 @@ export function createAgentApi(host: AgentHost): AgentApi {
         if (patch.share !== undefined || patch.shareOverrides !== undefined) {
           throw new Error(`"${id}" is a summary task: a share is fixed on its leaves, one by one`);
         }
+        if (patch.fixedEnd !== undefined) {
+          throw new Error(`"${id}" is a summary task: its end is its last leaf's`);
+        }
+      }
+      const start = patch.start ? asDate(patch.start, 'start') : current.start;
+      const fixedEnd =
+        patch.fixedEnd === undefined
+          ? undefined
+          : patch.fixedEnd
+            ? asDate(patch.fixedEnd, 'fixedEnd')
+            : null;
+      // Against the end the task keeps, too: a start moved past it is the same span.
+      const endKept = fixedEnd === undefined ? current.fixedEnd : fixedEnd;
+      if (endKept && endsBeforeStart(start, endKept)) {
+        throw new Error(`fixedEnd: ${serializeDate(endKept)} comes before the start, ${serializeDate(start)}`);
       }
       // The file's own gate, so a script cannot write what Save would refuse.
       const pace = parseTaskShare(patch.share ?? undefined, patch.shareOverrides ?? undefined);
@@ -407,7 +438,8 @@ export function createAgentApi(host: AgentHost): AgentApi {
       chart().updateTask(id, {
         name: patch.name ?? current.name,
         nominalDays: patch.nominalDays ?? current.nominalDays,
-        start: patch.start ? asDate(patch.start, 'start') : current.start,
+        start,
+        fixedEnd,
         resourceId:
           patch.resourceId === undefined ? current.resourceId || undefined : patch.resourceId || undefined,
         // `null` and '' both clear it: the bar then follows its person, or the default.

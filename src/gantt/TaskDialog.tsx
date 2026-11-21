@@ -7,7 +7,7 @@ import { Dialog } from './Dialog';
 import { formatDays } from './format';
 import type { TaskDetails, TaskPatch } from './ganttHandle';
 import { PercentCell, PeriodRowList } from './PeriodRowList';
-import { CRITICAL_CHAIN_LIMIT, type MeasuredSlack } from './project';
+import { CRITICAL_CHAIN_LIMIT, endsBeforeStart, type MeasuredSlack } from './project';
 import { DESCRIPTION_LIMIT } from './serialization';
 import { hasShare, parseTaskShare, type DatedSharePeriod } from './taskShare';
 
@@ -62,6 +62,8 @@ export function TaskDialog({
   // Kept as text so a half-typed number survives a re-render.
   const [effort, setEffort] = useState(String(task.nominalDays));
   const [start, setStart] = useState(toDayInput(task.start));
+  // Empty = the engine decides. The solved end, which on a fixed task is the declared one.
+  const [end, setEnd] = useState(task.fixedEnd ? toDayInput(task.end) : '');
   const [resourceId, setResourceId] = useState(task.resourceId);
   const [color, setColor] = useState(task.color ?? '');
   const [progress, setProgress] = useState(String(Math.round(task.progress * 100)));
@@ -89,7 +91,9 @@ export function TaskDialog({
   // "effort 0" and "milestone" one concept rather than two. An empty field is not
   // a zero — `Number('')` is — and would otherwise announce a milestone the user
   // is in the middle of not typing.
-  const isMilestone = !task.isSummary && effort.trim() !== '' && Number(effort) === 0;
+  const fixed = !task.isSummary && end !== '';
+  const isMilestone =
+    !task.isSummary && !fixed && effort.trim() !== '' && Number(effort) === 0;
   /** Only work can be paced: not a summary, which is never scheduled, nor an instant. */
   const paced = !task.isSummary && !isMilestone;
 
@@ -117,6 +121,16 @@ export function TaskDialog({
     // Keeps the time of day the engine assigned: only the calendar day is edited
     // here, and a start at midnight would sit outside the working window.
     const startDate = new Date(year, month - 1, day, task.start.getHours(), task.start.getMinutes());
+    const [endYear, endMonth, endDay] = end.split('-').map(Number);
+    if (fixed && !(endYear && endMonth && endDay)) {
+      setError('Invalid end date');
+      return;
+    }
+    const endDate = fixed ? new Date(endYear, endMonth - 1, endDay) : null;
+    if (endDate && endsBeforeStart(startDate, endDate)) {
+      setError('The end cannot come before the start');
+      return;
+    }
     // Whitespace-only reads as empty (deletes the stored text); otherwise the
     // value goes through verbatim — a description with content is not trimmed.
     const descriptionToSave = description.trim() === '' ? '' : description;
@@ -153,6 +167,7 @@ export function TaskDialog({
       description: descriptionToSave,
       share: shareEdited ? (pace.share ?? null) : undefined,
       shareOverrides: paced ? (pace.shareOverrides ?? []) : undefined,
+      fixedEnd: task.isSummary ? undefined : endDate,
     });
   };
 
@@ -177,7 +192,7 @@ export function TaskDialog({
   const rateCell = rateCellText({
     dailyRates: task.dailyRates,
     isSummary: task.isSummary,
-    isMilestone: task.nominalDays === 0 && !task.isSummary,
+    isMilestone: task.nominalDays === 0 && !task.isSummary && !task.fixedEnd,
   });
   const costCell = costCellText({
     effortDays: task.effortDays,
@@ -245,7 +260,11 @@ export function TaskDialog({
             Effort
             {/* The only way to make a milestone, so the field has to say so:
                 there is no second control, because there is no second concept. */}
-            {!task.isSummary && <span className="taskinfo__hint"> · 0 = milestone</span>}
+            {!task.isSummary && (
+              <span className="taskinfo__hint">
+                {fixed ? ' · the estimate: unused while the end is fixed' : ' · 0 = milestone'}
+              </span>
+            )}
           </span>
           {task.isSummary ? (
             fromChildren
@@ -275,6 +294,24 @@ export function TaskDialog({
               type="date"
               value={start}
               onChange={(event) => setStart(event.target.value)}
+            />
+          )}
+        </label>
+
+        <label className="taskinfo__field">
+          <span className="taskinfo__label">
+            End
+            {!task.isSummary && <span className="taskinfo__hint"> · empty = computed</span>}
+          </span>
+          {task.isSummary ? (
+            fromChildren
+          ) : (
+            <input
+              className="dialog__control"
+              type="date"
+              aria-label="Fixed end"
+              value={end}
+              onChange={(event) => setEnd(event.target.value)}
             />
           )}
         </label>
@@ -388,7 +425,14 @@ export function TaskDialog({
           </span>
         </summary>
         <p className="dialog__hint">
-          {isMilestone ? (
+          {task.fixedEnd ? (
+            <>
+              The <strong>start</strong> and the <strong>end</strong> are fixed: the engine neither
+              moves nor stretches this task, and no dependency holds it. It still takes its share of
+              the resource meanwhile, and its effort is the work that went in. Clearing the end
+              hands it back to the engine.
+            </>
+          ) : isMilestone ? (
             <>
               Effort <strong>0</strong>: a milestone, that is a date the plan reaches rather than
               work it consumes. It occupies nobody and is a diamond on the chart. Setting an effort
@@ -474,7 +518,9 @@ export function TaskDialog({
                     effort.
                   </p>
                 )}
-          {slack === null ? (
+          {task.fixedEnd ? (
+            <p className="taskinfo__note">Fixed dates have no float: it can neither slip nor grow.</p>
+          ) : slack === null ? (
             <p className="taskinfo__note">
               Past {CRITICAL_CHAIN_LIMIT} tasks the float is not measured: it costs a re-solve of the
               plan for every day probed. Ask for the critical chain from the status bar.

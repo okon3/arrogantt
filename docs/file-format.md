@@ -47,6 +47,10 @@
   list is normalized to absent) and never on a summary, like `resourceId`. On a
   milestone they are kept and inert. **A build that predates them drops both
   keys on its next save**, silently: it reads only the task keys it knows.
+- `tasks[].fixedEnd?: "YYYY-MM-DDTHH:mm"`: the end a leaf is fixed at; the
+  task then runs from `start` to it and `nominalDays` is only its estimate
+  (semantics: [scheduling.md](scheduling.md)). Optional and additive, never
+  written on a summary. **Refused on a day before `start`'s.**
 - Version 1 still loads: `daysOff` → availability overrides at zero.
 - `resources[].availability?: number`: a person's share of a full working day,
   `0..1`. Optional, default `1` (full time). Written only when present. The

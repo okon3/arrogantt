@@ -196,6 +196,7 @@ function countDependencies(project: Project): number {
 function sameOwnFields(a: ProjectTask, b: ProjectTask): boolean {
   return (
     a.start.getTime() === b.start.getTime() &&
+    a.fixedEnd?.getTime() === b.fixedEnd?.getTime() &&
     OWN_FIELDS.every((field) => (a[field] ?? null) === (b[field] ?? null))
   );
 }

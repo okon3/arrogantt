@@ -246,6 +246,20 @@ export class WorkingCalendar {
   }
 
   /**
+   * The close of the working day this date falls on, or of the one before: the
+   * twin of `startOfWorkingDay` for a declared end, which is a day too.
+   */
+  endOfWorkingDay(date: Date): Date {
+    let day = dayIndexOf(date);
+    const limit = this.holidays.length * 2 + 7;
+    for (let skipped = 0; !this.isWorkingDay(day); skipped++) {
+      if (skipped > limit) throw new Error('Calendar has no working day to end on');
+      day--;
+    }
+    return dateAtDayIndex(day, this.windows[this.windows.length - 1].to);
+  }
+
+  /**
    * Start of the given day on the working-minute axis.
    *
    * Days that are not working days collapse onto the next working day, which is

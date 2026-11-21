@@ -30,7 +30,9 @@ export interface PlanTask {
   start: string;
   /** Equal to `start` on a task with no effort, which spans nothing. */
   end: string;
-  /** Declared effort on a leaf, the rollup of the leaves on a summary. */
+  /** The end a leaf was fixed at: `start` and `end` are then declared, not solved. Absent when the engine decides. */
+  fixedEnd?: string;
+  /** Declared effort on a leaf — the work that went in on one with a fixed end — and the rollup of the leaves on a summary. */
   effortDays: number;
   /** Working days actually spanned; exceeds `effortDays` below full rate. */
   elapsedDays: number;
@@ -113,6 +115,9 @@ export function buildPlan(solved: SolvedProject): Plan {
         isSummary: summaryIds.has(task.id),
         start: serializeDate(scheduled?.start ?? task.start),
         end: serializeDate(scheduled?.end ?? task.start),
+        ...(task.fixedEnd && !summaryIds.has(task.id)
+          ? { fixedEnd: serializeDate(task.fixedEnd) }
+          : {}),
         effortDays: scheduled ? calendar.minutesToDays(scheduled.effortMinutes) : task.nominalDays,
         elapsedDays: scheduled ? calendar.minutesToDays(scheduled.elapsedWorkingMinutes) : 0,
         shared: scheduled ? isContended(scheduled) : false,

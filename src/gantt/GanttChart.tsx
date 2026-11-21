@@ -33,6 +33,8 @@ import {
   chainStateOf,
   closeGaps,
   constraintStart,
+  fixedEndOn,
+  moveFixed,
   barColors,
   isChainMeasurable,
   isMilestone,
@@ -295,6 +297,7 @@ export function GanttChart({
         const profiled = drawsProfile(scheduled, hasShare(task));
         ganttTask.color = barBackground(inherited, profiled, summary);
         ganttTask.shared = profiled;
+        ganttTask.fixed = !summary && task.fixedEnd !== undefined;
         ganttTask.disabled = solved.disabledIds.has(task.id);
         ganttTask.resource_classes = resourceClassesOf(solved, task.id);
         const cost = solved.costs.get(task.id)!;
@@ -452,6 +455,7 @@ export function GanttChart({
           contended: isContended(scheduled),
           disabled: task.disabled === true,
           ...leafShare(task, summary),
+          ...(task.fixedEnd && !summary ? { fixedEnd: task.fixedEnd } : {}),
           cost: reportedCost(cost),
           uncostedDays: cost.uncostedDays,
           dailyRates: [...cost.dailyRates],
@@ -501,7 +505,15 @@ export function GanttChart({
           task.nominalDays = patch.nominalDays;
           // The dialog's date field opens on the solved start and a script fills
           // an omitted one from it, so most saves hand back a date nobody chose.
-          task.start = constraintStart(task, patch.start, solvedRef.current);
+          const { calendar } = solvedRef.current;
+          const fixed = patch.fixedEnd === undefined ? task.fixedEnd : patch.fixedEnd;
+          // A fixed task is where it was said to be: the start shown is the one
+          // declared, so handing it back declares it — unlike a derived one.
+          task.start = fixed
+            ? calendar.startOfWorkingDay(patch.start)
+            : constraintStart(task, patch.start, solvedRef.current);
+          if (fixed) task.fixedEnd = fixedEndOn(calendar, task.start, fixed);
+          else delete task.fixedEnd;
           task.resourceId = patch.resourceId;
           if (patch.share === null) delete task.share;
           else if (patch.share !== undefined) task.share = patch.share;
@@ -930,11 +942,16 @@ export function GanttChart({
       // arrives after the solved start has been written onto the row, so
       // reading it back unconditionally would move the constraint on its own
       // and cost a second, invisible undo step.
-      task.start = constraintStart(
-        task,
-        new Date(ganttTask.start_date as Date),
-        solvedRef.current,
-      );
+      const offered = new Date(ganttTask.start_date as Date);
+      if (task.fixedEnd) {
+        // The same double report: the second finds the day it already has.
+        Object.assign(
+          task,
+          moveFixed(task, offered, solvedRef.current, projectRef.current.calendar),
+        );
+      } else {
+        task.start = constraintStart(task, offered, solvedRef.current);
+      }
       const assigned = (ganttTask.resource_id as string | undefined) || undefined;
       // An id the project does not have leaves the assignment as it was rather
       // than clearing it: unhooking somebody's work in silence is what
@@ -989,7 +1006,9 @@ export function GanttChart({
       'onBeforeEditStart',
       (state) =>
         !(solvedRef.current.summaryIds.has(String(state.id)) &&
-          DERIVED_ON_SUMMARY.has(state.columnName)),
+          DERIVED_ON_SUMMARY.has(state.columnName)) &&
+        // On a fixed task the cell shows the work that went in, which is derived.
+        !(state.columnName === 'nominal_days' && gantt.getTask(state.id).fixed),
     );
 
     // dhtmlx's own inline-editor keydown handler (bundled, live without the

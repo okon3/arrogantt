@@ -192,6 +192,13 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   subtree + dependency cleanup).
 - Only a task **with subtasks** confirms deletion. The opener button names its
   task.
+- **End is a field, empty by default**: a day in it fixes the task's dates,
+  clearing it hands the task back to the engine. Effort stays editable as the
+  estimate. On the grid a fixed task's Effort cell is the work that went in:
+  derived, so not editable. The bar's name carries a pin.
+- **Dragging a fixed bar moves it whole** (`moveFixed`): same working-day
+  length. Its edges are not draggable: `drag_resize` stays off.
+- A dependency drawn into a fixed task is kept and inert.
 - **The description is a dialog-only field**: a textarea last in the grid, on
   summaries as much as on leaves. It has no surface on the chart — no row
   icon, no tooltip, no column — and reaches a reader through the modal, the

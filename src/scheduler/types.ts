@@ -33,6 +33,13 @@ export interface Task {
    * with it.
    */
   shareOverrides?: ShareOverride[];
+  /**
+   * Makes the task a record instead of a problem: it runs from `startConstraint`
+   * to here whatever happens around it, waits for no predecessor, and still
+   * takes its part of its resource meanwhile. `effort` is then ignored — the
+   * work that went in is what the schedule reports.
+   */
+  fixedEnd?: Date;
 }
 
 /**
@@ -118,7 +125,10 @@ export interface ScheduledTask {
   endWorkingMinutes: number;
   /** Calendar working minutes spanned, which exceeds `effort` whenever the task was shared. */
   elapsedWorkingMinutes: number;
-  /** Man-minutes of work. Echoed from the input so callers can roll it up. */
+  /**
+   * Man-minutes of work: the input's, so callers can roll it up — or, on a task
+   * with a fixed end, what its segments add up to.
+   */
   effortMinutes: number;
   segments: AllocationSegment[];
 }

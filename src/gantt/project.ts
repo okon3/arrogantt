@@ -3,6 +3,7 @@ import {
   DEFAULT_CALENDAR,
   WorkingCalendar,
   criticalTasks,
+  dayIndexOf,
   resourceLoad,
   schedule,
   totalFloat,
@@ -24,7 +25,8 @@ import { leafShare, taskDays, trimToTask } from './taskShare';
  *
  * `nominalDays` is the duration the task would take with the resource fully
  * dedicated; it is the user's estimate and never changes on its own. The end
- * date is always derived, which is why it does not appear here.
+ * date is derived, which is why it does not appear here — unless `fixedEnd`
+ * declares it.
  *
  * For a summary task — one with children — `nominalDays`, `start` and
  * `resourceId` are ignored: effort and dates roll up from the leaves.
@@ -66,6 +68,12 @@ export interface ProjectTask {
    * it. Absent when empty, for the same reason as `disabled`.
    */
   shareOverrides?: ShareOverride[];
+  /**
+   * A leaf with one is a record, not a problem: it runs from `start` to here
+   * whatever the plan does around it, and `nominalDays` is then only the
+   * estimate it was given. The close of a working day. Ignored on a summary.
+   */
+  fixedEnd?: Date;
 }
 
 export interface Project {
@@ -213,10 +221,46 @@ export function subtreeOf(tasks: ProjectTask[], id: string): Set<string> {
  * Not a second kind of task. There is nothing to store that `nominalDays` does
  * not already say, and a flag beside the effort is a flag that can disagree with
  * it. A summary is excluded whatever its children happen to sum to: it is never
- * scheduled, so it brackets a span rather than marking an instant.
+ * scheduled, so it brackets a span rather than marking an instant. So is a task
+ * with a fixed end, whose length is declared whatever its estimate says.
  */
 export function isMilestone(task: ProjectTask, summaryIds: Set<string>): boolean {
-  return task.nominalDays === 0 && !summaryIds.has(task.id);
+  return task.nominalDays === 0 && !task.fixedEnd && !summaryIds.has(task.id);
+}
+
+/** Whether a fixed end falls on a day before the start's: the one span refused everywhere. */
+export function endsBeforeStart(start: Date, end: Date): boolean {
+  return dayIndexOf(end) < dayIndexOf(start);
+}
+
+/**
+ * The end a fixed task keeps for the day it was given: that working day's
+ * close, and never earlier than the day it starts on — two dates snapped
+ * across the same weekend would otherwise cross.
+ */
+export function fixedEndOn(calendar: WorkingCalendar, start: Date, end: Date): Date {
+  const close = calendar.endOfWorkingDay(end);
+  return close > start ? close : calendar.endOfWorkingDay(start);
+}
+
+/**
+ * A fixed task picked up and put down on another day: as many working days
+ * long as it was. Answers the task itself when the day is the one it has.
+ */
+export function moveFixed(
+  task: ProjectTask,
+  offered: Date,
+  solved: SolvedProject,
+  spec: CalendarSpec,
+): ProjectTask {
+  const start = solved.calendar.startOfWorkingDay(offered);
+  const scheduled = solved.schedule.tasks.get(task.id);
+  if (!task.fixedEnd || !scheduled || start.getTime() === task.start.getTime()) return task;
+  // An axis of its own: the solved one starts at the plan's earliest start and
+  // cannot express a day before it.
+  const axis = new WorkingCalendar(start, spec);
+  const end = axis.fromWorkingMinutes(scheduled.elapsedWorkingMinutes, 'end');
+  return { ...task, start, fixedEnd: fixedEndOn(axis, start, end) };
 }
 
 /**
@@ -265,7 +309,10 @@ export function closeGaps(project: Project, solved: SolvedProject, summaryId: st
   const floor = projectOrigin(leaves);
   const linked = new Set(
     solved.engineTasks
-      .filter((task) => leafIds.has(task.id) && (task.predecessors?.length ?? 0) > 0)
+      // A fixed leaf follows nothing, whatever it declares.
+      .filter(
+        (task) => leafIds.has(task.id) && !task.fixedEnd && (task.predecessors?.length ?? 0) > 0,
+      )
       .map((task) => task.id),
   );
   const moving = leaves.filter(
@@ -477,7 +524,8 @@ export function solve(project: Project): SolvedProject {
     predecessors: effectivePredecessors(task),
     // Not on a milestone: an instant has no work to pace, and a period at zero
     // must not hold a date back.
-    ...leafShare(task, task.nominalDays === 0),
+    ...leafShare(task, isMilestone(task, summaryIds)),
+    ...(task.fixedEnd ? { fixedEnd: task.fixedEnd } : {}),
   }));
 
   const result = schedule(engineTasks, project.resources, { origin, calendar: project.calendar });

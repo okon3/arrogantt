@@ -58,6 +58,8 @@ export interface BarFacts {
   shared: boolean;
   /** Effective state: a leaf's own flag or inherited, a summary once every leaf under it is. */
   disabled: boolean;
+  /** Start and end were declared: the engine neither moves nor stretches it. */
+  fixed?: boolean;
   /**
    * The share settings pacing the task, its periods on the dates the plan puts
    * them; absent when it has none, on a summary and on a milestone.
@@ -190,6 +192,9 @@ export function renderBarTooltip(facts: BarFacts): string {
   if (facts.disabled) {
     notes.push('Disabled — does not weigh on the plan.');
   }
+  if (facts.fixed) {
+    notes.push('Fixed dates: declared, not computed. The effort is the work that went in.');
+  }
   if (facts.isSummary) {
     const subtasks =
       facts.descendantCount === 1
@@ -273,6 +278,7 @@ export function barFactsOf(
     contended: isContended(scheduled),
     shared: isShared(scheduled),
     disabled: solved.disabledIds.has(task.id),
+    fixed: task.fixedEnd !== undefined && !solved.summaryIds.has(task.id),
     ...(paced
       ? {
           pace: {

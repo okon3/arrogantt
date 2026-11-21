@@ -1,7 +1,8 @@
 # Scheduling model
 
-**Effort and start are inputs; end is always derived.** Nothing writes an end
-date into the model.
+**Effort and start are inputs; end is derived.** The one end in the model is a
+declared one: `fixedEnd`, which takes the task out of the engine's hands
+(*Fixed dates*, below).
 
 `simulate.ts` is a discrete-event simulation: at each event (task ready, task
 complete, override edge) it recomputes who is active on each resource, divides
@@ -47,6 +48,30 @@ calendar logic. `WorkingCalendar` owns every conversion.
   leaves; a summary as predecessor → expands into its leaves.
 - **Bar colour is owned by the top-level task** and inherited by the subtree;
   moving a branch recolours it.
+
+## Fixed dates
+
+`Task.fixedEnd`: the task is a **record, not a problem**. It runs from its
+start to that end whatever happens around it.
+
+- **Replayed, not scheduled**: its completion is an event at `fixedEnd`, never
+  "effort burnt down". `effort` is ignored; `effortMinutes` reports what its
+  segments add up to, so Σ(rate × duration) = effort still holds, read the
+  other way.
+- **Waits for nothing**: its predecessors are dropped inside `schedule()`. Its
+  successors wait for the declared end.
+- **Still takes its part of its person** while it runs, by the ordinary split
+  and its own share: the tasks beside it are slowed until it closes, then
+  freed. At a share of zero it takes nothing — work done in the background.
+- **Anchored at its start even with its person away** (an ordinary task
+  anchors at the first capacity). A share of zero to the end is not a stall.
+- An end at or before the start is a task of no length; it is **not** a
+  milestone, whatever its estimate.
+- **Never measured for float**: it can neither slide nor grow. It stays in the
+  plan the probes re-solve.
+- The view: `ProjectTask.fixedEnd` is the close of a working day (a closed day
+  → the one before, `fixedEndOn`), never before the start's day. The start of
+  a fixed task is declared, so `constraintStart` does not apply to it.
 
 ## Disabled tasks
 

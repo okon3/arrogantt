@@ -106,6 +106,8 @@ function measure(
 
   for (const task of tasks) {
     if (wanted && !wanted.has(task.id)) continue;
+    // A record, not a decision: it can neither slide nor grow.
+    if (task.fixedEnd) continue;
     const scheduled = baseline.tasks.get(task.id);
     if (!scheduled) continue;
 
