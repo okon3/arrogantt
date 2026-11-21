@@ -7,8 +7,8 @@
   own. A colour set on a task or on its group still wins.
 - Take a colour off a task with "Auto" in its detail dialog.
 - A dependency on a task inside a closed group no longer goes unseen: a small
-  arrow with a count sits beside the bar, and the bar's tooltip names the
-  tasks it waits for or leads to.
+  arrow sits beside the bar, and pointing at the bar draws the arrow to the
+  group and names the tasks it waits for or leads to.
 - Remove a dependency with the × that appears when you point at its arrow.
   Pointing at a task brings its arrows forward, so a busy plan stays readable.
 - A task's pace periods leave a faint mark on its bar, so you can tell they

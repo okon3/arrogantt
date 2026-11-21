@@ -367,9 +367,9 @@ html:root[data-gantt-theme='dark'] {
   border-left-color: var(--link-ink);
 }
 
-/* How many dependencies of the bar are not drawn, their other end being inside
-   a closed group (gridColumns.ts, hiddenLinks.ts). Beside the bar, in the
-   label's own ink: a count, not a control. */
+/* Says a dependency of the bar is not drawn, its other end being inside a
+   closed group (gridColumns.ts, hiddenLinks.ts). Beside the bar, in the
+   label's own ink: a sign, not a control. */
 .gantt-hidden-links {
   display: inline-flex;
   align-items: center;
@@ -393,6 +393,32 @@ html:root[data-gantt-theme='dark'] {
 
 .gantt_task_line.gantt-bar--summary .gantt_side_content.gantt_left {
   line-height: 8px;
+}
+
+/* The hidden dependencies of the row pointed at, drawn onto the closed group
+   that holds their other end (rolledLinks.ts). In the accent, like any link
+   brought forward by the pointer; dashed, since it stands for links rather
+   than being one. Sized to nothing and overflowing, and deaf to the pointer. */
+.rolled-links {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.rolled-links__line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 5 3;
+}
+
+.rolled-links__head {
+  fill: var(--accent);
 }
 
 /* Removes the dependency pointed at (linkHover.ts). The pace period's own

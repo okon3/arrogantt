@@ -7,7 +7,7 @@ export interface HiddenLinks {
 }
 
 /** The row standing on the chart for `id`: itself, or the topmost closed branch it is inside. */
-function shownFor(id: string): string {
+export function shownFor(id: string): string {
   let shown = id;
   let parent = gantt.getParent(id);
   while (gantt.isTaskExists(parent)) {

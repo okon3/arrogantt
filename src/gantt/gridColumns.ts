@@ -439,15 +439,16 @@ export function installRowTemplates(ctx: RowContext): void {
     return renderSegments(scheduled, width, color, shade(color));
   };
   // A dependency whose other end is folded away draws no arrow, so the bar
-  // says how many: into it on its left, out of it on its right. The tooltip
-  // names them (barTooltip.ts).
+  // carries a small one: into it on its left, out of it on its right. No
+  // count: a bare number beside a bar read as nothing in particular. Pointing
+  // at the row draws where they go (rolledLinks.ts); the tooltip names them.
   gantt.templates.leftside_text = (_start, _end, task) => {
     const waiting = hiddenLinksOf(String(task.id)).waitsFor.length;
-    return waiting ? `<span class="gantt-hidden-links">${waiting}${ARROW_ICON}</span>` : '';
+    return waiting ? `<span class="gantt-hidden-links">${ARROW_ICON}</span>` : '';
   };
   gantt.templates.rightside_text = (_start, _end, task) => {
     const leading = hiddenLinksOf(String(task.id)).leadsTo.length;
-    const mark = leading ? `<span class="gantt-hidden-links">${ARROW_ICON}${leading}</span>` : '';
+    const mark = leading ? `<span class="gantt-hidden-links">${ARROW_ICON}</span>` : '';
     return mark + escapeHtml(String(task.text ?? ''));
   };
 }

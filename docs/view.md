@@ -412,14 +412,20 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - **A link pointed at offers a × on the middle of its longest stretch** that
   removes it at once, no question: undo is the way back. It does not follow
   the pointer. Double-click and its vendor confirm stay.
-- **A link with an end inside a closed branch draws no arrow; the bar counts
-  it instead** (`hiddenLinks.ts`): `n →` on its left for what it waits for,
-  `→ n` on its right for what follows, through `leftside_text` and
-  `rightside_text`. A closed branch counts those of everything inside it that
-  reach outside. The bar tooltip names the tasks. Counted by name, so two
-  links to one task are one.
-- **Redrawing those links onto the branch's bar, dashed, was tried and
-  dropped** (2026-11-21): the user preferred the count.
+- **A link with an end inside a closed branch draws no arrow; the bar carries
+  a small one instead** (`hiddenLinks.ts`): on its left for what it waits
+  for, on its right for what follows, through `leftside_text` and
+  `rightside_text`. A closed branch carries those of everything inside it
+  that reach outside. The bar tooltip names the tasks.
+- **Pointing at a row draws its hidden links onto the closed branch's bar**
+  (`rolledLinks.ts`), dashed, in the accent, for that row only. A pair of
+  rows linked both ways gets one line with a head on each end. A layer of our
+  own in `$task_data`, never links added to dhtmlx, which `syncLinks` would
+  read back as dependencies.
+- **Two forms were tried and refused by the user** (2026-11-21): all those
+  lines drawn at rest (too noisy, and a task before and after one branch read
+  as a contradiction), and a count beside the bar (a bare number said
+  nothing). Do not re-propose either.
 - **A summary's side content no longer clips** (`overflow: visible`): its
   box is the bar's height, enough for the uppercase name, not for the count.
 - **A label is lifted only over an arrow that is drawn**: `gantt-bar--no-arrow`
