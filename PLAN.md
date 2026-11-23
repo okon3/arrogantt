@@ -2,35 +2,18 @@
 
 ## Cosa resta sul tavolo
 
-Goal D, E, F, G, H, I e K sono **chiusi, recensiti e potati**; le loro Accept lines
-sono cadute dopo la review, come vuole la regola. Ultima release **`v1.6`**
-(2026-09-23), che ha portato i bullet accumulati di H e K: figura per il
-cliente senza colonne, task disattivati riconoscibili ovunque e fuori dalle
-figure, controlli di vista sulla status bar. **Goal I** (descrizione per
-task) e' **chiuso, recensito (`ship`, zero ACTION) e potato**: il suo bullet
-ha ricreato `## Unreleased`, non ancora rilasciato.
-`## Maintenance` porta il solo T16 (audit mobile); Goal C aspetta quel
-report prima di ricevere task veri. **Goal J** (task
-completato come misura della stima) ha le domande di prodotto chiuse ma e'
-**sospeso dall'utente**: materiale pronto per un'analisi di dettaglio piu'
-avanti, non lavoro in corso. **Goal L** (quota e pausa per task) e'
-**costruito e unito** il 2026-11-21 (periodi relativi al task, maniglie
-sulla barra), bullet sotto `## Unreleased`; goal review non ancora corsa.
-**«Congelare il passato»** e' diventato **date fisse** (`fixedEnd`), costruito
-e unito il 2026-11-21, rilasciato nella `v1.7`; goal review non corsa.
-**Micro-interazioni** costruite e pushate il 2026-11-21 (barre che scivolano,
-entrate, pressione, scossone, Today), bullet sotto `## Unreleased`. **Goal K** (polish di UI/UX) e' **chiuso, recensito e potato**; quel che
-non va riproposto sta sotto `## Decisioni chiuse`. Tre conseguenze per chi
-entra adesso: **le due barre stanno su `--surface-sunken`** (chi tocca un
-controllo che vive li' sopra ha un fondo diverso da quello per cui era stato
-dipinto), **le barre del chart hanno `--radius-bar: 6px`**, non piu' una
-pillola, e **la status bar e' una riga sola** (`white-space: nowrap`): chi le
-aggiunge un controllo lo paga in ellissi sul costo e sulla nota agent, non in
-altezza — e sotto ~980px la fila esce di larghezza.
+Ultima release **`v1.7`** (2026-11-21): ritmo dei task (Goal L), date fisse,
+colore per persona, descrizioni e micro-interazioni. Nessun goal e' in corso.
+- **T16** (audit mobile, sotto `## Maintenance`) e' il prossimo passo
+  pronto; il suo report apre **Goal C** per davvero.
+- **Goal J** (confronto stima/consuntivo) e' **sospeso dall'utente**;
+  le date fisse ne hanno gia' costruito la meta' «record».
+- Le goal review di L e delle date fisse **non sono corse**; la potatura del
+  2026-11-23 ne ha tolto le voci di task, recuperabili con
+  `git show 32850b7:PLAN.md`.
 
-**Trappola di misura, costata un falso negativo**: `ChangelogDialog` rende
-`className="help"` (`ChangelogDialog.tsx:10`) — un dialogo "changelog" nel DOM
-non si trova per nome, si misura sul contenuto.
+I fatti di UI che vincolano chi tocca la vista stanno in `docs/view.md`
+(barre su `--surface-sunken`, `--radius-bar`, status bar su una riga, Motion).
 
 ## Goal C — valutazione mobile-friendly                    [aperto, senza task]
 Agevolare la visualizzazione da smartphone/tablet nascondendo le azioni
@@ -58,222 +41,39 @@ dell'80% non vale un meccanismo da solo — ma e' il primo indizio che il goal
 raccogliera'.
 
 ## Goal J — un task completato misura la stima         [sospeso dall'utente]
-Un task si puo' marcare **completato**, e quello e' l'unico caso in cui la
-**fine la dichiara l'utente** invece di derivarla. Il task resta un peso sul
-passato (occupa capacita', i successori ne dipendono) e diventa il materiale
-per confrontare la stima iniziale con il consuntivo. Aperto dall'utente il
-2026-09-21.
+Confrontare la stima con il consuntivo di un task concluso. Aperto il
+2026-09-21, **sospeso dall'utente** lo stesso giorno («la gestione della
+chiusura di un'attivita' e' piu' complessa del previsto»): **niente parte da
+qui senza che l'utente lo riapra**.
 
-**Il punto che riconcilia la proposta con l'invariante.** La fine dichiarata
-non e' un input «data di fine»: e' **una misura dell'effort effettivo espressa
-nell'unita' che l'utente conosce**, il giorno in cui ha finito. Per un task
-completato si **inverte la freccia** — la fine e' l'input, l'effort e' il
-derivato — e si usa la stessa legge di conservazione del motore
-(`Σ rate × durata = effort`) letta al contrario. Un task completato **smette
-di essere un problema di scheduling e diventa un record**: non si schedula, si
-rigioca, occupando capacita' come blocco fisso mentre il simulatore schedula
-il resto attorno. E' la stessa forma di «un summary non si schedula mai».
+**Gia' costruito dalle date fisse (`fixedEnd`)**: la fine dichiarata, il
+task come record rigiocato e non schedulato, l'invariante di conservazione
+riscritto (su un task fisso l'effort e' cio' che e' entrato). Resta solo il
+confronto.
 
 **Risposte dell'utente, 2026-09-21 — chiuse.**
-- **Lo stato e' la data, non un flag.** Un task e' completato **se e solo se**
-  porta una fine effettiva: il campo che porta l'informazione *e'* lo stato.
-  Niente `completed` boolean, niente `progress === 1` portante — nessuna
-  doppia grafia e nessuna combinazione impossibile da rifiutare nel parsing.
-  Scompletare = cancellare la data.
 - **Il confronto e' elapsed previsto contro elapsed effettivo**, non effort
-  contro effort. «Il piano diceva 10 giorni lavorativi, ne sono serviti 7»:
-  una sola unita', nessuna inversione. La domanda iniziale dell'utente
-  (confrontare i 5gg stimati) e' **rientrata** per la ragione sotto.
+  contro effort: «il piano diceva 10 giorni lavorativi, ne sono serviti 7».
+- **Il termine di paragone si ricalcola sempre**, nessun derivato
+  conservato; conseguenza **accettata**: il confronto e' retroattivo.
+- **Si legge nel modal del task e in nessun altro posto**. Colonna in
+  griglia, CSV, figura e stampa: **offerti e rifiutati** — una goal review che
+  li segnala come MISSING sta segnalando una scelta.
 
-**Perche' l'inversione a effort e' stata scartata, e va ricordato.** La fine
-da' l'*elapsed*; per risalire all'effort si divide per il tasso, che e'
-esattamente la grandezza incerta. «Previsti 10, effettivi 7» puo' voler dire
-che il task era da 3,5 giorni-persona invece di 5, **oppure** che la persona
-era al 70% invece che al 50%: stesso numero, lezione opposta, e dalla sola
-data le due non si separano. L'inversione sarebbe esatta solo sui task non
-condivisi — e lo scheduler gia' lo sa (`scheduler/types.ts:85`:
-`elapsedWorkingMinutes` «exceeds `effort` whenever the task was shared»,
-e `planCsv.ts:35` ha gia' la colonna `Contended`). Se un giorno si volesse
-riaprire, e' li' che si guarda.
+**Perche' l'inversione a effort e' scartata.** Dalla fine si ottiene
+l'elapsed; per risalire all'effort si divide per il tasso, che e' proprio la
+grandezza incerta: «previsti 10, effettivi 7» puo' voler dire stima sbagliata
+**oppure** persona al 70% invece del 50%, e dalla sola data le due non si
+separano (esatta solo sui task non condivisi, `elapsedWorkingMinutes`).
 
-**Misurato il 2026-09-21, prima di scrivere qualunque cosa.**
-- **Lo scheduler non legge mai `progress`**: zero occorrenze in
-  `src/scheduler/` (le tre che un grep trova sono la parola dentro commenti).
-  Nel modello `progress?: number` esiste (`project.ts:44`) e una fixture porta
-  gia' `progress: 1`. **«Completato al 100%» e' quindi gia' scrivibile oggi ed
-  e' gia' inerte**: un boolean `completed` accanto sarebbe una seconda grafia
-  dello stesso stato, contro la regola che il repo applica a `disabled` e a
-  `description`.
-- Nel modello **non esiste nessun campo `end`**: la fine e' solo un'uscita
-  dello scheduler.
-
-**Due conseguenze che non sono gratis.**
-- **Completare pinna anche l'inizio.** Lo start e' derivato salvo vincolo; un
-  task completato il cui predecessore si sposta slitterebbe trascinandosi
-  dietro una fine *registrata*. Il flag fa due cose, non una — implica un
-  `constraintStart`.
-- **`Σ(rate × duration) = effort` va riscritta.** Per un task completato il
-  membro destro e' l'effort **effettivo**, non la stima. CLAUDE.md la dichiara
-  assoluta: cambiarla e' un atto deliberato da scrivere in chiaro, non un
-  effetto collaterale da scoprire.
-
-**Domande ancora aperte — nessuna e' decisa, nessuna e' binding.**
-- **Il termine di paragone si ricalcola sempre** (utente, 2026-09-21).
-  Nessun derivato conservato, come vuole la dottrina del repo — il blocco
-  `solved` nel file e' ignorato in lettura. Conseguenza **accettata
-  sapendola**: il confronto e' retroattivo, e correggere il passato cambia da
-  sola la varianza di un task gia' chiuso («con quello che so oggi ne
-  sarebbero serviti 12; ne hai impiegati 7»).
-- **Il confronto si legge nel modal del task, e in nessun altro posto**
-  (utente, 2026-09-21). E' dove si inserisce la fine effettiva, quindi la
-  varianza sta accanto al campo che la produce. **Colonna in griglia, CSV,
-  figura e stampa: offerti e rifiutati**, la colonna anche contro la
-  raccomandazione dell'hub (il registro di Goal F l'avrebbe resa economica).
-  **Una goal review che li segnala come MISSING sta segnalando una scelta.**
-  Se un giorno servisse vedere la varianza di tutti i task insieme — l'unico
-  modo di accorgersi di una sottostima **sistematica** — la colonna e' il
-  candidato, e si riapre con l'utente, non dentro questo goal.
-- **Cosa succede a un task completato senza risorsa** (tasso pieno) e **a una
-  milestone completata** (effort zero: la fine e' tutto cio' che c'e').
-- **Il giorno dichiarato e' un giorno lavorativo?** Vale la regola del
-  confine di giornata; una fine su un giorno chiuso va normalizzata o
-  rifiutata, come gia' fa lo start dichiarato.
-
-**Dove costa davvero, e non e' dove sembra.** Il modello guadagna **un solo
-campo**: una fine effettiva opzionale. Tutto il resto e' motore, ed e' li' il
-prezzo:
-- il simulatore deve trattare un task completato come **occupazione fissa**
-  sull'asse dei minuti lavorativi — non lo schedula, ci schedula attorno;
-- «ricalcola sempre» vuol dire che la previsione da confrontare va prodotta
-  da una **seconda passata**, che schedula il task *come se non fosse
-  completato* per ottenere il 10 da mettere accanto al 7. Non e' un numero
-  gratis e non e' `effort / tasso`: il tasso dipende dalla concorrenza, che
-  dipende dalla schedulazione. E' il primo nodo che la spec deve sciogliere.
-
-**Restano tecniche, non di prodotto** (le decide la spec): un task completato
-**senza risorsa** (tasso pieno), una **milestone completata** (effort zero: la
-fine e' tutto cio' che c'e'), e una fine dichiarata su un **giorno non
-lavorativo** — vale la regola del confine di giornata, e la si normalizza o
-la si rifiuta come gia' fa lo start dichiarato.
-
-**Sospeso dall'utente il 2026-09-21**, subito dopo averne chiuso le domande:
-«la gestione della chiusura di un'attivita' e' piu' complessa del previsto»,
-l'analisi di dettaglio si fa in un secondo momento. Quanto sta scritto qui
-sopra e' **materiale pronto**, non lavoro in corso: nessun task, nessuna
-corsia, e **niente parte da qui senza che l'utente lo riapra**.
-
-**Quando si riaprira': nessuna suddivisione, le scrive la spec.** Le domande
-di prodotto sono **chiuse**; il goal e' pronto per una spec `architect`,
-obbligatoria perche' tocca il motore e riscrive un invariante che CLAUDE.md
-dichiara assoluto. La spec deve sciogliere, in quest'ordine: la seconda
-passata che produce il termine di paragone, l'occupazione fissa nel
-simulatore, la riscrittura dell'invariante di conservazione, e solo dopo
-proporre le fette.
-
-## Goal L — il ritmo di un task: quota e pausa                     [costruito]
-Riaperto dall'utente il 2026-11-20, unito il 2026-11-21. Un task foglia
-corre a una **quota esatta** della capacita' della sua persona, di default
-e/o per periodi (`share`, `shareOverrides`); 0% in un periodo e' la pausa. Un
-periodo e' `{fromDay, toDay, share}`: **giorni lavorativi del task**, contati
-dal suo giorno 0 (l'ancora), non date di calendario. Sostituisce il default.
-Semantica in `docs/scheduling.md`, formato in `docs/file-format.md`, vista in
-`docs/view.md`.
-
-**Risposte dell'utente, vincolanti**: la quota e' **esatta, non un tetto**
-(rimasto solo, il task non accelera); e' **della capacita' della persona in
-quel momento**; quote **oltre il 100% si riducono in proporzione** e i task
-senza quota si fermano, **nessun rifiuto al salvataggio**; **la fine resta
-derivata** (la manutenzione dichiara un effort); **modal prima, gesto sulla
-timeline subito dopo**. Sul gesto: **i periodi seguono il task** («li metto
-sul singolo task, non sulla persona»); **un periodo nuovo nasce alla quota
-che il task ha gia' quel giorno**; **non supera mai la fine del task** (fine
-tirata indietro, cancellato se non resta nulla, dal vivo nel drag); **niente
-sovrapposizioni** sullo stesso task; **maniglie, × e tutte le percentuali
-solo in hover**; **bordi trascinabili a ogni zoom**; **maniglie nascoste
-mentre si trascina il task**; doppio clic sulla barra = periodo di un giorno.
-
-**Deciso dall'hub, tecnico**: task senza risorsa = quota del tasso pieno;
-default a 0 rifiutato (non finirebbe mai); su una milestone i campi sono
-conservati e ignorati; lo start riportato e' l'ancora, per ogni task; il
-vecchio formato a date e' rifiutato per nome, senza migrazione (mai
-rilasciato); le maniglie sono un layer sopra dhtmlx (`paceHandles.ts`), la
-voce di menu «Set pace from here…» resta.
-
-- [x] L1 [engine] — quota risolta nel loop e passata alla policy; bordi dei
-      periodi come eventi; riduzione proporzionale; tempi degli eventi
-      agganciati al minuto intero (`MINUTE_SNAP`). — f6b2b90, ff81c2f
-- [x] L2 [feature] — modello, `.gantt` v2, agent API, sezione «Pace» nel
-      modal, barra e tooltip; un solo validatore (`parseTaskShare`). — 9af67ee
-- [x] L3 [feature] — gesto dal menu di riga sulla timeline. — d5b8ecf
-- [x] L4 [feature] — maniglie sulla barra: bordi, livello, ×, doppio clic;
-      core puro in `pacePeriods.ts`. — fb577ca, 6688b23, cecb3ba, 63b3089,
-      649914c
-- [x] L5 [engine] — periodi relativi al task, ancora, taglio a fine task
-      (`trimSharePeriods`). Critic: zero difetti di semantica, due ACTION
-      chiusi (soglia di `splitCapacity` sulle quote, test sul riordino dei
-      bordi). — baf5fd5, fcad21b
-
-**Non visto da nessuno**: tema chiaro; sensazione al mouse sul drag della
-quota; taglio contro undo e draft; a scala trimestri il drag di un bordo e'
-assoluto, non relativo al punto di presa.
-
-**Fuori perimetro, non costruito**: CSV, figura PNG e stampa non mostrano la
-quota ne' il buco della pausa. Una build vecchia che salva il file perde i
-campi (vale per ogni campo nuovo sul task).
-
-## Date fisse — «congelare il passato», riletto                    [costruito]
-Riaperto dall'utente il 2026-11-21 con l'episodio che mancava: «ieri hanno
-finito, voglio mettere la fine a ieri senza giocare coi calcoli» e
-«un'attivita' extra fatta in background non deve allungare le altre». Non e'
-un blocco del passato: e' una barra con **inizio e fine dichiarati**.
-**Risposte dell'utente, vincolanti**: **occupa la persona come un task
-normale** (in background = ritmo 0%); **vale anche nel futuro**, nessun
-«oggi»; **dialogo prima, bordi trascinabili subito dopo**; **niente confronto
-stima/consuntivo in questo giro** (resta Goal J).
-- [x] D1 [engine+feature] — `fixedEnd` nel motore, modello, `.gantt`, agent
-      API, dialogo, barra con spillo, drag che sposta intera la barra. — 8cc6df4
-- [x] D2 [feature] — bordi trascinabili sulla barra fissa.
-**Guidato nell'app con mouse CDP**: bordo destro, bordo sinistro, barra
-intera oltre un weekend. **Non guidato**: edit dello start in griglia, figura
-PNG/CSV/stampa, tema chiaro, convivenza con le maniglie del ritmo. Nessun
-critic e' corso. L'esperimento del blocco e' superato: branch e worktree
-cancellati (era il commit `934aa38`).
-
-## Micro-interazioni — l'app si muove                            [costruito]
-Chiesto dall'utente il 2026-11-21: farla sentire piu' «viva». Studio delle
-pratiche correnti (Apple HIG, Material, Atlassian, Emil Kowalski) e proposta
-in tre fasce; **l'utente ha comprato A e B, C no**. Regola e token in
-`docs/view.md` § Motion; bullet sotto `## Unreleased`.
-- [x] M1 — dialoghi e menu entrano, pressione dei pulsanti, pallino dirty che
-      compare, scossone sul rifiuto. — af21321, corretto in e22e150
-- [x] M2 — Today scorre; Fit, zoom e `showToday()` dell'agent saltano. — c7a67db
-- [x] M3 — dopo un ricalcolo o un undo/redo le barre spostate scivolano
-      (`glideBars`, `motion.ts`). — e1fd29c
-**Decisioni dell'utente**: anche undo/redo e scritture dell'agent animano;
-**basta `prefers-reduced-motion`**, niente interruttore nell'app.
-**Fascia C, non comprata**: transizioni sull'hover, zoom animato, catena
-critica pulsante, skeleton, effetti celebrativi, apertura dei gruppi animata.
-**Trappola costata un falso positivo**: nella preview embedded
-`requestAnimationFrame` gira a 1 Hz senza focus — un fotogramma intermedio
-non si osserva; si ferma l'animazione WAAPI a meta' (`pause()` +
-`currentTime`) e si misura. Lo scossone con `translate` sforava il
-contenitore (776 in 772, scrollbar): ora sposta il testo nel padding.
-**Guidato**: entrate di dialogo e menu, scossone in People e sulla barra
-d'errore (link ciclico), glide su edit agent e su Undo, Today, chiaro e scuro.
-**Non guidato**: drag di una barra e delle maniglie del ritmo con il glide
-attivo, stampa e PNG subito dopo un edit, fluidita' reale a 60 Hz.
+**Il nodo per la spec** (`architect`, tocca il motore): il 10 da mettere
+accanto al 7 viene da una **seconda passata** che schedula il task come se
+non fosse fisso — non e' `effort / tasso`, perche' il tasso dipende dalla
+concorrenza. Tecniche, le decide la spec: task senza risorsa, milestone.
 
 ## Maintenance — no goal
-Task che non servono una milestone: difetti puntuali, salute del codice e
-analisi, arrivati come richieste singole. **Non ricevono la goal review**, ed
-e' il prezzo di stare qui — dichiarato adesso, non scoperto alla fine. Se uno
-di questi cresce fino a meritarne una, si apre un goal e lo si sposta.
-
-- [x] T17 [self] — Il nome del task per esteso in hover sulla griglia: un
-      `title` nativo sullo span `.gantt-name`, incondizionato. Premessa
-      misurata dall'hub prima di scrivere (al default di 230px un nome di 58
-      caratteri perde 199px di 393); la corsia e' passata da `[impl]` a
-      `[self]` — una riga di template non paga i 40k d'ingresso. — commit 44cfc48
+Task che non servono una milestone. **Non ricevono la goal review**; se uno
+cresce fino a meritarne una, si apre un goal e lo si sposta.
 
 - [ ] T16 [architect] — Valutazione mobile: audit + proposta
       Scope: audit dell'app a viewport smartphone (375px) e tablet (768px),
@@ -286,16 +86,11 @@ di questi cresce fino a meritarne una, si apre un goal e lo si sposta.
       Goal C (dialogo People e bottone «Fit»).
       Il censimento si consegna come **matrice di celle guidate** piu' una
       lista esplicita di cio' che non e' stato guidato — mai in prosa.
-      **Depends: soddisfatta.** L'ordine deciso dall'utente il 2026-09-21
-      voleva T16 dopo Goal K, o auditerebbe un'UI in movimento: Goal K e'
-      chiuso e potato, quindi l'UI desktop e' ferma e T16 puo' partire.
-      Auditera' menu e resa **dopo** lo spostamento dei controlli di vista
-      sulla status bar, non prima.
+      **Depends: soddisfatta** — l'UI desktop e' ferma da Goal K.
 
 ## Decisioni chiuse — non riproporre
 
-**La descrizione di un task (Goal I).** Chiuso, recensito (`ship`, zero
-ACTION) e potato. **Non ha e non avra' superficie sul grafico**: niente icona
+**La descrizione di un task (Goal I).** **Non ha e non avra' superficie sul grafico**: niente icona
 di riga, niente tooltip — chiesto due volte e confermato due volte. Si legge
 dal modal, dal CSV e dall'agent API. **`addTask` la rifiuta** invece di
 perderla (l'unico percorso di creazione legge la riga dhtmlx, dove la
@@ -335,6 +130,25 @@ linguaggio visivo nuovo, nessun sistema di componenti. Gli screenshot in
 `inspiration_ui/` sono ignorati **davvero** ora: un `git check-ignore` si
 legge dal codice di uscita, non dall'output.
 
+**Il ritmo di un task (Goal L).** Risposte dell'utente, vincolanti: la quota
+e' **esatta, non un tetto**; e' **della capacita' della persona in quel
+momento**; oltre il 100% **si riduce in proporzione**, nessun rifiuto; **la
+fine resta derivata**; i periodi **seguono il task**, nascono alla quota che
+il task ha quel giorno, **non superano mai la sua fine**, **niente
+sovrapposizioni**; maniglie, × e percentuali **solo in hover**, nascoste
+mentre si trascina il task. Semantica in `docs/scheduling.md`.
+
+**Date fisse.** Una barra con **inizio e fine dichiarati**, non un blocco del
+passato: **occupa la persona come un task normale** (in background = ritmo
+0%), **vale anche nel futuro**, nessun «oggi». Il confronto stima/consuntivo
+**non** ne fa parte: e' Goal J.
+
+**Micro-interazioni.** Comprate le fasce A e B; **C no**: transizioni
+sull'hover, zoom animato, catena critica pulsante, skeleton, effetti
+celebrativi, apertura dei gruppi animata. Anche undo/redo e agent animano;
+**basta `prefers-reduced-motion`**, niente interruttore. Regola in
+`docs/view.md` § Motion.
+
 **Repo e pubblicazione.** Non ricreare mai `okon3/yagni`: i redirect di web,
 API e git che tengono vivi i cloni esistenti muoiono nell'istante in cui
 qualcuno rioccupa il vecchio nome. Le tre chiavi di `localStorage` sono
@@ -363,14 +177,9 @@ colonne puo' vedere un cliente» non esiste piu', la risposta e' «nessuna».
 Un summary disattivato porta via **tutto il ramo**: `disabled` e' ereditato in
 `disabledByTask`, quindi un filtro piatto basta. CSV resta fuori scopo.
 
-**Refactoring della vista (Goal E).** S5b, S6 e S7 restano fuori. S5b unifica
-la mappa riga — l'unica fetta che cambia forma, in giacenza finche' un goal non
-aggiunge campi di riga, corsia **deep**, e la verifica e' parita' dei campi via
-`gantt.getTask(id)` dopo apertura/edit/undo su un piano con summary, milestone,
-condivisa, disabled e critico stale, **senza pixel**. S6/S7 su `App.tsx` e i
-gesti: raccomandati contro dalla spec. Il corpo dell'handle e gli handler del
-modello restano nel chart: sono le operazioni e il codice che muta il modello,
-e il file di destinazione sarebbe grande quanto quello che lascia.
+**Refactoring della vista (Goal E).** S6/S7 su `App.tsx` e i gesti:
+raccomandati contro dalla spec. Il corpo dell'handle e gli handler del
+modello restano nel chart. S5b e' sotto `## Da riproporre`.
 
 **Dipendenze (Goal D).** Fuori scope per decisione dell'utente: l'editor delle
 dipendenze (O4, in giacenza), l'handle sinistro visibile (O2b), il modale
@@ -395,6 +204,8 @@ fatta**, e va rifatta se qualcuno riapre la questione.
 
 - **Percentuali sulle barre come opzione di vista** (Goal L): proposta
   dall'utente in alternativa al solo hover, non costruita.
+- CSV, figura PNG e stampa **non mostrano la quota ne' il buco della pausa**
+  (Goal L, fuori perimetro); ne' lo spillo delle date fisse, mai guidato li'.
 
 - **S5b, unificare la mappa riga** (corsia deep). Era in giacenza «finche' un
   goal non aggiunge campi di riga»: Goal I ne ha aggiunto uno, quindi la

@@ -219,6 +219,18 @@ latches `gantt.skin` and removing it later yields `terrace` on a light page —
 a value the app never sets. Load with the scheme already set, or measure only
 what the attribute selects for. Mechanism in [dhtmlx.md](dhtmlx.md).
 
+## Animations
+
+- **`requestAnimationFrame` runs at ~1 Hz while the pane has no focus**, so a
+  frame between start and end is never seen. Pause the animation and measure:
+  `el.getAnimations()[0].pause(); a.currentTime = 90`, then read styles or take
+  the screenshot. A JS-driven glide is sampled by swapping in a 16 ms timer.
+
+## Finding a dialog by name
+
+- `ChangelogDialog` renders `className="help"`: a "changelog" dialog is found
+  by its content, not its class — a lookup by name is a false negative.
+
 ## Verifying a print
 
 The figure is built by `installPrintFigure` off `beforeprint`, so **stubbing
