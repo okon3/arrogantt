@@ -17,7 +17,9 @@ avanti, non lavoro in corso. **Goal L** (quota e pausa per task) e'
 **costruito e unito** il 2026-11-21 (periodi relativi al task, maniglie
 sulla barra), bullet sotto `## Unreleased`; goal review non ancora corsa.
 **«Congelare il passato»** e' diventato **date fisse** (`fixedEnd`), costruito
-e unito il 2026-11-21, rilasciato nella `v1.7`; goal review non corsa. **Goal K** (polish di UI/UX) e' **chiuso, recensito e potato**; quel che
+e unito il 2026-11-21, rilasciato nella `v1.7`; goal review non corsa.
+**Micro-interazioni** costruite e pushate il 2026-11-21 (barre che scivolano,
+entrate, pressione, scossone, Today), bullet sotto `## Unreleased`. **Goal K** (polish di UI/UX) e' **chiuso, recensito e potato**; quel che
 non va riproposto sta sotto `## Decisioni chiuse`. Tre conseguenze per chi
 entra adesso: **le due barre stanno su `--surface-sunken`** (chi tocca un
 controllo che vive li' sopra ha un fondo diverso da quello per cui era stato
@@ -237,6 +239,30 @@ PNG/CSV/stampa, tema chiaro, convivenza con le maniglie del ritmo. Nessun
 critic e' corso. L'esperimento del blocco e' superato: branch e worktree
 cancellati (era il commit `934aa38`).
 
+## Micro-interazioni — l'app si muove                            [costruito]
+Chiesto dall'utente il 2026-11-21: farla sentire piu' «viva». Studio delle
+pratiche correnti (Apple HIG, Material, Atlassian, Emil Kowalski) e proposta
+in tre fasce; **l'utente ha comprato A e B, C no**. Regola e token in
+`docs/view.md` § Motion; bullet sotto `## Unreleased`.
+- [x] M1 — dialoghi e menu entrano, pressione dei pulsanti, pallino dirty che
+      compare, scossone sul rifiuto. — af21321, corretto in e22e150
+- [x] M2 — Today scorre; Fit, zoom e `showToday()` dell'agent saltano. — c7a67db
+- [x] M3 — dopo un ricalcolo o un undo/redo le barre spostate scivolano
+      (`glideBars`, `motion.ts`). — e1fd29c
+**Decisioni dell'utente**: anche undo/redo e scritture dell'agent animano;
+**basta `prefers-reduced-motion`**, niente interruttore nell'app.
+**Fascia C, non comprata**: transizioni sull'hover, zoom animato, catena
+critica pulsante, skeleton, effetti celebrativi, apertura dei gruppi animata.
+**Trappola costata un falso positivo**: nella preview embedded
+`requestAnimationFrame` gira a 1 Hz senza focus — un fotogramma intermedio
+non si osserva; si ferma l'animazione WAAPI a meta' (`pause()` +
+`currentTime`) e si misura. Lo scossone con `translate` sforava il
+contenitore (776 in 772, scrollbar): ora sposta il testo nel padding.
+**Guidato**: entrate di dialogo e menu, scossone in People e sulla barra
+d'errore (link ciclico), glide su edit agent e su Undo, Today, chiaro e scuro.
+**Non guidato**: drag di una barra e delle maniglie del ritmo con il glide
+attivo, stampa e PNG subito dopo un edit, fluidita' reale a 60 Hz.
+
 ## Maintenance — no goal
 Task che non servono una milestone: difetti puntuali, salute del codice e
 analisi, arrivati come richieste singole. **Non ricevono la goal review**, ed
@@ -361,6 +387,12 @@ fatta**, e va rifatta se qualcuno riapre la questione.
 
 ## Da riproporre — nessuno le ha comprate
 
+- **Tre limiti del movimento, accettati sotto la regola dell'80%**: durante
+  il glide frecce ed etichette laterali sono gia' all'arrivo; due rifiuti
+  uguali di fila scuotono una volta sola (React non rimonta la barra); il
+  pallino dirty compare animato ma sparisce di colpo (sfumarlo vuol dire
+  riservargli lo spazio sempre).
+
 - **Percentuali sulle barre come opzione di vista** (Goal L): proposta
   dall'utente in alternativa al solo hover, non costruita.
 
@@ -465,6 +497,7 @@ misurato. Le lezioni durevoli stanno in `.claude/orchestrate.md`, non qui.
 | L2, L3 | feature | browser | 226, 102 | - | - | 0 |
 | L4 (spike 243 + indagine 188) | feature | browser | 290 | - | - | 0 |
 | L5 | engine | browser | 366 | 175 | L4+L5: 1330+/100- | 1 (hub) |
+| M1-M3 | polish | browser, 1 sessione | - | - | 176+/3- | 1 (utente: scossone) |
 
 Sopra ~300k per meno di ~50 righe di `src/` e' un difetto di processo e va
 all'utente coi numeri, non nel Log come successo a zero round.
