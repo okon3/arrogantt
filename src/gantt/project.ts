@@ -286,6 +286,36 @@ export function moveFixed(
  * comparison, or the solved start of a task held to 13:00 by a predecessor
  * would round to 08:00 and read as a move nobody made.
  */
+/**
+ * What a bar put down here would write, read off the drag before the drop: a
+ * scheduled task gets only its earliest start (the engine decides the rest), a
+ * fixed one both its days. Same rules as the drop itself (`moveFixed`,
+ * `fixedEndOn`, the working day the start falls on).
+ */
+export function dropDates(
+  task: ProjectTask,
+  resize: boolean,
+  offeredStart: Date,
+  offeredEnd: Date,
+  solved: SolvedProject,
+  spec: CalendarSpec,
+): { start: Date; end?: Date; days?: number } {
+  const { calendar } = solved;
+  if (!task.fixedEnd) return { start: calendar.startOfWorkingDay(offeredStart) };
+  let start: Date;
+  let end: Date;
+  if (resize) {
+    start = calendar.startOfWorkingDay(offeredStart);
+    end = fixedEndOn(calendar, start, offeredEnd);
+  } else {
+    const moved = moveFixed(task, offeredStart, solved, spec);
+    start = moved.start;
+    end = moved.fixedEnd!;
+  }
+  const axis = new WorkingCalendar(start, spec);
+  return { start, end, days: axis.minutesToDays(axis.toWorkingMinutes(end)) };
+}
+
 export function constraintStart(task: ProjectTask, offered: Date, solved: SolvedProject): Date {
   const scheduled = solved.schedule.tasks.get(task.id);
   if (scheduled && offered.getTime() === scheduled.start.getTime()) return task.start;

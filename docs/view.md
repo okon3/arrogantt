@@ -312,6 +312,14 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   share is in force — so a split outside a fixed period stays plain contention.
   An unfixed task stopped by others' shares gets no wording of its own.
 
+## Drag tooltip
+
+- **While a bar is dragged, a pill over it says what the drop will write**
+  (`dropDates`, `project.ts`, same rules as the drop): a scheduled task only
+  `Not before <day>`, since the engine decides its dates; a fixed task both
+  days and its working-day length. Placed from the dragged dates, not the
+  bar's node, which dhtmlx moves after `onTaskDrag`.
+
 ## Highlight (person)
 
 - **Highlighting is not filtering**: their rows/bars/links keep opacity, the

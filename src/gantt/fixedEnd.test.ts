@@ -5,6 +5,7 @@ import type { GanttHandle, TaskDetails } from './ganttHandle';
 import { buildPlan } from './plan';
 import {
   closeGaps,
+  dropDates,
   fixedEndOn,
   isMilestone,
   moveFixed,
@@ -135,6 +136,27 @@ describe('moving a fixed task', () => {
     expect(moveFixed(plan.tasks[0], new Date(2026, 8, 9, 15, 0), solved, plan.calendar)).toBe(
       plan.tasks[0],
     );
+  });
+});
+
+describe('the dates a drag would write', () => {
+  const plan = project([leaf('a', { start: open(2), fixedEnd: close(4) }), leaf('b')]);
+  const solved = solve(plan);
+
+  it('are only a start for a scheduled task, on the working day it falls on', () => {
+    // Saturday afternoon: the next opening is Monday's.
+    expect(dropDates(plan.tasks[1], false, new Date(2026, 8, 12, 15, 0), close(9), solved, plan.calendar))
+      .toEqual({ start: open(7) });
+  });
+
+  it('carry a fixed task whole, as many working days long', () => {
+    expect(dropDates(plan.tasks[0], false, new Date(2026, 8, 10, 14, 0), close(9), solved, plan.calendar))
+      .toEqual({ start: open(3), end: close(7), days: 3 });
+  });
+
+  it('move one edge of a fixed task on a resize', () => {
+    expect(dropDates(plan.tasks[0], true, open(2), new Date(2026, 8, 15, 11, 0), solved, plan.calendar))
+      .toEqual({ start: open(2), end: close(8), days: 5 });
   });
 });
 

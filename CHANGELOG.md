@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **A quieter dark look.** Neutral greys and hairline borders, and a selected
+  task's dependencies stand out while the others dim.
+- **Dates while you drag.** A bar shows the day it will start from; a task
+  with fixed dates shows both ends and its length.
 - **Smaller touches.** A click on a task's name selects it, a double click
   renames it, and opening or closing a group slides its rows.
 

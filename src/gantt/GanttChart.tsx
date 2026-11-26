@@ -34,6 +34,7 @@ import {
   chainStateOf,
   closeGaps,
   constraintStart,
+  dropDates,
   fixedEndOn,
   moveFixed,
   barColors,
@@ -66,8 +67,10 @@ import {
   columnsWidth,
   installRowTemplates,
   refreshResourceOptions,
+  shortDate,
   type RowContext,
 } from './gridColumns';
+import { formatDays } from './format';
 import type { PlanColumnName } from './columns';
 import { matchesSearch, searchKey } from './search';
 import { keystrokeIsCaptured } from './shortcuts';
@@ -1192,6 +1195,14 @@ export function GanttChart({
     // keyboard navigation dhtmlx moves focus around its own cells, and a key
     // that only works when focus happens to sit inside the chart reads as
     // broken.
+    const dragTip = document.createElement('div');
+    dragTip.className = 'pace-tip drag-tip';
+    dragTip.hidden = true;
+    document.body.appendChild(dragTip);
+    // A drag dhtmlx abandons ends without `onAfterTaskDrag`.
+    const hideDragTip = () => (dragTip.hidden = true);
+    document.addEventListener('pointerup', hideDragTip);
+
     const deleteSelected = (event: KeyboardEvent) => {
       if (event.key !== 'Delete') return;
       if (keystrokeIsCaptured()) return;
@@ -1321,7 +1332,33 @@ export function GanttChart({
         (id, mode) => mode !== gantt.config.drag_mode.resize || Boolean(gantt.getTask(id).fixed),
         undefined,
       ),
+      // Says what the drop will write while the bar is in the air.
+      gantt.attachEvent('onTaskDrag', (id, mode, ganttTask) => {
+        const task = projectRef.current.tasks.find((candidate) => candidate.id === String(id));
+        const summary = solvedRef.current.summaryIds.has(String(id));
+        if (!task || summary || mode === gantt.config.drag_mode.progress) return true;
+        const drop = dropDates(
+          task,
+          mode === gantt.config.drag_mode.resize,
+          new Date(ganttTask.start_date as Date),
+          new Date(ganttTask.end_date as Date),
+          solvedRef.current,
+          projectRef.current.calendar,
+        );
+        dragTip.textContent = drop.end
+          ? `${shortDate(drop.start)} → ${shortDate(drop.end)}, ${formatDays(drop.days!)}d`
+          : `Not before ${shortDate(drop.start)}`;
+        // From the dates, not the bar's node: dhtmlx moves the node after this event.
+        const bar = gantt.getTaskPosition(ganttTask, ganttTask.start_date, ganttTask.end_date);
+        // `$task_data` moves with the scroll: no offset to add (docs/dhtmlx.md).
+        const origin = gantt.$task_data.getBoundingClientRect();
+        dragTip.style.left = `${origin.left + bar.left + bar.width / 2}px`;
+        dragTip.style.top = `${origin.top + bar.top - 22}px`;
+        dragTip.hidden = false;
+        return true;
+      }, undefined),
       gantt.attachEvent('onAfterTaskDrag', (id) => {
+        dragTip.hidden = true;
         if (applyingRef.current) return true;
         pullFromView(id);
         applySolution();
@@ -1479,6 +1516,8 @@ export function GanttChart({
       container.removeEventListener('click', slideOnToggle, true);
       container.removeEventListener('click', runFold);
       document.removeEventListener('keydown', deleteSelected);
+      document.removeEventListener('pointerup', hideDragTip);
+      dragTip.remove();
       handlers.forEach((handlerId) => gantt.detachEvent(handlerId));
       // Deliberately no destructor(): it leaves the singleton unusable, and
       // StrictMode's mount/unmount/mount would then re-init a dead instance
