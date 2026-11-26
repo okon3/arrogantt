@@ -69,10 +69,11 @@ const foldMs = () =>
 
 /**
  * A critically damped spring (no overshoot) as a CSS `linear()` curve over
- * `duration` — the motion a fold measured on the reference demo follows.
+ * `duration`: the reference demo's fold, stiffened to make up for the redraw dhtmlx
+ * spends before the first frame.
  */
 function springEasing(duration: number) {
-  const omega = 14; // per second
+  const omega = 20; // per second
   const points = Array.from({ length: 25 }, (_, i) => {
     const t = (i / 24) * (duration / 1000);
     return i === 24 ? 1 : 1 - (1 + omega * t) * Math.exp(-omega * t);
@@ -98,8 +99,8 @@ const rowNodes = () => [
 const rowTops = () => new Map(gridRows().map((node) => [rowId(node), node.getBoundingClientRect().top]));
 
 /**
- * Read before branch `parentId` opens or closes; the returned call, run on the
- * first frame after the redraw, folds the rows like a lane: children slide out
+ * Read before branch `parentId` opens or closes; the returned call, run once
+ * the redraw is done, folds the rows like a lane: children slide out
  * of the parent's row on open and back into it on close, fading, while the rows
  * below follow. Every node of a row gets the same offset, so grid and timeline
  * stay level. dhtmlx drops closed rows from the DOM before anything can move

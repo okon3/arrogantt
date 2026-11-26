@@ -77,7 +77,7 @@
      decorates: hover stays instant, a control used all day must not wait. */
   --motion-fast: 120ms;
   --motion-base: 180ms;
-  --motion-fold: 480ms;
+  --motion-fold: 340ms;
   --ease-out: cubic-bezier(0.2, 0, 0, 1);
 
   /* Dialog spacing — the only scale dialog.css draws gaps and padding from. */

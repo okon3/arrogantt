@@ -1160,17 +1160,23 @@ export function GanttChart({
     };
     container.addEventListener('click', markClickInFlight, true);
 
-    // dhtmlx opens or closes the branch and redraws inside this click; the
-    // frame after it is the first one painted.
+    // Read above dhtmlx's delegation root, before it toggles and redraws; run
+    // below it, after `selectRow` has redrawn the row too, in the same task, so
+    // the fold starts on the very frame that first shows the new tree.
+    let pendingFold: (() => void) | null = null;
     const slideOnToggle = (event: MouseEvent) => {
+      pendingFold = null;
       const target = event.target as HTMLElement | null;
       if (!target?.closest?.('.gantt_tree_icon.gantt_open, .gantt_tree_icon.gantt_close')) return;
       const id = target.closest('.gantt_row')?.getAttribute('data-task-id');
-      if (!id || !gantt.isTaskExists(id)) return;
-      const fold = foldRows(id);
-      requestAnimationFrame(fold);
+      if (id && gantt.isTaskExists(id)) pendingFold = foldRows(id);
     };
     container.addEventListener('click', slideOnToggle, true);
+    const runFold = () => {
+      pendingFold?.();
+      pendingFold = null;
+    };
+    container.addEventListener('click', runFold);
 
     const renameOnDoubleClick = (event: MouseEvent) => {
       const editors = gantt.ext.inlineEditors;
@@ -1471,6 +1477,7 @@ export function GanttChart({
       container.removeEventListener('click', markClickInFlight, true);
       container.removeEventListener('dblclick', renameOnDoubleClick);
       container.removeEventListener('click', slideOnToggle, true);
+      container.removeEventListener('click', runFold);
       document.removeEventListener('keydown', deleteSelected);
       handlers.forEach((handlerId) => gantt.detachEvent(handlerId));
       // Deliberately no destructor(): it leaves the singleton unusable, and
