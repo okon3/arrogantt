@@ -140,11 +140,17 @@ export function foldRows(parentId: string): () => void {
       const dy = was === undefined && folded(id) ? parentTop - top : above;
       shift.set(id, { dy, fades: was === undefined && folded(id) });
     }
+    // Rows cross each other on the way: an opaque one would cut the text of the
+    // one under it. Same colour as the chart behind, so at rest nothing changes.
+    const see = (node: HTMLElement) => (node.matches('.gantt_row, .gantt_task_row') ? { background: 'transparent' } : {});
     for (const node of rowNodes()) {
       const row = shift.get(rowId(node));
       if (!row) continue;
       if (Math.abs(row.dy) >= 1) {
-        node.animate([{ transform: `translateY(${row.dy}px)` }, { transform: 'none' }], { duration, easing });
+        node.animate([{ transform: `translateY(${row.dy}px)`, ...see(node) }, { transform: 'none', ...see(node) }], {
+          duration,
+          easing,
+        });
       }
       if (row.fades) node.animate([{ opacity: 0 }, { opacity: 1 }], { duration: fade, easing: easeOutCss });
     }
@@ -156,6 +162,7 @@ export function foldRows(parentId: string): () => void {
       copy.removeAttribute('task_id');
       copy.removeAttribute('data-pace-task');
       copy.style.pointerEvents = 'none';
+      copy.style.background = 'transparent';
       host.append(copy);
       const now = copy.getBoundingClientRect().top;
       copy.animate(
