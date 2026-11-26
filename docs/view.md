@@ -172,12 +172,12 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   leave; Enter saves+closes; Esc closes without saving. Focused field carries
   the app's focus ring.
 - **A top-level task starts a new group** (`gantt-row--group-start`,
-  `installRowTemplates`), marked on grid and timeline rows both with a 2px
+  `installRowTemplates`), marked on grid and timeline rows both with a 1px
   inset top shadow in `--line-strong`. Not a background: hover, selected,
   found already contend for it, and zebra striping is off for the same
   reason. Not a `border-top`: a border offsets the grid pane against the
-  timeline once the grid scrolls. 2px, not 1px: `--line-strong` is one step
-  from `--line`, and at 1px the two read alike. **`box-shadow` does not merge
+  timeline once the grid scrolls. 1px is a taste taken over legibility: in
+  light `--line-strong` is one step from `--line`. **`box-shadow` does not merge
   across rules**: a further row rule drawing a shadow on a group-start row
   needs a compound declaration carrying both
   (`.gantt-found.gantt-row--group-start`), in **both** panes; in the timeline
