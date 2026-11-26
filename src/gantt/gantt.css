@@ -442,6 +442,51 @@ html[data-scheme='dark'] .gantt_resizing {
   stroke-width: 3;
 }
 
+/* The bar's own buttons, beside its right end and over its label while the
+   pointer is there. The inverse pill the link's × and the drag tooltip wear. */
+.bar-actions {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  gap: 1px;
+  padding: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--inverse-surface);
+  translate: 0 -50%;
+  box-shadow: var(--shadow-raised);
+}
+
+.bar-actions[hidden] {
+  display: none;
+}
+
+.bar-actions__btn {
+  display: flex;
+  padding: 3px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--inverse-ink);
+  cursor: pointer;
+}
+
+.bar-actions__btn[hidden] {
+  display: none;
+}
+
+.bar-actions__btn:hover {
+  background: rgb(255 255 255 / 16%);
+}
+
+.bar-actions__btn--on {
+  color: var(--danger);
+}
+
+.bar-actions__btn--danger:hover {
+  background: var(--danger);
+  color: var(--inverse-ink);
+}
+
 /* A shared task keeps a single continuous outline — the bar is one task, and
    the profile inside it is what varies.
    dhtmlx v10 drives bar colours through custom properties and sets them inline

@@ -40,7 +40,7 @@ function personLabel(resource: Resource): string {
  * is the documented way around a string, short of pulling in React's
  * server renderer for two icons.
  */
-function sizedIcon(svg: string, size: number): string {
+export function sizedIcon(svg: string, size: number): string {
   return svg
     .replace(/\swidth="\d+"/, ` width="${size}"`)
     .replace(/\sheight="\d+"/, ` height="${size}"`)

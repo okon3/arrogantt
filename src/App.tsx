@@ -1113,6 +1113,7 @@ export default function App() {
           }}
           onRowMenu={setRowMenu}
           onToggleDisabled={toggleDisabled}
+          onToggleAutoEnd={toggleAutoEnd}
           onSetPacePeriods={setPacePeriods}
           onDeleteTask={(id) => void requestDelete(id)}
           onScaleChange={setScale}

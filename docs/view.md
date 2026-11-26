@@ -331,6 +331,13 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   share is in force — so a split outside a fixed period stays plain contention.
   An unfixed task stopped by others' shares gets no wording of its own.
 
+## Bar actions
+
+- **Pointing at a bar shows its buttons beside its right end** (`barActions.ts`):
+  details, Auto end (pin; not on a summary or a milestone), disable, delete.
+  Each calls the handler the grid, the row menu and the panel already use: no
+  rule of its own. In `$task_data`; hidden on a press, a redraw or leaving.
+
 ## Drag tooltip
 
 - **While a bar is dragged, a pill over it says what the drop will write**

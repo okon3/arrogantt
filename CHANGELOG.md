@@ -4,6 +4,8 @@
 
 - 🗂️ **Details beside the chart.** The (i) opens a panel that follows the
   selected task; changes apply at once, and Auto end turns fixed dates on or off.
+- **Actions on the bar.** Point at a bar for its details, Auto end, disable
+  and delete.
 - **A quieter dark look.** Neutral greys and hairline borders, and a selected
   task's dependencies stand out while the others dim.
 - **Dates while you drag.** A bar shows the day it will start from; a task

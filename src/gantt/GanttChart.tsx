@@ -20,6 +20,7 @@ import {
 } from './zoomLevels';
 import { fitRangeToPlan, repinRangeToScale, appliedScrollX } from './timelineGeometry';
 import { hiddenLinksOf } from './hiddenLinks';
+import { installBarActions } from './barActions';
 import { installLinkHover } from './linkHover';
 import { barRects, foldRows, glideBars, glideScrollX } from './motion';
 import { installPaceHandles } from './paceHandles';
@@ -117,6 +118,7 @@ export function GanttChart({
   onSelectionChange,
   onRowMenu,
   onToggleDisabled,
+  onToggleAutoEnd,
   onSetPacePeriods,
   onDeleteTask,
   onScaleChange,
@@ -136,6 +138,8 @@ export function GanttChart({
   showLoad?: boolean;
   onChange?: () => void;
   onOpenTask?: (id: string) => void;
+  /** Auto end on or off, from the bar's own buttons. */
+  onToggleAutoEnd?: (id: string) => void;
   /** The selected task after every change of selection, null when none is. */
   onSelectionChange?: (id: string | null) => void;
   /** A right-click on a row, for the caller to answer with a menu of its own. */
@@ -174,6 +178,7 @@ export function GanttChart({
   const selectionRef = useRef(onSelectionChange);
   const rowMenuRef = useRef(onRowMenu);
   const toggleDisabledRef = useRef(onToggleDisabled);
+  const toggleAutoEndRef = useRef(onToggleAutoEnd);
   const setPacePeriodsRef = useRef(onSetPacePeriods);
   const deleteTaskRef = useRef(onDeleteTask);
   const scaleChangeRef = useRef(onScaleChange);
@@ -238,6 +243,7 @@ export function GanttChart({
     selectionRef.current = onSelectionChange;
     rowMenuRef.current = onRowMenu;
     toggleDisabledRef.current = onToggleDisabled;
+    toggleAutoEndRef.current = onToggleAutoEnd;
     setPacePeriodsRef.current = onSetPacePeriods;
     deleteTaskRef.current = onDeleteTask;
     scaleChangeRef.current = onScaleChange;
@@ -250,6 +256,7 @@ export function GanttChart({
     onDeleteTask,
     onOpenTask,
     onSelectionChange,
+    onToggleAutoEnd,
     onReject,
     onRowMenu,
     onScaleChange,
@@ -1467,6 +1474,22 @@ export function GanttChart({
     });
 
     const detachLinkHover = installLinkHover(container);
+    const detachBarActions = installBarActions(container, {
+      describe: (taskId) => {
+        const task = projectRef.current.tasks.find((candidate) => candidate.id === taskId);
+        if (!task) return undefined;
+        return {
+          isSummary: solvedRef.current.summaryIds.has(taskId),
+          isMilestone: isMilestone(task, solvedRef.current.summaryIds),
+          fixed: Boolean(task.fixedEnd),
+          disabled: task.disabled === true,
+        };
+      },
+      info: (taskId) => openTaskRef.current?.(taskId),
+      toggleAutoEnd: (taskId) => toggleAutoEndRef.current?.(taskId),
+      toggleDisabled: (taskId, disabled) => toggleDisabledRef.current?.(taskId, disabled),
+      remove: (taskId) => deleteTaskRef.current?.(taskId),
+    });
     const detachRolledLinks = installRolledLinks(container);
 
     loadProject(projectRef.current);
@@ -1534,6 +1557,7 @@ export function GanttChart({
       overlays.detach();
       detachPaceHandles();
       detachLinkHover();
+      detachBarActions();
       detachRolledLinks();
       gantt.ext.zoom.detachEvent(zoomHandler);
       container.removeEventListener('wheel', zoomOnWheel, true);
