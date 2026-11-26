@@ -57,7 +57,7 @@ export function installBarActions(container: HTMLElement, actions: BarActions): 
     bar.hidden = true;
   };
 
-  const show = (taskId: string, node: HTMLElement) => {
+  const show = (taskId: string) => {
     const target = actions.describe(taskId);
     if (!target) return;
     window.clearTimeout(hiding);
@@ -69,12 +69,15 @@ export function installBarActions(container: HTMLElement, actions: BarActions): 
     disable.title = target.disabled ? 'Enable' : 'Disable';
     disable.classList.toggle('bar-actions__btn--on', target.disabled);
     remove.title = 'Delete';
-    // `$task_data` moves with the scroll: no offset to add (docs/dhtmlx.md).
-    const origin = gantt.$task_data.getBoundingClientRect();
-    const box = node.getBoundingClientRect();
-    bar.style.left = `${box.right - origin.left + 6}px`;
-    bar.style.top = `${box.top + box.height / 2 - origin.top}px`;
+    // In the data's own coordinates, as the bars are: `$task_data` scrolls its
+    // rows by `scrollTop` (docs/dhtmlx.md), and a screen offset would ignore it.
+    const at = gantt.getTaskPosition(gantt.getTask(taskId));
     bar.hidden = false;
+    // Short of the timeline's right edge: a long bar's end can be far off screen.
+    const onScreenRight =
+      gantt.$task.getBoundingClientRect().right - gantt.$task_data.getBoundingClientRect().left;
+    bar.style.left = `${Math.min(at.left + at.width + 6, onScreenRight - bar.offsetWidth - 8)}px`;
+    bar.style.top = `${at.top + at.rowHeight / 2}px`;
   };
 
   const onOver = (event: MouseEvent) => {
@@ -84,7 +87,7 @@ export function installBarActions(container: HTMLElement, actions: BarActions): 
       return;
     }
     const node = target.closest<HTMLElement>('.gantt_task_line[data-task-id]');
-    if (node) show(node.dataset.taskId!, node);
+    if (node) show(node.dataset.taskId!);
   };
 
   const onOut = (event: MouseEvent) => {

@@ -1383,14 +1383,15 @@ export function GanttChart({
           : `Starting ${formatDay(drop.start)}`;
         // From the dates, not the bar's node: dhtmlx moves the node after this event.
         const bar = gantt.getTaskPosition(ganttTask, ganttTask.start_date, ganttTask.end_date);
-        // `$task_data` moves with the scroll: no offset to add (docs/dhtmlx.md).
+        // Data to screen: `$task_data` follows a horizontal scroll but scrolls its
+        // rows itself, by `scrollTop` (docs/dhtmlx.md).
         const origin = gantt.$task_data.getBoundingClientRect();
         // Over the part of the bar on screen: a long bar's middle can be far off it.
         const view = gantt.$task.getBoundingClientRect();
         const from = Math.max(origin.left + bar.left, view.left);
         const to = Math.min(origin.left + bar.left + bar.width, view.right);
         dragTip.style.left = `${(from + to) / 2}px`;
-        dragTip.style.top = `${origin.top + bar.top - 22}px`;
+        dragTip.style.top = `${origin.top + bar.top - gantt.$task_data.scrollTop - 22}px`;
         dragTip.hidden = false;
         return true;
       }, undefined),

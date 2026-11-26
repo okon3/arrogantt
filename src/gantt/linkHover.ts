@@ -85,10 +85,12 @@ export function installLinkHover(container: HTMLElement): () => void {
         .map((segment) => segment.getBoundingClientRect())
         .sort((a, b) => b.width + b.height - (a.width + a.height))[0];
       if (!longest) return;
-      // `$task_data` moves with the scroll: no offset to add (docs/dhtmlx.md).
-      const origin = gantt.$task_data.getBoundingClientRect();
-      remove.style.left = `${longest.left + longest.width / 2 - origin.left}px`;
-      remove.style.top = `${longest.top + longest.height / 2 - origin.top}px`;
+      // Screen to the data's own coordinates: `$task_data` follows a horizontal
+      // scroll but scrolls its rows itself, by `scrollTop` (docs/dhtmlx.md).
+      const data = gantt.$task_data;
+      const origin = data.getBoundingClientRect();
+      remove.style.left = `${longest.left + longest.width / 2 - origin.left + data.scrollLeft}px`;
+      remove.style.top = `${longest.top + longest.height / 2 - origin.top + data.scrollTop}px`;
       remove.hidden = false;
       return;
     }

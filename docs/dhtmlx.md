@@ -264,8 +264,11 @@ library. Each bullet is a constraint or a fact; how it was found is in git.
   cycle (inherited summary links), so it is trial-solved there, like a link.
 - **`onAfterTaskMove` reports only the new parent**: read order back off the
   grid (`getChildren`, not `eachTask`; closed branches still have an order).
-- **`$task_data` moves with the scroll; don't add the scroll to it.** Pointer →
-  date is `dateFromPos(clientX - $task_data.getBoundingClientRect().left)`.
+- **`$task_data` moves with a horizontal scroll but scrolls its rows itself**
+  (`scrollTop`; its rect stays put). Pointer → date is
+  `dateFromPos(clientX - $task_data.getBoundingClientRect().left)`, no offset;
+  a screen y → its child's `top` adds `$task_data.scrollTop`, or position from
+  `getTaskPosition`, which is already in its coordinates.
   The load lanes do add it and aren't a precedent: they draw in their own
   panel.
 - **`onGanttScroll`'s `left` argument is stale in some firings, and the firing
