@@ -138,7 +138,11 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   same shape as `RowMenu`). Focus moves to the first checkbox on open (an
   explicit `.focus()`; `setAutofocus` only fires through `showModal()`), Tab
   cycles the checkboxes wrapping, Escape alone returns focus to the button.
-  It flips **above the button**, above its top edge.
+  It flips **above the button**, above its top edge. *Reset to defaults*
+  under the list sets the boxes to the registry's `defaultShown` (resource,
+  effort, end) and is saved like any tick.
+- **Dates in the grid read `8 Dec`**, the year only off the current one
+  (`formatDay`, `format.ts`); the drag tooltip shares it.
 - **Persisted as a preference, not plan data**: `localStorage`
   `arrogantt.columns.v1`, a JSON array of the shown names, written by a picker
   change, read once at first render (`readColumnSelection`). Anything

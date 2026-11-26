@@ -31,6 +31,10 @@ describe('the default column selection', () => {
     expect([...defaultColumnSelection()].sort()).toEqual([...DEFAULT_SHOWN_NAMES].sort());
   });
 
+  it('is the resource, the effort and the end', () => {
+    expect([...defaultColumnSelection()]).toEqual(['resource_id', 'nominal_days', 'end_shown']);
+  });
+
   it('excludes an entry whose defaultShown is false', () => {
     const hidden = PLAN_COLUMNS.filter((entry) => !entry.defaultShown).map((entry) => entry.name);
     expect(hidden.length).toBeGreaterThan(0);

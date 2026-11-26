@@ -51,7 +51,7 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
     label: () => 'Start',
     gridWidth: 84,
     figureWidth: 76,
-    defaultShown: true,
+    defaultShown: false,
   },
   {
     name: 'end_shown',
@@ -65,7 +65,7 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
     label: () => 'Duration',
     gridWidth: 62,
     figureWidth: 60,
-    defaultShown: true,
+    defaultShown: false,
   },
   // The first two labels that read `project`: a rate or a cost is meaningless
   // without the currency it is in, and the label is the only place that unit

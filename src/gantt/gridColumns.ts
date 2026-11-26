@@ -1,7 +1,7 @@
 import { gantt } from 'dhtmlx-gantt';
 import type { GridColumn } from 'dhtmlx-gantt';
 import { ArrowRight, Info, Ban, Pin } from 'lucide-static';
-import { formatDays } from './format';
+import { formatDay, formatDays } from './format';
 import { costCellText, rateCellText, type CellText } from './costCells';
 import { hiddenLinksOf } from './hiddenLinks';
 import { escapeHtml } from './html';
@@ -13,12 +13,7 @@ import { matchesSearch } from './search';
 import { PLAN_COLUMNS, type PlanColumnName } from './columns';
 import type { Resource } from '../scheduler';
 
-const dayMonth = new Intl.DateTimeFormat('en-GB', {
-  day: '2-digit',
-  month: '2-digit',
-  year: '2-digit',
-});
-const shortDate = (value: Date) => (value ? dayMonth.format(new Date(value)) : '');
+const shortDate = (value: Date) => (value ? formatDay(new Date(value)) : '');
 
 /** Columns whose value a summary derives from its children. */
 export const DERIVED_ON_SUMMARY = new Set(['nominal_days', 'resource_id', 'start_date']);

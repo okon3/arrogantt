@@ -69,7 +69,7 @@ import {
   refreshResourceOptions,
   type RowContext,
 } from './gridColumns';
-import { formatDays } from './format';
+import { formatDay, formatDays } from './format';
 import type { PlanColumnName } from './columns';
 import { matchesSearch, searchKey } from './search';
 import { keystrokeIsCaptured } from './shortcuts';
@@ -1194,7 +1194,6 @@ export function GanttChart({
     // keyboard navigation dhtmlx moves focus around its own cells, and a key
     // that only works when focus happens to sit inside the chart reads as
     // broken.
-    const dayAndMonth = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
     const dragTip = document.createElement('div');
     dragTip.className = 'pace-tip drag-tip';
     dragTip.hidden = true;
@@ -1355,8 +1354,8 @@ export function GanttChart({
           projectRef.current.calendar,
         );
         dragTip.textContent = drop.end
-          ? `${dayAndMonth.format(drop.start)} → ${dayAndMonth.format(drop.end)}, ${formatDays(drop.days!)}d`
-          : `Starting ${dayAndMonth.format(drop.start)}`;
+          ? `${formatDay(drop.start)} → ${formatDay(drop.end)}, ${formatDays(drop.days!)}d`
+          : `Starting ${formatDay(drop.start)}`;
         // From the dates, not the bar's node: dhtmlx moves the node after this event.
         const bar = gantt.getTaskPosition(ganttTask, ganttTask.start_date, ganttTask.end_date);
         // `$task_data` moves with the scroll: no offset to add (docs/dhtmlx.md).

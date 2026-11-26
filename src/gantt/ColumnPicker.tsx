@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ColumnChecklist } from './ColumnChecklist';
-import type { PlanColumnName } from './columns';
+import { defaultColumnSelection, type PlanColumnName } from './columns';
 import type { Project } from './project';
 
 /** Where the button that opened the popover sits, so it can anchor under it. */
@@ -83,9 +83,9 @@ export function ColumnPicker({
       }
       if (event.key === 'Tab') {
         const boxes = [
-          ...(dialog.current?.querySelectorAll<HTMLInputElement>('input[type="checkbox"]') ?? []),
+          ...(dialog.current?.querySelectorAll<HTMLElement>('input[type="checkbox"], button') ?? []),
         ];
-        const from = boxes.indexOf(document.activeElement as HTMLInputElement);
+        const from = boxes.indexOf(document.activeElement as HTMLElement);
         if (from === -1) return;
         event.preventDefault();
         const next = boxes[(from + (event.shiftKey ? -1 : 1) + boxes.length) % boxes.length];
@@ -112,6 +112,9 @@ export function ColumnPicker({
   return (
     <dialog ref={dialog} open className="columnpicker" aria-label="Choose columns">
       <ColumnChecklist shown={shown} project={project} onChange={onChange} />
+      <button type="button" className="columnpicker__reset" onClick={() => onChange(defaultColumnSelection())}>
+        Reset to defaults
+      </button>
     </dialog>
   );
 }

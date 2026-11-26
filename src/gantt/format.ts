@@ -38,3 +38,11 @@ const moneyFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 2 })
 export function formatMoney(amount: number): string {
   return moneyFormat.format(amount);
 }
+
+const dayMonthFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
+const dayMonthYearFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: '2-digit' });
+
+/** A calendar day as the UI prints it: `8 Dec`, with the year only off this one (`8 Dec 27`). */
+export function formatDay(date: Date, today: Date = new Date()): string {
+  return (date.getFullYear() === today.getFullYear() ? dayMonthFormat : dayMonthYearFormat).format(date);
+}

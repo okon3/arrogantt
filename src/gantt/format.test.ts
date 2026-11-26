@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDays, formatMoney } from './format';
+import { formatDay, formatDays, formatMoney } from './format';
 
 describe('formatDays', () => {
   it('prints a whole number of days without decimals', () => {
@@ -49,5 +49,17 @@ describe('formatMoney', () => {
   it('writes the number and nothing else, the currency label belongs to the caller', () => {
     expect(formatMoney(0)).toBe('0');
     expect(formatMoney(600)).toBe('600');
+  });
+});
+
+describe('formatDay', () => {
+  const today = new Date(2026, 10, 26);
+
+  it('writes the day and the short month, no year within this one', () => {
+    expect(formatDay(new Date(2026, 11, 8, 17, 0), today)).toBe('8 Dec');
+  });
+
+  it('adds the year on a day of another one', () => {
+    expect(formatDay(new Date(2027, 0, 20), today)).toBe('20 Jan 27');
   });
 });
