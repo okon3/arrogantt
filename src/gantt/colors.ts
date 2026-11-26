@@ -11,7 +11,7 @@ export const HEX_COLOR = /^#[0-9a-f]{6}$/i;
  * way to keep this many apart on a 12px bar, and it degrades gracefully for
  * colour-blind users (minimum CIEDE2000 ΔE00 across every pair: 13.87).
  * Every tint clears 3:1 (the WCAG non-text floor) against **both** chart row
- * backgrounds — white in light scheme, `#1b1e24` in dark — since the tint
+ * backgrounds — white in light scheme, `#191919` in dark — since the tint
  * itself never changes with the scheme. It does not additionally cap
  * lightness against a single fixed ink: `needsDarkInk` below picks whichever
  * of white or a near-black reads best on each tint, so a tint just has to

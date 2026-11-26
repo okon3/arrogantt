@@ -113,15 +113,16 @@
     --danger-soft: #2c1d18;
     --critical: #ef6a80;
 
-    --ink: #e4e6ec;
-    --ink-muted: #99a0ac;
-    --ink-faint: #717886;
+    /* Neutral greys, no blue cast: a taste taken from a reference design. */
+    --ink: #e6e6e6;
+    --ink-muted: #a0a0a0;
+    --ink-faint: #787878;
 
-    --surface: #1b1e24;
-    --surface-sunken: #16181d;
-    --surface-hover: #252932;
-    --line: #2b2f37;
-    --line-strong: #3d434e;
+    --surface: #191919;
+    --surface-sunken: #141414;
+    --surface-hover: #232323;
+    --line: #222222;
+    --line-strong: #3a3a3a;
     /* Flat, not a share of --line-strong like the light value: a share of the
        line grey lightens over dark rows, and a weekend that lightens stops
        being background. Untracked on purpose — a retune of --line-strong
@@ -135,12 +136,12 @@
     --band-timeoff: color-mix(in srgb, var(--danger-soft) 40%, transparent);
     --band-timeoff-hatch: color-mix(in srgb, var(--danger-line) 28%, transparent);
 
-    --inverse-surface: #333944;
-    --inverse-ink: #eef0f4;
+    --inverse-surface: #363636;
+    --inverse-ink: #f0f0f0;
 
-    --bar-track: #2c313b;
-    --bar-track-line: #4a515e;
-    --bar-track-ink: #ccd3e0;
+    --bar-track: #2e2e2e;
+    --bar-track-line: #4f4f4f;
+    --bar-track-ink: #d4d4d4;
 
     --dirty: #e0a24a;
 

@@ -466,8 +466,8 @@ html:root[data-gantt-theme='dark'] {
    than a fourth track variable. */
 @media (prefers-color-scheme: dark) {
   .gantt_task_line.gantt-bar--shared .gantt_task_progress {
-    --dhx-gantt-task-progress: #3a414e;
-    background: #3a414e;
+    --dhx-gantt-task-progress: #3e3e3e;
+    background: #3e3e3e;
   }
 }
 
@@ -1142,7 +1142,7 @@ html:root[data-gantt-theme='dark'] {
 @media (prefers-color-scheme: dark) {
   .loadtip__when,
   .loadtip__free {
-    color: #a8b0bd;
+    color: #b0b0b0;
   }
 }
 

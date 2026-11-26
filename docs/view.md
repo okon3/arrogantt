@@ -20,6 +20,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   retune of the line grey does not reach dark.
 - **`--band-nonworking-over`** is the load lane's veil (painted over content):
   black at low alpha in both schemes, tuned separately.
+- **Dark greys are neutral, no blue cast** (surfaces, lines, inks, inverse,
+  track): a taste taken from a reference design. Accents keep their hue.
 - **Task, avatar and swatch colours do not change with the scheme.**
 - **`COLOR_OPTIONS` tints (`colors.ts`) are distinguished by hue and
   luminance**, every tint clearing WCAG's non-text floor against both chart
