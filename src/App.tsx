@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type DragEvent,
@@ -11,7 +12,7 @@ import { ThemeSwitcher } from './gantt/ThemeSwitcher';
 // ?inline: as a data URI the mark survives even a lone single-file index.html,
 // where a URL beside the page would have nothing to point at.
 import markUrl from './assets/favicon.svg?inline';
-import { dayIndexOfString, type CalendarSpec, type ShareOverride } from './scheduler';
+import { dayIndexOf, dayIndexOfString, type CalendarSpec, type ShareOverride } from './scheduler';
 import { GanttChart } from './gantt/GanttChart';
 import { INITIAL_SCALE_LABEL } from './gantt/zoomLevels';
 import type { GanttHandle } from './gantt/ganttHandle';
@@ -24,9 +25,10 @@ import { EmptyState } from './gantt/EmptyState';
 import { ExportDialog } from './gantt/ExportDialog';
 import { HelpDialog } from './gantt/HelpDialog';
 import { ResourceDialog } from './gantt/ResourceDialog';
-import { TaskDialog } from './gantt/TaskDialog';
+import { TaskPanel, type TaskEdit } from './gantt/TaskPanel';
 import {
   datePeriods,
+  parseTaskShare,
   seededSharePeriod,
   taskDays,
   undatePeriods,
@@ -49,7 +51,7 @@ import {
   pickTextFile,
 } from './gantt/files';
 import { DEFAULT_CALENDAR } from './scheduler';
-import { emptyProject, type ChainState, type MeasuredSlack, type Project } from './gantt/project';
+import { emptyProject, endFromEffort, type ChainState, type Project } from './gantt/project';
 import { RowMenu, type RowMenuAction, type RowMenuTarget } from './gantt/RowMenu';
 import { ColumnPicker, type ColumnPickerAnchor } from './gantt/ColumnPicker';
 import { readColumnSelection, writeColumnSelection, type PlanColumnName } from './gantt/columns';
@@ -214,24 +216,11 @@ export default function App() {
   } | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [rowMenu, setRowMenu] = useState<RowMenuTarget | null>(null);
-  // Snapshotted on open, like the other dialogs: the chart owns the live task.
-  const [openTask, setOpenTask] = useState<{
-    details: TaskDetails;
-    /** The day a pace period is to be started on, when the row menu asked for one. */
-    paceFrom?: Date;
-    /**
-     * The task's periods to and from the dates they fall on, and a new one at
-     * the share the task runs at — all against the plan as solved when the
-     * dialog opened.
-     */
-    pacePeriods: DatedSharePeriod[];
-    paceDays(periods: DatedSharePeriod[]): ShareOverride[];
-    newPacePeriod(day: string): DatedSharePeriod;
-    /** Measured when the dialog opens, since the figure costs a search. */
-    slack: MeasuredSlack | null;
-    resources: Person[];
-    workingDays: number[];
-  } | null>(null);
+  // The details panel shows the selected task while open; a cleared selection closes it.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+  // Bumped when a pace period was just added from the chart, for the panel to focus it.
+  const [focusPace, setFocusPace] = useState(0);
   const [calendarSnapshot, setCalendarSnapshot] = useState<CalendarSpec>(DEFAULT_CALENDAR);
   // Snapshotted when the dialog opens: the chart owns the live project, and
   // reading it on every render would fight the imperative handle.
@@ -573,19 +562,23 @@ export default function App() {
     handle.updateTask(taskId, { ...unchangedPatch(details), shareOverrides: periods });
   }, []);
 
-  const openTaskDetails = useCallback((id: string, pace?: { from?: Date }) => {
+  /**
+   * The panel's view of a task, against the plan as it stands: rebuilt on every
+   * change, so a figure in it is never older than the chart.
+   */
+  const panelTask = useMemo(() => {
     const handle = chart.current;
-    const details = handle?.getTaskDetails(id);
-    if (!handle || !details) return;
+    if (!panelOpen || !selectedId || !handle) return null;
+    const details = handle.getTaskDetails(selectedId);
     const solved = handle.getSolved();
-    const scheduled = solved.schedule.tasks.get(id);
-    if (!scheduled) return;
+    const scheduled = solved.schedule.tasks.get(selectedId);
+    if (!details || !scheduled) return null;
     const days = taskDays(scheduled, solved.calendar);
-    setOpenTask({
+    return {
       details,
       pacePeriods: datePeriods(details.shareOverrides ?? [], days),
-      paceDays: (periods) => undatePeriods(periods, days),
-      newPacePeriod: (day) => {
+      paceDays: (periods: DatedSharePeriod[]) => undatePeriods(periods, days),
+      newPacePeriod: (day: string) => {
         const pointed = dayIndexOfString(day);
         // A period is days of the task: a day outside it stands for the nearest one inside.
         const ordinal =
@@ -593,23 +586,70 @@ export default function App() {
         const seeded = seededSharePeriod(details, scheduled, ordinal, solved.calendar.minutesPerDay);
         return datePeriods([seeded], days)[0];
       },
-      // From the grid there is no day to point at: the task's solved start, as
-      // for a creation from the same menu.
-      ...(pace ? { paceFrom: pace.from ?? details.start } : {}),
-      slack: handle.getTaskSlack(id),
+      // Measured per change: the figure costs a search, bounded by CRITICAL_CHAIN_LIMIT.
+      slack: handle.getTaskSlack(selectedId),
       resources: handle.getResources(),
       workingDays: handle.getCalendar().workingDays,
-    });
+    };
+    // `history.present.text` stands for "the plan changed".
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [panelOpen, selectedId, history.present.text]);
+
+  /**
+   * Opens the panel on a task. With `pace`, adds one period on the pointed day
+   * (grid: the solved start) at the share the task already runs at, so adding
+   * it moves nothing, and has the panel focus it.
+   */
+  const openTaskDetails = useCallback((id: string, pace?: { from?: Date }) => {
+    const handle = chart.current;
+    const details = handle?.getTaskDetails(id);
+    if (!handle || !details) return;
+    handle.selectTask(id);
+    setSelectedId(id);
+    setPanelOpen(true);
+    if (!pace) return;
+    const solved = handle.getSolved();
+    const scheduled = solved.schedule.tasks.get(id);
+    if (!scheduled) return;
+    const days = taskDays(scheduled, solved.calendar);
+    const pointed = dayIndexOf(pace.from ?? details.start);
+    const ordinal = days.nearestOrdinal(pointed) ?? (pointed < days.dayOf(0) ? 0 : days.last);
+    const seeded = seededSharePeriod(details, scheduled, ordinal, solved.calendar.minutesPerDay);
+    const periods = [...(details.shareOverrides ?? []), seeded];
+    try {
+      const checked = parseTaskShare(details.share, periods, Boolean(details.fixedEnd));
+      handle.updateTask(id, { ...unchangedPatch(details), shareOverrides: checked.shareOverrides ?? [] });
+      setFocusPace((count) => count + 1);
+    } catch (problem) {
+      setError((problem as Error).message);
+    }
   }, []);
 
-  const saveTaskDetails = useCallback(
-    (patch: TaskPatch) => {
-      if (!openTask) return;
-      chart.current?.updateTask(openTask.details.id, patch);
-      setOpenTask(null);
-    },
-    [openTask],
-  );
+  /** One change from the panel, on top of the task as it stands now. */
+  const editTask = useCallback((edit: TaskEdit): string | null => {
+    const handle = chart.current;
+    const details = selectedId ? handle?.getTaskDetails(selectedId) : undefined;
+    if (!handle || !details) return null;
+    try {
+      handle.updateTask(details.id, { ...unchangedPatch(details), ...edit });
+      return null;
+    } catch (problem) {
+      return (problem as Error).message;
+    }
+  }, [selectedId]);
+
+  /** Off fixes the end at start plus effort; on hands the end back to the engine. */
+  const toggleAutoEnd = useCallback((taskId: string) => {
+    const handle = chart.current;
+    const details = handle?.getTaskDetails(taskId);
+    if (!handle || !details || details.isSummary) return;
+    handle.updateTask(taskId, {
+      ...unchangedPatch(details),
+      fixedEnd: details.fixedEnd
+        ? null
+        : endFromEffort(details.start, details.nominalDays, handle.getCalendar()),
+    });
+  }, []);
 
   /**
    * Shared by the dialog's button and the Del key, so both ask the same thing:
@@ -628,7 +668,6 @@ export default function App() {
         if (!(await ask(`Delete "${details.name}" and ${subtasks}?`, 'Delete'))) return;
       }
       handle.deleteTask(id);
-      setOpenTask(null);
       syncFromChart();
     },
     [ask, syncFromChart],
@@ -705,6 +744,17 @@ export default function App() {
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [travel]);
+
+  // Escape closes the details panel, unless a field or a dialog has the keys.
+  useEffect(() => {
+    if (!panelOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || keystrokeIsCaptured()) return;
+      setPanelOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [panelOpen]);
 
   /**
    * Ctrl+F puts the caret in the search field, as it does in every other
@@ -1036,6 +1086,7 @@ export default function App() {
         </button>
       </header>
 
+      <div className="app__work">
       <div className="app__body">
         {error && (
           <p className="app__error" role="alert">
@@ -1056,6 +1107,10 @@ export default function App() {
             registerChange();
           }}
           onOpenTask={openTaskDetails}
+          onSelectionChange={(id) => {
+            setSelectedId(id);
+            if (id === null) setPanelOpen(false);
+          }}
           onRowMenu={setRowMenu}
           onToggleDisabled={toggleDisabled}
           onSetPacePeriods={setPacePeriods}
@@ -1072,6 +1127,25 @@ export default function App() {
           />
         )}
         {dragging && <div className="app__dropzone">Drop the .gantt file to open it</div>}
+      </div>
+      {panelTask && (
+        <TaskPanel
+          key={panelTask.details.id}
+          task={panelTask.details}
+          focusPace={focusPace}
+          pacePeriods={panelTask.pacePeriods}
+          paceDays={panelTask.paceDays}
+          newPacePeriod={panelTask.newPacePeriod}
+          slack={panelTask.slack}
+          resources={panelTask.resources}
+          workingDays={panelTask.workingDays}
+          colors={COLOR_OPTIONS}
+          onEdit={editTask}
+          onToggleAutoEnd={() => toggleAutoEnd(panelTask.details.id)}
+          onClose={() => setPanelOpen(false)}
+          onDelete={() => void requestDelete(panelTask.details.id)}
+        />
+      )}
       </div>
 
       <StatusBar
@@ -1175,22 +1249,7 @@ export default function App() {
         />
       )}
 
-      {openTask && (
-        <TaskDialog
-          task={openTask.details}
-          paceFrom={openTask.paceFrom}
-          pacePeriods={openTask.pacePeriods}
-          paceDays={openTask.paceDays}
-          newPacePeriod={openTask.newPacePeriod}
-          slack={openTask.slack}
-          resources={openTask.resources}
-          workingDays={openTask.workingDays}
-          colors={COLOR_OPTIONS}
-          onCancel={() => setOpenTask(null)}
-          onSave={saveTaskDetails}
-          onDelete={() => void requestDelete(openTask.details.id)}
-        />
-      )}
+
     </main>
   );
 }

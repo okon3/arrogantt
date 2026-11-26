@@ -6,6 +6,7 @@ import { buildPlan } from './plan';
 import {
   closeGaps,
   dropDates,
+  endFromEffort,
   fixedEndOn,
   isMilestone,
   moveFixed,
@@ -136,6 +137,17 @@ describe('moving a fixed task', () => {
     expect(moveFixed(plan.tasks[0], new Date(2026, 8, 9, 15, 0), solved, plan.calendar)).toBe(
       plan.tasks[0],
     );
+  });
+});
+
+describe('turning Auto end off', () => {
+  it('fixes the end at the start plus the effort, in working days', () => {
+    // Thursday plus three working days: the Monday after, at its close.
+    expect(endFromEffort(open(3), 3, DEFAULT_CALENDAR)).toEqual(close(7));
+  });
+
+  it('keeps a milestone on the day it starts', () => {
+    expect(endFromEffort(open(2), 0, DEFAULT_CALENDAR)).toEqual(close(2));
   });
 });
 

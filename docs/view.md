@@ -226,15 +226,23 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   predecessor declares the subtree's earliest declared start, so it re-solves to
   its predecessors' finish. Unlinked leaves are anchors and keep theirs.
 
-## Details dialog
+## Details panel
 
-- Holds float (measured per row on open), progress, colour, and delete (with
-  subtree + dependency cleanup).
+- **A panel docked right of the chart** (`TaskPanel`), not a modal: opened by
+  the row's (i), it shows the selected task, follows the selection and closes
+  when it clears, on × or on Escape. The chart narrows; the status bar spans both.
+- **Every change applies at once** through `updateTask`, one undo step each:
+  text, number and date fields on leaving them (or Enter; Escape takes the edit
+  back), select, colour and checkboxes on change, pace rows on leaving the
+  section (a row added or removed at once). A refused value reverts and says why.
+- Holds float (measured per change, bounded by `CRITICAL_CHAIN_LIMIT`),
+  progress, colour, and delete (with subtree + dependency cleanup).
 - Only a task **with subtasks** confirms deletion. The opener button names its
   task.
-- **End is a field, empty by default**: a day in it fixes the task's dates,
-  clearing it hands the task back to the engine. Effort stays editable as the
-  estimate. On the grid a fixed task's Effort cell is the work that went in:
+- **Auto end is the switch** (checkbox under End): on, the end is computed and
+  read-only; off fixes it at the start plus the effort in working days
+  (`endFromEffort`), and End becomes a date field. Back on hands the end to the
+  engine with the effort the task had. Effort stays editable as the estimate. On the grid a fixed task's Effort cell is the work that went in:
   derived, so not editable. The bar's name carries a pin.
 - **Dragging a fixed bar moves it whole** (`moveFixed`): same working-day
   length. **Its edges drag**, each to the working day it is left on.
@@ -243,42 +251,41 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - `pullFromView` tells the two apart by the row: both ends off the solved
   dates is a move, one is an edge.
 - A dependency drawn into a fixed task is kept and inert.
-- **The description is a dialog-only field**: a textarea last in the grid, on
+- **The description is a panel-only field**: a textarea last in the grid, on
   summaries as much as on leaves. It has no surface on the chart — no row
-  icon, no tooltip, no column — and reaches a reader through the modal, the
+  icon, no tooltip, no column — and reaches a reader through the panel, the
   CSV and the agent API instead.
-  - **`save()` refuses past `DESCRIPTION_LIMIT`** rather than truncating with
+  - **The panel refuses past `DESCRIPTION_LIMIT`** rather than truncating with
     `maxLength`: the model must never hold a project `serializeForFile`
     would refuse, which would leave Save writing nothing. One constant
     (`serialization.ts`), counted in UTF-16 units on every surface that
-    writes — the dialog, the agent API and the parser.
-  - Whitespace-only reads as empty in the dialog and removes the text; the
+    writes — the panel, the agent API and the parser.
+  - Whitespace-only reads as empty in the panel and removes the text; the
     agent API stores what it is given, `''` and `null` apart.
 - **Pace (`.taskinfo__pace`) is the task's twin of a person's availability**:
   an optional default share plus periods, on `PeriodRowList` and `PercentCell`
   as People's list is. Leaves with effort only — hidden on a summary and while
-  the effort field reads 0, and a hidden section writes nothing.
+  the task is a milestone.
   - Percent in the form, fraction in the model. The default goes back **only
     if retyped**: the field shows a rounded figure, and writing it back would
     change a share nobody touched. Empty = not fixed.
   - **The rows show dates, the model holds days of the task**: `datePeriods`
-    on open, `undatePeriods` on Save, both against the solve the dialog opened
-    on (`taskDays`). A start edited in the same Save moves the periods with it.
+    and `undatePeriods` against the plan as it stands (`taskDays`).
   - A closed day at either end of a row gives way to the working day inside
     it; a row starting before the task, or covering no working day, is refused.
-  - `save()` then runs `parseTaskShare`, the gate the file and the agent API
+  - Every write runs `parseTaskShare`, the gate the file and the agent API
     use; it refuses periods sharing a day, so an overlapped row
-    (`overlapRefused`) says what Save will refuse, not *overridden*.
-  - Row menu *Set pace from here…* (leaf with effort) opens the dialog with one
-    **unsaved** period on the pointed day (grid: the solved start), percent
-    focused. A day outside the task, here and from *Add period*, stands for the
-    task's nearest day. Nothing is written before Save. Label wraps to line two.
+    (`overlapRefused`) says what will be refused, not *overridden*.
+  - Row menu *Set pace from here…* (leaf with effort) opens the panel and adds
+    one period on the pointed day (grid: the solved start), percent focused. A
+    day outside the task, here and from *Add period*, stands for the task's
+    nearest day. Label wraps to line two.
   - **A new period starts at the share the task already has there**, unrounded
     (`seedShare`): adding one moves nothing. Same function for *Add period*,
-    the row menu and the bar; the dialog seeds from the solve it opened on.
-- **Row heights are stable, not incidental** (`TaskDialog.tsx`, `.taskinfo__*`
+    the row menu and the bar.
+- **Row heights are stable, not incidental** (`TaskPanel.tsx`, `.taskinfo__*`
   in App.css): anything matching a control's height uses
-  `--dialog-control-h` on `.dialog` (`dialog.css`), set to the taller of the
+  `--dialog-control-h` on `.dialog` (`dialog.css`) and `.taskpanel`, set to the taller of the
   browser's two native control heights. The floor lives on the row-matching
   rules, not on `.dialog__control`.
   - **The "0 = milestone" hint is part of the Effort label**, one line
@@ -287,18 +294,17 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
     the modifier `.taskinfo__derived--cell`, on spans standing in for a grid
     cell. `.taskinfo__checkbox` and `.taskinfo__amount` get the same
     `min-height`.
-  - **Computed is a closed `<details>`**, opened on request; its summary line
-    carries the end and the duration. The explanation that end and duration
-    are derived (or what a milestone is) lives inside it. Order above it:
-    fields, Colour, Pace, Description, Disabled.
+  - **Computed is a section under the fields**, always open: the panel has the
+    room. The explanation that end and duration are derived (or what a
+    milestone is) lives in it. Order above it: fields, Auto end, Colour, Pace,
+    Description, Disabled.
   - **Computed (`.taskinfo__readonly`) is a fixed 3-track grid**: End ·
     Duration · Total effort / Float · Rate · Cost, so no entry drifts with its
     content. Sized against `Total effort`, an 8-character currency label, a
     `≥` cost and a `dd/mm/yyyy` date (`tabular-nums`).
     - **Rate and Cost read the same descriptors the grid cell renders**
-      (`rateCellText`/`costCellText`, `costCells.ts`). The dialog's milestone
-      test is `project.ts`'s predicate, not the dialog's own `isMilestone`
-      (which reads the field being typed, on purpose). `currencyLabel`
+      (`rateCellText`/`costCellText`, `costCells.ts`). The panel's milestone
+      test is `project.ts`'s predicate. `currencyLabel`
       (`costCells.ts`) is the one home of the `(CUR)` form.
     - **A summary's Cost reason ignores `resourceName`**: `costCellText` takes
       a required `isSummary`, so grid and dialog say the same about a task
@@ -371,7 +377,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 
 ## Disabled tasks
 
-- Toggled from the row menu, the details dialog's *Disabled* checkbox, and a
+- Toggled from the row menu, the details panel's *Disabled* checkbox, and a
   ban-icon grid column (stays at full opacity once off). All three go through
   `updateTask`'s `TaskPatch`.
 - Drawn state is the **effective** one (`solved.disabledIds`); menu and dialog
@@ -574,7 +580,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   `ConfirmDialog`'s Cancel carries a literal `autofocus` attribute via
   `setAutofocus` (`autofocus.ts`; its own module for Fast Refresh). React's
   `autoFocus` prop cannot supply this: it focuses at mount, while the dialog
-  is still closed. TaskDialog's name field uses the same. **`ExportDialog` is
+  is still closed. **`ExportDialog` is
   the one deviation**: an export is neither destructive nor irreversible, so
   its confirm button carries it and Enter exports.
 - CSS: `src/dialog.css`, imported before `App.css`, so an equal-specificity

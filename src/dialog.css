@@ -13,7 +13,7 @@
      renders at here, 2px taller than a `text`/`number` one — a platform sizing
      quirk, not a stylesheet difference. Read by the row-matching `.taskinfo__*`
      rules, never by `.dialog__control` itself: a row whose only control is
-     text/number (TaskDialog `Name`, ResourceDialog's people row) has nothing
+     text/number (TaskPanel `Name`, ResourceDialog's people row) has nothing
      else to hold it at 29px, so putting the floor on the primitive grows it by
      ~2px (measured: 47->49px and 36.5->37.5px). */
   --dialog-control-h: 29px;

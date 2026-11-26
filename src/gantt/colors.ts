@@ -3,7 +3,7 @@ export const DEFAULT_BAR_COLOR = '#3b74d6';
 export const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 /**
- * One consumer: `TaskDialog`'s colour swatches (`App.tsx` passes this straight
+ * One consumer: `TaskPanel`'s colour swatches (`App.tsx` passes this straight
  * through). The hex is stored as-is on the task — this array only supplies
  * the picker's options and their English labels.
  *

@@ -90,12 +90,82 @@
 /* Fills whatever is left below the bar, and shares it between the chart and the
    load panel under it. Still positioned, for the overlays that cover the whole
    body: the empty state and the drop zone. */
+/* The chart and, beside it, the details panel; the status bar spans both. */
+.app__work {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
 .app__body {
   position: relative;
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  min-width: 0;
+}
+
+/* Docked, not over the chart: the plan stays workable while it is open. Reads
+   the dialog primitives (`.dialog__control`, `.taskinfo__*`), so it carries the
+   variable and the font size `.dialog` gives them. */
+.taskpanel {
+  --dialog-control-h: 29px;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: 380px;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.taskpanel__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.taskpanel__title {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.taskpanel__close {
+  display: flex;
+  padding: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.taskpanel__close:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+
+.taskpanel__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.taskpanel .taskinfo__computed {
+  margin-top: var(--space-5);
+}
+
+.taskpanel__footer {
+  display: flex;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--line);
 }
 
 .app__dropzone {
@@ -909,7 +979,7 @@
 /* Fixed tracks over the dialog's 512px content box (1fr, measured
    170.656/170.672/170.672px — the browser's own subpixel split of 512 ÷ 3)
    so the six entries stop drifting with their content — see docs/view.md §
-   Details dialog. Widest strings measured to fit inside a track, not
+   Details panel. Widest strings measured to fit inside a track, not
    derived: header "Total effort", label "Rate (XXXXXXXX)"/"Cost (XXXXXXXX)"
    (an 8-character currency, the widest `validateCurrency` allows), a Cost
    reading `≥ 999,999.75`, and an End date (`dd/mm/yyyy`, tabular-nums keeps
@@ -945,7 +1015,7 @@
 
 /* min-height is a real two-line .taskinfo__note, measured at this dialog's
    width (12px font, 512px content box: 16px × 2) — not derived from
-   line-height, see docs/view.md § Details dialog. A one-line note then still
+   line-height, see docs/view.md § Details panel. A one-line note then still
    reserves the same floor a wrapped one would need; a longer or a second note
    grows the region past it instead of clipping. Nothing in here changes while
    the dialog is open, so the height only ever varies task-to-task. */

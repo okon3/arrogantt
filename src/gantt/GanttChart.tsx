@@ -114,6 +114,7 @@ export function GanttChart({
   showLoad = false,
   onChange,
   onOpenTask,
+  onSelectionChange,
   onRowMenu,
   onToggleDisabled,
   onSetPacePeriods,
@@ -135,6 +136,8 @@ export function GanttChart({
   showLoad?: boolean;
   onChange?: () => void;
   onOpenTask?: (id: string) => void;
+  /** The selected task after every change of selection, null when none is. */
+  onSelectionChange?: (id: string | null) => void;
   /** A right-click on a row, for the caller to answer with a menu of its own. */
   onRowMenu?: (target: {
     taskId: string;
@@ -168,6 +171,7 @@ export function GanttChart({
   // Held in a ref because the dhtmlx handlers are registered once, in an effect
   // that must not re-run when a callback identity changes.
   const openTaskRef = useRef(onOpenTask);
+  const selectionRef = useRef(onSelectionChange);
   const rowMenuRef = useRef(onRowMenu);
   const toggleDisabledRef = useRef(onToggleDisabled);
   const setPacePeriodsRef = useRef(onSetPacePeriods);
@@ -231,6 +235,7 @@ export function GanttChart({
 
   useEffect(() => {
     openTaskRef.current = onOpenTask;
+    selectionRef.current = onSelectionChange;
     rowMenuRef.current = onRowMenu;
     toggleDisabledRef.current = onToggleDisabled;
     setPacePeriodsRef.current = onSetPacePeriods;
@@ -244,6 +249,7 @@ export function GanttChart({
     onChange,
     onDeleteTask,
     onOpenTask,
+    onSelectionChange,
     onReject,
     onRowMenu,
     onScaleChange,
@@ -1135,9 +1141,8 @@ export function GanttChart({
     // A click on a grid cell opens an inline editor but leaves the row
     // unselected, so Del would have nothing to act on unless the user went to
     // the timeline to click a bar first. The info and toggle buttons are
-    // excluded: info opens a modal (a row highlighted behind it reads as a
-    // pending action), and the toggle is a self-contained action that must not
-    // also select the row it sits on.
+    // excluded: info selects through the panel it opens, and the toggle is a
+    // self-contained action that must not also select the row it sits on.
     const selectRow = (event: MouseEvent) => {
       clickInFlight = false;
       const target = event.target as HTMLElement | null;
@@ -1255,9 +1260,22 @@ export function GanttChart({
           return false;
         }
         if (!target?.closest?.('[data-task-info]')) return true;
+        // The panel shows the selected task: opening it selects the row.
         openTaskRef.current?.(String(id));
-        // Selecting the row as well would leave it highlighted behind the modal.
         return false;
+      }, undefined),
+      gantt.attachEvent('onTaskSelected', (id) => {
+        selectionRef.current?.(String(id));
+        return true;
+      }, undefined),
+      gantt.attachEvent('onTaskUnselected', () => {
+        // A new selection unselects the old one first, and only then sets
+        // itself: read what is left once dhtmlx is done.
+        queueMicrotask(() => {
+          const selected = gantt.getSelectedId();
+          if (!selected || !gantt.isTaskExists(selected)) selectionRef.current?.(null);
+        });
+        return true;
       }, undefined),
       gantt.attachEvent('onEmptyClick', () => {
         gantt.unselectTask();

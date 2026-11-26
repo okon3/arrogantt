@@ -287,6 +287,16 @@ export function moveFixed(
  * would round to 08:00 and read as a move nobody made.
  */
 /**
+ * The end a task gets when its Auto end is turned off: its start plus its
+ * effort in working days, on an axis of its own (the plan's cannot express a
+ * day before its origin).
+ */
+export function endFromEffort(start: Date, nominalDays: number, spec: CalendarSpec): Date {
+  const axis = new WorkingCalendar(start, spec);
+  return fixedEndOn(axis, start, axis.fromWorkingMinutes(axis.daysToMinutes(nominalDays), 'end'));
+}
+
+/**
  * What a bar put down here would write, read off the drag before the drop: a
  * scheduled task gets only its earliest start (the engine decides the rest), a
  * fixed one both its days. Same rules as the drop itself (`moveFixed`,

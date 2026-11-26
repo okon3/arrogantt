@@ -80,7 +80,7 @@ A React-controlled field can't be filled from the browser tool's own context:
 plain assignment is ignored by the value tracker, and the native
 `HTMLInputElement.prototype` setter throws *Illegal invocation* from there.
 Inject a `<script>` element with the same code — it runs in the page context,
-the setter works, the `input` event reaches React. (How the details dialog's
+the setter works, the `input` event reaches React. (How the details panel's
 date field is driven in verifications.)
 
 **And the browser tool's own `fill` on an already-filled controlled field
