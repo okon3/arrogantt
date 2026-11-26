@@ -1029,12 +1029,17 @@ export function GanttChart({
     //
     // Refused here rather than at the gesture that opened it. Every way in ends
     // at `startEdit`, and there are four: dhtmlx's own click, Tab arriving from
-    // the cell before, a script, and the double click a person makes out of the
-    // first of those. A guard on any one of them is a guard the other three
-    // walk past.
+    // the cell before, a script, and the double click on a name. A guard on any
+    // one of them is a guard the other three walk past.
+    //
+    // The name is the exception that proves it: a single click on it selects
+    // the row, so dhtmlx's click is refused for `text` alone while a click is in
+    // flight (`clickInFlight`), and `renameOnDoubleClick` opens it instead.
+    let clickInFlight = false;
     const derivedGuard = gantt.ext.inlineEditors.attachEvent(
       'onBeforeEditStart',
       (state) =>
+        !(state.columnName === 'text' && clickInFlight) &&
         !(solvedRef.current.summaryIds.has(String(state.id)) &&
           DERIVED_ON_SUMMARY.has(state.columnName)) &&
         // On a fixed task the cell shows the work that went in, which is derived.
@@ -1094,9 +1099,9 @@ export function GanttChart({
       return gantt.dateFromPos(clientX - left) ?? undefined;
     };
 
-    // The only pointer gesture either half of the chart had left: a single
-    // click opens the inline editor and selects the row, a double click the
-    // same, a drag reorders in the grid and moves the bar in the timeline. The
+    // The only pointer gesture either half of the chart had left: a click
+    // selects the row (and opens the cell's editor, the name's on a double
+    // click), a drag reorders in the grid and moves the bar in the timeline. The
     // row is selected too, so the plan says which one the menu is about even
     // after the pointer has moved off it.
     //
@@ -1132,6 +1137,7 @@ export function GanttChart({
     // pending action), and the toggle is a self-contained action that must not
     // also select the row it sits on.
     const selectRow = (event: MouseEvent) => {
+      clickInFlight = false;
       const target = event.target as HTMLElement | null;
       if (target?.closest?.('[data-task-info]')) return;
       if (target?.closest?.('[data-task-toggle]')) return;
@@ -1145,6 +1151,24 @@ export function GanttChart({
     // and on the "+" button of any row that is not already selected. dhtmlx
     // delegates on $grid, inside this container, so bubble gets there second.
     container.addEventListener('click', selectRow);
+
+    // Set above dhtmlx's delegation root, cleared below it by `selectRow`; the
+    // timeout covers a click a capture-phase closer (RowMenu, ColumnPicker) stops.
+    const markClickInFlight = () => {
+      clickInFlight = true;
+      setTimeout(() => (clickInFlight = false));
+    };
+    container.addEventListener('click', markClickInFlight, true);
+
+    const renameOnDoubleClick = (event: MouseEvent) => {
+      const editors = gantt.ext.inlineEditors;
+      const cell = editors.locateCell(event.target as HTMLElement) as
+        | { id: string | number; columnName: string }
+        | null;
+      if (cell?.columnName !== 'text' || editors.isVisible()) return;
+      editors.startEdit(cell.id, 'text');
+    };
+    container.addEventListener('dblclick', renameOnDoubleClick);
 
     // Del on the selected row, on the document rather than the container: with
     // keyboard navigation dhtmlx moves focus around its own cells, and a key
@@ -1432,6 +1456,8 @@ export function GanttChart({
       gantt.ext.inlineEditors.detachEvent(derivedGuard);
       container.removeEventListener('keydown', editorKeys);
       container.removeEventListener('click', selectRow);
+      container.removeEventListener('click', markClickInFlight, true);
+      container.removeEventListener('dblclick', renameOnDoubleClick);
       document.removeEventListener('keydown', deleteSelected);
       handlers.forEach((handlerId) => gantt.detachEvent(handlerId));
       // Deliberately no destructor(): it leaves the singleton unusable, and

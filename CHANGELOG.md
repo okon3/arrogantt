@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Smaller touches.** A click on a task's name selects it; a double click
+  renames it.
+
 ## v1.7 — 2026-11-21
 
 - 📌 **Fixed dates.** Type an End in a task's dialog and its bar stays on

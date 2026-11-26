@@ -221,7 +221,8 @@ library. Each bullet is a constraint or a fact; how it was found is in git.
   re-renders the row, so a capture-phase select swallowed clicks on the expand
   arrow and `+`.
 - **Inline editors open on a single click** regardless of
-  `keyboard_navigation*`. **Editing rules go on
+  `keyboard_navigation*` (the app refuses it on the name, which opens on
+  `dblclick`). **Editing rules go on
   `inlineEditors.attachEvent('onBeforeEditStart')`**: every way in passes
   through it.
 - `resource` is reserved in the task type; the custom field is `resource_id`.
