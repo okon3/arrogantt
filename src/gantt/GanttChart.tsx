@@ -21,7 +21,7 @@ import {
 import { fitRangeToPlan, repinRangeToScale, appliedScrollX } from './timelineGeometry';
 import { hiddenLinksOf } from './hiddenLinks';
 import { installLinkHover } from './linkHover';
-import { barRects, glideBars, glideScrollX, rowTops, slideRows } from './motion';
+import { barRects, foldRows, glideBars, glideScrollX } from './motion';
 import { installPaceHandles } from './paceHandles';
 import { installRolledLinks } from './rolledLinks';
 import { mountOverlays, nonWorkingSpans, paintBands, placeTodayLine } from './timelineOverlays';
@@ -1165,8 +1165,10 @@ export function GanttChart({
     const slideOnToggle = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
       if (!target?.closest?.('.gantt_tree_icon.gantt_open, .gantt_tree_icon.gantt_close')) return;
-      const before = rowTops();
-      requestAnimationFrame(() => slideRows(before));
+      const id = target.closest('.gantt_row')?.getAttribute('data-task-id');
+      if (!id || !gantt.isTaskExists(id)) return;
+      const fold = foldRows(id);
+      requestAnimationFrame(fold);
     };
     container.addEventListener('click', slideOnToggle, true);
 

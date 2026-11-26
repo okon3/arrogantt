@@ -55,16 +55,17 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - **Motion carries information or is absent**: entries (dialogs, menus, the
   dirty dot), press feedback, a refusal's shake. **Hover stays instant**:
   buttons transition `scale` alone, never their colour.
-- Durations and curve only from `--motion-fast`, `--motion-base`, `--ease-out`;
-  `prefers-reduced-motion: reduce` zeroes both durations, so nothing moves.
+- Durations and curve only from `--motion-fast`, `--motion-base`, `--ease-out`,
+  and `--motion-fold` with a critically damped spring for branch folds;
+  `prefers-reduced-motion: reduce` zeroes every duration, so nothing moves.
 - Entries only: dialogs and menus unmount on close, so there is no exit to time.
 - **A re-solve slides the bars it moved** (`glideBars`, `motion.ts`): after
   `applySolution` and an undo/redo restore, never on a file load. `left`/`width`,
   not a transform (labels would stretch); a bar that changed row jumps.
-- **A branch toggle slides its rows** (`slideRows`, `motion.ts`): one offset
-  per task id on every node of the row, both panes, so they stay level. Shown
-  rows fade in; hidden ones and links jump. Collapse/Expand all, search and
-  the agent API jump.
+- **A branch toggle folds like a lane** (`foldRows`, `motion.ts`): children
+  slide out of the parent's row and back into it, fading; closing ones are
+  inert copies, as dhtmlx drops them first. One offset per task id in both
+  panes; links jump. Collapse/Expand all, search, the agent API jump.
 - **Today glides; Fit, zoom and the agent's `showToday()` jump**: a zoom moves
   everything at once, and a script's screenshot must find the scroll landed.
 

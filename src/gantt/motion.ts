@@ -63,12 +63,29 @@ export function glideBars(before: Map<string, DOMRect>) {
   }
 }
 
+/** `--motion-fold`, read like the other tokens: `0` under `prefers-reduced-motion`. */
+const foldMs = () =>
+  parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-fold')) || 0;
+
+/**
+ * A critically damped spring (no overshoot) as a CSS `linear()` curve over
+ * `duration` — the motion a fold measured on the reference demo follows.
+ */
+function springEasing(duration: number) {
+  const omega = 14; // per second
+  const points = Array.from({ length: 25 }, (_, i) => {
+    const t = (i / 24) * (duration / 1000);
+    return i === 24 ? 1 : 1 - (1 + omega * t) * Math.exp(-omega * t);
+  });
+  return `linear(${points.map((p) => p.toFixed(4)).join(', ')})`;
+}
+
 const gridRows = () =>
   gantt.$grid_data ? [...gantt.$grid_data.querySelectorAll<HTMLElement>('.gantt_row[data-task-id]')] : [];
 
 const rowId = (node: HTMLElement) => node.dataset.taskId ?? node.dataset.paceTask!;
 
-/** Every node drawn for a task's row, in both panes: what a toggle must move together. */
+/** Every node drawn for a task's row, in both panes: what a fold must move together. */
 const rowNodes = () => [
   ...gridRows(),
   ...(gantt.$task_data
@@ -78,38 +95,79 @@ const rowNodes = () => [
     : []),
 ];
 
-/** Where each grid row sits on screen, by task id — read before a branch toggles. */
-export const rowTops = () => new Map(gridRows().map((node) => [rowId(node), node.getBoundingClientRect().top]));
+const rowTops = () => new Map(gridRows().map((node) => [rowId(node), node.getBoundingClientRect().top]));
 
 /**
- * Slides the rows a branch toggle moved from where `before` saw them, every
- * node of a row by the same offset so grid and timeline stay level. A row with
- * no `before` (a child just shown, a row scrolled in from below) takes the
- * offset of the row above it and fades in: it was hidden under that row.
+ * Read before branch `parentId` opens or closes; the returned call, run on the
+ * first frame after the redraw, folds the rows like a lane: children slide out
+ * of the parent's row on open and back into it on close, fading, while the rows
+ * below follow. Every node of a row gets the same offset, so grid and timeline
+ * stay level. dhtmlx drops closed rows from the DOM before anything can move
+ * them, so a closing branch is animated on inert copies taken here.
  */
-export function slideRows(before: Map<string, number>) {
-  const duration = motionMs('--motion-base');
-  if (!duration || before.size === 0) return;
-  const easing = getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim();
-  const shift = new Map<string, { dy: number; entering: boolean }>();
-  let above = 0;
-  const rows = gridRows()
-    .map((node) => ({ id: rowId(node), top: node.getBoundingClientRect().top }))
-    .sort((a, b) => a.top - b.top);
-  for (const { id, top } of rows) {
-    const was = before.get(id);
-    if (was !== undefined) above = was - top;
-    shift.set(id, { dy: above, entering: was === undefined });
-  }
-  for (const node of rowNodes()) {
-    const row = shift.get(rowId(node));
-    if (!row || (!row.entering && Math.abs(row.dy) < 1)) continue;
-    node.animate(
-      [
-        { transform: `translateY(${row.dy}px)`, ...(row.entering && { opacity: 0 }) },
-        { transform: 'none', ...(row.entering && { opacity: 1 }) },
-      ],
-      { duration, easing },
-    );
-  }
+export function foldRows(parentId: string): () => void {
+  const duration = foldMs();
+  if (!duration) return () => {};
+  const before = rowTops();
+  const parentTop = before.get(parentId);
+  if (parentTop === undefined) return () => {};
+  const folded = (id: string) => gantt.isTaskExists(id) && gantt.isChildOf(id, parentId);
+  const ghosts = gantt.getTask(parentId).$open
+    ? rowNodes()
+        .filter((node) => folded(rowId(node)))
+        .map((node) => ({
+          host: node.parentElement!,
+          copy: node.cloneNode(true) as HTMLElement,
+          top: node.getBoundingClientRect().top,
+          inRow: node.getBoundingClientRect().top - before.get(rowId(node))!,
+        }))
+    : [];
+
+  return () => {
+    const easing = springEasing(duration);
+    const easeOutCss = getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim();
+    const fade = duration * 0.35;
+    const shift = new Map<string, { dy: number; fades: boolean }>();
+    let above = 0;
+    const rows = gridRows()
+      .map((node) => ({ id: rowId(node), top: node.getBoundingClientRect().top }))
+      .sort((a, b) => a.top - b.top);
+    const parentNow = rows.find((row) => row.id === parentId)?.top ?? parentTop;
+    for (const { id, top } of rows) {
+      const was = before.get(id);
+      if (was !== undefined) above = was - top;
+      // A row scrolled in from below follows the one above it.
+      const dy = was === undefined && folded(id) ? parentTop - top : above;
+      shift.set(id, { dy, fades: was === undefined && folded(id) });
+    }
+    for (const node of rowNodes()) {
+      const row = shift.get(rowId(node));
+      if (!row) continue;
+      if (Math.abs(row.dy) >= 1) {
+        node.animate([{ transform: `translateY(${row.dy}px)` }, { transform: 'none' }], { duration, easing });
+      }
+      if (row.fades) node.animate([{ opacity: 0 }, { opacity: 1 }], { duration: fade, easing: easeOutCss });
+    }
+    // Screen coordinates on both ends: a close that shortens the chart can clamp
+    // the scroll, which moves the copies' host and the parent's row with it.
+    for (const { host, copy, top, inRow } of ghosts) {
+      if (!host.isConnected) continue;
+      copy.removeAttribute('data-task-id');
+      copy.removeAttribute('task_id');
+      copy.removeAttribute('data-pace-task');
+      copy.style.pointerEvents = 'none';
+      host.append(copy);
+      const now = copy.getBoundingClientRect().top;
+      copy.animate(
+        [{ transform: `translateY(${top - now}px)` }, { transform: `translateY(${parentNow + inRow - now}px)` }],
+        { duration, easing },
+      );
+      copy.animate([{ opacity: 1 }, { opacity: 0 }], { duration: fade, easing: 'linear', fill: 'forwards' }).onfinish =
+        () => copy.remove();
+    }
+    const icon = gantt.$grid_data?.querySelector<HTMLElement>(`.gantt_row[data-task-id="${parentId}"] .gantt_tree_icon`);
+    // The glyph swapped with the redraw; turning it from the old one's angle reads as one chevron.
+    const from = gantt.getTask(parentId).$open ? '-90deg' : '90deg';
+    icon?.animate([{ rotate: from }, { rotate: '0deg' }], { duration: duration * 0.6, easing });
+  };
 }
