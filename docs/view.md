@@ -183,6 +183,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   (`.gantt-found.gantt-row--group-start`), in **both** panes; in the timeline
   every top-level row is a group start, so without it the match's edge never
   paints.
+- **The timeline fades out under the grid's edge** (`.timeline_cell::after`,
+  `--surface` to transparent), over bars and links, pointer passing through.
+  On the cell: `.gantt_task` scrolls itself and would carry it off screen.
 - **Collapse to zero width, status-bar toggle** (`toggleGridCollapsed`).
   Remembers the width by measuring `$grid.offsetWidth`, not
   `config.grid_width`, defensively. Not persisted; no undo, no dirty.

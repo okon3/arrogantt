@@ -1421,3 +1421,17 @@ body.pace-dragging-y,
 body.pace-dragging-y * {
   cursor: ns-resize !important;
 }
+
+/* The timeline fades out under the grid's edge, so it reads as scrolling
+   beneath the task list. Over the bars and links, under nothing interactive:
+   the pointer passes through. On the timeline's cell, not on `.gantt_task`,
+   which scrolls itself and would carry the fade off screen. */
+.gantt-host .timeline_cell::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 28px;
+  background: linear-gradient(to right, var(--surface), transparent);
+  pointer-events: none;
+  z-index: 4;
+}
