@@ -505,6 +505,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   box is the bar's height, enough for the uppercase name, not for the count.
 - **A label is lifted only over an arrow that is drawn**: `gantt-bar--no-arrow`
   (`task_class`) levels it when no outgoing link has a visible target.
+- **The link dots are ringed in `--ink-faint`, filled with the accent under
+  the pointer**: the vendor paints them in the base background and light
+  border, which are the timeline's own colours here.
 - The link handle sits above the task label (`.gantt_link_control
   { z-index: 3 }`, `gantt.css`): the label used to cover the dot.
 - Only finish-to-start links: a left-handle drag is rejected in

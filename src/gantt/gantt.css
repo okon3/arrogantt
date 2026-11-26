@@ -325,6 +325,18 @@ html[data-scheme='dark'] .gantt_resizing {
   z-index: 3;
 }
 
+/* The vendor paints the dot in the base background and the light border, both
+   the timeline's own colour here: it has to stand off the rows to be found. */
+.gantt-host .gantt_link_control .gantt_link_point {
+  border-color: var(--ink-faint);
+  background: var(--surface);
+}
+
+.gantt-host .gantt_link_control:hover .gantt_link_point {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
 /* The vendor's lift is for an arrow leaving the bar; with none drawn (the
    class is ours, gridColumns.ts) the label sits level with it. */
 .gantt_task_line.gantt-bar--no-arrow .gantt_side_content.gantt_link_crossing {
