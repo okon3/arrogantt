@@ -287,6 +287,20 @@ export function moveFixed(
  * would round to 08:00 and read as a move nobody made.
  */
 /**
+ * The working day `step` working days from `date`'s, at the same time of day:
+ * what a date's − and + buttons move it to.
+ */
+export function stepWorkingDay(calendar: WorkingCalendar, date: Date, step: number): Date {
+  const next = new Date(date);
+  for (let moved = 0, guard = 0; moved < Math.abs(step); guard++) {
+    if (guard > 366) throw new Error('Calendar has no working day nearby');
+    next.setDate(next.getDate() + Math.sign(step));
+    if (calendar.isWorkingDate(next)) moved++;
+  }
+  return next;
+}
+
+/**
  * The end a task gets when its Auto end is turned off: its start plus its
  * effort in working days, on an axis of its own (the plan's cannot express a
  * day before its origin).

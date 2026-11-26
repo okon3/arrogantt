@@ -25,7 +25,7 @@ import { EmptyState } from './gantt/EmptyState';
 import { ExportDialog } from './gantt/ExportDialog';
 import { HelpDialog } from './gantt/HelpDialog';
 import { ResourceDialog } from './gantt/ResourceDialog';
-import { TaskPanel, type TaskEdit } from './gantt/TaskPanel';
+import { TaskPanel, type RelatedTask, type TaskEdit } from './gantt/TaskPanel';
 import {
   datePeriods,
   parseTaskShare,
@@ -51,7 +51,7 @@ import {
   pickTextFile,
 } from './gantt/files';
 import { DEFAULT_CALENDAR } from './scheduler';
-import { emptyProject, endFromEffort, type ChainState, type Project } from './gantt/project';
+import { emptyProject, endFromEffort, stepWorkingDay, type ChainState, type Project } from './gantt/project';
 import { RowMenu, type RowMenuAction, type RowMenuTarget } from './gantt/RowMenu';
 import { ColumnPicker, type ColumnPickerAnchor } from './gantt/ColumnPicker';
 import { readColumnSelection, writeColumnSelection, type PlanColumnName } from './gantt/columns';
@@ -574,6 +574,13 @@ export default function App() {
     const scheduled = solved.schedule.tasks.get(selectedId);
     if (!details || !scheduled) return null;
     const days = taskDays(scheduled, solved.calendar);
+    const project = handle.getProject();
+    const order = project.tasks.map((task) => task.id);
+    const related = (id: string, edge: 'start' | 'end'): RelatedTask | null => {
+      const task = project.tasks.find((candidate) => candidate.id === id);
+      const at = solved.schedule.tasks.get(id);
+      return task && at ? { id, name: task.name, day: at[edge] } : null;
+    };
     return {
       details,
       pacePeriods: datePeriods(details.shareOverrides ?? [], days),
@@ -586,6 +593,15 @@ export default function App() {
         const seeded = seededSharePeriod(details, scheduled, ordinal, solved.calendar.minutesPerDay);
         return datePeriods([seeded], days)[0];
       },
+      position: { index: order.indexOf(selectedId) + 1, total: order.length },
+      predecessors: (project.tasks.find((task) => task.id === selectedId)?.predecessors ?? [])
+        .map((id) => related(id, 'end'))
+        .filter((task): task is RelatedTask => task !== null),
+      successors: project.tasks
+        .filter((task) => task.predecessors?.includes(selectedId))
+        .map((task) => related(task.id, 'start'))
+        .filter((task): task is RelatedTask => task !== null),
+      stepDay: (date: Date, step: number) => stepWorkingDay(solved.calendar, date, step),
       // Measured per change: the figure costs a search, bounded by CRITICAL_CHAIN_LIMIT.
       slack: handle.getTaskSlack(selectedId),
       resources: handle.getResources(),
@@ -623,6 +639,14 @@ export default function App() {
     } catch (problem) {
       setError((problem as Error).message);
     }
+  }, []);
+
+  /** Brings a task into view and selects it: the panel follows. */
+  const showTask = useCallback((id: string) => {
+    const handle = chart.current;
+    if (!handle) return;
+    handle.revealTask(id);
+    handle.selectTask(id);
   }, []);
 
   /** One change from the panel, on top of the task as it stands now. */
@@ -1133,6 +1157,10 @@ export default function App() {
         <TaskPanel
           key={panelTask.details.id}
           task={panelTask.details}
+          position={panelTask.position}
+          predecessors={panelTask.predecessors}
+          successors={panelTask.successors}
+          stepDay={panelTask.stepDay}
           focusPace={focusPace}
           pacePeriods={panelTask.pacePeriods}
           paceDays={panelTask.paceDays}
@@ -1143,6 +1171,12 @@ export default function App() {
           colors={COLOR_OPTIONS}
           onEdit={editTask}
           onToggleAutoEnd={() => toggleAutoEnd(panelTask.details.id)}
+          onOpenTask={showTask}
+          onStepTask={(step) => {
+            const order = chart.current?.getProject().tasks ?? [];
+            const next = order[panelTask.position.index - 1 + step];
+            if (next) showTask(next.id);
+          }}
           onClose={() => setPanelOpen(false)}
           onDelete={() => void requestDelete(panelTask.details.id)}
         />

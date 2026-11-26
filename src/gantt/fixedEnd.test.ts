@@ -8,6 +8,7 @@ import {
   dropDates,
   endFromEffort,
   fixedEndOn,
+  stepWorkingDay,
   isMilestone,
   moveFixed,
   slackByRow,
@@ -137,6 +138,15 @@ describe('moving a fixed task', () => {
     expect(moveFixed(plan.tasks[0], new Date(2026, 8, 9, 15, 0), solved, plan.calendar)).toBe(
       plan.tasks[0],
     );
+  });
+});
+
+describe('a date stepped by working days', () => {
+  const { calendar } = solve(project([leaf('a')]));
+
+  it('skips the weekend, keeping the time of day', () => {
+    expect(stepWorkingDay(calendar, close(4), 1)).toEqual(close(7));
+    expect(stepWorkingDay(calendar, open(7), -1)).toEqual(open(4));
   });
 });
 

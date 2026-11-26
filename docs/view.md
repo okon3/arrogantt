@@ -239,7 +239,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   progress, colour, and delete (with subtree + dependency cleanup).
 - Only a task **with subtasks** confirms deletion. The opener button names its
   task.
-- **Auto end is the switch** (checkbox under End): on, the end is computed and
+- **Auto end is the switch** (on the End row): on, the end is computed and
   read-only; off fixes it at the start plus the effort in working days
   (`endFromEffort`), and End becomes a date field. Back on hands the end to the
   engine with the effort the task had. Effort stays editable as the estimate. On the grid a fixed task's Effort cell is the work that went in:
@@ -285,39 +285,30 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   - **A new period starts at the share the task already has there**, unrounded
     (`seedShare`): adding one moves nothing. Same function for *Add period*,
     the row menu and the bar.
-- **Row heights are stable, not incidental** (`TaskPanel.tsx`, `.taskinfo__*`
-  in App.css): anything matching a control's height uses
-  `--dialog-control-h` on `.dialog` (`dialog.css`) and `.taskpanel`, set to the taller of the
-  browser's two native control heights. The floor lives on the row-matching
-  rules, not on `.dialog__control`.
-  - **The "0 = milestone" hint is part of the Effort label**, one line
-    whatever the field holds, so the row does not change height mid-edit.
-  - **`.taskinfo__derived` carries only the semantics**; the height rule is
-    the modifier `.taskinfo__derived--cell`, on spans standing in for a grid
-    cell. `.taskinfo__checkbox` and `.taskinfo__amount` get the same
-    `min-height`.
-  - **Computed is a section under the fields**, always open: the panel has the
-    room. The explanation that end and duration are derived (or what a
-    milestone is) lives in it. Order above it: fields, Auto end, Colour, Pace,
-    Description, Disabled.
-  - **Computed (`.taskinfo__readonly`) is a fixed 3-track grid**: End ·
-    Duration · Total effort / Float · Rate · Cost, so no entry drifts with its
-    content. Sized against `Total effort`, an 8-character currency label, a
-    `≥` cost and a `dd/mm/yyyy` date (`tabular-nums`).
-    - **Rate and Cost read the same descriptors the grid cell renders**
-      (`rateCellText`/`costCellText`, `costCells.ts`). The panel's milestone
-      test is `project.ts`'s predicate. `currencyLabel`
-      (`costCells.ts`) is the one home of the `(CUR)` form.
-    - **A summary's Cost reason ignores `resourceName`**: `costCellText` takes
-      a required `isSummary`, so grid and dialog say the same about a task
-      that gained a child; `planFigure.ts` renders `text` only.
-  - **Notes (`.taskinfo__notes`) reserve a minimum of one two-line note** and
-    grow past it; the height varies task-to-task, never mid-edit. Spacing is
-    the region's `gap`, not a per-note margin.
-  - **The colour preview (`.taskinfo__preview`) is a fixed swatch** carrying
-    `--radius-bar`, the bars' own corner;
-    `margin-left: auto`; `.taskinfo__colors` wraps so a wider palette
-    degrades to a second line.
+- **Layout after a reference design** (`TaskPanel.tsx`, `.taskpanel__*` in
+  App.css): a top line with the kind, `n of N` and ‹ › through the row order
+  (`revealTask` + `selectTask`), and ×; then the name as an input that reads
+  as the title until pointed at or focused; then a label/value list
+  (`.taskpanel__fields`, 76px labels, 34px rows). Its controls show as text at
+  rest and take a tint under the pointer.
+  - **A day is text, the calendar on a click, − / + on either side**:
+    `showPicker()` on an invisible native date input under the text; a step is
+    a working day (`stepWorkingDay`). End steps only with Auto end off.
+  - **Progress is a slider written on release** (pointer up, key up, blur):
+    one change per gesture, not per step.
+  - **Colour is a field opening the whole palette in a popover**
+    (`ColorSwatches`, same as People): one line, no colour dropped. Only a
+    top-level task has one; a subtask shows the colour it inherits.
+  - **Duration, Float and Cost are rows of the list**, read-only; the notes on
+    contention, criticality, fixed dates and milestones follow in small text.
+    **Rate and Cost read the same descriptors the grid cell renders**
+    (`rateCellText`/`costCellText`, `costCells.ts`); `currencyLabel` is the one
+    home of the `(CUR)` form. The panel's milestone test is `project.ts`'s
+    predicate.
+  - **Depends on / Blocks list the task's predecessors and successors** with
+    their end and start; a row selects that task. Hidden when empty.
+  - Sections after them: Pace, Description; *Delete task* last, a red text
+    button under a hairline.
 
 ## Bar tooltip
 
