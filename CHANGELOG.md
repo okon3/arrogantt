@@ -14,8 +14,8 @@
   system.
 - **A leaner grid.** Name, person, effort and end by default, dates as 8 Dec,
   and Reset to defaults in the column picker.
-- **Smaller touches.** A click on a task's name selects it, a double click
-  renames it, and opening or closing a group slides its rows.
+- **Smaller touches.** Click a name to select, double-click to rename; groups
+  slide open; a bar with Auto end off shows grips on its edges.
 
 ## v1.7 — 2026-11-21
 

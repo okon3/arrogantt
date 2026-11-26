@@ -558,6 +558,27 @@ html[data-scheme='dark'] .gantt_resizing {
   right: 0;
 }
 
+/* The edges of a bar with Auto end off (gridColumns.ts draws them): a short
+   grip in a light mix of the task's colour, centred in dhtmlx's drag zones. */
+.bar-grip {
+  position: absolute;
+  top: 50%;
+  width: 3px;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--bar-ink) 35%, white);
+  translate: 0 -50%;
+  pointer-events: none;
+}
+
+.bar-grip--start {
+  left: 3px;
+}
+
+.bar-grip--end {
+  right: 3px;
+}
+
 /* A zero-effort task is a point on the plan, and dhtmlx draws it as a square
    rotated 45°. The bar element itself is `visibility: hidden` there — only its
    content shows — so anything meant to be seen has to sit on the content, the

@@ -428,13 +428,24 @@ export function installRowTemplates(ctx: RowContext): void {
   // beside it, where a one-day bar can still show it in full.
   gantt.templates.task_text = (_start, _end, task) => {
     const scheduled = ctx.solved().schedule.tasks.get(String(task.id));
+    const color = String(task.bar_color || DEFAULT_BAR_COLOR);
+    // With Auto end off both edges are inputs, and say so at rest. Drawn here,
+    // over the profile, in the task's own colour, which lives nowhere else on
+    // the bar; dhtmlx's own edge zones still take the drag.
+    const grips =
+      task.fixed && task.type !== MILESTONE_TYPE
+        ? `<span class="bar-grip bar-grip--start" style="--bar-ink:${color}"></span>` +
+          `<span class="bar-grip bar-grip--end" style="--bar-ink:${color}"></span>`
+        : '';
     // The row's flag, not a second verdict: whoever wrote it knew the task.
-    if (!scheduled || !task.shared) return '';
+    if (!scheduled || !task.shared) return grips;
     // Which percentage labels fit depends on the zoom level, so ask dhtmlx for
     // the bar's actual pixel width rather than guessing from a percentage.
     const width = Number(gantt.getTaskPosition(task).width) || 0;
-    const color = String(task.bar_color || DEFAULT_BAR_COLOR);
-    return renderSegments(scheduled, width, Number(gantt.config.bar_height) || 24, color, shade(color));
+    return (
+      renderSegments(scheduled, width, Number(gantt.config.bar_height) || 24, color, shade(color)) +
+      grips
+    );
   };
   // A dependency whose other end is folded away draws no arrow, so the bar
   // carries a small one: into it on its left, out of it on its right. No

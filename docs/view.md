@@ -247,7 +247,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - **Dragging a fixed bar moves it whole** (`moveFixed`): same working-day
   length. **Its edges drag**, each to the working day it is left on.
   `drag_resize` is on for that alone: `onBeforeTaskDrag` refuses a resize of
-  any other bar, and the stylesheet hides their handles.
+  any other bar, and the stylesheet hides their handles. **Its edges show a
+  grip at rest** (`.bar-grip`, drawn by `task_text` over the profile in a light
+  mix of the task's colour, which lives nowhere else on the bar).
 - `pullFromView` tells the two apart by the row: both ends off the solved
   dates is a move, one is an edge.
 - A dependency drawn into a fixed task is kept and inert.
