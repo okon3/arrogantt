@@ -437,14 +437,18 @@ export function installRowTemplates(ctx: RowContext): void {
         ? `<span class="bar-grip bar-grip--start" style="--bar-ink:${color}"></span>` +
           `<span class="bar-grip bar-grip--end" style="--bar-ink:${color}"></span>`
         : '';
+    // Lit while the task is selected (the class is dhtmlx's, the colour ours).
+    const ring =
+      task.type !== MILESTONE_TYPE ? `<span class="bar-ring" style="--bar-ink:${color}"></span>` : '';
     // The row's flag, not a second verdict: whoever wrote it knew the task.
-    if (!scheduled || !task.shared) return grips;
+    if (!scheduled || !task.shared) return grips + ring;
     // Which percentage labels fit depends on the zoom level, so ask dhtmlx for
     // the bar's actual pixel width rather than guessing from a percentage.
     const width = Number(gantt.getTaskPosition(task).width) || 0;
     return (
       renderSegments(scheduled, width, Number(gantt.config.bar_height) || 24, color, shade(color)) +
-      grips
+      grips +
+      ring
     );
   };
   // A dependency whose other end is folded away draws no arrow, so the bar

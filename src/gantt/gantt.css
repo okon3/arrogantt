@@ -571,6 +571,20 @@ html[data-scheme='dark'] .gantt_resizing {
   pointer-events: none;
 }
 
+/* The selected bar's edge, lit in a lighter, livelier tint of its own colour. */
+.bar-ring {
+  display: none;
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-bar);
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklch, var(--bar-ink) 60%, white);
+  pointer-events: none;
+}
+
+.gantt_task_line.gantt_selected .bar-ring {
+  display: block;
+}
+
 .bar-grip--start {
   left: 3px;
 }

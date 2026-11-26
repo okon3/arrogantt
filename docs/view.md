@@ -33,6 +33,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   luminance**, every tint clearing WCAG's non-text floor against both chart
   row backgrounds. Chroma is not capped, a deliberate trade against a soberer
   set.
+- **The selected bar's edge lights up** in a lighter, livelier tint of its own
+  colour (`.bar-ring`, drawn by `task_text` because the colour lives nowhere
+  else on the bar; shown by dhtmlx's `gantt_selected`). Not on a milestone.
 - **A bar's outline is a darker mix of its own fill**, not a fixed line colour
   (`--dhx-gantt-task-border`, `gantt.css`), same multiplier as `shade()` in
   `colors.ts`. It costs the bar content box ([dhtmlx.md](dhtmlx.md)).

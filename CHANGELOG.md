@@ -15,7 +15,7 @@
 - **A leaner grid.** Name, person, effort and end by default, dates as 8 Dec,
   and Reset to defaults in the column picker.
 - **Smaller touches.** Click a name to select, double-click to rename; groups
-  slide open; a bar with Auto end off shows grips on its edges.
+  slide open; fixed bars show grips; the selected bar lights its edge.
 
 ## v1.7 — 2026-11-21
 
