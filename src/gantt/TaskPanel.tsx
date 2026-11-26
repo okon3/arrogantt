@@ -529,11 +529,6 @@ export function TaskPanel({
             )}
           </dd>
 
-          <dt>Float</dt>
-          <dd className={slack?.isCritical ? 'taskinfo__critical' : undefined}>
-            {fixed || slack === null ? <span className="taskpanel__muted">&mdash;</span> : `${formatDays(slack.floatDays)} d`}
-          </dd>
-
           <dt>{currencyLabel('Cost', task.currency)}</dt>
           <dd title={costCell.title ?? rateCell.title ?? undefined}>
             <span className={costCell.derived ? 'taskpanel__muted' : undefined}>{costCell.text}</span>

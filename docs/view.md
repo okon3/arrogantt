@@ -238,7 +238,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   text, number and date fields on leaving them (or Enter; Escape takes the edit
   back), select, colour and checkboxes on change, pace rows on leaving the
   section (a row added or removed at once). A refused value reverts and says why.
-- Holds float (measured per change, bounded by `CRITICAL_CHAIN_LIMIT`),
+- Measures float for its criticality note (per change, bounded by
+  `CRITICAL_CHAIN_LIMIT`); holds
   progress, colour, and delete (with subtree + dependency cleanup).
 - Only a task **with subtasks** confirms deletion. The opener button names its
   task.
@@ -302,8 +303,10 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   - **Colour is a field opening the whole palette in a popover**
     (`ColorSwatches`, same as People): one line, no colour dropped. Only a
     top-level task has one; a subtask shows the colour it inherits.
-  - **Duration, Float and Cost are rows of the list**, read-only; the notes on
+  - **Duration and Cost are rows of the list**, read-only; the notes on
     contention, criticality, fixed dates and milestones follow in small text.
+    No Float row: the figure read as jargon, the criticality note says it in
+    words.
     **Rate and Cost read the same descriptors the grid cell renders**
     (`rateCellText`/`costCellText`, `costCells.ts`); `currencyLabel` is the one
     home of the `(CUR)` form. The panel's milestone test is `project.ts`'s
