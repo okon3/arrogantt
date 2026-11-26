@@ -67,7 +67,6 @@ import {
   columnsWidth,
   installRowTemplates,
   refreshResourceOptions,
-  shortDate,
   type RowContext,
 } from './gridColumns';
 import { formatDays } from './format';
@@ -1195,6 +1194,7 @@ export function GanttChart({
     // keyboard navigation dhtmlx moves focus around its own cells, and a key
     // that only works when focus happens to sit inside the chart reads as
     // broken.
+    const dayAndMonth = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
     const dragTip = document.createElement('div');
     dragTip.className = 'pace-tip drag-tip';
     dragTip.hidden = true;
@@ -1346,13 +1346,17 @@ export function GanttChart({
           projectRef.current.calendar,
         );
         dragTip.textContent = drop.end
-          ? `${shortDate(drop.start)} → ${shortDate(drop.end)}, ${formatDays(drop.days!)}d`
-          : `Not before ${shortDate(drop.start)}`;
+          ? `${dayAndMonth.format(drop.start)} → ${dayAndMonth.format(drop.end)}, ${formatDays(drop.days!)}d`
+          : `Starting ${dayAndMonth.format(drop.start)}`;
         // From the dates, not the bar's node: dhtmlx moves the node after this event.
         const bar = gantt.getTaskPosition(ganttTask, ganttTask.start_date, ganttTask.end_date);
         // `$task_data` moves with the scroll: no offset to add (docs/dhtmlx.md).
         const origin = gantt.$task_data.getBoundingClientRect();
-        dragTip.style.left = `${origin.left + bar.left + bar.width / 2}px`;
+        // Over the part of the bar on screen: a long bar's middle can be far off it.
+        const view = gantt.$task.getBoundingClientRect();
+        const from = Math.max(origin.left + bar.left, view.left);
+        const to = Math.min(origin.left + bar.left + bar.width, view.right);
+        dragTip.style.left = `${(from + to) / 2}px`;
         dragTip.style.top = `${origin.top + bar.top - 22}px`;
         dragTip.hidden = false;
         return true;

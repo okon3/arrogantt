@@ -18,7 +18,7 @@ const dayMonth = new Intl.DateTimeFormat('en-GB', {
   month: '2-digit',
   year: '2-digit',
 });
-export const shortDate = (value: Date) => (value ? dayMonth.format(new Date(value)) : '');
+const shortDate = (value: Date) => (value ? dayMonth.format(new Date(value)) : '');
 
 /** Columns whose value a summary derives from its children. */
 export const DERIVED_ON_SUMMARY = new Set(['nominal_days', 'resource_id', 'start_date']);
