@@ -4,16 +4,47 @@ import { X } from 'lucide-static';
 /** Long enough to carry the pointer along the line to the button on it. */
 const HIDE_DELAY_MS = 350;
 
+const linksOf = (taskId: string) =>
+  gantt
+    .getLinks()
+    .filter((each) => String(each.source) === taskId || String(each.target) === taskId)
+    .map((each) => String(each.id));
+
+const linkSelector = (ids: string[]) =>
+  ids.map((id) => `.gantt-host .gantt_task_link[link_id="${CSS.escape(id)}"]`).join(',');
+
 /**
  * Brings a link forward while the pointer is on it or on a task at either end,
- * and offers a button to remove the one pointed at.
+ * and offers a button to remove the one pointed at. While a task is selected,
+ * its links stay forward and every other one dims.
  *
- * A stylesheet rule, not a class on the nodes: dhtmlx rebuilds the links on
- * every redraw and would drop it.
+ * Stylesheet rules, not classes on the nodes: dhtmlx rebuilds the links on
+ * every redraw and would drop them.
  */
 export function installLinkHover(container: HTMLElement): () => void {
+  const selection = document.createElement('style');
+  document.head.appendChild(selection);
   const rule = document.createElement('style');
   document.head.appendChild(rule);
+
+  const followSelection = () => {
+    const selected = gantt.getSelectedId();
+    const live = selected && gantt.isTaskExists(selected);
+    const ids = live ? linksOf(String(selected)) : [];
+    selection.textContent = live
+      ? `.gantt-host .gantt_task_link{opacity:var(--gantt-dimmed)}` +
+        (ids.length ? `${linkSelector(ids)}{opacity:1;--link-ink:var(--accent)}` : '')
+      : '';
+    return true;
+  };
+  const selectionEvents = [
+    'onTaskSelected',
+    'onTaskUnselected',
+    'onAfterLinkAdd',
+    'onAfterLinkDelete',
+    'onAfterTaskDelete',
+    'onParse',
+  ].map((name) => gantt.attachEvent(name as 'onTaskSelected', followSelection, undefined));
 
   // In `$task_data`, which survives the redraws that replace the link's node.
   const remove = document.createElement('div');
@@ -27,11 +58,7 @@ export function installLinkHover(container: HTMLElement): () => void {
   let hiding: number | undefined;
 
   const raise = (linkIds: string[]) => {
-    rule.textContent = linkIds.length
-      ? linkIds
-          .map((id) => `.gantt-host .gantt_task_link[link_id="${CSS.escape(id)}"]`)
-          .join(',') + '{opacity:1;--link-ink:var(--accent)}'
-      : '';
+    rule.textContent = linkIds.length ? `${linkSelector(linkIds)}{opacity:1;--link-ink:var(--accent)}` : '';
   };
 
   const settle = () => {
@@ -67,14 +94,7 @@ export function installLinkHover(container: HTMLElement): () => void {
     }
     if (pointed) return;
     const taskId = target.closest<HTMLElement>('[data-task-id]')?.dataset.taskId;
-    raise(
-      taskId && gantt.isTaskExists(taskId)
-        ? gantt
-            .getLinks()
-            .filter((each) => String(each.source) === taskId || String(each.target) === taskId)
-            .map((each) => String(each.id))
-        : [],
-    );
+    raise(taskId && gantt.isTaskExists(taskId) ? linksOf(taskId) : []);
   };
 
   const onOut = (event: MouseEvent) => {
@@ -104,5 +124,7 @@ export function installLinkHover(container: HTMLElement): () => void {
     container.removeEventListener('mouseleave', settle);
     remove.remove();
     rule.remove();
+    selection.remove();
+    selectionEvents.forEach((id) => gantt.detachEvent(id));
   };
 }

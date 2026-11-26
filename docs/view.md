@@ -447,6 +447,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   `--accent` under the pointer, as do those of the task pointed at
   (`linkHover.ts`, a stylesheet rule keyed on `link_id`: a class would not
   survive a redraw). In light the line grey is left as it is.
+- **A selected task keeps its links forward, in `--accent`; every other link
+  dims to `--gantt-dimmed`** (`linkHover.ts`, a second rule). No selection:
+  all at rest. The pointer still raises any link over the dimming.
 - **A link pointed at offers a × on the middle of its longest stretch** that
   removes it at once, no question: undo is the way back. It does not follow
   the pointer. Double-click and its vendor confirm stay.
