@@ -4,6 +4,8 @@ import { sizedIcon } from './gridColumns';
 
 /** Long enough to carry the pointer from the bar to the buttons beside it. */
 const HIDE_DELAY_MS = 300;
+/** Width of `.gantt_link_control`, the zone holding the link dot past the bar's end. */
+const LINK_HANDLE_PX = 18;
 
 export interface BarActionTarget {
   isSummary: boolean;
@@ -76,7 +78,9 @@ export function installBarActions(container: HTMLElement, actions: BarActions): 
     // Short of the timeline's right edge: a long bar's end can be far off screen.
     const onScreenRight =
       gantt.$task.getBoundingClientRect().right - gantt.$task_data.getBoundingClientRect().left;
-    bar.style.left = `${Math.min(at.left + at.width + 6, onScreenRight - bar.offsetWidth - 8)}px`;
+    // Past the link handle dhtmlx hangs just outside the bar's end, so the dot
+    // that starts a dependency stays reachable.
+    bar.style.left = `${Math.min(at.left + at.width + LINK_HANDLE_PX + 2, onScreenRight - bar.offsetWidth - 8)}px`;
     bar.style.top = `${at.top + at.rowHeight / 2}px`;
   };
 

@@ -332,7 +332,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 
 ## Bar actions
 
-- **Pointing at a bar shows its buttons beside its right end** (`barActions.ts`):
+- **Pointing at a bar shows its buttons past its right end** (`barActions.ts`),
+  after the link dot dhtmlx hangs there (`LINK_HANDLE_PX`), so it stays reachable:
   details, Auto end (pin; not on a summary or a milestone), disable, delete.
   Each calls the handler the grid, the row menu and the panel already use: no
   rule of its own. In `$task_data`; hidden on a press, a redraw or leaving.
