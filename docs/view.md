@@ -510,7 +510,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   the band's own width (month columns vary). Runs measured before clipping to
   the rendered range.
 - Allocation profile = single SVG path inside the bar. Both it and the bands
-  place own elements in the data area.
+  place own elements in the data area. **Its corners are rounded**
+  (`STEP_RADIUS_PX`, `segmentBar.ts`): the radius is taken in pixels, per axis,
+  since the viewBox stretches unevenly, and capped at half a short edge.
 - `drawsProfile` decides profile vs plain fill, once, where the row is written;
   the bar template reads the row's `shared` flag. A gap between segments calls
   for the profile **only on a task carrying share settings** (its pause reads

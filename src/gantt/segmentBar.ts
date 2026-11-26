@@ -5,6 +5,48 @@ import { needsDarkInk } from './colors';
 const MIN_LABEL_WIDTH_PX = 30;
 /** Above this rate the filled area is tall enough to hold the label inside it. */
 const LABEL_INSIDE_RATE = 0.45;
+/** Radius of the profile's corners: a change of rate reads as a soft step, not a notch. */
+const STEP_RADIUS_PX = 4;
+
+type Point = [x: number, y: number];
+
+/**
+ * The outline through `points` (percentages of the bar, every edge horizontal
+ * or vertical) with each inner corner rounded. The radius is taken in pixels
+ * and converted per axis, since the viewBox stretches unevenly; a short edge
+ * caps it at half its length, so two corners never overlap.
+ */
+function roundedOutline(points: Point[], widthPx: number, heightPx: number): string {
+  const kept = points.filter(
+    (point, index) =>
+      index === 0 || point[0] !== points[index - 1][0] || point[1] !== points[index - 1][1],
+  );
+  const corners = kept.filter((point, index) => {
+    const before = kept[index - 1];
+    const after = kept[index + 1];
+    if (!before || !after) return true;
+    // A point midway along a straight edge is no corner.
+    return !(
+      (before[0] === point[0] && point[0] === after[0]) ||
+      (before[1] === point[1] && point[1] === after[1])
+    );
+  });
+  const pixels = (from: Point, to: Point) =>
+    Math.abs(to[0] - from[0]) * (widthPx / 100) + Math.abs(to[1] - from[1]) * (heightPx / 100);
+  const toward = (from: Point, to: Point, px: number): Point => {
+    const length = pixels(from, to);
+    const share = length === 0 ? 0 : px / length;
+    return [from[0] + (to[0] - from[0]) * share, from[1] + (to[1] - from[1]) * share];
+  };
+  const xy = ([x, y]: Point) => `${x.toFixed(2)},${y.toFixed(2)}`;
+  let path = `M ${xy(corners[0])}`;
+  for (let index = 1; index < corners.length - 1; index++) {
+    const [before, corner, after] = [corners[index - 1], corners[index], corners[index + 1]];
+    const radius = Math.min(STEP_RADIUS_PX, pixels(before, corner) / 2, pixels(corner, after) / 2);
+    path += ` L ${xy(toward(corner, before, radius))} Q ${xy(corner)} ${xy(toward(corner, after, radius))}`;
+  }
+  return `${path} L ${xy(corners[corners.length - 1])} Z`;
+}
 
 export function isShared(scheduled: ScheduledTask): boolean {
   return scheduled.segments.some((segment) => segment.rate < 1);
@@ -51,6 +93,7 @@ export function drawsProfile(scheduled: ScheduledTask, paced: boolean): boolean 
 export function renderSegments(
   scheduled: ScheduledTask,
   barWidthPx: number,
+  barHeightPx: number,
   fill: string,
   stroke: string,
 ): string {
@@ -62,7 +105,7 @@ export function renderSegments(
   const asPercent = (date: Date) => ((date.getTime() - origin) / spanMs) * 100;
 
   // Along the floor to where work begins: the span opens on the anchor.
-  let path = `M 0,100 L ${asPercent(scheduled.segments[0].start).toFixed(2)},100`;
+  const outline: Point[] = [[0, 100], [asPercent(scheduled.segments[0].start), 100]];
   const labels: string[] = [];
 
   scheduled.segments.forEach((segment, index) => {
@@ -77,10 +120,10 @@ export function renderSegments(
     const to = next && !idleAhead ? asPercent(next.start) : asPercent(segment.end);
     const top = 100 - segment.rate * 100;
 
-    path += ` L ${from.toFixed(2)},${top.toFixed(2)} L ${to.toFixed(2)},${top.toFixed(2)}`;
+    outline.push([from, top], [to, top]);
     // Idle time inside the span drops the outline to the floor, so the stop
     // stays visible.
-    if (idleAhead) path += ` L ${to.toFixed(2)},100 L ${asPercent(next.start).toFixed(2)},100`;
+    if (idleAhead) outline.push([to, 100], [asPercent(next.start), 100]);
 
     if (((to - from) / 100) * barWidthPx >= MIN_LABEL_WIDTH_PX) {
       const centre = (from + to) / 2;
@@ -97,7 +140,8 @@ export function renderSegments(
       labels.push(`<span class="seg-pct${modifier}" style="${style}">${percent}%</span>`);
     }
   });
-  path += ' L 100,100 Z';
+  outline.push([100, 100]);
+  const path = roundedOutline(outline, barWidthPx, barHeightPx);
 
   return (
     '<div class="seg-track">' +

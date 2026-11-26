@@ -278,8 +278,11 @@ describe('the bar rule', () => {
     // Anchored on day 0, working from day 2: the span opens two days early.
     const waiting = { ...scheduled([segment(2, 4)]), start: at(0), startWorkingMinutes: 0 };
     expect(drawsProfile(waiting, false)).toBe(true);
-    // Along the floor to the middle of the bar, then up: no ramp from the corner.
-    expect(renderSegments(waiting, 200, '#000', '#000')).toContain('d="M 0,100 L 50.00,100 L 50.00,0.00');
+    // Along the floor to the middle of the bar, then up: no ramp from the corner,
+    // only the step's rounding (4px is 2% of a 200px bar, a sixth of 24px).
+    expect(renderSegments(waiting, 200, 24, '#000', '#000')).toContain(
+      'd="M 0.00,100.00 L 48.00,100.00 Q 50.00,100.00 50.00,83.33',
+    );
   });
 
   it('leaves the bar across a person\'s absence the plain fill it was', () => {

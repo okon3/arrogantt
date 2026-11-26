@@ -434,7 +434,7 @@ export function installRowTemplates(ctx: RowContext): void {
     // the bar's actual pixel width rather than guessing from a percentage.
     const width = Number(gantt.getTaskPosition(task).width) || 0;
     const color = String(task.bar_color || DEFAULT_BAR_COLOR);
-    return renderSegments(scheduled, width, color, shade(color));
+    return renderSegments(scheduled, width, Number(gantt.config.bar_height) || 24, color, shade(color));
   };
   // A dependency whose other end is folded away draws no arrow, so the bar
   // carries a small one: into it on its left, out of it on its right. No
