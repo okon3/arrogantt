@@ -1245,6 +1245,11 @@ export function GanttChart({
       }, undefined),
       gantt.attachEvent('onTaskClick', (id, event) => {
         const target = event?.target as HTMLElement | null;
+        // The empty stretch of a task's lane is outside the task.
+        if (target?.closest?.('[data-task-id], [task_id]')?.classList.contains('gantt_task_row')) {
+          gantt.unselectTask();
+          return false;
+        }
         if (target?.closest?.('[data-task-toggle]')) {
           const task = projectRef.current.tasks.find((candidate) => candidate.id === String(id));
           toggleDisabledRef.current?.(String(id), task?.disabled === true);
@@ -1254,6 +1259,10 @@ export function GanttChart({
         openTaskRef.current?.(String(id));
         // Selecting the row as well would leave it highlighted behind the modal.
         return false;
+      }, undefined),
+      gantt.attachEvent('onEmptyClick', () => {
+        gantt.unselectTask();
+        return true;
       }, undefined),
       // Rows created by dhtmlx itself — the grid's "+" button, which adds a
       // child — never passed through the model, so they rendered with an

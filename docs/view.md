@@ -165,6 +165,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   only, no initials**, and don't highlight; `+n` is the only one with text. A
   single-person branch draws a normal avatar.
 - The two derived columns are paid by the **timeline**, not the name column.
+- **A click outside every task deselects**: empty timeline, a lane beside its
+  bar, the grid below the last row (`onEmptyClick`, and `onTaskClick` on a
+  `.gantt_task_row`).
 - **A click on the name selects the row; a double click renames.** Every
   other editable cell opens on a single click. Only clicks are refused on
   `text` (`onBeforeEditStart`): Tab, Shift+Tab and scripts still open it.
