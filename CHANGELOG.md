@@ -6,6 +6,8 @@
   task's dependencies stand out while the others dim.
 - **Dates while you drag.** A bar shows the day it will start from; a task
   with fixed dates shows both ends and its length.
+- **Light, Auto or Dark.** Pick the theme from the header; Auto follows your
+  system.
 - **A leaner grid.** Name, person, effort and end by default, dates as 8 Dec,
   and Reset to defaults in the column picker.
 - **Smaller touches.** A click on a task's name selects it, a double click

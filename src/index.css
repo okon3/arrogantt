@@ -1,5 +1,5 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   /* Checkboxes are UA-default blue otherwise, off-palette in both schemes;
      set once here it inherits everywhere and follows the dark redefinition
      for free. */
@@ -91,65 +91,63 @@
   color: var(--ink);
 }
 
-/* The same palette, read in the dark. The app follows the system and offers no
-   switch of its own: a per-app theme is one more piece of state to persist and
-   to disagree with the desktop around it.
+/* The same palette, read in the dark: `data-scheme` on the root, which
+   `theme.ts` resolves from the header's switch (Auto follows the system).
 
    Only the values move — every name above keeps its meaning, so no rule has to
    know which scheme it is in. The accents lighten rather than darken on
    emphasis, since on a dark surface that is what "stronger" looks like. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --accent: #8b78ea;
-    --accent-strong: #a495f2;
-    --accent-soft: #2a2542;
-    /* The accent lightens here (see above), so white ink loses AA on it —
-       goes near-black instead, the palette's night-ink family. */
-    --on-accent: #0a0c12;
-    --today: #6d9bf5;
-    --warn: #d9903f;
-    --danger: #dd8a68;
-    --danger-line: #7b4433;
-    --danger-soft: #2c1d18;
-    --critical: #ef6a80;
+:root:where([data-scheme='dark']) {
+  color-scheme: dark;
+  --accent: #8b78ea;
+  --accent-strong: #a495f2;
+  --accent-soft: #2a2542;
+  /* The accent lightens here (see above), so white ink loses AA on it —
+     goes near-black instead, the palette's night-ink family. */
+  --on-accent: #0a0c12;
+  --today: #6d9bf5;
+  --warn: #d9903f;
+  --danger: #dd8a68;
+  --danger-line: #7b4433;
+  --danger-soft: #2c1d18;
+  --critical: #ef6a80;
 
-    /* Neutral greys, no blue cast: a taste taken from a reference design. */
-    --ink: #e6e6e6;
-    --ink-muted: #a0a0a0;
-    --ink-faint: #787878;
+  /* Neutral greys, no blue cast: a taste taken from a reference design. */
+  --ink: #e6e6e6;
+  --ink-muted: #a0a0a0;
+  --ink-faint: #787878;
 
-    --surface: #191919;
-    --surface-sunken: #141414;
-    --surface-hover: #232323;
-    --line: #222222;
-    --line-strong: #3a3a3a;
-    /* Flat, not a share of --line-strong like the light value: a share of the
-       line grey lightens over dark rows, and a weekend that lightens stops
-       being background. Untracked on purpose — a retune of --line-strong
-       will not reach it. */
-    --band-nonworking: rgb(0 0 0 / 18%);
-    /* Identical to --band-nonworking here: two decisions that coincide in this
-       scheme, not one shared with a second name. Merging them would tie the
-       lane's veil back to the chart's, which light cannot afford. */
-    --band-nonworking-over: rgb(0 0 0 / 18%);
-    /* On dark rows the full brick red is the loudest thing on the chart. */
-    --band-timeoff: color-mix(in srgb, var(--danger-soft) 40%, transparent);
-    --band-timeoff-hatch: color-mix(in srgb, var(--danger-line) 28%, transparent);
+  --surface: #191919;
+  --surface-sunken: #141414;
+  --surface-hover: #232323;
+  --line: #222222;
+  --line-strong: #3a3a3a;
+  /* Flat, not a share of --line-strong like the light value: a share of the
+     line grey lightens over dark rows, and a weekend that lightens stops
+     being background. Untracked on purpose — a retune of --line-strong
+     will not reach it. */
+  --band-nonworking: rgb(0 0 0 / 18%);
+  /* Identical to --band-nonworking here: two decisions that coincide in this
+     scheme, not one shared with a second name. Merging them would tie the
+     lane's veil back to the chart's, which light cannot afford. */
+  --band-nonworking-over: rgb(0 0 0 / 18%);
+  /* On dark rows the full brick red is the loudest thing on the chart. */
+  --band-timeoff: color-mix(in srgb, var(--danger-soft) 40%, transparent);
+  --band-timeoff-hatch: color-mix(in srgb, var(--danger-line) 28%, transparent);
 
-    --inverse-surface: #363636;
-    --inverse-ink: #f0f0f0;
+  --inverse-surface: #363636;
+  --inverse-ink: #f0f0f0;
 
-    --bar-track: #2e2e2e;
-    --bar-track-line: #4f4f4f;
-    --bar-track-ink: #d4d4d4;
+  --bar-track: #2e2e2e;
+  --bar-track-line: #4f4f4f;
+  --bar-track-ink: #d4d4d4;
 
-    --dirty: #e0a24a;
+  --dirty: #e0a24a;
 
-    /* A shadow is a lack of light: on a dark surface the tinted greys of the
-       light scheme are invisible, and only near-black still reads as depth. */
-    --shadow-raised: 0 1px 2px rgb(0 0 0 / 45%);
-    --shadow-dialog: 0 18px 48px rgb(0 0 0 / 60%);
-  }
+  /* A shadow is a lack of light: on a dark surface the tinted greys of the
+     light scheme are invisible, and only near-black still reads as depth. */
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 45%);
+  --shadow-dialog: 0 18px 48px rgb(0 0 0 / 60%);
 }
 
 /* The chart fills the viewport, which needs an unbroken height chain from the

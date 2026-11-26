@@ -7,6 +7,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react';
 import { CircleHelp } from 'lucide-react';
+import { ThemeSwitcher } from './gantt/ThemeSwitcher';
 // ?inline: as a data URI the mark survives even a lone single-file index.html,
 // where a URL beside the page would have nothing to point at.
 import markUrl from './assets/favicon.svg?inline';
@@ -1022,6 +1023,7 @@ export default function App() {
           onEditCalendar={openCalendar}
           onHighlight={setPinnedResource}
         />
+        <ThemeSwitcher storage={draftStore} />
         {/* Outside the toolbar so it keeps its place when the avatars wrap. */}
         <button
           type="button"

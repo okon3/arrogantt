@@ -584,6 +584,41 @@
 
 /* Always in the same place, whatever the toolbar does: it sits outside it, so a
    plan with twenty people cannot push it onto a second line. */
+/* Three pills in one track, the pressed one lifted: the header's own register
+   (surface on sunken), like the borderless pills beside it. */
+.theme-switch {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+}
+
+.theme-switch__option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+
+.theme-switch__option:hover {
+  color: var(--ink);
+}
+
+.theme-switch__option[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-raised);
+}
+
 .app__help {
   display: flex;
   align-items: center;
@@ -1381,22 +1416,20 @@
 
 /* What the palette cannot carry: veils, a shadow and a hairline are stated with
    an alpha, and a pale one over a dark page reads as fog rather than as depth. */
-@media (prefers-color-scheme: dark) {
-  .app__dropzone {
-    background: rgb(18 20 25 / 92%);
-  }
+:where([data-scheme='dark']) .app__dropzone {
+  background: rgb(18 20 25 / 92%);
+}
 
-  .empty {
-    background: rgb(18 20 25 / 94%);
-  }
+:where([data-scheme='dark']) .empty {
+  background: rgb(18 20 25 / 94%);
+}
 
-  .empty__card {
-    box-shadow: 0 6px 24px rgb(0 0 0 / 45%);
-  }
+:where([data-scheme='dark']) .empty__card {
+  box-shadow: 0 6px 24px rgb(0 0 0 / 45%);
+}
 
-  .taskinfo__swatch {
-    border-color: rgb(255 255 255 / 22%);
-  }
+:where([data-scheme='dark']) .taskinfo__swatch {
+  border-color: rgb(255 255 255 / 22%);
 }
 
 /* The plan as a sheet of paper.

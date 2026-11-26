@@ -58,11 +58,10 @@ library. Each bullet is a constraint or a fact; how it was found is in git.
   app default's specificity, hence the default is restated on both classes.
 - **The built-in dark theme is an attribute, not a media query**:
   `:root[data-gantt-theme=dark]` re-points the `--dhx-gantt-base-colors-*`
-  set. `theme.ts` sets it from `prefers-color-scheme`; `gantt.css` re-points
-  those base colours at the palette. A bare `:root[data-gantt-theme=dark]` of
-  ours only ties with dhtmlx's (`html:root[…]` outranks it), and keying on the
-  attribute alone would leave the chart light if a `change` event went
-  missing, hence the media query beside it.
+  set. `theme.ts` sets it together with the app's `data-scheme`; `gantt.css`
+  re-points those base colours at the palette under
+  `html:root[data-scheme=dark]`. A bare `:root[…]` of ours only ties with
+  dhtmlx's; `html:` outranks it.
 - **dhtmlx writes that attribute back on a poll**: `setSkin` sets
   `data-gantt-theme`, and an interval reads `--dhx-gantt-theme` and calls
   `setSkin` when it differs from `gantt.skin`. Forcing the attribute in a

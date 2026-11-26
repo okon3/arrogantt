@@ -66,42 +66,38 @@ html:root[data-gantt-theme='dark'] {
    colours are re-pointed at the palette here and what is left of it is the parts
    we do not skin ourselves: link handles, icons, scrollbars.
 
-   Written against both selectors on purpose. Keyed on the attribute alone, a
-   `change` the browser fails to deliver would leave the chart light inside a
-   dark app; keyed on the media query alone, dhtmlx's own dark block outranks it
-   the moment the attribute is there. And `html:` is not decoration — dhtmlx's
-   blocks are `:root` and `:root[data-gantt-theme=dark]`, which a bare selector
-   only ties with, leaving the winner to whichever order Vite bundles the two
-   stylesheets in. */
-@media (prefers-color-scheme: dark) {
-  html:root,
-  html:root[data-gantt-theme='dark'] {
-    --dhx-gantt-base-colors-background: var(--surface);
-    --dhx-gantt-base-colors-background-alt: var(--surface-sunken);
-    /* Hairlines barely off the surface, the grid's edge included. */
-    --dhx-gantt-base-colors-border: var(--line);
-    --dhx-gantt-base-colors-border-light: var(--line);
-    --dhx-gantt-base-colors-text-base: var(--ink);
-    --dhx-gantt-base-colors-text-light: var(--ink-muted);
-    --dhx-gantt-base-colors-icons: var(--ink-faint);
-    --dhx-gantt-base-colors-primary: var(--accent);
-    --dhx-gantt-base-colors-error: var(--critical);
-  }
+   Keyed on `data-scheme`, which `theme.ts` sets in the same breath. `html:` is
+   not decoration — dhtmlx's blocks are `:root` and
+   `:root[data-gantt-theme=dark]`, which a bare selector only ties with, leaving
+   the winner to whichever order Vite bundles the two stylesheets in. Every
+   other dark rule in the app is prefixed `:where([data-scheme='dark'])`, which
+   adds no specificity: the cascade stays what the media query gave. */
+html:root[data-scheme='dark'] {
+  --dhx-gantt-base-colors-background: var(--surface);
+  --dhx-gantt-base-colors-background-alt: var(--surface-sunken);
+  /* Hairlines barely off the surface, the grid's edge included. */
+  --dhx-gantt-base-colors-border: var(--line);
+  --dhx-gantt-base-colors-border-light: var(--line);
+  --dhx-gantt-base-colors-text-base: var(--ink);
+  --dhx-gantt-base-colors-text-light: var(--ink-muted);
+  --dhx-gantt-base-colors-icons: var(--ink-faint);
+  --dhx-gantt-base-colors-primary: var(--accent);
+  --dhx-gantt-base-colors-error: var(--critical);
+}
 
-  /* The veils dhtmlx lays over a pane while its splitter is dragged are literal
-     light greys, not variables, so the re-pointing above cannot reach them: on a
-     dark chart they flash as bright bars for exactly the length of the drag.
-     What dims in the light has to glow in the dark — a translucent white, kept
-     faint. The `html` prefix, as above, to outrank rather than tie. */
-  html .gantt_grid_resize_area,
-  html .gantt_row_grid_resize_area,
-  html .gantt_drag_marker.gantt_row_grid_resize_area {
-    background-color: rgb(255 255 255 / 7%);
-  }
+/* The veils dhtmlx lays over a pane while its splitter is dragged are literal
+   light greys, not variables, so the re-pointing above cannot reach them: on a
+   dark chart they flash as bright bars for exactly the length of the drag.
+   What dims in the light has to glow in the dark — a translucent white, kept
+   faint. The `html` prefix, as above, to outrank rather than tie. */
+html[data-scheme='dark'] .gantt_grid_resize_area,
+html[data-scheme='dark'] .gantt_row_grid_resize_area,
+html[data-scheme='dark'] .gantt_drag_marker.gantt_row_grid_resize_area {
+  background-color: rgb(255 255 255 / 7%);
+}
 
-  html .gantt_resizing {
-    background: var(--surface-hover);
-  }
+html[data-scheme='dark'] .gantt_resizing {
+  background: var(--surface-hover);
 }
 
 /* dhtmlx ships its own font stack and its own greys. Everything in this block
@@ -349,10 +345,8 @@ html:root[data-gantt-theme='dark'] {
   --link-rest: 1;
 }
 
-@media (prefers-color-scheme: dark) {
-  .gantt-host {
-    --link-rest: 0.6;
-  }
+:where([data-scheme='dark']) .gantt-host {
+  --link-rest: 0.6;
 }
 
 .gantt-host .gantt_task_link:hover {
@@ -465,11 +459,9 @@ html:root[data-gantt-theme='dark'] {
 
 /* Between the track and its edge, and nowhere else — hence a literal rather
    than a fourth track variable. */
-@media (prefers-color-scheme: dark) {
-  .gantt_task_line.gantt-bar--shared .gantt_task_progress {
-    --dhx-gantt-task-progress: #3e3e3e;
-    background: #3e3e3e;
-  }
+:where([data-scheme='dark']) .gantt_task_line.gantt-bar--shared .gantt_task_progress {
+  --dhx-gantt-task-progress: #3e3e3e;
+  background: #3e3e3e;
 }
 
 /* The plan's end depends on this task.
@@ -1139,11 +1131,9 @@ html:root[data-gantt-theme='dark'] {
   color: #c6ccd8;
 }
 
-@media (prefers-color-scheme: dark) {
-  .loadtip__when,
-  .loadtip__free {
-    color: #b0b0b0;
-  }
+:where([data-scheme='dark']) .loadtip__when,
+:where([data-scheme='dark']) .loadtip__free {
+  color: #b0b0b0;
 }
 
 .loadtip__headline {

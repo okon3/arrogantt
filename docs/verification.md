@@ -207,11 +207,10 @@ questions, not one.
 Switching the pane's scheme flips `matchMedia('(prefers-color-scheme: dark)')
 .matches` and repaints every `@media` rule, but **fires no `change` event** — a
 listener on that query is never called (measured: `matches` went true→false with
-a probe listener armed, count stayed 0). So the JS half of the dark mode
-(`theme.ts` setting `data-gantt-theme`) can only be verified **on load**, with
-the scheme already set; a switch on a live page proves nothing about it. Which is
-why the chart's dhtmlx variables are keyed on the media query as well as on the
-attribute — see [dhtmlx.md](dhtmlx.md).
+a probe listener armed, count stayed 0). Every dark rule keys on `data-scheme`,
+which `theme.ts` sets from that listener under *Auto*, so there a switch on a
+live page proves nothing: verify *Auto* **on load**, or drive the header's
+switch. `agent-browser set media` does fire the event.
 
 Setting `data-gantt-theme` by hand instead is not a shortcut to the same state:
 dhtmlx polls the theme every 100ms and writes the attribute back, so forcing it

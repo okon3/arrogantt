@@ -5,6 +5,18 @@
     <link rel="icon" type="image/svg+xml" href="/src/assets/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ARROGANTT — Automatic Resource Resolution &amp; Optimization</title>
+    <!-- Before the stylesheets paint: the scheme is a root attribute, and a
+         module script runs too late to spare a dark user a white first frame.
+         theme.ts owns the rule; this is its first answer only. -->
+    <script>
+      (function () {
+        var choice = null;
+        try { choice = localStorage.getItem('arrogantt.theme.v1'); } catch (e) {}
+        var dark = choice === 'dark' ||
+          (choice !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.scheme = dark ? 'dark' : 'light';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

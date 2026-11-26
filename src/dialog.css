@@ -43,10 +43,8 @@
   background: rgb(28 36 48 / 35%);
 }
 
-@media (prefers-color-scheme: dark) {
-  .dialog::backdrop {
-    background: rgb(0 0 0 / 55%);
-  }
+:where([data-scheme='dark']) .dialog::backdrop {
+  background: rgb(0 0 0 / 55%);
 }
 
 .dialog__header {

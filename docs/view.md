@@ -11,7 +11,13 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 
 ## Colour scheme
 
-- **Follows the system, with no switch of its own** (`prefers-color-scheme`).
+- **Light / Auto / Dark, a switch in the header** (`ThemeSwitcher`, `theme.ts`).
+  Auto follows `prefers-color-scheme`. A view preference in `localStorage`
+  (`arrogantt.theme.v1`), never in the file. Resolved onto `data-scheme` on the
+  root; an inline script in `index.html` sets it before the first paint.
+- **Every dark rule is `:where([data-scheme='dark']) …`**: no specificity
+  added, so the cascade is the one the media query gave; dhtmlx's block alone
+  is `html:root[data-scheme='dark']`, to outrank the vendor.
 - One palette, two sets of values: dark redefines the same variables in
   `index.css`; no rule knows which scheme it is in. Accents lighten on
   emphasis in dark.
