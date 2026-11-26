@@ -61,6 +61,10 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - **A re-solve slides the bars it moved** (`glideBars`, `motion.ts`): after
   `applySolution` and an undo/redo restore, never on a file load. `left`/`width`,
   not a transform (labels would stretch); a bar that changed row jumps.
+- **A branch toggle slides its rows** (`slideRows`, `motion.ts`): one offset
+  per task id on every node of the row, both panes, so they stay level. Shown
+  rows fade in; hidden ones and links jump. Collapse/Expand all, search and
+  the agent API jump.
 - **Today glides; Fit, zoom and the agent's `showToday()` jump**: a zoom moves
   everything at once, and a script's screenshot must find the scroll landed.
 

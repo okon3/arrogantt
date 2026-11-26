@@ -62,3 +62,54 @@ export function glideBars(before: Map<string, DOMRect>) {
     );
   }
 }
+
+const gridRows = () =>
+  gantt.$grid_data ? [...gantt.$grid_data.querySelectorAll<HTMLElement>('.gantt_row[data-task-id]')] : [];
+
+const rowId = (node: HTMLElement) => node.dataset.taskId ?? node.dataset.paceTask!;
+
+/** Every node drawn for a task's row, in both panes: what a toggle must move together. */
+const rowNodes = () => [
+  ...gridRows(),
+  ...(gantt.$task_data
+    ? gantt.$task_data.querySelectorAll<HTMLElement>(
+        '.gantt_task_row[data-task-id], .gantt_task_line[data-task-id], [data-pace-task]',
+      )
+    : []),
+];
+
+/** Where each grid row sits on screen, by task id — read before a branch toggles. */
+export const rowTops = () => new Map(gridRows().map((node) => [rowId(node), node.getBoundingClientRect().top]));
+
+/**
+ * Slides the rows a branch toggle moved from where `before` saw them, every
+ * node of a row by the same offset so grid and timeline stay level. A row with
+ * no `before` (a child just shown, a row scrolled in from below) takes the
+ * offset of the row above it and fades in: it was hidden under that row.
+ */
+export function slideRows(before: Map<string, number>) {
+  const duration = motionMs('--motion-base');
+  if (!duration || before.size === 0) return;
+  const easing = getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim();
+  const shift = new Map<string, { dy: number; entering: boolean }>();
+  let above = 0;
+  const rows = gridRows()
+    .map((node) => ({ id: rowId(node), top: node.getBoundingClientRect().top }))
+    .sort((a, b) => a.top - b.top);
+  for (const { id, top } of rows) {
+    const was = before.get(id);
+    if (was !== undefined) above = was - top;
+    shift.set(id, { dy: above, entering: was === undefined });
+  }
+  for (const node of rowNodes()) {
+    const row = shift.get(rowId(node));
+    if (!row || (!row.entering && Math.abs(row.dy) < 1)) continue;
+    node.animate(
+      [
+        { transform: `translateY(${row.dy}px)`, ...(row.entering && { opacity: 0 }) },
+        { transform: 'none', ...(row.entering && { opacity: 1 }) },
+      ],
+      { duration, easing },
+    );
+  }
+}

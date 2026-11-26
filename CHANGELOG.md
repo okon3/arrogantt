@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-- **Smaller touches.** A click on a task's name selects it; a double click
-  renames it.
+- **Smaller touches.** A click on a task's name selects it, a double click
+  renames it, and opening or closing a group slides its rows.
 
 ## v1.7 — 2026-11-21
 

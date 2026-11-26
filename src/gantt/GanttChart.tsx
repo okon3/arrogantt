@@ -21,7 +21,7 @@ import {
 import { fitRangeToPlan, repinRangeToScale, appliedScrollX } from './timelineGeometry';
 import { hiddenLinksOf } from './hiddenLinks';
 import { installLinkHover } from './linkHover';
-import { barRects, glideBars, glideScrollX } from './motion';
+import { barRects, glideBars, glideScrollX, rowTops, slideRows } from './motion';
 import { installPaceHandles } from './paceHandles';
 import { installRolledLinks } from './rolledLinks';
 import { mountOverlays, nonWorkingSpans, paintBands, placeTodayLine } from './timelineOverlays';
@@ -1160,6 +1160,16 @@ export function GanttChart({
     };
     container.addEventListener('click', markClickInFlight, true);
 
+    // dhtmlx opens or closes the branch and redraws inside this click; the
+    // frame after it is the first one painted.
+    const slideOnToggle = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest?.('.gantt_tree_icon.gantt_open, .gantt_tree_icon.gantt_close')) return;
+      const before = rowTops();
+      requestAnimationFrame(() => slideRows(before));
+    };
+    container.addEventListener('click', slideOnToggle, true);
+
     const renameOnDoubleClick = (event: MouseEvent) => {
       const editors = gantt.ext.inlineEditors;
       const cell = editors.locateCell(event.target as HTMLElement) as
@@ -1458,6 +1468,7 @@ export function GanttChart({
       container.removeEventListener('click', selectRow);
       container.removeEventListener('click', markClickInFlight, true);
       container.removeEventListener('dblclick', renameOnDoubleClick);
+      container.removeEventListener('click', slideOnToggle, true);
       document.removeEventListener('keydown', deleteSelected);
       handlers.forEach((handlerId) => gantt.detachEvent(handlerId));
       // Deliberately no destructor(): it leaves the singleton unusable, and
