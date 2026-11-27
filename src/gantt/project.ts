@@ -186,13 +186,6 @@ export function buildHierarchy(tasks: ProjectTask[]): Hierarchy {
 }
 
 /**
- * Colour is chosen once on the top-level task and inherited all the way down.
- *
- * Whatever a subtask carries in its own `color` is ignored while it has an
- * ancestor, so moving a branch under a different parent recolours it — the tree
- * stays one visual block instead of a patchwork.
- */
-/**
  * A task and everything under it.
  *
  * Deleting a summary has to take its subtree with it: descendants left behind
@@ -264,29 +257,6 @@ export function moveFixed(
 }
 
 /**
- * The start to keep as a task's constraint, given the one a caller hands back.
- *
- * Everything that shows a start shows the solved one — the grid rows, the bars,
- * the dialog's date field — and on a task held by a predecessor that is later
- * than the constraint behind it. Writing it back turns a derived value into an
- * input: the declared start creeps forward to wherever the plan currently puts
- * the task, so **renaming** a task is enough to move its constraint, and the
- * plan then changes on the day that predecessor is removed, because the task no
- * longer falls back to where it was asked to start.
- *
- * So a start that is the solved one is not a constraint at all: it is the view
- * handing back what it was given. The cost is that a caller cannot pin a
- * constraint *onto* the date the plan already computed — asking for the date it
- * already has changes nothing — which is the same bargain a drag has always
- * made: dropping a bar where it already sits declares nothing.
- *
- * One that *is* a constraint is taken as the working day it lands on. A drop
- * carries the instant under the pointer and a date field carries none at all,
- * and neither is a time anybody chose; the snap has to come after the
- * comparison, or the solved start of a task held to 13:00 by a predecessor
- * would round to 08:00 and read as a move nobody made.
- */
-/**
  * The working day `step` working days from `date`'s, at the same time of day:
  * what a date's − and + buttons move it to.
  */
@@ -340,6 +310,29 @@ export function dropDates(
   return { start, end, days: axis.minutesToDays(axis.toWorkingMinutes(end)) };
 }
 
+/**
+ * The start to keep as a task's constraint, given the one a caller hands back.
+ *
+ * Everything that shows a start shows the solved one — the grid rows, the bars,
+ * the dialog's date field — and on a task held by a predecessor that is later
+ * than the constraint behind it. Writing it back turns a derived value into an
+ * input: the declared start creeps forward to wherever the plan currently puts
+ * the task, so **renaming** a task is enough to move its constraint, and the
+ * plan then changes on the day that predecessor is removed, because the task no
+ * longer falls back to where it was asked to start.
+ *
+ * So a start that is the solved one is not a constraint at all: it is the view
+ * handing back what it was given. The cost is that a caller cannot pin a
+ * constraint *onto* the date the plan already computed — asking for the date it
+ * already has changes nothing — which is the same bargain a drag has always
+ * made: dropping a bar where it already sits declares nothing.
+ *
+ * One that *is* a constraint is taken as the working day it lands on. A drop
+ * carries the instant under the pointer and a date field carries none at all,
+ * and neither is a time anybody chose; the snap has to come after the
+ * comparison, or the solved start of a task held to 13:00 by a predecessor
+ * would round to 08:00 and read as a move nobody made.
+ */
 export function constraintStart(task: ProjectTask, offered: Date, solved: SolvedProject): Date {
   const scheduled = solved.schedule.tasks.get(task.id);
   if (scheduled && offered.getTime() === scheduled.start.getTime()) return task.start;
