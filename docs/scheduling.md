@@ -46,8 +46,8 @@ calendar logic. `WorkingCalendar` owns every conversion.
   don't run back to back.
 - **Dependencies cross the hierarchy**: declared on a summary → pushed to its
   leaves; a summary as predecessor → expands into its leaves.
-- **Bar colour is owned by the top-level task** and inherited by the subtree;
-  moving a branch recolours it.
+- **Bar colour: the task's own, else the nearest one set above it**, else its
+  person's (`barColors`); moving a branch recolours what has none of its own.
 
 ## Fixed dates
 

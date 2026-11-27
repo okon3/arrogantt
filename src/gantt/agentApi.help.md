@@ -11,6 +11,25 @@ person at the same time each run at half rate, and someone at 50% or away on
 holiday stretches them further. The time axis is working minutes, so nights,
 weekends and company shutdowns never appear in a duration.
 
+**How the engine decides:**
+
+- **Nothing is queued.** A person's tasks that overlap run at the same time and
+  split their capacity — three at once, a third each. To have one person do
+  them one after another, `link` them or give them separate starts.
+- **At every moment**: the person's capacity is their `availability`, or the
+  override covering that day (it replaces, never multiplies). Tasks with a
+  fixed `share` take exactly that part of it; the rest is split equally among
+  their other active tasks.
+- **Recomputed whenever a task starts or finishes** or an availability changes:
+  the end is not effort ÷ availability, and adding a task can move earlier ones.
+- **Effort is conserved**: rate × time adds up to `effortDays`; what stretches
+  is `elapsedDays`. `shared: true` means the stretch is contention (move or
+  reassign a task); otherwise it is part-time work (change the person).
+- A task begins once its start date, its predecessors (finish-to-start) and its
+  person's capacity allow. With nobody assigned it never contends and runs at
+  full rate; effort `0` is a milestone and takes nobody's time; a group is never
+  scheduled, it rolls up from its subtasks.
+
 ## Driving it from a script
 
 `window.arrogantt` is the whole surface, in both dev and production builds.
