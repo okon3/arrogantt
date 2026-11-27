@@ -718,16 +718,6 @@
   line-height: 1;
 }
 
-.toolbar__primary {
-  background: var(--accent) !important;
-  color: var(--on-accent) !important;
-  font-weight: 550;
-}
-
-.toolbar__primary:hover {
-  background: var(--accent-strong) !important;
-}
-
 /* People as avatars rather than a dropdown: the point of the control is to be
    read at a glance while the chart is dimmed, and the colours are the same ones
    the grid uses for the same person. */
@@ -790,6 +780,37 @@
   color: var(--ink-muted);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+}
+
+/* File and Export drop their entries under the button, in the row menu's chrome. */
+.toolbar__menu {
+  position: relative;
+}
+
+.toolbar .rowmenu.toolbar__dropdown {
+  position: absolute;
+  inset: auto;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 150px;
+}
+
+.toolbar .toolbar__dropdown button {
+  justify-content: flex-start;
+  color: var(--ink);
+}
+
+.toolbar__file {
+  cursor: default;
+}
+
+.toolbar__rename {
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  font: inherit;
+  color: var(--ink);
 }
 
 .toolbar__dirty {

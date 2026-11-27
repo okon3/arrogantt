@@ -13,7 +13,9 @@
 - **Light, Auto or Dark.** Pick the theme from the header; Auto follows your
   system.
 - **A leaner grid.** Name, person, effort and end by default, dates as 8 Dec,
-  row actions in a compact pill, Reset to defaults in the column picker.
+  row actions in a compact pill, + Task in its header, Reset in the column picker.
+- **A tidier header.** File and Export are menus; double-click the file name
+  to rename the project.
 - **Smaller touches.** Click a name to select, double-click to rename; groups
   slide open; fixed bars show grips and a set End; the selected bar lights up.
 

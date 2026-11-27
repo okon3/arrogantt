@@ -109,6 +109,12 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   runs after the load. **Undo is not an opening**: same restore path, keeps
   viewport, zoom, closed branches.
 
+## Toolbar
+
+- **File (New, Open) and Export (CSV, PNG, Print) are dropdowns; Save stays a
+  button.** Add task lives in the grid. The file name is the project's name:
+  a double click renames what Save writes.
+
 ## Grid
 
 - **Columns are a registry (`columns.ts`), the grid a filter over it.**
@@ -118,7 +124,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   hideable. Resource has no header: the avatar says what the column holds.
 - **A row's actions are the bar toolbar's pill, always shown** (`actions`
   column, fixed width, faint until the row is hovered): details, disable, subtask, delete.
-  GanttChart's `rowAction` claims the press on capture.
+  Its header holds *+ Task*. GanttChart's `rowAction` claims both on capture.
+  Details is lucide's `info` without its circle (`bareInfoIcon`), here and on the bar.
 - **Every numeric column is `align: 'right'`; dates and the avatar stay
   `center`.** Headers remain centred: `align` does not reach the head cell in
   this build ([dhtmlx.md](dhtmlx.md)), and a rule of our own would buy no

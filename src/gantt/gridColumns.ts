@@ -47,11 +47,23 @@ export function sizedIcon(svg: string, size: number): string {
     .replace('<svg', '<svg aria-hidden="true"');
 }
 
-const rowAction = (action: string, title: string, icon: string, modifier = '') =>
+/**
+ * Lucide's `info` without its circle, framed on the glyph: inside the pill the
+ * circle read as one more button outline.
+ */
+export function bareInfoIcon(size: number): string {
+  return sizedIcon(Info, size)
+    .replace(/<circle[^>]*\/>/, '')
+    .replace('viewBox="0 0 24 24"', 'viewBox="7 7 10 10"')
+    // A box under half the original, so half the stroke keeps the neighbours' weight.
+    .replace('stroke-width="2"', 'stroke-width="1"');
+}
+
+const rowAction = (action: string, title: string, icon: string, modifier = '', svg = sizedIcon(icon, 13)) =>
   `<button type="button" class="bar-actions__btn${modifier}" data-row-action="${action}"` +
-  ` title="${title}">${sizedIcon(icon, 13)}</button>`;
-/** Four 13px buttons in the pill, plus the cell's padding. */
-const ROW_ACTIONS_WIDTH = 84;
+  ` title="${title}">${svg}</button>`;
+/** The pill (four 13px buttons) with room on both sides: the cell has no padding. */
+const ROW_ACTIONS_WIDTH = 86;
 const ARROW_ICON = sizedIcon(ArrowRight, 11);
 const PIN_ICON = sizedIcon(Pin, 11);
 
@@ -305,7 +317,8 @@ export function buildColumns(ctx: RowContext, shown: ReadonlySet<PlanColumnName>
     })),
     {
       name: 'actions',
-      label: '',
+      // Adding a task belongs with the rows, not with the file buttons up top.
+      label: `<button type="button" class="gantt-gridadd" data-grid-add="1" title="Add a task">${sizedIcon(Plus, 13)}Task</button>`,
       width: ROW_ACTIONS_WIDTH,
       // Narrowing the grid squeezes the columns; the pill would be cut.
       min_width: ROW_ACTIONS_WIDTH,
@@ -319,7 +332,7 @@ export function buildColumns(ctx: RowContext, shown: ReadonlySet<PlanColumnName>
           ctx.project().tasks.find((candidate) => candidate.id === String(task.id))?.disabled === true;
         return (
           `<span class="bar-actions gantt-rowactions">` +
-          rowAction('info', 'Details', Info) +
+          rowAction('info', 'Details', '', '', bareInfoIcon(13)) +
           rowAction('disable', own ? 'Enable' : 'Disable', Ban, own ? ' bar-actions__btn--on' : '') +
           rowAction('child', 'Add a subtask', Plus) +
           rowAction('remove', 'Delete', Trash2, ' bar-actions__btn--danger') +

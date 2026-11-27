@@ -1,6 +1,6 @@
 import { gantt } from 'dhtmlx-gantt';
-import { Ban, Info, Pin, PinOff, Trash2 } from 'lucide-static';
-import { sizedIcon } from './gridColumns';
+import { Ban, Pin, PinOff, Trash2 } from 'lucide-static';
+import { bareInfoIcon, sizedIcon } from './gridColumns';
 
 /** Long enough to carry the pointer from the bar to the buttons beside it. */
 const HIDE_DELAY_MS = 300;
@@ -40,7 +40,7 @@ export function installBarActions(container: HTMLElement, actions: BarActions): 
   bar.className = 'bar-actions';
   bar.hidden = true;
   const info = button('info');
-  info.innerHTML = sizedIcon(Info, 14);
+  info.innerHTML = bareInfoIcon(14);
   const autoEnd = button('auto-end');
   const disable = button('disable');
   disable.innerHTML = sizedIcon(Ban, 14);

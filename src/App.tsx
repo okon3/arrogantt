@@ -1092,7 +1092,7 @@ export default function App() {
           onPrint={() => openExportDialog('print')}
           onUndo={() => travel(undone)}
           onRedo={() => travel(redone)}
-          onAddTask={handleAddTask}
+          onRename={setFilename}
           onEditResources={openResources}
           onEditCalendar={openCalendar}
           onHighlight={setPinnedResource}
@@ -1140,6 +1140,7 @@ export default function App() {
           onToggleAutoEnd={toggleAutoEnd}
           onSetPacePeriods={setPacePeriods}
           onDeleteTask={(id) => void requestDelete(id)}
+          onAddTask={handleAddTask}
           onScaleChange={setScale}
           onReject={setError}
           suppressTooltip={rowMenu !== null}

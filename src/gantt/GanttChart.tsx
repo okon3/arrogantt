@@ -121,6 +121,7 @@ export function GanttChart({
   onToggleAutoEnd,
   onSetPacePeriods,
   onDeleteTask,
+  onAddTask,
   onScaleChange,
   onChainState,
   onReject,
@@ -161,6 +162,8 @@ export function GanttChart({
   onSetPacePeriods?: (taskId: string, periods: ShareOverride[]) => void;
   /** Asked, not done: the confirmation belongs with the rest of the dialogs. */
   onDeleteTask?: (id: string) => void;
+  /** The grid header's "+": a new task at the end of the plan. */
+  onAddTask?: () => void;
   onScaleChange?: (label: string) => void;
   /** Whether the marking is live, has to be asked for, or is showing an old answer. */
   onChainState?: (state: ChainState) => void;
@@ -182,6 +185,7 @@ export function GanttChart({
   const toggleAutoEndRef = useRef(onToggleAutoEnd);
   const setPacePeriodsRef = useRef(onSetPacePeriods);
   const deleteTaskRef = useRef(onDeleteTask);
+  const addTaskRef = useRef(onAddTask);
   const scaleChangeRef = useRef(onScaleChange);
   const changeRef = useRef(onChange);
   const rejectRef = useRef(onReject);
@@ -247,6 +251,7 @@ export function GanttChart({
     toggleAutoEndRef.current = onToggleAutoEnd;
     setPacePeriodsRef.current = onSetPacePeriods;
     deleteTaskRef.current = onDeleteTask;
+    addTaskRef.current = onAddTask;
     scaleChangeRef.current = onScaleChange;
     changeRef.current = onChange;
     rejectRef.current = onReject;
@@ -255,6 +260,7 @@ export function GanttChart({
     onChainState,
     onChange,
     onDeleteTask,
+    onAddTask,
     onOpenTask,
     onSelectionChange,
     onToggleAutoEnd,
@@ -1158,7 +1164,13 @@ export function GanttChart({
     // The row's hover buttons, claimed on the capture phase: a press there must
     // not select, rename or drag the row under them.
     const rowAction = (event: MouseEvent) => {
-      const button = (event.target as HTMLElement | null)?.closest?.<HTMLElement>('[data-row-action]');
+      const target = event.target as HTMLElement | null;
+      if (target?.closest?.('[data-grid-add]')) {
+        event.stopPropagation();
+        if (event.type === 'click') addTaskRef.current?.();
+        return;
+      }
+      const button = target?.closest?.<HTMLElement>('[data-row-action]');
       if (!button) return;
       event.stopPropagation();
       if (event.type !== 'click') return;

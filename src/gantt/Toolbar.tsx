@@ -1,4 +1,8 @@
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
+  ChevronDown,
+  File,
+  FileDown,
   FilePlus2,
   FolderOpen,
   Save,
@@ -7,7 +11,6 @@ import {
   Printer,
   Undo2,
   Redo2,
-  Plus,
   Users,
   CalendarDays,
 } from 'lucide-react';
@@ -31,7 +34,7 @@ export interface ToolbarProps {
   onPrint(): void;
   onUndo(): void;
   onRedo(): void;
-  onAddTask(): void;
+  onRename(filename: string): void;
   onEditResources(): void;
   onEditCalendar(): void;
   onHighlight(resourceId: string | null): void;
@@ -52,7 +55,7 @@ export function Toolbar({
   onPrint,
   onUndo,
   onRedo,
-  onAddTask,
+  onRename,
   onEditResources,
   onEditCalendar,
   onHighlight,
@@ -60,14 +63,14 @@ export function Toolbar({
   return (
     <div className="toolbar">
       <div className="toolbar__group">
-        <button type="button" onClick={onNew}>
-          <FilePlus2 size={15} />
-          New
-        </button>
-        <button type="button" onClick={onOpen}>
-          <FolderOpen size={15} />
-          Open
-        </button>
+        <ToolbarMenu
+          icon={<File size={15} />}
+          label="File"
+          items={[
+            { icon: <FilePlus2 size={15} />, label: 'New', onSelect: onNew },
+            { icon: <FolderOpen size={15} />, label: 'Open…', onSelect: onOpen },
+          ]}
+        />
         <button type="button" onClick={onSave}>
           <Save size={15} />
           Save
@@ -77,31 +80,26 @@ export function Toolbar({
           project, what this writes is the schedule derived from it — a file
           that comes back in is one thing, a file that only goes out is
           another. */}
-      <div className="toolbar__group" role="group" aria-label="Export">
-        <button
-          type="button"
-          onClick={onExportCsv}
-          title="Export the solved plan to CSV (dates, effort and durations)"
-        >
-          <FileSpreadsheet size={15} />
-          CSV
-        </button>
-        <button
-          type="button"
-          onClick={onExportPng}
-          title="Export the plan as a PNG image"
-        >
-          <Image size={15} />
-          PNG
-        </button>
-        <button
-          type="button"
-          onClick={onPrint}
-          title="Print the plan, or save it as PDF from the print dialog (Ctrl+P)"
-        >
-          <Printer size={15} />
-          Print
-        </button>
+      <div className="toolbar__group">
+        <ToolbarMenu
+          icon={<FileDown size={15} />}
+          label="Export"
+          items={[
+            {
+              icon: <FileSpreadsheet size={15} />,
+              label: 'CSV',
+              title: 'Export the solved plan to CSV (dates, effort and durations)',
+              onSelect: onExportCsv,
+            },
+            { icon: <Image size={15} />, label: 'PNG', title: 'Export the plan as a PNG image', onSelect: onExportPng },
+            {
+              icon: <Printer size={15} />,
+              label: 'Print',
+              title: 'Print the plan, or save it as PDF from the print dialog (Ctrl+P)',
+              onSelect: onPrint,
+            },
+          ]}
+        />
       </div>
       <div className="toolbar__group">
         {/* The title names the step rather than only saying there is one: a
@@ -130,10 +128,6 @@ export function Toolbar({
         </button>
       </div>
       <div className="toolbar__group">
-        <button type="button" className="toolbar__primary" onClick={onAddTask}>
-          <Plus size={15} />
-          Add task
-        </button>
         <button type="button" onClick={onEditResources}>
           <Users size={15} />
           People
@@ -171,10 +165,109 @@ export function Toolbar({
           })}
         </div>
       )}
-      <span className="toolbar__file">
-        {filename}
-        {dirty && <span className="toolbar__dirty" title="Unsaved changes" />}
-      </span>
+      <FileName filename={filename} dirty={dirty} onRename={onRename} />
     </div>
+  );
+}
+
+interface MenuItem {
+  icon: ReactNode;
+  label: string;
+  title?: string;
+  onSelect(): void;
+}
+
+/** A toolbar button that drops a list, in the row menu's chrome. */
+function ToolbarMenu({ icon, label, items }: { icon: ReactNode; label: string; items: MenuItem[] }) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOutside, true);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside, true);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open]);
+  return (
+    <div className="toolbar__menu" ref={root}>
+      <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
+        {icon}
+        {label}
+        <ChevronDown size={13} />
+      </button>
+      {/* A dialog, like the row menu, so Escape and Del stay with it while open. */}
+      {open && (
+        <dialog open className="rowmenu toolbar__dropdown" aria-label={label}>
+          <ul className="rowmenu__items">
+            {items.map((item) => (
+              <li key={item.label}>
+                <button
+                  type="button"
+                  title={item.title}
+                  onClick={() => {
+                    setOpen(false);
+                    item.onSelect();
+                  }}
+                >
+                  {item.icon}
+                  {item.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </dialog>
+      )}
+    </div>
+  );
+}
+
+const PROJECT_SUFFIX = /\.gantt$/i;
+
+/** The project's name is its file's: a double click renames what Save writes. */
+function FileName({ filename, dirty, onRename }: { filename: string; dirty: boolean; onRename(name: string): void }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const commit = () => {
+    const stem = draft?.trim().replace(PROJECT_SUFFIX, '');
+    setDraft(null);
+    if (stem) onRename(`${stem}.gantt`);
+  };
+  return (
+    <span
+      className="toolbar__file"
+      title="Double-click to rename"
+      onDoubleClick={() => setDraft(filename.replace(PROJECT_SUFFIX, ''))}
+    >
+      {draft === null ? (
+        filename
+      ) : (
+        <input
+          className="toolbar__rename"
+          aria-label="Project name"
+          autoFocus
+          value={draft}
+          size={Math.max(draft.length, 8)}
+          onChange={(event) => setDraft(event.target.value)}
+          onFocus={(event) => event.target.select()}
+          onBlur={commit}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') commit();
+            else if (event.key === 'Escape') {
+              // The edit's own: the panel's Escape must not also close.
+              event.stopPropagation();
+              setDraft(null);
+            }
+          }}
+        />
+      )}
+      {dirty && <span className="toolbar__dirty" title="Unsaved changes" />}
+    </span>
   );
 }

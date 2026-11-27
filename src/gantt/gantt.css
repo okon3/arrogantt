@@ -924,6 +924,36 @@ html[data-scheme='dark'] .gantt_resizing {
   vertical-align: middle;
 }
 
+/* Add task, in the head of the actions column: the rows' own place. */
+.gantt-gridadd {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px 2px 6px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  /* The head cell's line-height is its height. */
+  line-height: 16px;
+  vertical-align: middle;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.gantt-gridadd:hover {
+  background: var(--accent-strong);
+}
+
+/* The vendor's padding would push the pill's last button past the grid's edge. */
+.gantt_cell[data-column-name='actions'] {
+  padding: 0;
+}
+
 /* The row's actions: the bar toolbar's pill, in a cell of its own. At rest it
    takes the row's background and faint icons; the row's hover darkens it. */
 .gantt-rowactions {
