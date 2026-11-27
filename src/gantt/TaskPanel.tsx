@@ -23,9 +23,6 @@ export interface RelatedTask {
 const pad = (value: number) => String(value).padStart(2, '0');
 const toDayInput = (date: Date) =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-/** Empty = not fixed. Trimmed of float noise: 0.07 is 7, not 7.000000000000001. */
-const toPercentInput = (share: number | undefined) =>
-  share === undefined ? '' : String(Number((share * 100).toFixed(4)));
 /** A day typed in full: a date input reports year 2, 20 and 202 on the way to 2026. */
 const typedDay = (value: string) => {
   const [year, month, day] = value.split('-').map(Number);
@@ -104,16 +101,33 @@ function DayField({
         value={toDayInput(value)}
         onChange={(event) => onPick(event.target.value)}
       />
-      <span className="taskpanel__stepper">
-        <button type="button" aria-label={`${label} one working day earlier`} onClick={() => onStep(-1)}>
-          <Minus size={13} />
-        </button>
-        <button type="button" aria-label={`${label} one working day later`} onClick={() => onStep(1)}>
-          <Plus size={13} />
-        </button>
-      </span>
+      <Stepper label={label} unit="working day" onStep={onStep} />
     </span>
   );
+}
+
+function Stepper({ label, unit, onStep }: { label: string; unit: string; onStep(step: number): void }) {
+  return (
+    <span className="taskpanel__stepper">
+      <button type="button" aria-label={`${label} one ${unit} less`} onClick={() => onStep(-1)}>
+        <Minus size={13} />
+      </button>
+      <button type="button" aria-label={`${label} one ${unit} more`} onClick={() => onStep(1)}>
+        <Plus size={13} />
+      </button>
+    </span>
+  );
+}
+
+/** A colour's place around the wheel; a grey goes after every hue. */
+function hueOrder(hex: string): number {
+  const [r, g, b] = [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16) / 255);
+  const max = Math.max(r, g, b);
+  const span = max - Math.min(r, g, b);
+  // Saturation, not the channel spread: the palette's grey leans blue.
+  if (span / max < 0.25) return 361;
+  const hue = max === r ? ((g - b) / span) % 6 : max === g ? (b - r) / span + 2 : (r - g) / span + 4;
+  return (hue * 60 + 360) % 360;
 }
 
 /** The current colour as a field; the whole palette in a popover under it. */
@@ -140,6 +154,7 @@ function ColorField({
   }, [open]);
   const name =
     value === '' ? 'Auto' : (colors.find((option) => option.key.toLowerCase() === value.toLowerCase())?.label ?? value);
+  const byHue = [...colors].sort((a, b) => hueOrder(a.key) - hueOrder(b.key));
   return (
     <span
       className="taskpanel__colorfield"
@@ -163,7 +178,7 @@ function ColorField({
             value={value}
             auto={auto}
             autoTitle="No colour of its own: its person's when it has one alone, else the default"
-            colors={colors}
+            colors={byHue}
             onChange={(next) => {
               onChange(next);
               setOpen(false);
@@ -209,6 +224,7 @@ export function TaskPanel({
   onEdit,
   onToggleAutoEnd,
   onOpenTask,
+  onHintTask,
   onStepTask,
   onClose,
   onDelete,
@@ -241,6 +257,8 @@ export function TaskPanel({
   /** Off fixes the end at the start plus the effort; on hands the end back to the engine. */
   onToggleAutoEnd(): void;
   onOpenTask(id: string): void;
+  /** Lights a task on the chart while its row here is pointed at; null puts it out. */
+  onHintTask(id: string | null): void;
   /** The previous (−1) or next (+1) task in row order. */
   onStepTask(step: number): void;
   onClose(): void;
@@ -279,20 +297,23 @@ export function TaskPanel({
       ? refuse(`Description: ${text.length} characters, the limit is ${DESCRIPTION_LIMIT}`)
       : write({ description: text });
   });
-  const sharePercent = useLiveField(toPercentInput(task.share), (value) => {
-    const typed = value.trim();
+  // The file's gate, so the panel cannot store what Save would refuse.
+  const writeShare = (share: number | undefined) => {
     try {
-      // The file's gate, so the panel cannot store what Save would refuse.
-      const pace = parseTaskShare(
-        typed !== '' ? Number(typed) / 100 : undefined,
-        task.shareOverrides,
-        fixed,
-      );
-      return write({ share: pace.share ?? null });
+      const pace = parseTaskShare(share, task.shareOverrides, fixed);
+      write({ share: pace.share ?? null });
     } catch (problem) {
-      return refuse((problem as Error).message);
+      refuse((problem as Error).message);
     }
-  });
+  };
+  // Auto is no fixed share; touching the slider fixes one, written on release.
+  const paceAuto = task.share === undefined;
+  const [paceDraft, setPaceDraft] = useState<number | null>(null);
+  const pace = paceDraft ?? (paceAuto ? 100 : Math.round(task.share! * 100));
+  const settlePace = () => {
+    if (paceDraft !== null) writeShare(paceDraft / 100);
+    setPaceDraft(null);
+  };
 
   // Dragged in steps of 5 and written on release: one change, not one per step.
   const [progressDraft, setProgressDraft] = useState<number | null>(null);
@@ -446,12 +467,30 @@ export function TaskPanel({
                   aria-label="Effort in days"
                   {...effort}
                 />
-                <span className="taskpanel__muted">
-                  {fixed ? 'days, unused: end fixed' : 'days · 0 = milestone'}
-                </span>
+                <span className="taskpanel__muted">{fixed ? 'days, unused: end fixed' : 'days'}</span>
+                <Stepper
+                  label="Effort"
+                  unit="day"
+                  onStep={(step) => write({ nominalDays: Math.max(0, task.nominalDays + step) })}
+                />
               </>
             )}
           </dd>
+
+          {!task.isSummary && (
+            <>
+              <dt>Milestone</dt>
+              <dd>
+                <Switch
+                  on={isMilestone}
+                  label="Milestone"
+                  // A milestone is effort 0 on a computed end; leaving it hands back one day.
+                  onToggle={() => write(isMilestone ? { nominalDays: 1 } : { nominalDays: 0, fixedEnd: null })}
+                />
+                <span className="taskpanel__muted">{isMilestone ? 'a date, no work' : ''}</span>
+              </dd>
+            </>
+          )}
 
           <dt>Start</dt>
           <dd>
@@ -512,6 +551,33 @@ export function TaskPanel({
             <span className="taskpanel__rangevalue">{progress}%</span>
           </dd>
 
+          {paced && (
+            <>
+              <dt>Pace</dt>
+              <dd className={paceAuto && paceDraft === null ? 'taskpanel__auto-on' : undefined}>
+                <input
+                  className="taskpanel__range"
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  aria-label="Pace: share of the person's capacity"
+                  style={{ '--value': `${pace}%` } as CSSProperties}
+                  value={pace}
+                  onChange={(event) => setPaceDraft(Number(event.target.value))}
+                  onPointerUp={settlePace}
+                  onKeyUp={settlePace}
+                  onBlur={settlePace}
+                />
+                <span className="taskpanel__rangevalue">{paceAuto && paceDraft === null ? '—' : `${pace}%`}</span>
+                <span className="taskpanel__auto">
+                  Auto
+                  <Switch on={paceAuto} label="Automatic pace" onToggle={() => writeShare(paceAuto ? 1 : undefined)} />
+                </span>
+              </dd>
+            </>
+          )}
+
           <dt>Colour</dt>
           <dd>
             {task.ownsColor ? (
@@ -568,7 +634,16 @@ export function TaskPanel({
 
         {predecessors.length > 0 && <Section title="Depends on" count={predecessors.length}>
           {predecessors.map((related) => (
-            <button key={related.id} type="button" className="taskpanel__rel" onClick={() => onOpenTask(related.id)}>
+            <button
+              key={related.id}
+              type="button"
+              className="taskpanel__rel"
+              onClick={() => onOpenTask(related.id)}
+              onMouseEnter={() => onHintTask(related.id)}
+              onMouseLeave={() => onHintTask(null)}
+              onFocus={() => onHintTask(related.id)}
+              onBlur={() => onHintTask(null)}
+            >
               <span className="taskpanel__relname">{related.name}</span>
               <span className="taskpanel__muted">ends {formatDay(related.day)}</span>
             </button>
@@ -577,7 +652,16 @@ export function TaskPanel({
 
         {successors.length > 0 && <Section title="Blocks" count={successors.length}>
           {successors.map((related) => (
-            <button key={related.id} type="button" className="taskpanel__rel" onClick={() => onOpenTask(related.id)}>
+            <button
+              key={related.id}
+              type="button"
+              className="taskpanel__rel"
+              onClick={() => onOpenTask(related.id)}
+              onMouseEnter={() => onHintTask(related.id)}
+              onMouseLeave={() => onHintTask(null)}
+              onFocus={() => onHintTask(related.id)}
+              onBlur={() => onHintTask(null)}
+            >
               <span className="taskpanel__relname">{related.name}</span>
               <span className="taskpanel__muted">starts {formatDay(related.day)}</span>
             </button>
@@ -586,26 +670,11 @@ export function TaskPanel({
 
         {paced && (
           <section className="taskpanel__section taskinfo__pace" ref={paceSection} onBlur={leavePace}>
-            <h3 className="taskpanel__sectiontitle">Pace</h3>
-            <span className="taskinfo__checkbox">
-              <span className="dialog__field people__field">
-                <input
-                  className="dialog__control ranges__pct taskinfo__pace-default"
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={5}
-                  aria-label="Default share"
-                  {...sharePercent}
-                />
-                <span className="dialog__suffix">%</span>
-              </span>
-              by default (empty: not fixed{fixed ? '; 0: weighs on nobody' : ''})
-            </span>
+            <h3 className="taskpanel__sectiontitle">Pace periods</h3>
             <PeriodRowList<DatedSharePeriod>
               periods={periods}
               workingWeekdays={workingDays}
-              emptyMessage="No periods: the pace above holds for the whole task."
+              emptyMessage="No periods: the pace above holds for the whole task. 0% pauses it."
               newPeriod={newPacePeriod}
               labelPlaceholder={(period) => (period.share === 0 ? 'Pause' : 'Reason')}
               countSuffix={(period) => (period.share === 0 ? ' paused' : '')}

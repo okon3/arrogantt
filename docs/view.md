@@ -299,9 +299,17 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
     `showPicker()` on an invisible native date input under the text; a step is
     a working day (`stepWorkingDay`). End steps only with Auto end off.
   - **Progress is a slider written on release** (pointer up, key up, blur):
-    one change per gesture, not per step.
+    one change per gesture, not per step. **So is Pace**, the task's default
+    share, beside an *Auto* switch: Auto is no fixed share (slider faint, value
+    `—`); touching the slider fixes one and turns Auto off; switching Auto off
+    fixes 100%. Every write goes through `parseTaskShare`.
+  - **Effort has − / + of one whole day** (never below 0), and **Milestone is a
+    switch**: on writes effort 0 and hands a fixed end back to the engine (a
+    milestone is effort 0 on a computed end); off writes one day.
   - **Colour is a field opening the whole palette in a popover**
-    (`ColorSwatches`, same as People): one line, no colour dropped. Only a
+    (`ColorSwatches`, same as People): one line, no colour dropped. In the
+    popover Auto and the free picker share the first line; the 15 colours sit
+    in a 5x3 square ordered by hue (`hueOrder`), the grey last. Only a
     top-level task has one; a subtask shows the colour it inherits.
   - **Duration and Cost are rows of the list**, read-only; the notes on
     contention, criticality, fixed dates and milestones follow in small text.
@@ -312,8 +320,10 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
     home of the `(CUR)` form. The panel's milestone test is `project.ts`'s
     predicate.
   - **Depends on / Blocks list the task's predecessors and successors** with
-    their end and start; a row selects that task. Hidden when empty.
-  - Sections after them: Pace, Description; *Delete task* last, a red text
+    their end and start; a row selects that task, and pointing at it lights
+    that task on the chart (`hintTask`: a rule tinting its rows and showing
+    its `.bar-ring`, never a selection). Hidden when empty.
+  - Sections after them: Pace periods, Description; *Delete task* last, a red text
     button under a hairline.
 
 ## Bar tooltip

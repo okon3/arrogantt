@@ -1172,12 +1172,16 @@ export default function App() {
           onEdit={editTask}
           onToggleAutoEnd={() => toggleAutoEnd(panelTask.details.id)}
           onOpenTask={showTask}
+          onHintTask={(id) => chart.current?.hintTask(id)}
           onStepTask={(step) => {
             const order = chart.current?.getProject().tasks ?? [];
             const next = order[panelTask.position.index - 1 + step];
             if (next) showTask(next.id);
           }}
-          onClose={() => setPanelOpen(false)}
+          onClose={() => {
+            chart.current?.hintTask(null);
+            setPanelOpen(false);
+          }}
           onDelete={() => void requestDelete(panelTask.details.id)}
         />
       )}

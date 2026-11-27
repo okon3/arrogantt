@@ -83,6 +83,8 @@ export interface GanttHandle {
   addLink(from: string, to: string): void;
   removeLink(from: string, to: string): void;
   selectTask(id: string): void;
+  /** Lights one task on the chart, row and bar, without selecting it; null puts it out. */
+  hintTask(id: string | null): void;
   /** Opens whatever branches hide the task, then scrolls it into view. */
   revealTask(id: string): void;
   /**

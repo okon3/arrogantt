@@ -171,6 +171,7 @@ export function GanttChart({
   ref?: Ref<GanttHandle>;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const hintRule = useRef<HTMLStyleElement | null>(null);
   const loadHost = useRef<HTMLDivElement>(null);
   // Held in a ref because the dhtmlx handlers are registered once, in an effect
   // that must not re-run when a callback identity changes.
@@ -693,6 +694,15 @@ export function GanttChart({
         if (link) gantt.deleteLink(link.id);
       },
       selectTask: (id) => gantt.selectTask(id),
+      // A rule, not a class: dhtmlx redraws the row and the bar and would drop it.
+      hintTask: (id) => {
+        if (!hintRule.current) hintRule.current = document.head.appendChild(document.createElement('style'));
+        hintRule.current.textContent = id
+          ? `.gantt-host .gantt_row[data-task-id="${CSS.escape(id)}"],` +
+            `.gantt-host .gantt_task_row[data-task-id="${CSS.escape(id)}"]{background:var(--surface-hover)}` +
+            `.gantt-host .gantt_task_line[data-task-id="${CSS.escape(id)}"] .bar-ring{display:block}`
+          : '';
+      },
       revealTask: (id) => {
         if (!gantt.isTaskExists(id)) return;
         // A row inside a closed branch has no position on the chart, so
