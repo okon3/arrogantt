@@ -157,15 +157,19 @@ export function foldRows(parentId: string): () => void {
     }
     // Screen coordinates on both ends: a close that shortens the chart can clamp
     // the scroll, which moves the copies' host and the parent's row with it.
-    for (const { host, copy, top, inRow } of ghosts) {
-      if (!host.isConnected) continue;
+    // Appended all, then measured all: a read between two appends forces a
+    // layout per copy before the first frame.
+    const placed = ghosts.filter(({ host }) => host.isConnected);
+    for (const { host, copy } of placed) {
       copy.removeAttribute('data-task-id');
       copy.removeAttribute('task_id');
       copy.removeAttribute('data-pace-task');
       copy.style.pointerEvents = 'none';
       copy.style.background = 'transparent';
       host.append(copy);
-      const now = copy.getBoundingClientRect().top;
+    }
+    const landed = placed.map((ghost) => ({ ...ghost, now: ghost.copy.getBoundingClientRect().top }));
+    for (const { copy, top, inRow, now } of landed) {
       copy.animate(
         [{ transform: `translateY(${top - now}px)` }, { transform: `translateY(${parentNow + inRow - now}px)` }],
         { duration, easing },
