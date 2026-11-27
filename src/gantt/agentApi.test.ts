@@ -15,7 +15,6 @@ const details = (overrides: Partial<TaskDetails> = {}): TaskDetails => ({
   color: '#3b82f6',
   paintedColor: '#3b82f6',
   autoColor: '#3b74d6',
-  ownsColor: true,
   progress: 0,
   isSummary: false,
   descendantCount: 0,

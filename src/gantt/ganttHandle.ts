@@ -127,14 +127,12 @@ export interface TaskDetails {
   start: Date;
   end: Date;
   resourceId: string;
-  /** The colour set on the task itself; absent when none is, and on a subtask. */
+  /** The colour set on the task itself; absent when none is. */
   color: string | undefined;
-  /** What the bar shows: that, its branch's, its one person's, or the default. */
+  /** What the bar shows: that, the nearest one above it, its one person's, or the default. */
   paintedColor: string;
   /** What it would show with no colour set on the task. */
   autoColor: string;
-  /** Only a top-level task owns its colour; a subtask inherits it. */
-  ownsColor: boolean;
   progress: number;
   isSummary: boolean;
   /** How many tasks sit under this one; they go with it when it is deleted. */

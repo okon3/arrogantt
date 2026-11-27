@@ -567,10 +567,18 @@ describe('colour inheritance', () => {
 
   const colorOf = barColors({ tasks, resources: [] }, hierarchy);
 
-  it('gives every descendant the root colour, overriding its own', () => {
+  it('gives a descendant the nearest colour above it', () => {
     expect(colorOf('mid')).toBe('#2f9e6e');
-    // The leaf carries #c0533f but inherits regardless.
-    expect(colorOf('leaf')).toBe('#2f9e6e');
+  });
+
+  it('lets a subtask keep a colour of its own over its branch', () => {
+    expect(colorOf('leaf')).toBe('#c0533f');
+  });
+
+  it('lets a subtask colour beat its person too', () => {
+    const own = [...tasks.map((t) => (t.id === 'leaf' ? { ...t, resourceId: 'r' } : t))];
+    const resolve = barColors({ tasks: own, resources: [{ id: 'r', name: 'R', color: '#123456' }] }, buildHierarchy(own));
+    expect(resolve('leaf')).toBe('#c0533f');
   });
 
   it('leaves a task without a coloured root undefined', () => {
@@ -582,7 +590,8 @@ describe('colour inheritance', () => {
       task.id === 'mid' ? { ...task, parentId: undefined } : task,
     );
     const rebuilt = barColors({ tasks: moved, resources: [] }, buildHierarchy(moved));
-    expect(rebuilt('leaf')).toBeUndefined();
+    expect(rebuilt('mid')).toBeUndefined();
+    expect(rebuilt('leaf')).toBe('#c0533f');
   });
 });
 

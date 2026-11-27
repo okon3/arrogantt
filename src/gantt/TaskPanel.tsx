@@ -200,7 +200,7 @@ function ColorField({
           <ColorSwatches
             value={value}
             auto={auto}
-            autoTitle="No colour of its own: its person's when it has one alone, else the default"
+            autoTitle="No colour of its own: its group's if one is set, else its person's when it has one alone, else the default"
             colors={colors}
             onChange={(next) => {
               onChange(next);
@@ -568,19 +568,12 @@ export function TaskPanel({
 
           <dt>Colour</dt>
           <dd>
-            {task.ownsColor ? (
-              <ColorField
-                value={task.color ?? ''}
-                auto={task.autoColor}
-                colors={colors}
-                onChange={(color) => write({ color: color || undefined })}
-              />
-            ) : (
-              <span className="taskpanel__muted">
-                <span className="taskpanel__dot" style={{ background: task.paintedColor }} />
-                its top-level task's
-              </span>
-            )}
+            <ColorField
+              value={task.color ?? ''}
+              auto={task.autoColor}
+              colors={colors}
+              onChange={(color) => write({ color: color || undefined })}
+            />
           </dd>
 
           <dt>{currencyLabel('Cost', task.currency)}</dt>

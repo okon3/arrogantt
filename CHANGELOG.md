@@ -6,6 +6,8 @@
   plan for a small team, to see how it works and looks before writing your own.
 - **New colours for each theme.** Fifteen colours made for light and fifteen
   for dark; the picker offers the set on screen, and a picked colour stays put.
+- **A colour for any task.** A subtask can now have its own colour; on Auto it
+  follows its group, or else its person.
 
 ## v1.8 — 2026-11-27
 

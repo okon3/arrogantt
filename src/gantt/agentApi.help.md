@@ -238,12 +238,12 @@ refused rather than quietly turned into "at the end".
 `resourceId: null` unassigns, and an unassigned task never contends: it runs at
 full rate. **An id no resource carries is refused before anything is written**,
 like a cyclic `link`: assigned to a person the project does not have, a task
-would be scheduled against no capacity at all. `color` is `#rrggbb` and only a
-top-level task owns one — a subtask inherits its parent's, so the whole subtree
-stays one visual block. `color: null` clears it. A bar with no colour of its
-own or its branch's takes its person's (`addResource({ color })`) when it is
-theirs alone — for a summary, when every leaf under it is — and the app's
-default otherwise.
+would be scheduled against no capacity at all. `color` is `#rrggbb` and any
+task may own one; `color: null` clears it. A task without one takes the
+nearest colour set above it, so a group colours its branch and a subtask can
+still stand out. With none above either, a bar takes its person's
+(`addResource({ color })`) when it is theirs alone — for a summary, when every
+leaf under it is — and the app's default otherwise.
 
 `getTask()` answers with `color`, what the task itself declares (absent when
 nothing), `paintedColor`, what the bar shows, and `autoColor`, what it would

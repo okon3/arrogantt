@@ -455,7 +455,6 @@ export function GanttChart({
               },
               solved.hierarchy,
             )(id) ?? DEFAULT_BAR_COLOR,
-          ownsColor: task.parentId === undefined,
           progress: task.progress ?? 0,
           isSummary: summary,
           descendantCount: subtreeOf(projectRef.current.tasks, id).size - 1,
@@ -514,11 +513,9 @@ export function GanttChart({
         // cannot show the field as empty: a zero coming back on every save is
         // what the view invented to show the task, not something it declares.
         task.progress = patch.progress || undefined;
-        // Same rules the grid enforces: a summary derives its effort, start and
-        // resource from the leaves, and a subtask inherits its parent's colour.
-        if (task.parentId === undefined) {
-          task.color = patch.color || undefined;
-        }
+        task.color = patch.color || undefined;
+        // Same rule the grid enforces: a summary derives its effort, start and
+        // resource from the leaves.
         if (!solvedRef.current.summaryIds.has(id)) {
           task.nominalDays = patch.nominalDays;
           // The dialog's date field opens on the solved start and a script fills
@@ -966,11 +963,9 @@ export function GanttChart({
       // Absent rather than zero, so a rename does not add a key the task never
       // had — see `updateTask`, which reads the same value from the dialog.
       task.progress = Number(ganttTask.progress) || undefined;
-      // Subtasks display an inherited colour; writing it back would freeze a copy
-      // that stops following the parent.
-      if (task.parentId === undefined) {
-        task.color = (ganttTask.own_color as string | undefined) || undefined;
-      }
+      // `own_color`, never `bar_color`: the bar shows what it inherits, and
+      // writing that back would freeze a copy that stops following the parent.
+      task.color = (ganttTask.own_color as string | undefined) || undefined;
       // Effort, start and resource of a summary are rolled up from its children,
       // so writing them back would overwrite the user's leaf data with derived
       // figures the moment dhtmlx refreshes the parent row.
@@ -1337,9 +1332,9 @@ export function GanttChart({
             // Same net as `pullFromView`'s, with nothing to fall back on: a row
             // that did not exist a moment ago has no earlier assignment to keep.
             resourceId: assigned !== undefined && knownResource(assigned) ? assigned : undefined,
-            // Only a top-level task owns a colour; a subtask inherits its
-            // parent's, and a copy frozen here would stop following it.
-            color: parent ? undefined : (item.own_color as string | undefined) || undefined,
+            // The row's own colour only, never the one it shows: a copy of the
+            // parent's frozen here would stop following the parent.
+            color: (item.own_color as string | undefined) || undefined,
             // Never stored as false — see updateTask's own comment.
             disabled: item.disabled === true ? true : undefined,
           });

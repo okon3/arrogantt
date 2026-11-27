@@ -373,10 +373,11 @@ export function closeGaps(project: Project, solved: SolvedProject, summaryId: st
 /**
  * The colour each row is painted, or undefined for the app's default.
  *
- * What was chosen comes first: the colour set on the row's top-level task,
- * which its whole branch carries. Failing that, the colour of the person the
- * row is for — a leaf's own, a summary's when every leaf under it is the same
- * person's. A row shared between people, or with nobody on it, has none.
+ * What was chosen comes first: the row's own colour, else the nearest one set
+ * above it, so a group colours its branch and any task in it can still be
+ * picked out. Failing that, the colour of the person the row is for — a
+ * leaf's own, a summary's when every leaf under it is the same person's. A
+ * row shared between people, or with nobody on it, has none.
  *
  * A resolver rather than a lookup: every caller asks for many rows of one plan.
  */
@@ -387,7 +388,9 @@ export function barColors(
   const tasks = new Map(project.tasks.map((task) => [task.id, task]));
   const personColor = new Map(project.resources.map((person) => [person.id, person.color]));
   return (id) => {
-    const chosen = tasks.get(hierarchy.rootOf(id))?.color;
+    const chosen = [id, ...hierarchy.ancestorsOf(id)]
+      .map((each) => tasks.get(each)?.color)
+      .find(Boolean);
     if (chosen) return chosen;
     const people = new Set(hierarchy.leavesUnder(id).map((leaf) => tasks.get(leaf)?.resourceId));
     if (people.size !== 1) return undefined;

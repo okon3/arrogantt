@@ -237,7 +237,6 @@ describe('agent API fixedEnd', () => {
     color: undefined,
     paintedColor: '#3b82f6',
     autoColor: '#3b82f6',
-    ownsColor: true,
     progress: 0,
     isSummary: false,
     descendantCount: 0,

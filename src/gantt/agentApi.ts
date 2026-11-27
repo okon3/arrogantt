@@ -56,7 +56,7 @@ export interface TaskInput {
   start?: string | Date;
   /** Null or empty unassigns. */
   resourceId?: string | null;
-  /** `#rrggbb`. Only a top-level task owns one; a subtask inherits. */
+  /** `#rrggbb`. Without one a task takes the nearest colour above it, else its person's. */
   color?: string | null;
   /** 0..1. */
   progress?: number;

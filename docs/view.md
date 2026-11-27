@@ -332,8 +332,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   - **Colour is a field opening the whole palette in a popover**
     (`ColorSwatches`, same as People): one line, no colour dropped. In the
     popover Auto and the free picker share the first line; the 15 colours sit
-    in a 5x3 square ordered by hue (`hueOrder`), the grey last. Only a
-    top-level task has one; a subtask shows the colour it inherits.
+    in a 5x3 square in `COLOR_SETS` order, the grey last. Every task has the
+    field; Auto takes the nearest colour above, else the person's.
   - **Duration and Cost are rows of the list**, read-only; the notes on
     contention, criticality, fixed dates and milestones follow in small text.
     No Float row: the figure read as jargon, the criticality note says it in
