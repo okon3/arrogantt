@@ -4,25 +4,22 @@
 // `vite/client` types, so app code cannot reach the filesystem.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { COLOR_OPTIONS, DEFAULT_BAR_COLOR, needsDarkInk } from './colors';
+import { COLOR_SETS, DEFAULT_BAR_COLOR, colorLabel, needsDarkInk, type Scheme } from './colors';
 
-function colorOf(label: string): string {
-  const option = COLOR_OPTIONS.find((o) => o.label === label);
+function colorOf(scheme: Scheme, label: string): string {
+  const option = COLOR_SETS[scheme].find((o) => o.label === label);
   if (!option) throw new Error(`no such colour option: ${label}`);
   return option.key;
 }
 
 describe('needsDarkInk', () => {
-  it('picks dark ink for the palette\'s lightest tint', () => {
-    // Rose is the palest tint shipped (OKLab L ~0.675) — white ink loses
-    // contrast fast at this end, dark ink wins.
-    expect(needsDarkInk(colorOf('Rose'))).toBe(true);
+  it('picks dark ink for a pale tint of the dark set', () => {
+    // White ink loses contrast fast at the pale end; dark ink wins.
+    expect(needsDarkInk(colorOf('dark', 'Pink'))).toBe(true);
   });
 
-  it('picks white ink for the palette\'s darkest tint', () => {
-    // Green is the deepest tint shipped (OKLab L ~0.512) — dark-on-dark
-    // would be close to unreadable, white wins comfortably.
-    expect(needsDarkInk(colorOf('Green'))).toBe(false);
+  it('picks white ink for a deep tint of the light set', () => {
+    expect(needsDarkInk(colorOf('light', 'Wine'))).toBe(false);
   });
 
   it('picks white ink for the default bar colour', () => {
@@ -75,17 +72,31 @@ describe('the shipped palette', () => {
   const [lightRow, darkRow] = cssColors('surface');
   const [paintedInk] = cssColors('bar-fill-ink-dark');
 
-  it.each(COLOR_OPTIONS)('$label clears 3:1 against both chart rows', ({ key }) => {
-    expect(contrast(key, lightRow)).toBeGreaterThanOrEqual(3);
-    expect(contrast(key, darkRow)).toBeGreaterThanOrEqual(3);
+  // Each set is offered on its own scheme only, so it owes contrast to that
+  // scheme's rows only.
+  const cases = (['light', 'dark'] as const).flatMap((scheme) =>
+    COLOR_SETS[scheme].map((option) => ({ ...option, scheme, row: scheme === 'light' ? lightRow : darkRow })),
+  );
+
+  it('offers the same names in the same order in both schemes', () => {
+    expect(COLOR_SETS.dark.map((o) => o.label)).toEqual(COLOR_SETS.light.map((o) => o.label));
   });
 
-  it.each(COLOR_OPTIONS)('$label clears 4.5:1 against the ink it gets', ({ key }) => {
+  it('names a swatch picked under either scheme', () => {
+    expect(colorLabel(colorOf('light', 'Teal').toUpperCase())).toBe('Teal');
+    expect(colorLabel(colorOf('dark', 'Teal'))).toBe('Teal');
+  });
+
+  it.each(cases)('$scheme $label clears 3:1 against its chart rows', ({ key, row }) => {
+    expect(contrast(key, row)).toBeGreaterThanOrEqual(3);
+  });
+
+  it.each(cases)('$scheme $label clears 4.5:1 against the ink it gets', ({ key }) => {
     const ink = needsDarkInk(key) ? paintedInk : '#ffffff';
     expect(contrast(key, ink)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it.each(COLOR_OPTIONS)('$label gets the better of the two inks', ({ key }) => {
+  it.each(cases)('$scheme $label gets the better of the two inks', ({ key }) => {
     expect(needsDarkInk(key)).toBe(contrast(key, paintedInk) > contrast(key, '#ffffff'));
   });
 });

@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 import type { DraftStorage } from './draft';
 
 export type ThemeChoice = 'light' | 'auto' | 'dark';
@@ -17,6 +18,22 @@ export function readThemeChoice(storage: DraftStorage | undefined): ThemeChoice 
 }
 
 let current: ThemeChoice = 'auto';
+const listeners = new Set<() => void>();
+
+/** The scheme on screen now, whatever the choice that resolved to it. */
+export function currentScheme(): 'light' | 'dark' {
+  return document.documentElement.dataset.scheme === 'dark' ? 'dark' : 'light';
+}
+
+function subscribeScheme(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+/** The scheme on screen, re-rendering when a choice or the system flips it. */
+export function useScheme(): 'light' | 'dark' {
+  return useSyncExternalStore(subscribeScheme, currentScheme);
+}
 
 /**
  * Puts the resolved scheme on the root element: `data-scheme` for the app's
@@ -31,6 +48,7 @@ function apply(): void {
   // treats as its default, and naming it would pin us to that default's name.
   if (dark) root.dataset.ganttTheme = 'dark';
   else delete root.dataset.ganttTheme;
+  listeners.forEach((listener) => listener());
 }
 
 /**

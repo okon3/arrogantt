@@ -16,7 +16,8 @@ import { dayIndexOf, dayIndexOfString, type CalendarSpec, type ShareOverride } f
 import { GanttChart } from './gantt/GanttChart';
 import { INITIAL_SCALE_LABEL } from './gantt/zoomLevels';
 import type { GanttHandle } from './gantt/ganttHandle';
-import { COLOR_OPTIONS } from './gantt/colors';
+import { COLOR_SETS } from './gantt/colors';
+import { useScheme } from './gantt/theme';
 import { CalendarDialog } from './gantt/CalendarDialog';
 import { ChangelogDialog } from './gantt/ChangelogDialog';
 import { CHANGELOG_ENTRIES } from './gantt/changelogEntries';
@@ -118,6 +119,7 @@ const unchangedPatch = (details: TaskDetails): TaskPatch => ({
 
 export default function App() {
   const chart = useRef<GanttHandle>(null);
+  const colorSet = COLOR_SETS[useScheme()];
   const [filename, setFilename] = useState(DEFAULT_FILENAME);
   const [history, setHistory] = useState<History>(() => historyOf(initialText));
   // The project as it was last written to a file, or null when it never was.
@@ -1215,7 +1217,7 @@ export default function App() {
           slack={panelTask.slack}
           resources={panelTask.resources}
           workingDays={panelTask.workingDays}
-          colors={COLOR_OPTIONS}
+          colors={colorSet}
           onEdit={editTask}
           onToggleAutoEnd={() => toggleAutoEnd(panelTask.details.id)}
           onOpenTask={showTask}

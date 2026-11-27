@@ -28,11 +28,11 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   black at low alpha in both schemes, tuned separately.
 - **Dark greys are neutral, no blue cast** (surfaces, lines, inks, inverse,
   track): a taste taken from a reference design. Accents keep their hue.
-- **Task, avatar and swatch colours do not change with the scheme.**
-- **`COLOR_OPTIONS` tints (`colors.ts`) are distinguished by hue and
-  luminance**, every tint clearing WCAG's non-text floor against both chart
-  row backgrounds. Chroma is not capped, a deliberate trade against a soberer
-  set.
+- **Task and avatar colours do not change with the scheme**: a picked hex is
+  painted as-is in both, never swapped for a twin (user's call).
+- **The swatches offered do**: `COLOR_SETS` (`colors.ts`) holds a light and a
+  dark set, seven hues × two lightness tiers, each clearing 3:1 on its own
+  scheme's rows only. `DEFAULT_BAR_COLOR` stays outside both.
 - **The selected bar's edge lights up** in a lighter, livelier tint of its own
   colour (`.bar-ring`, drawn by `task_text` because the colour lives nowhere
   else on the bar; shown by dhtmlx's `gantt_selected`). Not on a milestone.
@@ -46,8 +46,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   not a lightness or chroma band. It is the fallback: a person with a colour
   of their own (People, the face opens the panel) wears it everywhere.
 - **"Auto" in the swatch row is no colour** (`ColorSwatches`, shared by the
-  task and the person): the default blue is a choice like any other and is
-  stored.
+  task and the person): a swatch is a choice and is stored; "Auto" paints the
+  fallback without storing it.
 - **Dark `--on-accent` is near-black, not white**: accents lighten in dark.
   Every accent-filled button reads its ink from that variable.
 - dhtmlx's own dark theme is taken for the parts we don't skin, base colours

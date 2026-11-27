@@ -2,42 +2,69 @@ export const DEFAULT_BAR_COLOR = '#3b74d6';
 
 export const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
+export type ColorOption = { key: string; label: string };
+export type Scheme = 'light' | 'dark';
+
 /**
- * One consumer: `TaskPanel`'s colour swatches (`App.tsx` passes this straight
- * through). The hex is stored as-is on the task — this array only supplies
- * the picker's options and their English labels.
+ * The swatches the task and person pickers offer, one set per scheme.
  *
- * 14 tints, distinguished by hue *and* luminance (not hue alone) — the only
- * way to keep this many apart on a 12px bar, and it degrades gracefully for
- * colour-blind users (minimum CIEDE2000 ΔE00 across every pair: 13.87).
- * Every tint clears 3:1 (the WCAG non-text floor) against **both** chart row
- * backgrounds — white in light scheme, `#191919` in dark — since the tint
- * itself never changes with the scheme. It does not additionally cap
- * lightness against a single fixed ink: `needsDarkInk` below picks whichever
- * of white or a near-black reads best on each tint, so a tint just has to
- * clear 4.5:1 against *one* of the two. `DEFAULT_BAR_COLOR` is first and
- * unchanged: it is what a bar with no colour of its own or its person's is
- * painted, on the chart and in `planFigure.ts`, so moving it would silently
- * repaint every existing project.
+ * Only the offer follows the scheme: a picked hex is stored as-is and painted
+ * as-is in either scheme, never swapped for its twin (the user's call — a
+ * colour once chosen does not change under you). So each set has to read on
+ * its own scheme's rows only, which is what frees the light set to be deeper
+ * and the dark one paler than a single set that served both.
+ *
+ * Seven OKLCH hues ~51° apart, each at a deep and a pale tier (the Tableau 20
+ * structure: past ~8 categories hue alone stops separating, lightness has to
+ * help), chosen to maximise the smallest CIEDE2000 distance within each set.
+ * Every tint clears 3:1 (WCAG non-text) on its scheme's rows, and 4.5:1
+ * against the badge ink `needsDarkInk` gives it. `DEFAULT_BAR_COLOR` stays
+ * outside the sets: it is what an uncoloured bar is painted, and moving it
+ * would repaint every existing project.
  */
-export const COLOR_OPTIONS = [
-  { key: DEFAULT_BAR_COLOR, label: 'Blue' },
-  { key: '#6a5db6', label: 'Indigo' },
-  { key: '#a385d1', label: 'Lilac' },
-  { key: '#9f2cdd', label: 'Purple' },
-  { key: '#dc28af', label: 'Magenta' },
-  { key: '#ca2164', label: 'Crimson' },
-  { key: '#c6808b', label: 'Rose' },
-  { key: '#db4824', label: 'Red' },
-  { key: '#856432', label: 'Amber' },
-  { key: '#939a19', label: 'Olive' },
-  { key: '#33a92d', label: 'Lime' },
-  { key: '#147b38', label: 'Green' },
-  { key: '#23a49e', label: 'Teal' },
-  { key: '#327585', label: 'Petrol' },
-  // The one neutral, for a bar meant to recede; outside the ΔE figure above.
-  { key: '#6b7789', label: 'Grey' },
-];
+export const COLOR_SETS: Record<Scheme, readonly ColorOption[]> = {
+  light: [
+    { key: '#0b51b4', label: 'Blue' },
+    { key: '#5a8cda', label: 'Sky' },
+    { key: '#75329c', label: 'Purple' },
+    { key: '#a574c6', label: 'Lilac' },
+    { key: '#9d1851', label: 'Wine' },
+    { key: '#cb6786', label: 'Pink' },
+    { key: '#884202', label: 'Rust' },
+    { key: '#c87337', label: 'Orange' },
+    { key: '#605a06', label: 'Olive' },
+    { key: '#999016', label: 'Mustard' },
+    { key: '#036a3d', label: 'Green' },
+    { key: '#38a36a', label: 'Mint' },
+    { key: '#0f636e', label: 'Teal' },
+    { key: '#009eaf', label: 'Aqua' },
+    // The one neutral, for a bar meant to recede; outside the ΔE figure.
+    { key: '#6b7789', label: 'Grey' },
+  ],
+  dark: [
+    { key: '#4e85dc', label: 'Blue' },
+    { key: '#97bfff', label: 'Sky' },
+    { key: '#a16ac6', label: 'Purple' },
+    { key: '#d4aaf3', label: 'Lilac' },
+    { key: '#ca5c7f', label: 'Wine' },
+    { key: '#f99fb8', label: 'Pink' },
+    { key: '#c7691e', label: 'Rust' },
+    { key: '#f6aa79', label: 'Orange' },
+    { key: '#928908', label: 'Olive' },
+    { key: '#c8c26a', label: 'Mustard' },
+    { key: '#159f60', label: 'Green' },
+    { key: '#7fd3a0', label: 'Mint' },
+    { key: '#0d97a7', label: 'Teal' },
+    { key: '#57d2e2', label: 'Aqua' },
+    { key: '#8a94a3', label: 'Grey' },
+  ],
+};
+
+/** A swatch's name from either set: a colour picked under the other scheme is still named. */
+export function colorLabel(hex: string): string | undefined {
+  const wanted = hex.toLowerCase();
+  return [...COLOR_SETS.light, ...COLOR_SETS.dark].find((option) => option.key === wanted)?.label;
+}
 
 /**
  * Near-black, the same figure as `--on-accent`'s dark-mode ink
@@ -99,23 +126,19 @@ export function needsDarkInk(fill: string): boolean {
  * Avatar colours, picked by name so the same person keeps the same colour
  * across sessions without storing one.
  *
- * Kept clear of the wider task palette above: not a clean lightness or
- * chroma band (the task palette now spans both — some tints are pale,
- * some deep, to read on both chart backgrounds — so avatars overlap parts
- * of that range), but verified computationally: every avatar clears a
- * CIEDE2000 ΔE00 of 11.2 from every other avatar and 11.8 from every task
- * tint, on par with the tints' own 13.87 mutual floor — an avatar reads as
- * a person, never as a task's colour.
+ * Muted on purpose, and picked to keep a CIEDE2000 distance from each other
+ * and from every swatch in both `COLOR_SETS` (and the default blue): an avatar
+ * reads as a person, never as a task's colour. White initials stay legible.
  */
 const AVATAR_COLORS = [
-  '#835854',
-  '#895881',
-  '#767c50',
-  '#446a5b',
-  '#ab7254',
-  '#4f8c6e',
-  '#737da5',
-  '#a55f71',
+  '#6e5755',
+  '#797d69',
+  '#4f4f6d',
+  '#8f788b',
+  '#4b5646',
+  '#856947',
+  '#a9655a',
+  '#805175',
 ];
 
 export function avatarColorOf(person: { name: string; color?: string }): string {

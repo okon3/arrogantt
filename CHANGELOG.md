@@ -4,6 +4,8 @@
 
 - **A demo plan to start from.** New here? The start screen opens a ready-made
   plan for a small team, to see how it works and looks before writing your own.
+- **New colours for each theme.** Fifteen colours made for light and fifteen
+  for dark; the picker offers the set on screen, and a picked colour stays put.
 
 ## v1.8 — 2026-11-27
 

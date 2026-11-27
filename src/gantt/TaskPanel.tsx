@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Trash2, X } from 'lucide-react';
 import type { Resource, ShareOverride } from '../scheduler';
+import { colorLabel } from './colors';
 import { ColorSwatches } from './ColorSwatches';
 import { costCellText, currencyLabel, rateCellText } from './costCells';
 import { formatDay, formatDays } from './format';
@@ -153,17 +154,6 @@ function Stepper({ label, unit, onStep }: { label: string; unit: string; onStep(
   );
 }
 
-/** A colour's place around the wheel; a grey goes after every hue. */
-function hueOrder(hex: string): number {
-  const [r, g, b] = [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16) / 255);
-  const max = Math.max(r, g, b);
-  const span = max - Math.min(r, g, b);
-  // Saturation, not the channel spread: the palette's grey leans blue.
-  if (span / max < 0.25) return 361;
-  const hue = max === r ? ((g - b) / span) % 6 : max === g ? (b - r) / span + 2 : (r - g) / span + 4;
-  return (hue * 60 + 360) % 360;
-}
-
 /** The current colour as a field; the whole palette in a popover under it. */
 function ColorField({
   value,
@@ -173,7 +163,7 @@ function ColorField({
 }: {
   value: string;
   auto: string;
-  colors: { key: string; label: string }[];
+  colors: readonly { key: string; label: string }[];
   onChange(value: string): void;
 }) {
   const [open, setOpen] = useState(false);
@@ -187,8 +177,7 @@ function ColorField({
     return () => document.removeEventListener('pointerdown', outside, true);
   }, [open]);
   const name =
-    value === '' ? 'Auto' : (colors.find((option) => option.key.toLowerCase() === value.toLowerCase())?.label ?? value);
-  const byHue = [...colors].sort((a, b) => hueOrder(a.key) - hueOrder(b.key));
+    value === '' ? 'Auto' : (colorLabel(value) ?? value);
   return (
     <span
       className="taskpanel__colorfield"
@@ -212,7 +201,7 @@ function ColorField({
             value={value}
             auto={auto}
             autoTitle="No colour of its own: its person's when it has one alone, else the default"
-            colors={byHue}
+            colors={colors}
             onChange={(next) => {
               onChange(next);
               setOpen(false);
@@ -285,7 +274,7 @@ export function TaskPanel({
   resources: Resource[];
   /** The calendar's working weekdays, for the day count beside a pace period. */
   workingDays: number[];
-  colors: { key: string; label: string }[];
+  colors: readonly { key: string; label: string }[];
   /** Applies a change; answers the refusal, if any. */
   onEdit(edit: TaskEdit): string | null;
   /** Off fixes the end at the start plus the effort; on hands the end back to the engine. */

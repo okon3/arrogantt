@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { countWorkingDaysInRange } from '../scheduler';
 import { AvailabilityList } from './AvailabilityList';
-import { COLOR_OPTIONS, avatarColorOf } from './colors';
+import { COLOR_SETS, avatarColorOf } from './colors';
+import { useScheme } from './theme';
 import { ColorSwatches } from './ColorSwatches';
 import type { Person } from './cost';
 import { validateCurrency } from './cost';
@@ -36,6 +37,7 @@ export function ResourceDialog({
   onCancel(): void;
   onSave(resources: Person[], releasedTaskIds: string[], currency: string | null): void;
 }) {
+  const colorSet = COLOR_SETS[useScheme()];
   const [drafts, setDrafts] = useState<DraftResource[]>(() => toDraft(resources));
   const [currencyDraft, setCurrencyDraft] = useState(currency ?? '');
   const [error, setError] = useState<string | null>(null);
@@ -251,7 +253,7 @@ export function ResourceDialog({
                       value={draft.color}
                       auto={avatarColorOf({ name: draft.name })}
                       autoTitle="No colour of their own: an automatic one on their avatar, and their tasks keep the default"
-                      colors={COLOR_OPTIONS}
+                      colors={colorSet}
                       onChange={(color) => update(index, { color })}
                     />
                     <h3 className="dialog__subhead">Availability periods</h3>
