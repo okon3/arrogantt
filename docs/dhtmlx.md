@@ -296,7 +296,3 @@ library. Each bullet is a constraint or a fact; how it was found is in git.
   `fonts.gstatic.com`.** `font-family: inherit` on the cells does nothing: they
   inherit from the container. It is overridden on the two containers. Changing
   the header font moves every header's cut-off point, differently per column.
-- **A column named `add` ignores its `template`**: the renderer emits a fixed
-  `<div class='gantt_add'>` and delegates the click on it. Replacing the glyph
-  means masking the pseudo-element (`gantt.css`, `.gantt_add::before`); the
-  vendor pins a `color` there, so restate `color: inherit`.

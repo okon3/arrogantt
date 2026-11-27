@@ -924,80 +924,20 @@ html[data-scheme='dark'] .gantt_resizing {
   vertical-align: middle;
 }
 
-.gantt-rowinfo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--ink-faint);
-  /* Faint until the row is hovered: one icon per row at full contrast is noise,
-     invisible until hover is undiscoverable. */
-  opacity: 0.4;
-  cursor: pointer;
+/* The row's actions, the bar toolbar's pill over the row's right end. The row
+   is their containing block, so the name cell's clipping does not reach them. */
+.gantt_grid_data .gantt_row {
+  position: relative;
 }
 
-.gantt_row:hover .gantt-rowinfo {
-  opacity: 1;
+.gantt-rowactions {
+  display: none;
+  top: 50%;
+  right: 6px;
 }
 
-.gantt_row .gantt-rowinfo:hover {
-  color: var(--accent);
-}
-
-.gantt-rowtoggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--danger);
-  opacity: 0.4;
-  cursor: pointer;
-}
-
-.gantt_row:hover .gantt-rowtoggle {
-  opacity: 1;
-}
-
-/* Discoverable without hover: a row already toggled off stays visible so its
-   state doesn't hide behind the same fade as an untouched row. */
-.gantt-rowtoggle--off {
-  opacity: 1;
-}
-
-/* The third icon of the row cluster, and the only one dhtmlx draws itself: a
-   column named `add` ignores its template (the vendor hardcodes the cell), so
-   the lucide glyph arrives as a mask over the font icon rather than as markup.
-   The asset is the same file `lucide-static` ships to the other two, so it
-   cannot drift from them. Size and fade follow .gantt-rowinfo above. */
-.gantt_add {
+.gantt_grid_data .gantt_row:hover .gantt-rowactions {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.4;
-  color: var(--ink-faint);
-}
-
-.gantt_row:hover .gantt_add {
-  opacity: 1;
-}
-
-.gantt_add::before {
-  content: '';
-  /* The vendor pins a colour on this pseudo-element, so `currentcolor` would
-     read that instead of the cluster's ink. */
-  color: inherit;
-  width: 15px;
-  height: 15px;
-  background: currentcolor;
-  mask: url('lucide-static/icons/plus.svg') center / contain no-repeat;
-}
-
-.gantt_grid_data .gantt_row .gantt_add:hover {
-  color: var(--accent);
 }
 
 /* A group is a heading for the rows under it, so its name carries the weight. */

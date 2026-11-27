@@ -114,8 +114,11 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - **Columns are a registry (`columns.ts`), the grid a filter over it.**
   `PLAN_COLUMNS` holds metadata; `gridColumns.ts`'s `GRID_CELLS` decides each
   cell (`template`/`editor`/`align`), keyed exhaustively so a registry entry
-  with no renderer is a compile error. `text`, `info`, `toggle`, `add` are
-  structural and never hideable.
+  with no renderer is a compile error. `text` is structural and never
+  hideable. Resource has no header: the avatar says what the column holds.
+- **A row's actions are a pill over its right end on hover** (`.gantt-rowactions`,
+  in the name cell, positioned against the row): details, disable, subtask, delete.
+  No column; GanttChart's `rowAction` claims the press on capture.
 - **Every numeric column is `align: 'right'`; dates and the avatar stay
   `center`.** Headers remain centred: `align` does not reach the head cell in
   this build ([dhtmlx.md](dhtmlx.md)), and a rule of our own would buy no
@@ -247,7 +250,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   read-only; off fixes it at the start plus the effort in working days
   (`endFromEffort`), and End becomes a date field. Back on hands the end to the
   engine with the effort the task had. Effort stays editable as the estimate. On the grid a fixed task's Effort cell is the work that went in:
-  derived, so not editable. The bar's name carries a pin.
+  derived, so not editable, and End is plain ink. The bar's name carries a pin.
 - **Dragging a fixed bar moves it whole** (`moveFixed`): same working-day
   length. **Its edges drag**, each to the working day it is left on.
   `drag_resize` is on for that alone: `onBeforeTaskDrag` refuses a resize of

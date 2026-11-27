@@ -1,6 +1,6 @@
 import { gantt } from 'dhtmlx-gantt';
 import type { GridColumn } from 'dhtmlx-gantt';
-import { ArrowRight, Info, Ban, Pin } from 'lucide-static';
+import { ArrowRight, Ban, Info, Pin, Plus, Trash2 } from 'lucide-static';
 import { formatDay, formatDays } from './format';
 import { costCellText, rateCellText, type CellText } from './costCells';
 import { hiddenLinksOf } from './hiddenLinks';
@@ -47,8 +47,9 @@ export function sizedIcon(svg: string, size: number): string {
     .replace('<svg', '<svg aria-hidden="true"');
 }
 
-const INFO_ICON = sizedIcon(Info, 15);
-const BAN_ICON = sizedIcon(Ban, 15);
+const rowAction = (action: string, title: string, icon: string, modifier = '') =>
+  `<button type="button" class="bar-actions__btn${modifier}" data-row-action="${action}"` +
+  ` title="${title}">${sizedIcon(icon, 14)}</button>`;
 const ARROW_ICON = sizedIcon(ArrowRight, 11);
 const PIN_ICON = sizedIcon(Pin, 11);
 
@@ -205,7 +206,11 @@ const GRID_CELLS: Record<
   // input.
   end_shown: () => ({
     align: 'center',
-    template: (task) => `<span class="gantt-derived">${shortDate(task.end_shown as Date)}</span>`,
+    // With Auto end off the end is an input, and reads like one.
+    template: (task) =>
+      task.fixed
+        ? shortDate(task.end_shown as Date)
+        : `<span class="gantt-derived">${shortDate(task.end_shown as Date)}</span>`,
   }),
   elapsed_days: () => ({
     align: 'right',
@@ -279,59 +284,35 @@ export function buildColumns(ctx: RowContext, shown: ReadonlySet<PlanColumnName>
       // short name is the cheaper noise.
       template: (task) => {
         const name = escapeHtml(String(task.text ?? ''));
+        // The row's own flag, not `task.disabled`, which a disabled parent sets too.
+        const own =
+          ctx.project().tasks.find((candidate) => candidate.id === String(task.id))?.disabled === true;
         return (
           `<span class="gantt-dot${task.type === MILESTONE_TYPE ? ' gantt-dot--milestone' : ''}"` +
           ` style="background:${String(task.bar_color || DEFAULT_BAR_COLOR)}"></span>` +
           `<span class="${task.is_summary ? 'gantt-name gantt-name--summary' : 'gantt-name'}"` +
-          ` title="${name}">${name}</span>`
+          ` title="${name}">${name}</span>` +
+          // Shown over the row's right end while it is hovered, so the actions
+          // cost the grid no column. Positioned against the row, out of the
+          // cell's clipping; GanttChart claims their clicks before dhtmlx does.
+          `<span class="bar-actions gantt-rowactions">` +
+          rowAction('info', 'Details', Info) +
+          rowAction('disable', own ? 'Enable' : 'Disable', Ban, own ? ' bar-actions__btn--on' : '') +
+          rowAction('child', 'Add a subtask', Plus) +
+          rowAction('remove', 'Delete', Trash2, ' bar-actions__btn--danger') +
+          `</span>`
         );
       },
       editor: { type: 'text', map_to: 'text' },
     },
     ...PLAN_COLUMNS.filter((entry) => shown.has(entry.name)).map((entry) => ({
       name: entry.name,
-      label: entry.label(ctx.project()),
+      // An avatar says what the column holds; its header would only take room.
+      label: entry.name === 'resource_id' ? '' : entry.label(ctx.project()),
       width: entry.gridWidth,
       resize: true,
       ...GRID_CELLS[entry.name](ctx),
     })),
-    {
-      name: 'info',
-      label: '',
-      width: 34,
-      align: 'center',
-      // Progress, colour and the float figure live behind this button: the
-      // first two are rarely changed, and the float costs a search per row.
-      // The button has no content, so its title is its accessible name — and
-      // one shared by every row leaves anyone moving between buttons unable
-      // to tell whose detail is about to open. Carried by the template, which
-      // dhtmlx re-runs on each render, rather than written onto the node: a
-      // class or an attribute set by hand does not survive a redraw.
-      template: (task) =>
-        `<button type="button" class="gantt-rowinfo" data-task-info="1"` +
-        ` title="Details for “${escapeHtml(String(task.text ?? ''))}”">${INFO_ICON}</button>`,
-    },
-    {
-      name: 'toggle',
-      label: '',
-      width: 34,
-      align: 'center',
-      // The effective (inherited) flag is what `task.disabled` carries here —
-      // wrong for a child of a disabled summary, which must still read as
-      // enabled on its own row. The row's own flag lives on the model, not
-      // on the dhtmlx task.
-      template: (task) => {
-        const own =
-          ctx.project().tasks.find((candidate) => candidate.id === String(task.id))
-            ?.disabled === true;
-        const name = escapeHtml(String(task.text ?? ''));
-        return (
-          `<button type="button" class="gantt-rowtoggle${own ? ' gantt-rowtoggle--off' : ''}"` +
-          ` data-task-toggle="1" title="${own ? 'Enable' : 'Disable'} “${name}”">${BAN_ICON}</button>`
-        );
-      },
-    },
-    { name: 'add', width: 40 },
   ];
 }
 

@@ -1155,16 +1155,33 @@ export function GanttChart({
     };
     container.addEventListener('contextmenu', openRowMenu);
 
+    // The row's hover buttons, claimed on the capture phase: a press there must
+    // not select, rename or drag the row under them.
+    const rowAction = (event: MouseEvent) => {
+      const button = (event.target as HTMLElement | null)?.closest?.<HTMLElement>('[data-row-action]');
+      if (!button) return;
+      event.stopPropagation();
+      if (event.type !== 'click') return;
+      const id = button.closest('.gantt_row')?.getAttribute('data-task-id');
+      if (!id || !gantt.isTaskExists(id)) return;
+      const action = button.dataset.rowAction;
+      if (action === 'info') openTaskRef.current?.(id);
+      else if (action === 'disable') {
+        const task = projectRef.current.tasks.find((candidate) => candidate.id === id);
+        toggleDisabledRef.current?.(id, task?.disabled === true);
+      } else if (action === 'child') gantt.createTask(undefined, id);
+      else if (action === 'remove') deleteTaskRef.current?.(id);
+    };
+    for (const type of ['pointerdown', 'mousedown', 'click', 'dblclick'] as const) {
+      container.addEventListener(type, rowAction, true);
+    }
+
     // A click on a grid cell opens an inline editor but leaves the row
     // unselected, so Del would have nothing to act on unless the user went to
-    // the timeline to click a bar first. The info and toggle buttons are
-    // excluded: info selects through the panel it opens, and the toggle is a
-    // self-contained action that must not also select the row it sits on.
+    // the timeline to click a bar first.
     const selectRow = (event: MouseEvent) => {
       clickInFlight = false;
       const target = event.target as HTMLElement | null;
-      if (target?.closest?.('[data-task-info]')) return;
-      if (target?.closest?.('[data-task-toggle]')) return;
       const id = target?.closest?.('.gantt_row')?.getAttribute('data-task-id');
       if (id && gantt.isTaskExists(id)) gantt.selectTask(id);
     };
@@ -1264,22 +1281,14 @@ export function GanttChart({
       gantt.attachEvent('onGanttScroll', () => {
         if (loadHost.current) scrollLoadPanel(loadHost.current, appliedScrollX());
       }, undefined),
-      gantt.attachEvent('onTaskClick', (id, event) => {
+      gantt.attachEvent('onTaskClick', (_id, event) => {
         const target = event?.target as HTMLElement | null;
         // The empty stretch of a task's lane is outside the task.
         if (target?.closest?.('[data-task-id], [task_id]')?.classList.contains('gantt_task_row')) {
           gantt.unselectTask();
           return false;
         }
-        if (target?.closest?.('[data-task-toggle]')) {
-          const task = projectRef.current.tasks.find((candidate) => candidate.id === String(id));
-          toggleDisabledRef.current?.(String(id), task?.disabled === true);
-          return false;
-        }
-        if (!target?.closest?.('[data-task-info]')) return true;
-        // The panel shows the selected task: opening it selects the row.
-        openTaskRef.current?.(String(id));
-        return false;
+        return true;
       }, undefined),
       gantt.attachEvent('onTaskSelected', (id) => {
         selectionRef.current?.(String(id));
@@ -1298,7 +1307,7 @@ export function GanttChart({
         gantt.unselectTask();
         return true;
       }, undefined),
-      // Rows created by dhtmlx itself — the grid's "+" button, which adds a
+      // Rows created by dhtmlx itself — `createTask`, behind the row's "+", which adds a
       // child — never passed through the model, so they rendered with an
       // undefined effort and a NaN duration.
       gantt.attachEvent('onAfterTaskAdd', (id, item) => {
@@ -1573,6 +1582,9 @@ export function GanttChart({
       gantt.ext.zoom.detachEvent(zoomHandler);
       container.removeEventListener('wheel', zoomOnWheel, true);
       container.removeEventListener('contextmenu', openRowMenu);
+      for (const type of ['pointerdown', 'mousedown', 'click', 'dblclick'] as const) {
+        container.removeEventListener(type, rowAction, true);
+      }
       gantt.ext.inlineEditors.detachEvent(derivedGuard);
       container.removeEventListener('keydown', editorKeys);
       container.removeEventListener('click', selectRow);
