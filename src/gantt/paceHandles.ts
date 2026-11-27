@@ -69,9 +69,11 @@ const PARTS =
   `<div class="pace-x" data-pace-part="delete" title="Remove this period">${X}</div>`;
 
 /**
- * How close to the bar's end a period's × stops fitting on its right: past the
- * end sit the link circle and the bar's action buttons, which it would cover.
- * The × is 14px wide and 7px (12px when tiny) off the period (gantt.css).
+ * How close to a bar's end a period's × stops fitting beside it on that side:
+ * past the end sit the link circles, and past the right one the bar's action
+ * buttons. The × is 14px wide and 7px (12px when tiny) off the period
+ * (gantt.css). Right first, then left; a period reaching near both ends gets
+ * it inside, the only room left.
  */
 const X_BESIDE_END_PX = 32;
 
@@ -191,10 +193,10 @@ export function installPaceHandles(options: Options): () => void {
           // on either end sticks out of its task.
           const left = Math.max(box.left, bar.left);
           const right = Math.min(box.left + box.width, bar.left + bar.width);
-          node.classList.toggle(
-            'pace-period--x-before',
-            bar.left + bar.width - right < X_BESIDE_END_PX,
-          );
+          const rightTaken = bar.left + bar.width - right < X_BESIDE_END_PX;
+          const leftTaken = left - bar.left < X_BESIDE_END_PX;
+          node.classList.toggle('pace-period--x-before', rightTaken && !leftTaken);
+          node.classList.toggle('pace-period--x-inside', rightTaken && leftTaken);
           node.style.setProperty(
             '--pace-bar',
             String(gantt.getTask(task.id).bar_color || DEFAULT_BAR_COLOR),

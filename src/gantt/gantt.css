@@ -1470,6 +1470,11 @@ html[data-scheme='dark'] .gantt_resizing {
   right: calc(100% + 12px);
 }
 
+/* Near both ends there is no free side: inside, past the left edge's grip. */
+.pace-period--x-inside .pace-x {
+  left: 10px;
+}
+
 /* On `body`, beside the pointer while a handle is dragged; above the bar
    tooltip (50), like the row menu. */
 .pace-tip {
