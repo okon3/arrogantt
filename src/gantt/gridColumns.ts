@@ -343,6 +343,26 @@ export function buildColumns(ctx: RowContext, shown: ReadonlySet<PlanColumnName>
   ];
 }
 
+let separatorStyle: HTMLStyleElement | null = null;
+
+/**
+ * Hides the head's line left of a column with no title: with nothing to
+ * separate, the line only cut the header in two (Resource beside Task). Only
+ * the line: the resize handle it draws stays where it was. dhtmlx numbers the
+ * handles by the column on their left, and which columns are shown changes, so
+ * the rule is rewritten with the columns rather than fixed in the stylesheet.
+ */
+export function quietHeaderSeparators(columns: GridColumn[]): void {
+  separatorStyle ??= document.head.appendChild(document.createElement('style'));
+  separatorStyle.textContent = columns
+    .flatMap((column, index) => (index > 0 && column.label === '' ? [index - 1] : []))
+    .map(
+      (index) =>
+        `.gantt_grid_column_resize_wrap[column_index="${index}"] .gantt_grid_column_resize { background: transparent; }`,
+    )
+    .join('\n');
+}
+
 // The grid holds `grid_width` and squeezes its resizable columns down to
 // `min_column_width` to fit, so two more columns came out of the task name —
 // 230px to 152px, and a truncated name is the one cell whose content cannot

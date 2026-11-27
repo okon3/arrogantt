@@ -123,7 +123,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   `PLAN_COLUMNS` holds metadata; `gridColumns.ts`'s `GRID_CELLS` decides each
   cell (`template`/`editor`/`align`), keyed exhaustively so a registry entry
   with no renderer is a compile error. `text`, `actions` are structural and never
-  hideable. Resource has no header: the avatar says what the column holds.
+  hideable. Resource has no header: the avatar says what the column holds,
+  and the head's line left of an untitled column is hidden (`quietHeaderSeparators`).
 - **A row's actions are the bar toolbar's pill, always shown** (`actions`
   column, fixed width, faint until the row is hovered): details, disable, subtask, delete.
   Its header holds *+ Task*. GanttChart's `rowAction` claims both on capture.

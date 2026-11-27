@@ -65,6 +65,7 @@ import {
 import {
   DERIVED_ON_SUMMARY,
   buildColumns,
+  quietHeaderSeparators,
   columnsWidth,
   installRowTemplates,
   refreshResourceOptions,
@@ -368,6 +369,7 @@ export function GanttChart({
       if (width !== undefined) column.width = width;
     }
     gantt.config.columns = rebuilt;
+    quietHeaderSeparators(rebuilt);
     if (savedGridWidthRef.current !== null) {
       // Collapsed: `grid_width` stays 0, and the new budget becomes what a
       // restore hands back — a divider drag from before the rebuild is
