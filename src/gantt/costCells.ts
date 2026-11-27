@@ -4,7 +4,7 @@ import { formatDays, formatMoney } from './format';
  * What a cost or rate cell says, in either medium: the grid renders it as an
  * HTML string, the details panel as JSX. One rule, two renderers — and the
  * `derived` register is a flag, not a class, because the two surfaces name it
- * differently (`gantt-derived` in the grid, `taskinfo__derived` in a dialog).
+ * differently (`gantt-derived` in the grid, its own class in the panel).
  */
 export interface CellText {
   /** Empty string = the cell says nothing at all. */
