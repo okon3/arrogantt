@@ -1,4 +1,4 @@
-import { Plus, FolderOpen } from 'lucide-react';
+import { Plus, FolderOpen, Sparkles } from 'lucide-react';
 
 /**
  * What is on screen when there is no plan yet.
@@ -11,14 +11,20 @@ import { Plus, FolderOpen } from 'lucide-react';
  * The heading is the app's own name and one line saying what kind of tool it is.
  * Naming the absence instead — "No tasks", "An empty plan" — tells somebody
  * staring at an empty screen the one thing they already know.
+ *
+ * The demo is a hint, not a third way in: somebody new has no plan of their
+ * own to judge the tool by, and an empty chart shows neither the split bars
+ * nor the look. It sits below the two buttons so it never competes with them.
  */
 export function EmptyState({
   onAddTask,
   onOpen,
+  onOpenDemo,
   onHelp,
 }: {
   onAddTask(): void;
   onOpen(): void;
+  onOpenDemo(): void;
   onHelp(): void;
 }) {
   return (
@@ -44,7 +50,18 @@ export function EmptyState({
           Or drag a <code>.gantt</code> file here from your computer.
         </p>
 
-        <button type="button" className="empty__help" onClick={onHelp}>
+        <div className="empty__demo">
+          <Sparkles size={15} />
+          <p>
+            New here?{' '}
+            <button type="button" className="empty__link" onClick={onOpenDemo}>
+              Open the demo plan
+            </button>
+            : a small team and a few months of work, ready to explore.
+          </p>
+        </div>
+
+        <button type="button" className="empty__help empty__link" onClick={onHelp}>
           Need help?
         </button>
       </div>

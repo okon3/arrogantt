@@ -601,7 +601,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   and why critical-with-float isn't a contradiction.
 - Diagram **drawn, not screenshotted**: SVG using `segmentBar.ts` geometry and
   `gantt.css` colours.
-- Empty state is minimal (name, one line, two buttons, help link).
+- Empty state is minimal (name, one line, two buttons, a demo hint, help
+  link). The demo is `docs/demo.gantt` bundled via `?raw` and opened clean,
+  like a file — never a draft.
 - Header version badge: the top `CHANGELOG.md` entry, opens the changelog
   dialog. Last seen version in `localStorage` (`arrogantt.seenVersion`); a
   new top entry opens the dialog once; a first visit records silently. Waits

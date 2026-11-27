@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **A demo plan to start from.** New here? The start screen opens a ready-made
+  plan for a small team, to see how it works and looks before writing your own.
+
 ## v1.8 — 2026-11-27
 
 - 🗂️ **Details beside the chart.** A panel follows the selected task: edits

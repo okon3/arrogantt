@@ -1049,9 +1049,37 @@
   font-size: 11px;
 }
 
+/* A hint rather than a third button: it shows the app, it does not start a plan. */
+.empty__demo {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.empty__demo svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.empty__demo p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
 /* A link rather than a third button: it explains the app, it does not start it. */
 .empty__help {
-  margin-top: 20px;
+  display: block;
+  margin-top: 16px;
+}
+
+.empty__link {
   padding: 0;
   border: 0;
   background: none;
@@ -1063,7 +1091,7 @@
   cursor: pointer;
 }
 
-.empty__help:hover {
+.empty__link:hover {
   color: var(--accent);
 }
 

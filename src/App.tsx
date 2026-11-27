@@ -22,6 +22,9 @@ import { ChangelogDialog } from './gantt/ChangelogDialog';
 import { CHANGELOG_ENTRIES } from './gantt/changelogEntries';
 import { ConfirmDialog } from './gantt/ConfirmDialog';
 import { EmptyState } from './gantt/EmptyState';
+// Bundled rather than fetched: GitHub Pages does not serve docs/, and the
+// single-file build has nothing beside it to fetch from.
+import demoText from '../docs/demo.gantt?raw';
 import { ExportDialog } from './gantt/ExportDialog';
 import { HelpDialog } from './gantt/HelpDialog';
 import { ResourceDialog } from './gantt/ResourceDialog';
@@ -402,6 +405,20 @@ export default function App() {
       const picked = await pickTextFile();
       if (!picked) return;
       adopt(picked.text, picked.name);
+    } catch (cause) {
+      reportFailure(cause);
+    }
+  }, [adopt, confirmDiscard, reportFailure]);
+
+  /**
+   * Opened like a file, not handed over as a draft: it arrives clean, so a
+   * newcomer can look around and leave without being asked to save a plan they
+   * never wrote, and Save hands back a copy under its own name.
+   */
+  const handleOpenDemo = useCallback(async () => {
+    if (!(await confirmDiscard())) return;
+    try {
+      adopt(demoText, 'demo.gantt');
     } catch (cause) {
       reportFailure(cause);
     }
@@ -1177,6 +1194,7 @@ export default function App() {
           <EmptyState
             onAddTask={handleAddTask}
             onOpen={() => void handleOpen()}
+            onOpenDemo={() => void handleOpenDemo()}
             onHelp={() => setHelpOpen(true)}
           />
         )}
