@@ -1,4 +1,5 @@
 import helpMarkdown from './agentApi.help.md?raw';
+import type { WorkingCalendar } from '../scheduler';
 import { validateCalendar } from './calendarRules';
 import { validateCurrency, type Person } from './cost';
 import { parseWallClock, serializeDate } from './dates';
@@ -135,7 +136,8 @@ export interface ResourceLoadInfo {
 }
 
 export interface AgentApi {
-  help(): string;
+  /** Short with no topic: the intro, how calls behave, and the section list. */
+  help(topic?: string): string;
 
   getPlan(): Plan;
   getTask(id: string): TaskInfo;
@@ -192,12 +194,65 @@ export interface AgentHost {
   newProject(): void;
 }
 
-function asDate(value: string | Date, field: string): Date {
+/**
+ * The help in pieces, cut at its own `##` headings: one file stays the only
+ * copy (it is `/llms.txt` too), and a caller reads the part it needs instead
+ * of 25 KB to find one signature.
+ */
+export function helpFor(markdown: string, topic?: string): string {
+  const [intro, ...rest] = markdown.split(/^(?=## )/m);
+  const sections = rest.map((text) => ({ title: text.slice(3, text.indexOf('\n')).trim(), text }));
+  if (topic === 'all') return markdown;
+  if (topic === undefined) {
+    // How every call behaves is what a caller needs before any one of them.
+    const first = sections[0]?.text ?? '';
+    const index = sections.map((section) => `- ${section.title}`).join('\n');
+    return (
+      `${intro}${first}## Sections\n\n` +
+      `\`help('<words from a title>')\` returns the sections whose title contains them; ` +
+      `\`help('all')\` the whole text, which is also \`/llms.txt\`.\n\n${index}\n`
+    );
+  }
+  const wanted = topic.toLowerCase();
+  const found = sections.filter((section) => section.title.toLowerCase().includes(wanted));
+  if (found.length === 0) {
+    throw new Error(
+      `help: no section title contains "${topic}". Sections: ${sections.map((s) => s.title).join('; ')}`,
+    );
+  }
+  return found.map((section) => section.text).join('\n');
+}
+
+const CALENDAR_DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * A date as a script writes it. A bare `YYYY-MM-DD` is taken as the day it
+ * names — the opening of that working day for a start, its close for an end —
+ * because the time is the calendar's to decide anyway, and an opening is what
+ * a full date snaps to: restating the solved start's day stays the no-op it
+ * is with `T08:00`. The file format keeps its one strict notation.
+ */
+function asDate(
+  value: string | Date,
+  field: string,
+  calendar: () => WorkingCalendar,
+  edge: 'start' | 'end',
+): Date {
   if (value instanceof Date) return value;
+  const day = typeof value === 'string' ? CALENDAR_DAY.exec(value) : null;
+  if (day) {
+    const [, year, month, date] = day.map(Number);
+    const midnight = new Date(year, month - 1, date);
+    if (midnight.getMonth() === month - 1 && midnight.getDate() === date) {
+      return edge === 'start'
+        ? calendar().startOfWorkingDay(midnight)
+        : calendar().endOfWorkingDay(midnight);
+    }
+  }
   const parsed = parseWallClock(value);
   if (!parsed) {
     throw new Error(
-      `${field}: expected a "YYYY-MM-DDTHH:mm" date in local time, received ${JSON.stringify(value)}`,
+      `${field}: expected "YYYY-MM-DD" or "YYYY-MM-DDTHH:mm" in local time, received ${JSON.stringify(value)}`,
     );
   }
   return parsed;
@@ -252,6 +307,7 @@ export function createAgentApi(host: AgentHost): AgentApi {
     if (!handle) throw new Error('The chart is not mounted yet');
     return handle;
   };
+  const calendarNow = () => chart().getSolved().calendar;
 
   const details = (id: string): TaskDetails => {
     const found = chart().getTaskDetails(id);
@@ -297,7 +353,7 @@ export function createAgentApi(host: AgentHost): AgentApi {
   };
 
   return {
-    help: () => helpMarkdown,
+    help: (topic) => helpFor(helpMarkdown, topic),
 
     getPlan: () => buildPlan(chart().getSolved()),
 
@@ -390,7 +446,7 @@ export function createAgentApi(host: AgentHost): AgentApi {
       return chart().addTask({
         name: patch?.name,
         nominalDays: patch?.nominalDays,
-        start: patch?.start ? asDate(patch.start, 'start') : undefined,
+        start: patch?.start ? asDate(patch.start, 'start', calendarNow, 'start') : undefined,
         resourceId: patch?.resourceId ?? undefined,
         color: patch?.color ?? undefined,
         disabled: patch?.disabled ?? undefined,
@@ -420,12 +476,12 @@ export function createAgentApi(host: AgentHost): AgentApi {
           throw new Error(`"${id}" is a summary task: its end is its last leaf's`);
         }
       }
-      const start = patch.start ? asDate(patch.start, 'start') : current.start;
+      const start = patch.start ? asDate(patch.start, 'start', calendarNow, 'start') : current.start;
       const fixedEnd =
         patch.fixedEnd === undefined
           ? undefined
           : patch.fixedEnd
-            ? asDate(patch.fixedEnd, 'fixedEnd')
+            ? asDate(patch.fixedEnd, 'fixedEnd', calendarNow, 'end')
             : null;
       // Against the end the task keeps, too: a start moved past it is the same span.
       const endKept = fixedEnd === undefined ? current.fixedEnd : fixedEnd;

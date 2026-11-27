@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAgentApi, type AgentApi } from './agentApi';
+import { createAgentApi, helpFor, type AgentApi } from './agentApi';
+import helpText from './agentApi.help.md?raw';
+import { solve } from './project';
+import { deserializeProject } from './serialization';
 import type { GanttHandle, TaskDetails } from './ganttHandle';
-import type { Resource } from '../scheduler';
+import { WorkingCalendar, type Resource } from '../scheduler';
 
 const ALICE: Resource = { id: 'r1', name: 'Alice' };
 
@@ -41,6 +44,8 @@ function harness(task: TaskDetails = details()) {
     addTask: vi.fn(() => 'tNew'),
     updateTask: vi.fn(),
     setCurrency: vi.fn(),
+    // The default calendar: Monday to Friday, 08:00-12:00 and 13:00-17:00.
+    getSolved: () => ({ calendar: new WorkingCalendar(new Date(2026, 8, 7)) }),
   };
   const api: AgentApi = createAgentApi({
     handle: () => handle as unknown as GanttHandle,
@@ -52,6 +57,74 @@ function harness(task: TaskDetails = details()) {
   });
   return { api, handle };
 }
+
+describe('agent API help', () => {
+  it('opens on a short overview that lists every section', () => {
+    const overview = helpFor(helpText);
+    expect(overview.length).toBeLessThan(helpText.length / 4);
+    expect(overview).toContain('## Driving it from a script');
+    expect(overview).toContain('- Loading a whole plan');
+    expect(overview).not.toContain('## Writing — tasks');
+  });
+
+  it('returns the sections whose title contains the words asked for', () => {
+    expect(helpFor(helpText, 'TASKS')).toMatch(/^## Writing — tasks/);
+    expect(helpFor(helpText, 'writing')).toContain('## Writing — people');
+    expect(helpFor(helpText, 'all')).toBe(helpText);
+  });
+
+  it('names the sections when nothing matches', () => {
+    expect(() => helpFor(helpText, 'nope')).toThrow(/Sections: .*Navigation/);
+  });
+
+  it('documents a whole-plan example the parser takes as written', () => {
+    const example = /## Loading a whole plan[\s\S]*?```json\n([\s\S]*?)```/.exec(helpText)?.[1];
+    expect(example).toBeDefined();
+    const project = deserializeProject(example!);
+    const { schedule } = solve(project);
+    // The predecessor holds: Payments starts once Auth is done.
+    expect(schedule.tasks.get('pay')!.start.getTime()).toBeGreaterThanOrEqual(
+      schedule.tasks.get('auth')!.end.getTime(),
+    );
+  });
+});
+
+describe('agent API dates', () => {
+  it('takes a bare day as that working day opening for a start', () => {
+    const { api, handle } = harness();
+    api.addTask({ start: '2027-01-11' });
+    expect(handle.addTask).toHaveBeenCalledWith(
+      expect.objectContaining({ start: new Date(2027, 0, 11, 8, 0) }),
+    );
+  });
+
+  it('moves a bare day off a weekend, as a full date does', () => {
+    const { api, handle } = harness();
+    api.updateTask('t1', { start: '2027-01-09' });
+    expect(handle.updateTask).toHaveBeenCalledWith(
+      't1',
+      expect.objectContaining({ start: new Date(2027, 0, 11, 8, 0) }),
+    );
+  });
+
+  it('takes a bare day as that working day close for a fixed end', () => {
+    const { api, handle } = harness();
+    api.updateTask('t1', { start: '2027-01-11', fixedEnd: '2027-01-11' });
+    expect(handle.updateTask).toHaveBeenCalledWith(
+      't1',
+      expect.objectContaining({ fixedEnd: new Date(2027, 0, 11, 17, 0) }),
+    );
+  });
+
+  it('still takes the full notation, and refuses a day that does not exist', () => {
+    const { api, handle } = harness();
+    api.addTask({ start: '2027-01-11T08:00' });
+    expect(handle.addTask).toHaveBeenCalledWith(
+      expect.objectContaining({ start: new Date(2027, 0, 11, 8, 0) }),
+    );
+    expect(() => api.addTask({ start: '2027-02-30' })).toThrow(/"YYYY-MM-DD" or/);
+  });
+});
 
 describe('agent API resource assignment', () => {
   it('refuses an id nobody has, naming it', () => {

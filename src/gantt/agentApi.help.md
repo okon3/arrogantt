@@ -14,8 +14,15 @@ weekends and company shutdowns never appear in a duration.
 ## Driving it from a script
 
 `window.arrogantt` is the whole surface, in both dev and production builds.
-`arrogantt.help()` returns this text. Every call is synchronous: `getPlan()` right
-after a write already reflects the new schedule.
+`arrogantt.help()` returns this overview and the list of sections,
+`help('tasks')` one of them, `help('all')` everything. Every call is
+synchronous: `getPlan()` right after a write already reflects the new schedule —
+and only until the next write. Each task added can move the ones before it, so
+report dates from a `getPlan()` read after your last write, not from what each
+step answered on the way.
+
+Dates are local wall-clock: `"YYYY-MM-DD"`, or `"YYYY-MM-DDTHH:mm"` where a time
+is meaningful. **A whole plan is one `loadText` call** — see `help('load')`.
 
 Three differences from clicking the buttons:
 
@@ -226,7 +233,10 @@ pin it to the date it already has, there is nothing to ask for.
 A start that *is* taken as a constraint is taken as the **opening of the working
 day it falls on**, and a day the calendar has closed moves on to the next open
 one: `2026-09-23T11:37` and a Saturday both come back as an 08:00. The time of
-day is the calendar's to decide, so asking for one is asking for nothing.
+day is the calendar's to decide, so asking for one is asking for nothing: a
+bare `2026-09-23` is that day's opening, and as a `fixedEnd` that day's close.
+**`addTask` without a `start` starts the task today**, at the opening of the
+working day (the next one, when today is closed).
 
 **The order of the rows is the order of the list**, in the grid and in the file
 both, and `after` is the only way to choose it: a new task lands at the end of a
@@ -367,6 +377,41 @@ predecessors, circular hierarchy, availability outside `0..1`, a malformed
 calendar, a future format version. The `solved` report blocks are ignored on
 load: the inputs alone decide the schedule, so editing the text and reloading it
 never needs the report kept in step.
+
+## Loading a whole plan
+
+A plan you already know is one `loadText(JSON.stringify(plan), 'name.gantt')`,
+not a call per task: you choose the ids, dependencies and groups are fields, and
+running the script again replaces the plan instead of adding a copy of it. It
+replaces the open project, undo history included.
+
+```json
+{
+  "format": "gantt-effort-split",
+  "version": 2,
+  "resources": [{ "id": "ada", "name": "Ada Lin", "availability": 0.8 }],
+  "tasks": [
+    { "id": "backend", "name": "Backend", "nominalDays": 0, "start": "2027-01-11T08:00" },
+    { "id": "auth", "name": "Auth", "nominalDays": 5, "start": "2027-01-11T08:00",
+      "resourceId": "ada", "parentId": "backend", "description": "OAuth and sessions" },
+    { "id": "pay", "name": "Payments", "nominalDays": 3, "start": "2027-01-11T08:00",
+      "resourceId": "ada", "parentId": "backend", "predecessors": ["auth"] }
+  ]
+}
+```
+
+- **Required**: `format`, `version: 2`; per task `id`, `nominalDays`, and
+  `start` as `"YYYY-MM-DDTHH:mm"` — the file takes no bare days.
+- A **group** is a task other tasks name as `parentId`: its effort, dates and
+  person are rolled up from them, so its own `nominalDays` and `start` are
+  placeholders. The list order is the row order.
+- **Optional**: per task `resourceId`, `predecessors` (ids), `parentId`,
+  `description`, `color`, `progress` (0..100), `disabled`, `fixedEnd`, `share`,
+  `shareOverrides`; per person `availability` (0..1), `availabilityOverrides`,
+  `dailyRate`, `rateOverrides`, `color`; top level `calendar` (the
+  `setCalendar` shape, default Monday-Friday 08:00-12:00 and 13:00-17:00) and `currency`.
+- Read it back with `getPlan()`, or start from a `toText()` of a plan built by
+  hand: that is the same format with every field the app writes.
 
 ## Navigation
 

@@ -8,6 +8,8 @@
   for dark; the picker offers the set on screen, and a picked colour stays put.
 - **A colour for any task.** A subtask can now have its own colour; on Auto it
   follows its group, or else its person.
+- **Easier for AI agents.** Dates can be plain days, the help comes in short
+  sections, and it shows how to load a whole plan in one call.
 
 ## v1.8 — 2026-11-27
 
