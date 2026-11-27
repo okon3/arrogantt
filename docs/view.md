@@ -298,7 +298,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
     use; it refuses periods sharing a day, so an overlapped row
     (`overlapRefused`) says what will be refused, not *overridden*.
   - Row menu *Set pace from here…* (leaf with effort) opens the panel and adds
-    one period on the pointed day (grid: the solved start). A
+    one period on the pointed day (grid: the solved start), its slider focused. A
     day outside the task, here and from *Add period*, stands for the task's
     nearest day. Label wraps to line two.
   - **A new period starts at the share the task already has there**, unrounded

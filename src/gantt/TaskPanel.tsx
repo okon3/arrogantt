@@ -398,11 +398,10 @@ export function TaskPanel({
   useEffect(() => {
     if (!focusPace) return;
     const seeded = [
-      ...(paceSection.current?.querySelectorAll<HTMLInputElement>('.ranges__row .ranges__pct') ?? []),
+      ...(paceSection.current?.querySelectorAll<HTMLInputElement>('.ranges__row .taskpanel__range') ?? []),
     ].at(-1);
     seeded?.scrollIntoView({ block: 'center' });
     seeded?.focus();
-    seeded?.select();
   }, [focusPace]);
 
   const fromChildren = <span className="taskpanel__muted">from subtasks</span>;
