@@ -130,6 +130,8 @@ for exact figures.
 
 - ≤ 40 tasks: marking re-measured on every edit (~40 ms vs 13 with it off).
 - \> 40: measured only on request (*Compute critical chain* in the status bar).
+  The control reads *Computing critical chain…* and that frame paints before
+  the measurement holds the page.
 - \> 40 after an edit: stale marking stays **dashed** (declares itself old)
   instead of vanishing — never looks measured when it isn't.
 - Undo counts as an edit: re-measure inside the limit, keep dashed past it.

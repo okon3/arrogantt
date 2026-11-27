@@ -145,6 +145,7 @@ export default function App() {
   // has to agree with `markCritical`, or the first click on the toggle would
   // turn off a marking that is not there.
   const [chainState, setChainState] = useState<ChainState>('off');
+  const [measuringChain, setMeasuringChain] = useState(false);
   // Off by default: the chart is what the plan is edited in, and the lanes are
   // what it is checked against — asked for, and taking room only then.
   const [showLoad, setShowLoad] = useState(false);
@@ -510,8 +511,23 @@ export default function App() {
       setMarkCritical(false);
       return;
     }
-    setMarkCritical(true);
-    chart.current?.measureCriticalChain();
+    const measure = () => {
+      setMarkCritical(true);
+      chart.current?.measureCriticalChain();
+    };
+    // Below the limit it is quick. Past it the measurement holds the page for
+    // seconds, so the control first says so and the frame showing it paints.
+    if (chart.current?.isChainMeasurable() !== false) return measure();
+    setMeasuringChain(true);
+    requestAnimationFrame(() =>
+      setTimeout(() => {
+        try {
+          measure();
+        } finally {
+          setMeasuringChain(false);
+        }
+      }),
+    );
   }, [chainState]);
 
   /**
@@ -1205,6 +1221,7 @@ export default function App() {
         cost={cost}
         scale={scale}
         chainState={chainState}
+        measuringChain={measuringChain}
         loadShown={showLoad}
         gridCollapsed={gridCollapsed}
         columnPickerOpen={columnPicker !== null}

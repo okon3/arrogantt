@@ -28,6 +28,8 @@ export interface StatusBarProps {
   scale: string;
   /** What the chart is showing of the critical chain, which decides what the control offers. */
   chainState: ChainState;
+  /** A measurement asked for and not yet back. */
+  measuringChain: boolean;
   /** Whether the per-person load lanes are open under the chart. */
   loadShown: boolean;
   /** Whether the task grid is collapsed to zero width, to render the toggle pressed. */
@@ -94,6 +96,7 @@ export function StatusBar({
   cost,
   scale,
   chainState,
+  measuringChain,
   loadShown,
   gridCollapsed,
   columnPickerOpen,
@@ -229,10 +232,11 @@ export function StatusBar({
           (chainState === 'stale' ? ' statusbar__critical--old' : '')
         }
         aria-pressed={CHAIN_SHOWN[chainState]}
+        aria-busy={measuringChain}
         title={CHAIN_TITLE[chainState]}
-        onClick={onCriticalChain}
+        onClick={measuringChain ? undefined : onCriticalChain}
       >
-        {CHAIN_LABEL[chainState]}
+        {measuringChain ? 'Computing critical chain…' : CHAIN_LABEL[chainState]}
       </button>
       {/* Beside the critical chain, and not with the zoom: both answer a question
           about the plan rather than about the view of it. */}

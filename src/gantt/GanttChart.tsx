@@ -481,6 +481,7 @@ export function GanttChart({
         if (!slack || slack.floatDays === null) return null;
         return { ...slack, floatDays: slack.floatDays };
       },
+      isChainMeasurable: () => isChainMeasurable(solvedRef.current),
       measureCriticalChain: () => {
         applyingRef.current = true;
         try {
