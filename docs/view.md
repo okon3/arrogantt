@@ -222,13 +222,11 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - **Collapse to zero width, status-bar toggle** (`toggleGridCollapsed`).
   Remembers the width by measuring `$grid.offsetWidth`, not
   `config.grid_width`, defensively. Not persisted; no undo, no dirty.
-- **The dhtmlx row schema is written in five places**: `toGanttData` and
-  `applySolution` (plus `writeChainOntoRows`) map model → row;
-  `handle.addTask` builds a new row; `onAfterTaskAdd` and `pullFromView` read
-  row → model. A new field goes in **both** model → row paths wherever the row
-  mirrors the model; added to one only, it is right on open and stale after
-  every edit. Identity and view state (`text`, `parent`, `open`, `progress`)
-  are written by the parse alone and must stay so.
+- **A field the row mirrors from the model goes in `rowFields`** (`ganttRows.ts`),
+  the one list `toGanttData` and `applySolution` both write. `handle.addTask`
+  builds a new row; `onAfterTaskAdd` and `pullFromView` read row → model.
+  Identity and view state (`text`, `parent`, `open`, `progress`) are written by
+  the parse alone and must stay so.
 - **The two model → row paths are not interchangeable**: `toGanttData` formats
   dates as strings for `gantt.parse`, `applySolution` assigns `Date`; whether
   `gantt.parse` accepts a `Date` is unverified.

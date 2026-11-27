@@ -10,8 +10,8 @@ import { gantt } from 'dhtmlx-gantt';
 import 'dhtmlx-gantt/codebase/dhtmlxgantt.css';
 import { barFactsOf, renderBarTooltip } from './barTooltip';
 import { reportedCost } from './cost';
-import { drawsProfile, isShared } from './segmentBar';
-import { hasShare, leafShare } from './taskShare';
+import { isShared } from './segmentBar';
+import { leafShare } from './taskShare';
 import {
   registerQuarterUnit,
   ZOOM_LEVELS,
@@ -54,12 +54,10 @@ import {
   type SolvedProject,
 } from './project';
 import {
-  barBackground,
   loadLanes,
   nextTaskId,
-  resourceClassesOf,
+  rowFields,
   toGanttData,
-  typeOf,
   writeChainOntoRows,
 } from './ganttRows';
 import {
@@ -300,36 +298,10 @@ export function GanttChart({
         for (const task of projectRef.current.tasks) {
           const scheduled = solved.schedule.tasks.get(task.id);
           if (!scheduled || !gantt.isTaskExists(task.id)) continue;
-          const ganttTask = gantt.getTask(task.id);
-          ganttTask.type = typeOf(task, solved);
-          ganttTask.start_date = scheduled.start;
-          ganttTask.end_date = scheduled.end;
-          ganttTask.end_shown = scheduled.end;
-          ganttTask.elapsed_days = solved.calendar.minutesToDays(scheduled.elapsedWorkingMinutes);
-          ganttTask.nominal_days = task.nominalDays;
-          // An input, like `nominal_days` above: the row mirrors the model, not
-          // just the solver's answer. Without it a path that clears `resourceId`
-          // without writing the row leaves a dead id for `pullFromView` to read
-          // back, and the saved file names a person `deserializeProject` refuses
-          // to reopen.
-          ganttTask.resource_id = task.resourceId ?? '';
-          ganttTask.rolled_effort_days = solved.calendar.minutesToDays(scheduled.effortMinutes);
-          const summary = solved.summaryIds.has(task.id);
-          const inherited = colorOf(task.id);
-          ganttTask.is_summary = summary;
-          ganttTask.bar_color = inherited ?? '';
-          ganttTask.own_color = task.color ?? '';
-          const profiled = drawsProfile(scheduled, hasShare(task));
-          ganttTask.color = barBackground(inherited, profiled, summary);
-          ganttTask.shared = profiled;
-          ganttTask.fixed = !summary && task.fixedEnd !== undefined;
-          ganttTask.disabled = solved.disabledIds.has(task.id);
-          ganttTask.resource_classes = resourceClassesOf(solved, task.id);
-          const cost = solved.costs.get(task.id)!;
-          ganttTask.cost_amount = reportedCost(cost);
-          ganttTask.cost_costed_days = cost.costedDays;
-          ganttTask.cost_uncosted_days = cost.uncostedDays;
-          ganttTask.daily_rates = [...cost.dailyRates];
+          Object.assign(gantt.getTask(task.id), rowFields(task, solved, colorOf), {
+            start_date: scheduled.start,
+            end_date: scheduled.end,
+          });
         }
         writeChainOntoRows(projectRef.current, chainRef.current);
         const drawn = barRects();

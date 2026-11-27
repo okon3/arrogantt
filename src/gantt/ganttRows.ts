@@ -35,64 +35,83 @@ export function typeOf(task: ProjectTask, solved: SolvedProject): string {
   return isMilestone(task, solved.summaryIds) ? MILESTONE_TYPE : BAR_TYPE;
 }
 
+/**
+ * Every field a row mirrors from the model and the solve: the one list both
+ * the parse (`toGanttData`) and each edit (`applySolution`) write, so a field
+ * cannot be right on open and stale after an edit. Dates and identity
+ * (`text`, `parent`, `open`, `progress`) are not here: each path writes those
+ * its own way.
+ */
+export function rowFields(
+  task: ProjectTask,
+  solved: SolvedProject,
+  colorOf: (id: string) => string | undefined,
+) {
+  const scheduled = solved.schedule.tasks.get(task.id);
+  const summary = solved.summaryIds.has(task.id);
+  const inherited = colorOf(task.id);
+  // Priced by the same walk that reaches every row `plan.ts` reports on
+  // (`cost.ts:taskCosts`), so the grid and getPlan() read one figure.
+  const cost = solved.costs.get(task.id)!;
+  const profiled = scheduled ? drawsProfile(scheduled, hasShare(task)) : false;
+  return {
+    type: typeOf(task, solved),
+    // The end the grid prints. A field of ours rather than `end_date`, which
+    // dhtmlx owns and rewrites: on a milestone it pins it to the start to
+    // place the diamond, and the column would then show the library's
+    // geometry instead of the schedule's answer.
+    end_shown: scheduled?.end ?? task.start,
+    elapsed_days: scheduled ? solved.calendar.minutesToDays(scheduled.elapsedWorkingMinutes) : 0,
+    // Inputs, not only the solver's answer: a path that clears `resourceId`
+    // without writing the row would leave a dead id for `pullFromView` to read
+    // back, and the saved file would name a person the parser refuses.
+    resource_id: task.resourceId ?? '',
+    nominal_days: task.nominalDays,
+    rolled_effort_days: scheduled
+      ? solved.calendar.minutesToDays(scheduled.effortMinutes)
+      : task.nominalDays,
+    is_summary: summary,
+    // The colour actually shown: the branch's, else its one person's.
+    bar_color: inherited ?? '',
+    // The model's own field, which is what a row hands back: the shown
+    // colour written back would turn a person's colour into a chosen one.
+    own_color: task.color ?? '',
+    // dhtmlx paints `color` straight onto the bar background, which must stay
+    // pale on a shared task: there the colour belongs to the profile inside.
+    color: barBackground(inherited, profiled, summary),
+    shared: profiled,
+    fixed: !summary && task.fixedEnd !== undefined,
+    // Effective state, from the solved project: a leaf's own flag or an
+    // inherited one, and a summary once every leaf under it is.
+    disabled: solved.disabledIds.has(task.id),
+    // Rendered on every row whether or not anyone is highlighted: the
+    // highlight is then one stylesheet rule away, with no redraw.
+    resource_classes: resourceClassesOf(solved, task.id),
+    cost_amount: reportedCost(cost),
+    cost_costed_days: cost.costedDays,
+    cost_uncosted_days: cost.uncostedDays,
+    daily_rates: [...cost.dailyRates],
+  };
+}
+
 export function toGanttData(project: Project, solved: SolvedProject, chain: MarkedChain | null) {
   const formatDate = gantt.date.date_to_str(gantt.config.date_format);
   const colorOf = barColors(project, solved.hierarchy);
   return {
     data: project.tasks.map((task) => {
       const scheduled = solved.schedule.tasks.get(task.id);
-      const summary = solved.summaryIds.has(task.id);
-      const inherited = colorOf(task.id);
-      // Priced by the same walk that reaches every row `plan.ts` reports on
-      // (`cost.ts:taskCosts`), so the grid and getPlan() read one figure.
-      const cost = solved.costs.get(task.id)!;
-      const profiled = scheduled ? drawsProfile(scheduled, hasShare(task)) : false;
       return {
         id: task.id,
         text: task.name,
         // dhtmlx uses 0 for the root of the tree.
         parent: task.parentId ?? 0,
         open: true,
-        type: typeOf(task, solved),
         start_date: formatDate(scheduled?.start ?? task.start),
         end_date: formatDate(scheduled?.end ?? task.start),
-        // The end the grid prints. A field of ours rather than the `end_date`
-        // beside it, which dhtmlx owns and rewrites — on a milestone it pins it
-        // to the start to place the diamond, and the column would then be
-        // showing the library's geometry instead of the schedule's answer.
-        end_shown: scheduled?.end ?? task.start,
-        elapsed_days: scheduled
-          ? solved.calendar.minutesToDays(scheduled.elapsedWorkingMinutes)
-          : 0,
         progress: task.progress ?? 0,
-        resource_id: task.resourceId ?? '',
-        nominal_days: task.nominalDays,
-        rolled_effort_days: scheduled
-          ? solved.calendar.minutesToDays(scheduled.effortMinutes)
-          : task.nominalDays,
-        is_summary: summary,
-        // The colour actually shown: the branch's, else its one person's.
-        bar_color: inherited ?? '',
-        // The model's own field, which is what a row hands back: the shown
-        // colour written back would turn a person's colour into a chosen one.
-        own_color: task.color ?? '',
-        // dhtmlx paints `color` straight onto the bar background, which must stay
-        // pale on a shared task: there the colour belongs to the profile inside.
-        color: barBackground(inherited, profiled, summary),
-        shared: profiled,
-        fixed: !summary && task.fixedEnd !== undefined,
-        // Effective state, from the solved project — a leaf's own flag or an
-        // inherited one, and a summary once every leaf under it is.
-        disabled: solved.disabledIds.has(task.id),
+        ...rowFields(task, solved, colorOf),
         critical: chain?.rows.get(task.id)?.isCritical ?? false,
         critical_stale: chain !== null && !chain.fresh,
-        // Rendered on every row whether or not anyone is highlighted: the
-        // highlight is then one stylesheet rule away, with no redraw.
-        resource_classes: resourceClassesOf(solved, task.id),
-        cost_amount: reportedCost(cost),
-        cost_costed_days: cost.costedDays,
-        cost_uncosted_days: cost.uncostedDays,
-        daily_rates: [...cost.dailyRates],
       };
     }),
     links: project.tasks.flatMap((task) =>
