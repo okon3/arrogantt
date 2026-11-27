@@ -955,6 +955,8 @@ export function GanttChart({
     const knownResource = (id: string) =>
       projectRef.current.resources.some((resource) => resource.id === id);
 
+    /** The task a drag's own update already solved, until the next drag starts. */
+    let solvedInDrag: string | null = null;
     const pullFromView = (id: string | number) => {
       const ganttTask = gantt.getTask(id);
       const task = projectRef.current.tasks.find((candidate) => candidate.id === String(id));
@@ -1378,13 +1380,13 @@ export function GanttChart({
         if (applyingRef.current) return true;
         pullFromView(id);
         applySolution();
+        solvedInDrag = String(id);
         return true;
       }, undefined),
-      gantt.attachEvent(
-        'onBeforeTaskDrag',
-        (id, mode) => mode !== gantt.config.drag_mode.resize || Boolean(gantt.getTask(id).fixed),
-        undefined,
-      ),
+      gantt.attachEvent('onBeforeTaskDrag', (id, mode) => {
+        solvedInDrag = null;
+        return mode !== gantt.config.drag_mode.resize || Boolean(gantt.getTask(id).fixed);
+      }, undefined),
       // Says what the drop will write while the bar is in the air.
       gantt.attachEvent('onTaskDrag', (id, mode, ganttTask) => {
         const task = projectRef.current.tasks.find((candidate) => candidate.id === String(id));
@@ -1418,6 +1420,9 @@ export function GanttChart({
       gantt.attachEvent('onAfterTaskDrag', (id) => {
         dragTip.hidden = true;
         if (applyingRef.current) return true;
+        // dhtmlx fires the update first: a drop it already reported is solved,
+        // and a second solve would change nothing at the cost of a whole redraw.
+        if (solvedInDrag === String(id)) return true;
         pullFromView(id);
         applySolution();
         return true;
