@@ -40,6 +40,9 @@ export interface ToolbarProps {
   onHighlight(resourceId: string | null): void;
 }
 
+/** Avatars the bar shows before the rest go behind a "+n", the count included. */
+const PEOPLE_SHOWN = 8;
+
 export function Toolbar({
   filename,
   dirty,
@@ -60,6 +63,9 @@ export function Toolbar({
   onEditCalendar,
   onHighlight,
 }: ToolbarProps) {
+  const overflowing = people.length > PEOPLE_SHOWN;
+  const shown = overflowing ? people.slice(0, PEOPLE_SHOWN - 1) : people;
+  const hidden = overflowing ? people.slice(PEOPLE_SHOWN - 1) : [];
   return (
     <div className="toolbar">
       <div className="toolbar__group">
@@ -136,7 +142,7 @@ export function Toolbar({
       </div>
       {people.length > 0 && (
         <div className="toolbar__group toolbar__people" role="group" aria-label="Highlight">
-          {people.map((person) => {
+          {shown.map((person) => {
             // The ring follows the pin, never the hover: what is pinned has to
             // stay readable while the pointer borrows the highlight elsewhere.
             const on = pinned === person.id;
@@ -160,6 +166,30 @@ export function Toolbar({
               </button>
             );
           })}
+          {/* The rest behind a count, so the bar keeps one line whatever the
+              team's size; the count carries the ring when the pin is in there. */}
+          {hidden.length > 0 && (
+            <ToolbarMenu
+              label="More people"
+              trigger={{
+                className: `toolbar__person toolbar__person--more${
+                  hidden.some((person) => person.id === pinned) ? ' toolbar__person--on' : ''
+                }`,
+                content: `+${hidden.length}`,
+              }}
+              items={hidden.map((person) => ({
+                icon: (
+                  <span className="toolbar__menuavatar" style={{ background: avatarColorOf(person) }}>
+                    {initialsOf(person.name)}
+                  </span>
+                ),
+                label: person.name,
+                resourceId: person.id,
+                current: pinned === person.id,
+                onSelect: () => onHighlight(pinned === person.id ? null : person.id),
+              }))}
+            />
+          )}
         </div>
       )}
       <FileName filename={filename} dirty={dirty} onRename={onRename} />
@@ -173,11 +203,26 @@ interface MenuItem {
   title?: string;
   /** A rule above it: the start of another kind of entry. */
   separated?: boolean;
+  /** Hovering the entry highlights this person, as their avatar does. */
+  resourceId?: string;
+  /** The entry in force (the pinned person). */
+  current?: boolean;
   onSelect(): void;
 }
 
 /** A toolbar button that drops a list, in the row menu's chrome. */
-function ToolbarMenu({ icon, label, items }: { icon: ReactNode; label: string; items: MenuItem[] }) {
+function ToolbarMenu({
+  icon,
+  label,
+  items,
+  trigger,
+}: {
+  icon?: ReactNode;
+  label: string;
+  items: MenuItem[];
+  /** In place of icon, label and chevron. */
+  trigger?: { className: string; content: ReactNode };
+}) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -197,10 +242,24 @@ function ToolbarMenu({ icon, label, items }: { icon: ReactNode; label: string; i
   }, [open]);
   return (
     <div className="toolbar__menu" ref={root}>
-      <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
-        {icon}
-        {label}
-        <ChevronDown size={13} />
+      <button
+        type="button"
+        className={trigger?.className}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={trigger ? label : undefined}
+        title={trigger ? label : undefined}
+        onClick={() => setOpen(!open)}
+      >
+        {trigger ? (
+          trigger.content
+        ) : (
+          <>
+            {icon}
+            {label}
+            <ChevronDown size={13} />
+          </>
+        )}
       </button>
       {/* A dialog, like the row menu, so Escape and Del stay with it while open. */}
       {open && (
@@ -211,6 +270,8 @@ function ToolbarMenu({ icon, label, items }: { icon: ReactNode; label: string; i
                 <button
                   type="button"
                   title={item.title}
+                  data-resource-id={item.resourceId}
+                  aria-current={item.current || undefined}
                   onClick={() => {
                     setOpen(false);
                     item.onSelect();

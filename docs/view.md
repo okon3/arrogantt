@@ -116,6 +116,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   the project's name: a double click renames what Save writes.
 - **The theme picker shows the choice in force**; hover or focus opens the
   others leftwards, over the header, so nothing moves.
+- **Past `PEOPLE_SHOWN` avatars the rest go behind a `+n` menu**, so the bar
+  keeps one line. Its entries highlight and pin like the avatars; `+n` wears the
+  ring while the pinned person is in there.
 
 ## Grid
 

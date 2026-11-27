@@ -793,11 +793,42 @@
   top: calc(100% + 4px);
   left: 0;
   min-width: 150px;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .toolbar .toolbar__dropdown button {
   justify-content: flex-start;
   color: var(--ink);
+}
+
+/* The count standing for the people past PEOPLE_SHOWN: neutral, like the grid's
+   "+n", or it would read as one more person. */
+.toolbar .toolbar__person--more {
+  background: var(--surface-hover);
+  color: var(--ink-muted);
+  opacity: 1;
+}
+
+.toolbar .toolbar__person--more:hover {
+  color: var(--ink);
+}
+
+.toolbar__menuavatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.toolbar .toolbar__dropdown [aria-current] {
+  font-weight: 650;
 }
 
 .toolbar .toolbar__separated {
