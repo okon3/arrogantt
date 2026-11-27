@@ -1,23 +1,21 @@
 # Changelog
 
-## Unreleased
+## v1.8 — 2026-11-27
 
-- 🗂️ **Details beside the chart.** The (i) opens a panel that follows the
-  selected task; changes apply at once, and Auto end turns fixed dates on or off.
-- **Actions on the bar.** Point at a bar for its details, Auto end, disable
-  and delete.
-- **A quieter dark look.** Neutral greys and hairline borders, and a selected
-  task's dependencies stand out while the others dim.
+- 🗂️ **Details beside the chart.** A panel follows the selected task: edits
+  apply at once, with sliders for Pace and progress and a switch for Auto end.
+- **Actions where you point.** A bar shows details, Auto end, disable and
+  delete; every row keeps a compact set, with a + for subtasks.
 - **Dates while you drag.** A bar shows the day it will start from; a task
   with fixed dates shows both ends and its length.
-- **Light, Auto or Dark.** Pick the theme from the header; Auto follows your
-  system.
+- 🌗 **Light, Auto or Dark.** A quieter look in neutral greys; pick the theme
+  in the header, where Auto follows your system.
 - **A leaner grid.** Name, person, effort and end by default, dates as 8 Dec,
-  row actions in a compact pill, + Task in its header, Reset in the column picker.
-- **A tidier header.** File and Settings are menus, a big team folds into +n,
-  the theme opens on hover; double-click the file name to rename.
+  + Task above the rows, and Reset in the column picker.
+- **A header on one line.** File and Settings are menus, a big team folds into
+  +n, and a double click on the file name renames the project.
 - **Smaller touches.** Click a name to select, double-click to rename; groups
-  slide open; fixed bars show grips and a set End; the selected bar lights up.
+  slide open; fixed tasks show grips and a set End; a selected task's links stand out.
 
 ## v1.7 — 2026-11-21
 
