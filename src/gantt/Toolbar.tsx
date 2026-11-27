@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import {
   ChevronDown,
   File,
@@ -40,8 +40,34 @@ export interface ToolbarProps {
   onHighlight(resourceId: string | null): void;
 }
 
-/** Avatars the bar shows before the rest go behind a "+n", the count included. */
-const PEOPLE_SHOWN = 8;
+/** An avatar and the gap after it (`.toolbar__person`, `.toolbar__people`). */
+const AVATAR_SLOT_PX = 28;
+/** `.toolbar`'s gap between groups. */
+const GROUP_GAP_PX = 8;
+
+/**
+ * How many avatars (the "+n" counting as one) fit on the bar's line beside
+ * everything else on it, re-measured whenever the bar or the file name resizes.
+ */
+function useAvatarSlots(bar: RefObject<HTMLDivElement | null>, people: number): number {
+  const [slots, setSlots] = useState(people);
+  useLayoutEffect(() => {
+    const node = bar.current;
+    if (!node) return;
+    const measure = () => {
+      const others = [...node.children].filter((child) => !child.classList.contains('toolbar__people'));
+      const used = others.reduce((total, child) => total + child.getBoundingClientRect().width, 0);
+      const free = node.clientWidth - used - GROUP_GAP_PX * others.length;
+      setSlots(Math.max(1, Math.floor((free + 4) / AVATAR_SLOT_PX)));
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    const file = node.querySelector('.toolbar__file');
+    if (file) observer.observe(file);
+    return () => observer.disconnect();
+  }, [bar, people]);
+  return slots;
+}
 
 export function Toolbar({
   filename,
@@ -63,11 +89,13 @@ export function Toolbar({
   onEditCalendar,
   onHighlight,
 }: ToolbarProps) {
-  const overflowing = people.length > PEOPLE_SHOWN;
-  const shown = overflowing ? people.slice(0, PEOPLE_SHOWN - 1) : people;
-  const hidden = overflowing ? people.slice(PEOPLE_SHOWN - 1) : [];
+  const bar = useRef<HTMLDivElement>(null);
+  const slots = useAvatarSlots(bar, people.length);
+  const overflowing = people.length > slots;
+  const shown = overflowing ? people.slice(0, slots - 1) : people;
+  const hidden = overflowing ? people.slice(slots - 1) : [];
   return (
-    <div className="toolbar">
+    <div className="toolbar" ref={bar}>
       <div className="toolbar__group">
         <ToolbarMenu
           icon={<File size={15} />}

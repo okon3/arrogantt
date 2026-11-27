@@ -13,7 +13,7 @@
 .app__bar {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 8px;
   padding: 0 16px;
   border-bottom: 1px solid var(--line);
   background: var(--surface-sunken);
@@ -21,6 +21,8 @@
 }
 
 .app__bar h1 {
+  /* The title stands apart; the theme and help buttons sit close to the bar. */
+  margin-right: 10px;
   display: flex;
   align-items: center;
   gap: 9px;
@@ -770,6 +772,8 @@
 }
 
 .toolbar__file {
+  /* Its natural width: the avatars give way to it (useAvatarSlots), not it to them. */
+  flex: none;
   margin-left: auto;
   display: flex;
   align-items: center;
