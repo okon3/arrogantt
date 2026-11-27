@@ -1459,6 +1459,17 @@ html[data-scheme='dark'] .gantt_resizing {
   left: calc(100% + 12px);
 }
 
+/* Near the bar's end the right side belongs to the link circle and the bar's
+   buttons (paceHandles.ts decides when), so the × mirrors to the left. */
+.pace-period--x-before .pace-x {
+  left: auto;
+  right: calc(100% + 7px);
+}
+
+.pace-period--tiny.pace-period--x-before .pace-x {
+  right: calc(100% + 12px);
+}
+
 /* On `body`, beside the pointer while a handle is dragged; above the bar
    tooltip (50), like the row menu. */
 .pace-tip {

@@ -475,6 +475,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - Double-click on a leaf's bar adds a one-day period; edges drag in whole
   days, the level grip in tenths (0 = paused); × or an edge past the other
   removes it. Summaries and milestones get nothing. No modifier key.
+- The period's × sits on its right, mirrored to its left within
+  `X_BESIDE_END_PX` of the bar's end: the link circle and bar buttons are there.
 - **A layer over the bars (`.pace-layer`), not markup inside them**: dhtmlx
   replaces a bar's node on refresh and selection ([dhtmlx.md](dhtmlx.md)).
   `pacePeriods.ts` decides what a gesture means; `paceHandles.ts` is the DOM.

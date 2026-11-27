@@ -68,6 +68,13 @@ const PARTS =
   `<div class="pace-level" data-pace-part="level"></div>` +
   `<div class="pace-x" data-pace-part="delete" title="Remove this period">${X}</div>`;
 
+/**
+ * How close to the bar's end a period's × stops fitting on its right: past the
+ * end sit the link circle and the bar's action buttons, which it would cover.
+ * The × is 14px wide and 7px (12px when tiny) off the period (gantt.css).
+ */
+const X_BESIDE_END_PX = 32;
+
 /** On the bar of the task under the pointer: what brings its percent labels up (gantt.css). */
 const HOT_BAR_CLASS = 'gantt-bar--hot';
 
@@ -184,6 +191,10 @@ export function installPaceHandles(options: Options): () => void {
           // on either end sticks out of its task.
           const left = Math.max(box.left, bar.left);
           const right = Math.min(box.left + box.width, bar.left + bar.width);
+          node.classList.toggle(
+            'pace-period--x-before',
+            bar.left + bar.width - right < X_BESIDE_END_PX,
+          );
           node.style.setProperty(
             '--pace-bar',
             String(gantt.getTask(task.id).bar_color || DEFAULT_BAR_COLOR),
