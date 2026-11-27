@@ -6,7 +6,7 @@ import { costCellText, currencyLabel, rateCellText } from './costCells';
 import { formatDay, formatDays } from './format';
 import type { TaskDetails, TaskPatch } from './ganttHandle';
 import { PercentCell, PeriodRowList } from './PeriodRowList';
-import { CRITICAL_CHAIN_LIMIT, endsBeforeStart, type MeasuredSlack } from './project';
+import { endsBeforeStart, type MeasuredSlack } from './project';
 import { DESCRIPTION_LIMIT } from './serialization';
 import { hasShare, parseTaskShare, type DatedSharePeriod } from './taskShare';
 
@@ -620,9 +620,7 @@ export function TaskPanel({
             <p>Fixed dates: nothing moves it, no dependency holds it, and it has no float. Its effort is the work that fits.</p>
           ) : isMilestone ? (
             <p>Effort 0: a date the plan reaches rather than work it consumes. It occupies nobody.</p>
-          ) : slack === null ? (
-            <p>Past {CRITICAL_CHAIN_LIMIT} tasks the float is not measured. Ask for the critical chain from the status bar.</p>
-          ) : slack.isCritical ? (
+          ) : slack?.isCritical ? (
             <p>
               <strong>Critical{namesContention ? ` — contended on ${contendedWith}` : ''}.</strong>{' '}
               {namesContention
