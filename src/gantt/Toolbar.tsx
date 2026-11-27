@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { flushSync } from 'react-dom';
 import {
   ChevronDown,
   File,
@@ -45,27 +46,39 @@ const AVATAR_SLOT_PX = 28;
 /** `.toolbar`'s gap between groups. */
 const GROUP_GAP_PX = 8;
 
+/** What an element would take unclipped: the file name gives way only last. */
+function naturalWidth(element: Element): number {
+  const name = element.querySelector('.toolbar__filename');
+  const clipped = name ? name.scrollWidth - name.clientWidth : 0;
+  return element.getBoundingClientRect().width + clipped;
+}
+
 /**
  * How many avatars (the "+n" counting as one) fit on the bar's line beside
- * everything else on it, re-measured whenever the bar or the file name resizes.
+ * everything else on it at full width, re-measured whenever the bar or the
+ * file name resizes. Past one slot the file name truncates instead.
+ *
+ * Committed with `flushSync`: a ResizeObserver reports after layout and before
+ * paint, but a plain state update from it renders in a later task, after the
+ * frame showing the stale count has been painted.
  */
-function useAvatarSlots(bar: RefObject<HTMLDivElement | null>, people: number): number {
+function useAvatarSlots(bar: RefObject<HTMLDivElement | null>, people: number, filename: string): number {
   const [slots, setSlots] = useState(people);
   useLayoutEffect(() => {
     const node = bar.current;
     if (!node) return;
     const measure = () => {
       const others = [...node.children].filter((child) => !child.classList.contains('toolbar__people'));
-      const used = others.reduce((total, child) => total + child.getBoundingClientRect().width, 0);
+      const used = others.reduce((total, child) => total + naturalWidth(child), 0);
       const free = node.clientWidth - used - GROUP_GAP_PX * others.length;
-      setSlots(Math.max(1, Math.floor((free + 4) / AVATAR_SLOT_PX)));
+      flushSync(() => setSlots(Math.max(1, Math.floor((free + 4) / AVATAR_SLOT_PX))));
     };
     const observer = new ResizeObserver(measure);
     observer.observe(node);
     const file = node.querySelector('.toolbar__file');
     if (file) observer.observe(file);
     return () => observer.disconnect();
-  }, [bar, people]);
+  }, [bar, people, filename]);
   return slots;
 }
 
@@ -90,7 +103,7 @@ export function Toolbar({
   onHighlight,
 }: ToolbarProps) {
   const bar = useRef<HTMLDivElement>(null);
-  const slots = useAvatarSlots(bar, people.length);
+  const slots = useAvatarSlots(bar, people.length, filename);
   const overflowing = people.length > slots;
   const shown = overflowing ? people.slice(0, slots - 1) : people;
   const hidden = overflowing ? people.slice(slots - 1) : [];
@@ -330,11 +343,12 @@ function FileName({ filename, dirty, onRename }: { filename: string; dirty: bool
   return (
     <span
       className="toolbar__file"
-      title="Double-click to rename"
       onDoubleClick={() => setDraft(filename.replace(PROJECT_SUFFIX, ''))}
     >
       {draft === null ? (
-        filename
+        <span className="toolbar__filename" title={`${filename} (double-click to rename)`}>
+          {filename}
+        </span>
       ) : (
         <input
           className="toolbar__rename"

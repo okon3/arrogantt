@@ -645,10 +645,9 @@
 .toolbar {
   display: flex;
   align-items: center;
-  /* Wraps rather than squeezes: with twenty people in the plan the avatars are
-     wider than the bar, and squeezing pushed the filename out of the window and
-     broke the buttons' labels over two lines. */
-  flex-wrap: wrap;
+  /* One line: the avatars past the room go behind "+n" (useAvatarSlots), then
+     the file name truncates. A wrap would break the line before either. */
+  min-width: 0;
   gap: 8px;
   padding: 10px 0;
   flex: 1;
@@ -772,8 +771,10 @@
 }
 
 .toolbar__file {
-  /* Its natural width: the avatars give way to it (useAvatarSlots), not it to them. */
-  flex: none;
+  /* Shrinks only once the avatars are down to "+n": useAvatarSlots counts its
+     natural width, so they give way to it first. */
+  flex: 0 1 auto;
+  min-width: 120px;
   margin-left: auto;
   display: flex;
   align-items: center;
@@ -843,6 +844,13 @@
 
 .toolbar__file {
   cursor: default;
+}
+
+.toolbar__filename {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .toolbar__rename {

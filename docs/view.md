@@ -116,8 +116,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   the project's name: a double click renames what Save writes.
 - **The theme picker shows the choice in force**; hover or focus opens the
   others leftwards, over the header, so nothing moves.
-- **Avatars past what fits beside the rest of the bar go behind a `+n` menu**
-  (`useAvatarSlots`, a `ResizeObserver` on the bar and the file name), so the bar keeps one line. Its entries highlight and pin like the avatars; `+n` wears the
+- **The bar never wraps: avatars past the room go behind a `+n` menu, then the
+  file name truncates** (`useAvatarSlots` counts its unclipped width). The count is
+  committed with `flushSync` in the `ResizeObserver`, or a stale frame paints first. Its entries highlight and pin like the avatars; `+n` wears the
   ring while the pinned person is in there.
 
 ## Grid
