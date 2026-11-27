@@ -253,6 +253,9 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   text, number and date fields on leaving them (or Enter; Escape takes the edit
   back), select, colour and switches on change, sliders on release (a pace row
   added or removed at once). A refused value reverts and says why.
+- **A task field's rules live in `refuseTaskEdit`** (`taskEdits.ts`), run by
+  `handle.updateTask` for every caller; it judges only the fields an edit
+  changes. The panel only parses text; the agent API keeps plain-JS type guards.
 - Measures float for its criticality note (per change, bounded by
   `CRITICAL_CHAIN_LIMIT`); holds
   progress, colour, and delete (with subtree + dependency cleanup).

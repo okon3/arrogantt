@@ -21,6 +21,7 @@ import {
 import { fitRangeToPlan, repinRangeToScale, appliedScrollX } from './timelineGeometry';
 import { hiddenLinksOf } from './hiddenLinks';
 import { installBarActions } from './barActions';
+import { isValidEffort, refuseTaskEdit } from './taskEdits';
 import { installLinkHover } from './linkHover';
 import { barRects, foldRows, glideBars, glideScrollX } from './motion';
 import { installPaceHandles } from './paceHandles';
@@ -503,6 +504,10 @@ export function GanttChart({
       updateTask: (id, patch) => {
         const task = projectRef.current.tasks.find((candidate) => candidate.id === id);
         if (!task || !gantt.isTaskExists(id)) return;
+        // Every way in passes here, so the rules do too: callers turn the throw
+        // into their own refusal (the panel's message, a script's exception).
+        const refusal = refuseTaskEdit(task, patch);
+        if (refusal) throw new Error(refusal);
         task.name = patch.name;
         // No progress and zero progress are the same thing, and the dialog
         // cannot show the field as empty: a zero coming back on every save is
@@ -1004,7 +1009,7 @@ export function GanttChart({
       // since applySolution writes `resource_id` from the model every solve.
       if (assigned === undefined || knownResource(assigned)) task.resourceId = assigned;
       const nominal = Number(ganttTask.nominal_days);
-      if (Number.isFinite(nominal) && nominal >= 0) task.nominalDays = nominal;
+      if (isValidEffort(nominal)) task.nominalDays = nominal;
     };
 
     /**
@@ -1323,7 +1328,7 @@ export function GanttChart({
           projectRef.current.tasks.push({
             id: key,
             name: String(item.text || 'New task'),
-            nominalDays: Number.isFinite(supplied) && supplied >= 0 ? supplied : 1,
+            nominalDays: isValidEffort(supplied) ? supplied : 1,
             start,
             parentId: parent,
             // Same net as `pullFromView`'s, with nothing to fall back on: a row

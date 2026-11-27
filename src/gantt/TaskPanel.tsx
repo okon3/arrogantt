@@ -6,8 +6,7 @@ import { costCellText, currencyLabel, rateCellText } from './costCells';
 import { formatDay, formatDays } from './format';
 import type { TaskDetails, TaskPatch } from './ganttHandle';
 import { PeriodRowList } from './PeriodRowList';
-import { endsBeforeStart, type MeasuredSlack } from './project';
-import { DESCRIPTION_LIMIT } from './serialization';
+import type { MeasuredSlack } from './project';
 import { hasShare, parseTaskShare, type DatedSharePeriod } from './taskShare';
 
 /** The fields a change writes; the caller adds the rest of the task as it stands. */
@@ -315,23 +314,18 @@ export function TaskPanel({
   /** Only work can be paced: not a summary, which is never scheduled, nor an instant. */
   const paced = !task.isSummary && !isMilestone;
 
-  const name = useLiveField(task.name, (value) =>
-    value.trim() ? write({ name: value.trim() }) : refuse('Name cannot be empty'),
+  // The rules are `refuseTaskEdit`'s, applied where every edit lands; the panel
+  // only turns text into values and shows the refusal it gets back.
+  const name = useLiveField(task.name, (value) => write({ name: value.trim() }));
+  // An empty field is no number: NaN, which the rules refuse, not the 0 Number('') reads.
+  const effort = useLiveField(String(task.nominalDays), (value) =>
+    write({ nominalDays: value.trim() === '' ? Number.NaN : Number(value) }),
   );
-  const effort = useLiveField(String(task.nominalDays), (value) => {
-    const days = Number(value);
-    return value.trim() !== '' && Number.isFinite(days) && days >= 0
-      ? write({ nominalDays: days })
-      : refuse('Effort must be a non-negative number of days');
-  });
-  const description = useLiveField(task.description ?? '', (value) => {
-    // Whitespace-only reads as empty (deletes the stored text); otherwise the
-    // value goes through verbatim — a description with content is not trimmed.
-    const text = value.trim() === '' ? '' : value;
-    return text.length > DESCRIPTION_LIMIT
-      ? refuse(`Description: ${text.length} characters, the limit is ${DESCRIPTION_LIMIT}`)
-      : write({ description: text });
-  });
+  // Whitespace-only reads as empty (deletes the stored text); otherwise the
+  // value goes through verbatim — a description with content is not trimmed.
+  const description = useLiveField(task.description ?? '', (value) =>
+    write({ description: value.trim() === '' ? '' : value }),
+  );
   // The file's gate, so the panel cannot store what Save would refuse.
   const writeShare = (share: number | undefined) => {
     try {
@@ -362,18 +356,12 @@ export function TaskPanel({
 
   // Keeps the time of day the engine assigned: only the calendar day is edited
   // here, and a start at midnight would sit outside the working window.
-  const writeStart = (start: Date) => {
-    if (fixed && endsBeforeStart(start, task.end)) refuse('The end cannot come before the start');
-    else write({ start });
-  };
+  const writeStart = (start: Date) => write({ start });
   const pickStart = (value: string) => {
     const day = typedDay(value);
     if (day) writeStart(new Date(day.year, day.month - 1, day.day, task.start.getHours(), task.start.getMinutes()));
   };
-  const writeEnd = (end: Date) => {
-    if (endsBeforeStart(task.start, end)) refuse('The end cannot come before the start');
-    else write({ fixedEnd: end });
-  };
+  const writeEnd = (end: Date) => write({ fixedEnd: end });
   const pickEnd = (value: string) => {
     const day = typedDay(value);
     if (day) writeEnd(new Date(day.year, day.month - 1, day.day));

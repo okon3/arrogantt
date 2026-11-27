@@ -551,7 +551,11 @@ export default function App() {
     const handle = chart.current;
     const details = handle?.getTaskDetails(taskId);
     if (!handle || !details) return;
-    handle.updateTask(taskId, { ...unchangedPatch(details), disabled: !currentDisabled });
+    try {
+      handle.updateTask(taskId, { ...unchangedPatch(details), disabled: !currentDisabled });
+    } catch (problem) {
+      setError((problem as Error).message);
+    }
   }, []);
 
   /** A gesture on a bar's pace periods, through the same funnel as the dialog's Save. */
@@ -559,7 +563,11 @@ export default function App() {
     const handle = chart.current;
     const details = handle?.getTaskDetails(taskId);
     if (!handle || !details) return;
-    handle.updateTask(taskId, { ...unchangedPatch(details), shareOverrides: periods });
+    try {
+      handle.updateTask(taskId, { ...unchangedPatch(details), shareOverrides: periods });
+    } catch (problem) {
+      setError((problem as Error).message);
+    }
   }, []);
 
   /**
@@ -667,12 +675,16 @@ export default function App() {
     const handle = chart.current;
     const details = handle?.getTaskDetails(taskId);
     if (!handle || !details || details.isSummary) return;
-    handle.updateTask(taskId, {
-      ...unchangedPatch(details),
-      fixedEnd: details.fixedEnd
-        ? null
-        : endFromEffort(details.start, details.nominalDays, handle.getCalendar()),
-    });
+    try {
+      handle.updateTask(taskId, {
+        ...unchangedPatch(details),
+        fixedEnd: details.fixedEnd
+          ? null
+          : endFromEffort(details.start, details.nominalDays, handle.getCalendar()),
+      });
+    } catch (problem) {
+      setError((problem as Error).message);
+    }
   }, []);
 
   /**
