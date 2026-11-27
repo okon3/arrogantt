@@ -5,7 +5,7 @@ import { ColorSwatches } from './ColorSwatches';
 import { costCellText, currencyLabel, rateCellText } from './costCells';
 import { formatDay, formatDays } from './format';
 import type { TaskDetails, TaskPatch } from './ganttHandle';
-import { PercentCell, PeriodRowList } from './PeriodRowList';
+import { PeriodRowList } from './PeriodRowList';
 import { endsBeforeStart, type MeasuredSlack } from './project';
 import { DESCRIPTION_LIMIT } from './serialization';
 import { hasShare, parseTaskShare, type DatedSharePeriod } from './taskShare';
@@ -56,6 +56,41 @@ function useLiveField(source: string, write: (value: string) => boolean) {
       }
     },
   };
+}
+
+/** A share as a slider, written by `onSettle` once the gesture ends. */
+function PaceSlider({
+  percent,
+  shown,
+  label,
+  onChange,
+  onSettle,
+}: {
+  percent: number;
+  shown: string;
+  label: string;
+  onChange(percent: number): void;
+  onSettle(): void;
+}) {
+  return (
+    <span className="taskpanel__paceslider">
+      <input
+        className="taskpanel__range"
+        type="range"
+        min={0}
+        max={100}
+        step={5}
+        aria-label={label}
+        style={{ '--value': `${percent}%` } as CSSProperties}
+        value={percent}
+        onChange={(event) => onChange(Number(event.target.value))}
+        onPointerUp={onSettle}
+        onKeyUp={onSettle}
+        onBlur={onSettle}
+      />
+      <span className="taskpanel__rangevalue">{shown}</span>
+    </span>
+  );
 }
 
 function Switch({ on, label, onToggle }: { on: boolean; label: string; onToggle(): void }) {
@@ -361,6 +396,10 @@ export function TaskPanel({
     if (next.length !== periods.length) writePeriods(next);
     else setPeriodsDraft(next);
   };
+  // A period's slider writes on release, like the task's own.
+  const settlePeriods = () => {
+    if (periodsDraft) writePeriods(periodsDraft);
+  };
   const leavePace = (event: FocusEvent<HTMLElement>) => {
     if (periodsDraft && !event.currentTarget.contains(event.relatedTarget as Node | null)) {
       writePeriods(periodsDraft);
@@ -551,33 +590,6 @@ export function TaskPanel({
             <span className="taskpanel__rangevalue">{progress}%</span>
           </dd>
 
-          {paced && (
-            <>
-              <dt>Pace</dt>
-              <dd className={paceAuto && paceDraft === null ? 'taskpanel__auto-on' : undefined}>
-                <input
-                  className="taskpanel__range"
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={5}
-                  aria-label="Pace: share of the person's capacity"
-                  style={{ '--value': `${pace}%` } as CSSProperties}
-                  value={pace}
-                  onChange={(event) => setPaceDraft(Number(event.target.value))}
-                  onPointerUp={settlePace}
-                  onKeyUp={settlePace}
-                  onBlur={settlePace}
-                />
-                <span className="taskpanel__rangevalue">{paceAuto && paceDraft === null ? '—' : `${pace}%`}</span>
-                <span className="taskpanel__auto">
-                  Auto
-                  <Switch on={paceAuto} label="Automatic pace" onToggle={() => writeShare(paceAuto ? 1 : undefined)} />
-                </span>
-              </dd>
-            </>
-          )}
-
           <dt>Colour</dt>
           <dd>
             {task.ownsColor ? (
@@ -609,6 +621,49 @@ export function TaskPanel({
             <span className="taskpanel__muted">no capacity, out of roll-up</span>
           </dd>
         </dl>
+
+
+        {paced && (
+          <section className="taskpanel__section taskpanel__pace" ref={paceSection} onBlur={leavePace}>
+            <h3 className="taskpanel__sectiontitle">
+              Pace
+              <span className="taskpanel__auto">
+                Auto
+                <Switch on={paceAuto} label="Automatic pace" onToggle={() => writeShare(paceAuto ? 1 : undefined)} />
+              </span>
+            </h3>
+            {/* The task's own share, standing for every day no period below claims. */}
+            <div className={`taskpanel__pacedefault${paceAuto && paceDraft === null ? ' taskpanel__auto-on' : ''}`}>
+              <span className="taskpanel__pacelabel">{periods.length > 0 ? 'Other days' : 'Whole task'}</span>
+              <PaceSlider
+                percent={pace}
+                shown={paceAuto && paceDraft === null ? 'Auto' : `${pace}%`}
+                label="Pace on the task's other days"
+                onChange={setPaceDraft}
+                onSettle={settlePace}
+              />
+            </div>
+            <PeriodRowList<DatedSharePeriod>
+              periods={periods}
+              workingWeekdays={workingDays}
+              emptyMessage=""
+              newPeriod={newPacePeriod}
+              labelPlaceholder={(period) => (period.share === 0 ? 'Pause' : 'Reason')}
+              countSuffix={(period) => (period.share === 0 ? ' paused' : '')}
+              overlapRefused
+              valueCell={(period, update) => (
+                <PaceSlider
+                  percent={Math.round(period.share * 100)}
+                  shown={`${Math.round(period.share * 100)}%`}
+                  label="Pace in this period"
+                  onChange={(percent) => update({ share: percent / 100 })}
+                  onSettle={settlePeriods}
+                />
+              )}
+              onChange={onPeriodsChange}
+            />
+          </section>
+        )}
 
         <div className="taskpanel__notes">
           {task.contended
@@ -666,24 +721,6 @@ export function TaskPanel({
           ))}
         </Section>}
 
-        {paced && (
-          <section className="taskpanel__section taskinfo__pace" ref={paceSection} onBlur={leavePace}>
-            <h3 className="taskpanel__sectiontitle">Pace periods</h3>
-            <PeriodRowList<DatedSharePeriod>
-              periods={periods}
-              workingWeekdays={workingDays}
-              emptyMessage="No periods: the pace above holds for the whole task. 0% pauses it."
-              newPeriod={newPacePeriod}
-              labelPlaceholder={(period) => (period.share === 0 ? 'Pause' : 'Reason')}
-              countSuffix={(period) => (period.share === 0 ? ' paused' : '')}
-              overlapRefused
-              valueCell={(period, update) => (
-                <PercentCell value={period.share} onChange={(share) => update({ share })} />
-              )}
-              onChange={onPeriodsChange}
-            />
-          </section>
-        )}
 
         <Section title="Description">
           <textarea

@@ -299,10 +299,17 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
     `showPicker()` on an invisible native date input under the text; a step is
     a working day (`stepWorkingDay`). End steps only with Auto end off.
   - **Progress is a slider written on release** (pointer up, key up, blur):
-    one change per gesture, not per step. **So is Pace**, the task's default
-    share, beside an *Auto* switch: Auto is no fixed share (slider faint, value
-    `—`); touching the slider fixes one and turns Auto off; switching Auto off
-    fixes 100%. Every write goes through `parseTaskShare`.
+    one change per gesture, not per step.
+  - **Pace is one section right after the fields**: *Auto* in its title, the
+    task's own share as a first row that cannot be removed, the periods under
+    it, all on the same slider written on release (`PaceSlider`). The first
+    row says what it covers: *Whole task*, or *Other days* once a period
+    exists. Auto is no fixed share (slider faint, value *Auto*); touching that
+    slider fixes one and turns Auto off; switching Auto off fixes 100%. Every
+    write goes through `parseTaskShare`. A period row stacks (dates and ×,
+    slider, reason and count): `PeriodRowList` is People's too and stays as it
+    is. **The notes sit under the section**: an edit there rewrites them, and
+    a height change above the slider would move it from under the pointer.
   - **Effort has − / + of one whole day** (never below 0), and **Milestone is a
     switch**: on writes effort 0 and hands a fixed end back to the engine (a
     milestone is effort 0 on a computed end); off writes one day.
@@ -323,7 +330,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
     their end and start; a row selects that task, and pointing at it lights
     that task on the chart (`hintTask`: a rule tinting its rows and showing
     its `.bar-ring`, never a selection). Hidden when empty.
-  - Sections after them: Pace periods, Description; *Delete task* last, a red text
+  - Sections after them: Depends on, Blocks, Description; *Delete task* last, a red text
     button under a hairline.
 
 ## Bar tooltip
