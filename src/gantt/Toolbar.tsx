@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ChevronDown,
   File,
-  FileDown,
   FilePlus2,
   FolderOpen,
   Save,
@@ -13,6 +12,7 @@ import {
   Redo2,
   Users,
   CalendarDays,
+  Settings2,
 } from 'lucide-react';
 import type { Resource } from '../scheduler';
 import { avatarColorOf, initialsOf } from './colors';
@@ -69,37 +69,33 @@ export function Toolbar({
           items={[
             { icon: <FilePlus2 size={15} />, label: 'New', onSelect: onNew },
             { icon: <FolderOpen size={15} />, label: 'Open…', onSelect: onOpen },
+            // What Save writes is the project, what these write is the schedule
+            // derived from it: a file that only goes out, kept apart by a rule.
+            {
+              icon: <FileSpreadsheet size={15} />,
+              label: 'Export CSV',
+              title: 'Export the solved plan to CSV (dates, effort and durations)',
+              onSelect: onExportCsv,
+              separated: true,
+            },
+            {
+              icon: <Image size={15} />,
+              label: 'Export PNG',
+              title: 'Export the plan as a PNG image',
+              onSelect: onExportPng,
+            },
+            {
+              icon: <Printer size={15} />,
+              label: 'Print…',
+              title: 'Print the plan, or save it as PDF from the print dialog (Ctrl+P)',
+              onSelect: onPrint,
+            },
           ]}
         />
         <button type="button" onClick={onSave}>
           <Save size={15} />
           Save
         </button>
-      </div>
-      {/* Its own group rather than beside Save: what Save writes is the
-          project, what this writes is the schedule derived from it — a file
-          that comes back in is one thing, a file that only goes out is
-          another. */}
-      <div className="toolbar__group">
-        <ToolbarMenu
-          icon={<FileDown size={15} />}
-          label="Export"
-          items={[
-            {
-              icon: <FileSpreadsheet size={15} />,
-              label: 'CSV',
-              title: 'Export the solved plan to CSV (dates, effort and durations)',
-              onSelect: onExportCsv,
-            },
-            { icon: <Image size={15} />, label: 'PNG', title: 'Export the plan as a PNG image', onSelect: onExportPng },
-            {
-              icon: <Printer size={15} />,
-              label: 'Print',
-              title: 'Print the plan, or save it as PDF from the print dialog (Ctrl+P)',
-              onSelect: onPrint,
-            },
-          ]}
-        />
       </div>
       <div className="toolbar__group">
         {/* The title names the step rather than only saying there is one: a
@@ -128,14 +124,15 @@ export function Toolbar({
         </button>
       </div>
       <div className="toolbar__group">
-        <button type="button" onClick={onEditResources}>
-          <Users size={15} />
-          People
-        </button>
-        <button type="button" onClick={onEditCalendar}>
-          <CalendarDays size={15} />
-          Calendar
-        </button>
+        {/* Set up once per plan, rarely touched after. */}
+        <ToolbarMenu
+          icon={<Settings2 size={15} />}
+          label="Settings"
+          items={[
+            { icon: <Users size={15} />, label: 'People…', onSelect: onEditResources },
+            { icon: <CalendarDays size={15} />, label: 'Calendar…', onSelect: onEditCalendar },
+          ]}
+        />
       </div>
       {people.length > 0 && (
         <div className="toolbar__group toolbar__people" role="group" aria-label="Highlight">
@@ -174,6 +171,8 @@ interface MenuItem {
   icon: ReactNode;
   label: string;
   title?: string;
+  /** A rule above it: the start of another kind of entry. */
+  separated?: boolean;
   onSelect(): void;
 }
 
@@ -208,7 +207,7 @@ function ToolbarMenu({ icon, label, items }: { icon: ReactNode; label: string; i
         <dialog open className="rowmenu toolbar__dropdown" aria-label={label}>
           <ul className="rowmenu__items">
             {items.map((item) => (
-              <li key={item.label}>
+              <li key={item.label} className={item.separated ? 'toolbar__separated' : undefined}>
                 <button
                   type="button"
                   title={item.title}

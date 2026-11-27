@@ -800,6 +800,12 @@
   color: var(--ink);
 }
 
+.toolbar .toolbar__separated {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+
 .toolbar__file {
   cursor: default;
 }
@@ -1112,13 +1118,48 @@
    plan with twenty people cannot push it onto a second line. */
 /* Three pills in one track, the pressed one lifted: the header's own register
    (surface on sunken), like the borderless pills beside it. */
+/* One pill wide in the header; the track holding all three opens leftwards
+   over it, so the layout never moves. The pressed option sits last, under the
+   pointer, wherever it is in the list. */
 .theme-switch {
-  display: flex;
+  position: relative;
   flex: none;
-  gap: 2px;
+  width: 28px;
+  height: 26px;
+}
+
+.theme-switch__track {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  /* No gap: the hidden options would still be spaced. */
+  gap: 0;
   padding: 2px;
   border: 1px solid var(--line);
   border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+}
+
+.theme-switch__option[aria-pressed='true'] {
+  order: 1;
+}
+
+.theme-switch__option:not([aria-pressed='true']) {
+  width: 0;
+  overflow: hidden;
+  transition: width var(--motion-fast) var(--ease-out);
+}
+
+.theme-switch:hover .theme-switch__option,
+.theme-switch:focus-within .theme-switch__option {
+  width: 22px;
+}
+
+.theme-switch:hover .theme-switch__option:not([aria-pressed='true']),
+.theme-switch:focus-within .theme-switch__option:not([aria-pressed='true']) {
+  margin-right: 2px;
 }
 
 .theme-switch__option {

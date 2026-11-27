@@ -12,23 +12,27 @@ const CHOICES: { value: ThemeChoice; label: string; Icon: typeof Sun }[] = [
 export function ThemeSwitcher({ storage }: { storage: DraftStorage | undefined }) {
   const [choice, setChoice] = useState(() => readThemeChoice(storage));
   return (
+    // Shows the choice in force; pointing at it (or tabbing in) opens the others
+    // beside it, leftwards, over the header rather than pushing it.
     <div className="theme-switch" role="group" aria-label="Theme">
-      {CHOICES.map(({ value, label, Icon }) => (
-        <button
-          key={value}
-          type="button"
-          className="theme-switch__option"
-          title={label}
-          aria-label={label}
-          aria-pressed={choice === value}
-          onClick={() => {
-            setThemeChoice(storage, value);
-            setChoice(value);
-          }}
-        >
-          <Icon size={13} />
-        </button>
-      ))}
+      <div className="theme-switch__track">
+        {CHOICES.map(({ value, label, Icon }) => (
+          <button
+            key={value}
+            type="button"
+            className="theme-switch__option"
+            title={label}
+            aria-label={label}
+            aria-pressed={choice === value}
+            onClick={() => {
+              setThemeChoice(storage, value);
+              setChoice(value);
+            }}
+          >
+            <Icon size={13} />
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

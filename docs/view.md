@@ -111,9 +111,11 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 
 ## Toolbar
 
-- **File (New, Open) and Export (CSV, PNG, Print) are dropdowns; Save stays a
-  button.** Add task lives in the grid. The file name is the project's name:
-  a double click renames what Save writes.
+- **File (New, Open, then the exports) and Settings (People, Calendar) are
+  dropdowns; Save stays a button.** Add task lives in the grid. The file name is
+  the project's name: a double click renames what Save writes.
+- **The theme picker shows the choice in force**; hover or focus opens the
+  others leftwards, over the header, so nothing moves.
 
 ## Grid
 
