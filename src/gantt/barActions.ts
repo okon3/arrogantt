@@ -52,6 +52,10 @@ export function installBarActions(container: HTMLElement, actions: BarActions): 
 
   let shown: string | null = null;
   let hiding: number | undefined;
+  // Held from a press on the chart to its release: a drag replaces the bar's
+  // node on every move, and each new node under the pointer would show the
+  // buttons again, riding along with the bar.
+  let pressed = false;
 
   const hide = () => {
     window.clearTimeout(hiding);
@@ -85,6 +89,7 @@ export function installBarActions(container: HTMLElement, actions: BarActions): 
   };
 
   const onOver = (event: MouseEvent) => {
+    if (pressed) return;
     const target = event.target as HTMLElement;
     if (bar.contains(target)) {
       window.clearTimeout(hiding);
@@ -122,9 +127,17 @@ export function installBarActions(container: HTMLElement, actions: BarActions): 
   container.addEventListener('mouseleave', hide);
   // A drag or a redraw moves the bar from under the buttons.
   const onPress = (event: PointerEvent) => {
-    if (!bar.contains(event.target as Node)) hide();
+    if (bar.contains(event.target as Node)) return;
+    pressed = true;
+    hide();
+  };
+  const onRelease = () => {
+    pressed = false;
   };
   container.addEventListener('pointerdown', onPress);
+  // On the window: the drag may end anywhere.
+  window.addEventListener('pointerup', onRelease);
+  window.addEventListener('pointercancel', onRelease);
   bar.addEventListener('click', onClick);
   bar.addEventListener('pointerdown', swallow);
   bar.addEventListener('mousedown', swallow);
@@ -139,6 +152,8 @@ export function installBarActions(container: HTMLElement, actions: BarActions): 
     container.removeEventListener('mouseout', onOut);
     container.removeEventListener('mouseleave', hide);
     container.removeEventListener('pointerdown', onPress);
+    window.removeEventListener('pointerup', onRelease);
+    window.removeEventListener('pointercancel', onRelease);
     gantt.detachEvent(redrawn);
     bar.remove();
   };
