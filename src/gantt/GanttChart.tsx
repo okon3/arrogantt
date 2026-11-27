@@ -282,62 +282,66 @@ export function GanttChart({
   const applySolution = useCallback(
     (notify = true) => {
       applyingRef.current = true;
-      const solved = solve(projectRef.current);
-      // Here, so the cut lands in the history step of whatever edit shortened
-      // the task — and before the chain below re-solves the engine tasks.
-      trimSharePeriods(projectRef.current, solved);
-      solvedRef.current = solved;
-      // Measured after the schedule and from it, so the two can never disagree
-      // about the plan they describe — or, over the limit, kept and called old.
-      chainRef.current = chainAfterEdit(
-        projectRef.current,
-        solved,
-        markCriticalRef.current,
-        chainRef.current,
-      );
-      const colorOf = barColors(projectRef.current, solved.hierarchy);
-      for (const task of projectRef.current.tasks) {
-        const scheduled = solved.schedule.tasks.get(task.id);
-        if (!scheduled || !gantt.isTaskExists(task.id)) continue;
-        const ganttTask = gantt.getTask(task.id);
-        ganttTask.type = typeOf(task, solved);
-        ganttTask.start_date = scheduled.start;
-        ganttTask.end_date = scheduled.end;
-        ganttTask.end_shown = scheduled.end;
-        ganttTask.elapsed_days = solved.calendar.minutesToDays(scheduled.elapsedWorkingMinutes);
-        ganttTask.nominal_days = task.nominalDays;
-        // An input, like `nominal_days` above: the row mirrors the model, not
-        // just the solver's answer. Without it a path that clears `resourceId`
-        // without writing the row leaves a dead id for `pullFromView` to read
-        // back, and the saved file names a person `deserializeProject` refuses
-        // to reopen.
-        ganttTask.resource_id = task.resourceId ?? '';
-        ganttTask.rolled_effort_days = solved.calendar.minutesToDays(scheduled.effortMinutes);
-        const summary = solved.summaryIds.has(task.id);
-        const inherited = colorOf(task.id);
-        ganttTask.is_summary = summary;
-        ganttTask.bar_color = inherited ?? '';
-        ganttTask.own_color = task.color ?? '';
-        const profiled = drawsProfile(scheduled, hasShare(task));
-        ganttTask.color = barBackground(inherited, profiled, summary);
-        ganttTask.shared = profiled;
-        ganttTask.fixed = !summary && task.fixedEnd !== undefined;
-        ganttTask.disabled = solved.disabledIds.has(task.id);
-        ganttTask.resource_classes = resourceClassesOf(solved, task.id);
-        const cost = solved.costs.get(task.id)!;
-        ganttTask.cost_amount = reportedCost(cost);
-        ganttTask.cost_costed_days = cost.costedDays;
-        ganttTask.cost_uncosted_days = cost.uncostedDays;
-        ganttTask.daily_rates = [...cost.dailyRates];
+      try {
+        const solved = solve(projectRef.current);
+        // Here, so the cut lands in the history step of whatever edit shortened
+        // the task — and before the chain below re-solves the engine tasks.
+        trimSharePeriods(projectRef.current, solved);
+        solvedRef.current = solved;
+        // Measured after the schedule and from it, so the two can never disagree
+        // about the plan they describe — or, over the limit, kept and called old.
+        chainRef.current = chainAfterEdit(
+          projectRef.current,
+          solved,
+          markCriticalRef.current,
+          chainRef.current,
+        );
+        const colorOf = barColors(projectRef.current, solved.hierarchy);
+        for (const task of projectRef.current.tasks) {
+          const scheduled = solved.schedule.tasks.get(task.id);
+          if (!scheduled || !gantt.isTaskExists(task.id)) continue;
+          const ganttTask = gantt.getTask(task.id);
+          ganttTask.type = typeOf(task, solved);
+          ganttTask.start_date = scheduled.start;
+          ganttTask.end_date = scheduled.end;
+          ganttTask.end_shown = scheduled.end;
+          ganttTask.elapsed_days = solved.calendar.minutesToDays(scheduled.elapsedWorkingMinutes);
+          ganttTask.nominal_days = task.nominalDays;
+          // An input, like `nominal_days` above: the row mirrors the model, not
+          // just the solver's answer. Without it a path that clears `resourceId`
+          // without writing the row leaves a dead id for `pullFromView` to read
+          // back, and the saved file names a person `deserializeProject` refuses
+          // to reopen.
+          ganttTask.resource_id = task.resourceId ?? '';
+          ganttTask.rolled_effort_days = solved.calendar.minutesToDays(scheduled.effortMinutes);
+          const summary = solved.summaryIds.has(task.id);
+          const inherited = colorOf(task.id);
+          ganttTask.is_summary = summary;
+          ganttTask.bar_color = inherited ?? '';
+          ganttTask.own_color = task.color ?? '';
+          const profiled = drawsProfile(scheduled, hasShare(task));
+          ganttTask.color = barBackground(inherited, profiled, summary);
+          ganttTask.shared = profiled;
+          ganttTask.fixed = !summary && task.fixedEnd !== undefined;
+          ganttTask.disabled = solved.disabledIds.has(task.id);
+          ganttTask.resource_classes = resourceClassesOf(solved, task.id);
+          const cost = solved.costs.get(task.id)!;
+          ganttTask.cost_amount = reportedCost(cost);
+          ganttTask.cost_costed_days = cost.costedDays;
+          ganttTask.cost_uncosted_days = cost.uncostedDays;
+          ganttTask.daily_rates = [...cost.dailyRates];
+        }
+        writeChainOntoRows(projectRef.current, chainRef.current);
+        const drawn = barRects();
+        // refreshData redraws from the mutated task objects without firing the
+        // update events that would bounce straight back into this function.
+        gantt.refreshData();
+        fitRangeToPlan(solved.schedule);
+        glideBars(drawn);
+      } finally {
+        // Even if a solve throws: left on, the flag silently drops every later edit.
+        applyingRef.current = false;
       }
-      writeChainOntoRows(projectRef.current, chainRef.current);
-      const drawn = barRects();
-      // refreshData redraws from the mutated task objects without firing the
-      // update events that would bounce straight back into this function.
-      gantt.refreshData();
-      fitRangeToPlan(solved.schedule);
-      glideBars(drawn);
-      applyingRef.current = false;
       reportChainState();
       if (notify) changeRef.current?.();
     },
@@ -397,37 +401,40 @@ export function GanttChart({
       // project the caller goes on to snapshot, or the first solve after it
       // would change the model with no edit to answer for it.
       trimSharePeriods(next, solved);
-      applyingRef.current = true;
-      projectRef.current = next;
-      solvedRef.current = solved;
-      // An undo keeps the marking it had — over the limit as a stale one — since
-      // it is the same plan a step back, and dropping it would leave a big plan
-      // with nothing marked after every Ctrl+Z. A file, a draft or a new project
-      // is a different plan, and a marking measured against the one that was
-      // open says nothing about it.
-      chainRef.current = chainAfterEdit(
-        next,
-        solvedRef.current,
-        markCriticalRef.current,
-        options?.keepViewport ? chainRef.current : null,
-      );
       // Undo and redo only: a file or a new plan has nothing to slide from.
       const drawn = options?.keepViewport ? barRects() : new Map<string, DOMRect>();
-      gantt.clearAll();
-      const data = toGanttData(next, solvedRef.current, chainRef.current);
-      // Written into the data rather than onto the tasks afterwards, which would
-      // need a second render of the whole chart to show.
-      for (const task of data.data) {
-        if (collapsed?.has(String(task.id))) task.open = false;
+      applyingRef.current = true;
+      try {
+        projectRef.current = next;
+        solvedRef.current = solved;
+        // An undo keeps the marking it had — over the limit as a stale one — since
+        // it is the same plan a step back, and dropping it would leave a big plan
+        // with nothing marked after every Ctrl+Z. A file, a draft or a new project
+        // is a different plan, and a marking measured against the one that was
+        // open says nothing about it.
+        chainRef.current = chainAfterEdit(
+          next,
+          solvedRef.current,
+          markCriticalRef.current,
+          options?.keepViewport ? chainRef.current : null,
+        );
+        gantt.clearAll();
+        const data = toGanttData(next, solvedRef.current, chainRef.current);
+        // Written into the data rather than onto the tasks afterwards, which would
+        // need a second render of the whole chart to show.
+        for (const task of data.data) {
+          if (collapsed?.has(String(task.id))) task.open = false;
+        }
+        gantt.parse(data);
+        // The loaded project may carry a different `currency` than the one the
+        // headers were built from — the label lives on the two new columns'
+        // `label(project)`, which nothing else here re-reads.
+        rebuildColumns();
+        refreshResourceOptions(next.resources);
+        fitRangeToPlan(solvedRef.current.schedule);
+      } finally {
+        applyingRef.current = false;
       }
-      gantt.parse(data);
-      // The loaded project may carry a different `currency` than the one the
-      // headers were built from — the label lives on the two new columns'
-      // `label(project)`, which nothing else here re-reads.
-      rebuildColumns();
-      refreshResourceOptions(next.resources);
-      fitRangeToPlan(solvedRef.current.schedule);
-      applyingRef.current = false;
       // After the render, or fitRangeToPlan would scroll back over it.
       if (scroll) gantt.scrollTo(scroll.x, scroll.y);
       // The row may be one of those the undone change had created.
@@ -503,14 +510,17 @@ export function GanttChart({
       },
       measureCriticalChain: () => {
         applyingRef.current = true;
-        chainRef.current = chainOnRequest(projectRef.current, solvedRef.current);
-        // The ref is what the rows were drawn from, so putting the marking on
-        // here is also what keeps the toggle effect from firing a second time
-        // and calling this very measurement old.
-        markCriticalRef.current = true;
-        writeChainOntoRows(projectRef.current, chainRef.current);
-        gantt.refreshData();
-        applyingRef.current = false;
+        try {
+          chainRef.current = chainOnRequest(projectRef.current, solvedRef.current);
+          // The ref is what the rows were drawn from, so putting the marking on
+          // here is also what keeps the toggle effect from firing a second time
+          // and calling this very measurement old.
+          markCriticalRef.current = true;
+          writeChainOntoRows(projectRef.current, chainRef.current);
+          gantt.refreshData();
+        } finally {
+          applyingRef.current = false;
+        }
         reportChainState();
       },
       deleteTask: (id) => {
