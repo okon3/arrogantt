@@ -624,7 +624,8 @@ export function TaskPanel({
 
 
         {paced && (
-          <section className="taskpanel__section taskpanel__pace" ref={paceSection} onBlur={leavePace}>
+          // A disabled task takes no capacity: a share of it would mean nothing.
+          <section className="taskpanel__section taskpanel__pace" ref={paceSection} onBlur={leavePace} inert={task.disabled}>
             <h3 className="taskpanel__sectiontitle">
               Pace
               <span className="taskpanel__auto">

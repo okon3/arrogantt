@@ -308,7 +308,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
     slider fixes one and turns Auto off; switching Auto off fixes 100%. Every
     write goes through `parseTaskShare`. A period row stacks (dates and ×,
     slider, reason and count): `PeriodRowList` is People's too and stays as it
-    is. **The notes sit under the section**: an edit there rewrites them, and
+    is. **A disabled task's Pace is inert and faint**: it takes no capacity,
+    so a share of it would mean nothing. **The notes sit under the section**: an edit there rewrites them, and
     a height change above the slider would move it from under the pointer.
   - **Effort has − / + of one whole day** (never below 0), and **Milestone is a
     switch**: on writes effort 0 and hands a fixed end back to the engine (a

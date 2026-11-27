@@ -1251,6 +1251,10 @@
   align-items: center;
 }
 
+.taskpanel__pace[inert] {
+  opacity: 0.45;
+}
+
 .taskpanel__pacedefault,
 .taskpanel__pace .ranges__row--pct {
   padding: var(--space-2) 0;
