@@ -8,15 +8,16 @@ const LABEL_INSIDE_RATE = 0.45;
 /** Radius of the profile's corners: a change of rate reads as a soft step, not a notch. */
 const STEP_RADIUS_PX = 4;
 
-type Point = [x: number, y: number];
+export type Point = [x: number, y: number];
 
 /**
  * The outline through `points` (percentages of the bar, every edge horizontal
  * or vertical) with each inner corner rounded. The radius is taken in pixels
  * and converted per axis, since the viewBox stretches unevenly; a short edge
- * caps it at half its length, so two corners never overlap.
+ * caps it at half its length, so two corners never overlap. With both sizes
+ * 100, points are taken as pixels: the help diagram draws through it that way.
  */
-function roundedOutline(points: Point[], widthPx: number, heightPx: number): string {
+export function roundedOutline(points: Point[], widthPx: number, heightPx: number): string {
   const kept = points.filter(
     (point, index) =>
       index === 0 || point[0] !== points[index - 1][0] || point[1] !== points[index - 1][1],

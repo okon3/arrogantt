@@ -599,10 +599,10 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 
 ## In-app help
 
-- Reached from `?` and from the empty state. Explains the rising/falling fill
-  and why critical-with-float isn't a contradiction.
-- Diagram **drawn, not screenshotted**: SVG using `segmentBar.ts` geometry and
-  `gantt.css` colours.
+- Reached from `?` and from the empty state. Short on purpose: one line per
+  rule, the rising/falling fill shown in the diagram rather than explained.
+- Diagram **drawn, not screenshotted**: SVG traced by `segmentBar.ts`'s
+  `roundedOutline`, `--radius-bar` corners, `gantt.css` colours.
 - Empty state is minimal (name, one line, two buttons, a demo hint, help
   link). The demo is `docs/demo.gantt` bundled via `?raw` and opened clean,
   like a file — never a draft.

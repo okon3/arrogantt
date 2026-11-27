@@ -1,5 +1,6 @@
 import { Dialog } from './Dialog';
 import { CRITICAL_CHAIN_LIMIT } from './project';
+import { roundedOutline, type Point } from './segmentBar';
 
 /**
  * The person both tasks in the diagram are assigned to.
@@ -7,7 +8,7 @@ import { CRITICAL_CHAIN_LIMIT } from './project';
  * Invented, and her avatar is drawn rather than derived: `avatarColorOf` answers
  * for somebody in the project, and nobody in the diagram is.
  */
-const PERSON = { initials: 'AL', colour: '#5b6ebd' };
+const PERSON = { initials: 'AD', colour: '#5b6ebd' };
 
 /**
  * The fill of a shared bar, kept in step with gantt.css — same default blue, and
@@ -21,10 +22,26 @@ const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S', 'M'];
 const COLUMN = 60;
 const AXIS_X = 110;
 const BAR_HEIGHT = 28;
+/** `--radius-bar`: an SVG `rx` cannot read a CSS variable. */
+const BAR_RADIUS = 6;
 
 const dayX = (day: number) => AXIS_X + day * COLUMN;
 /** The top edge of the fill for a given rate: the profile hangs from the floor. */
 const rateY = (top: number, rate: number) => top + BAR_HEIGHT * (1 - rate);
+
+/**
+ * A profile through `steps` ([from day, to day, rate]), traced by the helper
+ * the chart's bars use, so its steps are rounded the same way.
+ */
+const profile = (top: number, steps: [number, number, number][]) => {
+  const floor = top + BAR_HEIGHT;
+  const points: Point[] = [[dayX(steps[0][0]), floor]];
+  for (const [from, to, rate] of steps) {
+    points.push([dayX(from), rateY(top, rate)], [dayX(to), rateY(top, rate)]);
+  }
+  points.push([dayX(steps[steps.length - 1][1]), floor]);
+  return roundedOutline(points, 100, 100);
+};
 
 /**
  * The one thing a Gantt of this kind shows that an ordinary one does not: two
@@ -55,10 +72,10 @@ function EffortDiagram() {
     >
       <defs>
         <clipPath id="help-bar-a">
-          <rect x={dayX(0)} y={rowA} width={COLUMN * 8} height={BAR_HEIGHT} rx={BAR_HEIGHT / 2} />
+          <rect x={dayX(0)} y={rowA} width={COLUMN * 8} height={BAR_HEIGHT} rx={BAR_RADIUS} />
         </clipPath>
         <clipPath id="help-bar-b">
-          <rect x={dayX(2)} y={rowB} width={COLUMN * 2} height={BAR_HEIGHT} rx={BAR_HEIGHT / 2} />
+          <rect x={dayX(2)} y={rowB} width={COLUMN * 2} height={BAR_HEIGHT} rx={BAR_RADIUS} />
         </clipPath>
       </defs>
 
@@ -102,7 +119,7 @@ function EffortDiagram() {
         y={rowA}
         width={COLUMN * 8}
         height={BAR_HEIGHT}
-        rx={BAR_HEIGHT / 2}
+        rx={BAR_RADIUS}
         className="help__track"
       />
       <path
@@ -111,15 +128,13 @@ function EffortDiagram() {
         stroke={FILL_LINE}
         strokeWidth={1.5}
         strokeLinejoin="round"
-        d={
-          `M ${dayX(0)},${rowA + BAR_HEIGHT}` +
-          ` L ${dayX(0)},${rateY(rowA, 1)} L ${dayX(2)},${rateY(rowA, 1)}` +
-          ` L ${dayX(2)},${rateY(rowA, 0.5)} L ${dayX(4)},${rateY(rowA, 0.5)}` +
-          // The weekend is not a pause in working time, so the level carries
-          // across it as one segment — exactly as the real bar draws it.
-          ` L ${dayX(4)},${rateY(rowA, 1)} L ${dayX(8)},${rateY(rowA, 1)}` +
-          ` L ${dayX(8)},${rowA + BAR_HEIGHT} Z`
-        }
+        // The weekend is not a pause in working time, so the level carries
+        // across it as one segment — exactly as the real bar draws it.
+        d={profile(rowA, [
+          [0, 2, 1],
+          [2, 4, 0.5],
+          [4, 8, 1],
+        ])}
       />
       {label(dayX(1), rateY(rowA, 1) + BAR_HEIGHT / 2, '100%')}
       {label(dayX(3), rateY(rowA, 0.5) + BAR_HEIGHT / 4, '50%')}
@@ -131,7 +146,7 @@ function EffortDiagram() {
         y={rowB}
         width={COLUMN * 2}
         height={BAR_HEIGHT}
-        rx={BAR_HEIGHT / 2}
+        rx={BAR_RADIUS}
         className="help__track"
       />
       <path
@@ -140,11 +155,7 @@ function EffortDiagram() {
         stroke={FILL_LINE}
         strokeWidth={1.5}
         strokeLinejoin="round"
-        d={
-          `M ${dayX(2)},${rowB + BAR_HEIGHT}` +
-          ` L ${dayX(2)},${rateY(rowB, 0.5)} L ${dayX(4)},${rateY(rowB, 0.5)}` +
-          ` L ${dayX(4)},${rowB + BAR_HEIGHT} Z`
-        }
+        d={profile(rowB, [[2, 4, 0.5]])}
       />
       {label(dayX(3), rateY(rowB, 0.5) + BAR_HEIGHT / 4, '50%')}
 
@@ -184,109 +195,70 @@ export function HelpDialog({ onClose }: { onClose(): void }) {
       }
     >
       <p className="dialog__hint dialog__hint--wide">
-        A task declares two things: how much work it costs and from when it may start. Everything
-        else — duration, end date, who is holding up whom — is computed by the engine. The one
-        exception is a task on fixed dates, below.
+        For each task you enter the work and the earliest start. The app works out the end date
+        from how much time the assigned person has.
       </p>
 
       <section className="help__section">
-        <h3>Effort and start are inputs, the end is a result</h3>
+        <h3>Effort, start and end</h3>
         <p>
-          <strong>Effort</strong> is the work the task costs, in person-days. <strong>Start</strong>{' '}
-          is the day before which it cannot begin. <strong>End</strong> is not typed: it depends on
-          how much capacity the assigned person can actually give it, day by day.
+          <strong>Effort</strong> is how many days one person would need working only on this task.{' '}
+          <strong>Start</strong> is the earliest day it can begin; on a day off, it moves to the next
+          working day.
         </p>
         <p>
-          The exception is work whose dates are already a fact — a workshop, something finished last
-          week. Switch off <strong>Auto end</strong> in the task's details and its bar stays on the
-          dates you give it: no dependency or contention moves it. <strong>Pace</strong>, in the
-          same panel, holds a task to an exact share of its person, for all of it or for periods; at
-          0% it is paused.
+          A task with dates already decided, like a workshop or finished work: select it and turn off{' '}
+          <strong>Auto end</strong> in the panel on the right. <strong>Pace</strong>, in the same
+          panel, sets how much of the person's time the task gets, for the whole task or for some
+          days. 0% pauses it.
         </p>
       </section>
 
       <section className="help__section">
-        <h3>Two tasks at once are each done at half rate</h3>
+        <h3>Two tasks, one person</h3>
         <figure className="help__figure">
           <EffortDiagram />
           <figcaption className="help__caption">
-            Ada has <strong>Analysis</strong> (5 days of effort, from Monday) and{' '}
-            <strong>Report</strong> (1 day, from Wednesday). Both are active on Wednesday and
-            Thursday: her day splits in two and each progresses at 50%. Analysis returns to 100% on
-            Friday, once it is alone again.
+            Ada has <strong>Analysis</strong> (5 days, from Monday) and <strong>Report</strong> (1
+            day, from Wednesday). On Wednesday and Thursday each gets half her day. Analysis is back
+            to 100% on Friday and, skipping the weekend, ends on Monday.
           </figcaption>
         </figure>
+        <p>The height of the fill is the share of the person's day the task gets.</p>
+      </section>
+
+      <section className="help__section">
+        <h3>Days off and availability</h3>
         <p>
-          That is the up-and-down profile inside the bars: the height of the fill is the share of
-          the day that person is giving the task at that moment. The{' '}
-          <strong>work never changes</strong> — five days stay five days. What changes is only the
-          calendar time it takes to get through them: Analysis takes eight.
+          Nights, weekends, holidays and company closures don't count. Grey bands are days off; red
+          bands are a person's absence or a closure for everyone.
+        </p>
+        <p>
+          In People, a person works 100% unless you set less. A period with its own percentage
+          replaces that value for those days, it doesn't multiply it: 25% over a base of 50% is
+          25%. 0% is an absence.
         </p>
       </section>
 
       <section className="help__section">
-        <h3>Time nobody works does not count</h3>
+        <h3>Groups and unassigned tasks</h3>
         <p>
-          Nights, weekends, holidays and company shutdowns are not on the axis: a duration never
-          counts them. In the diagram Saturday and Sunday pass without consuming effort, and
-          Analysis finishes on Monday. On the chart the <strong>grey bands</strong> are non-working
-          days; the <strong>red bands</strong> are one person's absence or a shutdown for everyone.
+          A group is a task with subtasks. Its effort and dates are the totals of its subtasks, and a
+          link to it is a link to each of them. A task with nobody assigned always runs at 100%.
         </p>
       </section>
 
       <section className="help__section">
-        <h3>Availability replaces, it does not multiply</h3>
+        <h3>Red outline: what sets the end date</h3>
         <p>
-          A person at 50% gives half a day to the project. An availability period{' '}
-          <strong>replaces</strong> the base percentage instead of multiplying it: someone at 50%
-          with a period at 25% works at 25%, not at 12.5%. Where two periods overlap, the last one
-          declared wins, so a narrow exception carves itself out of a wider one. An availability of
-          zero is an absence — no other concept is needed.
-        </p>
-      </section>
-
-      <section className="help__section">
-        <h3>A group is never scheduled</h3>
-        <p>
-          A task with subtasks consumes no capacity: if it did, it would contend for the same
-          person against its own children, halving them. Its effort and dates are summed from its
-          children, and the colour chosen at the top level flows down the whole branch. A
-          dependency on a group applies to its leaves.
-        </p>
-      </section>
-
-      <section className="help__section">
-        <h3>With no person, there is no contention</h3>
-        <p>
-          A task with nobody assigned always progresses at 100%: its duration equals its effort,
-          and nothing else can slow it down.
-        </p>
-      </section>
-
-      <section className="help__section">
-        <h3>The red outline is the critical chain</h3>
-        <p>
-          Tasks outlined in <strong>red</strong> are the ones the end date depends on: starting them
-          later, or giving them one more day of work, moves it. A critical task's details say what moves
-          the end: any delay, or only more work.
+          Delaying a task outlined in <strong>red</strong>, or adding work to it, moves the end of the
+          plan. A task can be red just because it shares a person with other red tasks; select it to
+          see why.
         </p>
         <p>
-          This is not the textbook critical path, which only looks at dependencies. Here a person
-          split between two tasks stretches both of them, so a task can be critical without
-          depending on anything, purely because it shares a resource with the chain — and the
-          details say which of the two cases it is. A <strong>contention</strong> is resolved by
-          moving or reassigning another task of that person's; a sequence criticality is resolved
-          by shortening the chain.
-        </p>
-        <p>
-          The two coexist: someone booked from day one leaves float on every single task — moving
-          one lets it recover on its own — but one more day of work on any of them moves the end.
-        </p>
-        <p>
-          Measuring it costs a re-solve of the plan per task: up to {CRITICAL_CHAIN_LIMIT} tasks the
-          marking redoes itself on every edit, past that it is asked for from the status bar. In
-          that case, after an edit, the previous measurement stays on screen —{' '}
-          <strong>dashed</strong> to say so, and the same button redoes it.
+          Plans over {CRITICAL_CHAIN_LIMIT} tasks update this only when you click{' '}
+          <strong>Critical chain</strong> in the status bar; after an edit the outlines turn{' '}
+          <strong>dashed</strong> until you click it again.
         </p>
       </section>
     </Dialog>

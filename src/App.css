@@ -1112,6 +1112,10 @@
   color: var(--ink-muted);
 }
 
+.help__section p + p {
+  margin-top: 6px;
+}
+
 .help__figure {
   margin: 10px 0 12px;
   padding: 12px 14px 10px;
