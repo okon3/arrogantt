@@ -105,7 +105,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - **An opened plan is collapsed and fitted at once.** Status-bar count is the
   plan's, not the screen's. Open branches are view state: nothing marks the
   file dirty.
-- Every way in (toolbar, drag-drop, draft, `loadText`) shares one call; fit
+- Every way in (File menu, drag-drop, draft, `loadText`) shares one call; fit
   runs after the load. **Undo is not an opening**: same restore path, keeps
   viewport, zoom, closed branches.
 
@@ -185,8 +185,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   ([dhtmlx.md](dhtmlx.md)); the init effect builds from the selection before
   `gantt.init()`.
 - Columns: inputs (name, resource, effort, start) + derived **end and
-  duration**, faint italic, **no editor declared**. A summary's
-  effort/resource/start are refused the same way.
+  duration**, faint italic, **no editor declared** (a fixed End: plain ink).
+  A summary's effort/resource/start are refused the same way.
 - **The name cell carries a native `title` with the full name**, unconditional
   — the cell clips with an ellipsis at its own default width, and no render
   measures which rows overflow. The rich tooltip stays on the bars.
@@ -249,17 +249,16 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 ## Details panel
 
 - **A panel docked right of the chart** (`TaskPanel`), not a modal: opened by
-  the row's (i), it shows the selected task, follows the selection and closes
+  the details button on the row or the bar, it shows the selected task, follows the selection and closes
   when it clears, on × or on Escape. The chart narrows; the status bar spans both.
 - **Every change applies at once** through `updateTask`, one undo step each:
   text, number and date fields on leaving them (or Enter; Escape takes the edit
-  back), select, colour and checkboxes on change, pace rows on leaving the
-  section (a row added or removed at once). A refused value reverts and says why.
+  back), select, colour and switches on change, sliders on release (a pace row
+  added or removed at once). A refused value reverts and says why.
 - Measures float for its criticality note (per change, bounded by
   `CRITICAL_CHAIN_LIMIT`); holds
   progress, colour, and delete (with subtree + dependency cleanup).
-- Only a task **with subtasks** confirms deletion. The opener button names its
-  task.
+- Only a task **with subtasks** confirms deletion.
 - **Auto end is the switch** (on the End row): on, the end is computed and
   read-only; off fixes it at the start plus the effort in working days
   (`endFromEffort`), and End becomes a date field. Back on hands the end to the
@@ -274,7 +273,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - `pullFromView` tells the two apart by the row: both ends off the solved
   dates is a move, one is an edge.
 - A dependency drawn into a fixed task is kept and inert.
-- **The description is a panel-only field**: a textarea last in the grid, on
+- **The description is a panel-only field**: a textarea section of the panel, on
   summaries as much as on leaves. It has no surface on the chart — no row
   icon, no tooltip, no column — and reaches a reader through the panel, the
   CSV and the agent API instead.
@@ -285,13 +284,11 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
     writes — the panel, the agent API and the parser.
   - Whitespace-only reads as empty in the panel and removes the text; the
     agent API stores what it is given, `''` and `null` apart.
-- **Pace (`.taskinfo__pace`) is the task's twin of a person's availability**:
-  an optional default share plus periods, on `PeriodRowList` and `PercentCell`
-  as People's list is. Leaves with effort only — hidden on a summary and while
-  the task is a milestone.
-  - Percent in the form, fraction in the model. The default goes back **only
-    if retyped**: the field shows a rounded figure, and writing it back would
-    change a share nobody touched. Empty = not fixed.
+- **Pace (`.taskpanel__pace`) is the task's twin of a person's availability**:
+  an optional default share plus periods, on `PeriodRowList` as People's list
+  is. Leaves with effort only — hidden on a summary and while the task is a
+  milestone.
+  - Percent in the panel, fraction in the model. Auto = not fixed.
   - **The rows show dates, the model holds days of the task**: `datePeriods`
     and `undatePeriods` against the plan as it stands (`taskDays`).
   - A closed day at either end of a row gives way to the working day inside
@@ -300,7 +297,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
     use; it refuses periods sharing a day, so an overlapped row
     (`overlapRefused`) says what will be refused, not *overridden*.
   - Row menu *Set pace from here…* (leaf with effort) opens the panel and adds
-    one period on the pointed day (grid: the solved start), percent focused. A
+    one period on the pointed day (grid: the solved start). A
     day outside the task, here and from *Add period*, stands for the task's
     nearest day. Label wraps to line two.
   - **A new period starts at the share the task already has there**, unrounded
@@ -310,7 +307,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   App.css): a top line with the kind, `n of N` and ‹ › through the row order
   (`revealTask` + `selectTask`), and ×; then the name as an input that reads
   as the title until pointed at or focused; then a label/value list
-  (`.taskpanel__fields`, 76px labels, 34px rows). Its controls show as text at
+  (`.taskpanel__fields`). Its controls show as text at
   rest and take a tint under the pointer.
   - **A day is text, the calendar on a click, − / + on either side**:
     `showPicker()` on an invisible native date input under the text; a step is
@@ -419,10 +416,10 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 
 ## Disabled tasks
 
-- Toggled from the row menu, the details panel's *Disabled* checkbox, and a
-  ban-icon grid column (stays at full opacity once off). All three go through
-  `updateTask`'s `TaskPatch`.
-- Drawn state is the **effective** one (`solved.disabledIds`); menu and dialog
+- Toggled from the row menu, the details panel's *Disabled* switch, and the
+  ban icon in the row's and the bar's actions. All go through `updateTask`'s
+  `TaskPatch`.
+- Drawn state is the **effective** one (`solved.disabledIds`); menu and panel
   show the row's **own** flag.
 - Bar dimmed (opacity + desaturating filter). Grid row: most cells' ink goes
   muted; End/Duration keep their fainter ink (reason in the `gantt.css`
@@ -455,7 +452,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   outline-offset + outline-width`, so the offset is not the lever and the
   body's radius is; shrinking it reads squared for no visible gain.
 - **Milestone = diamond**: same colour, same ring, same dimming; grid dot
-  becomes a diamond; dialog heading flips to *Milestone* at effort 0.
+  becomes a diamond; the panel's kind flips to *Milestone* at effort 0.
 - Milestone day placement: one that closes something is drawn where that
   thing ends; one nothing runs into sits on the morning of its date. Decided
   from **predecessors**, never the start constraint.
@@ -467,7 +464,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   every solve in `applySolution` and `loadProject`, a `toDay` past the task's
   last working day is cut to it and a period starting after it is removed.
   - Inside the edit's own `applySolution`, before `onChange`: the cut is in
-    the history step of whatever shortened the task, on every path — dialog,
+    the history step of whatever shortened the task, on every path — panel,
     drag, grid, agent API.
   - On load it cuts the project the caller then snapshots, so a file reaching
     past an end opens clean, not dirty.
@@ -502,7 +499,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   to it; outside the bar or inside a period it adds nothing.
 - **A drag previews by re-solving without `onChange`** (`preview`, in
   `GanttChart`'s init effect); its release is one `updateTask` through
-  `onSetPacePeriods`, like the dialog's Save.
+  `onSetPacePeriods`, like a panel edit.
 - **Every move starts from every task's list at the press** (`atPress`), the
   trim applied to the preview only: a level raised and lowered again in one
   drag gives back what it cut, on the dragged task and on its neighbours.
@@ -666,8 +663,8 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 
 ## Export dialog
 
-One dialog (`ExportDialog.tsx`) on both the PNG and the Print button; `action`
-decides the title and the confirm label. CSV starts at the click: nothing to
+One dialog (`ExportDialog.tsx`) behind both *Export PNG* and *Print…* in the
+File menu; `action` decides the title and the confirm label. CSV starts at the click: nothing to
 ask.
 
 - **Three questions, and no fourth**: Rows (*The whole plan* / *As I see it*,

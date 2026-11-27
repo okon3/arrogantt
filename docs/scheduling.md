@@ -129,13 +129,14 @@ the plan: 7 ms @ 20 tasks, 41 @ 40, 162 @ 60, 267 @ 100 — plus a search per ta
 for exact figures.
 
 - ≤ 40 tasks: marking re-measured on every edit (~40 ms vs 13 with it off).
-- \> 40: measured only on request (*Calcola catena critica* in the status bar).
+- \> 40: measured only on request (*Compute critical chain* in the status bar).
 - \> 40 after an edit: stale marking stays **dashed** (declares itself old)
   instead of vanishing — never looks measured when it isn't.
 - Undo counts as an edit: re-measure inside the limit, keep dashed past it.
   Opening a file / draft / new project **drops** the marking (different plan).
-- The float *figure* is measured per row when its details open, inside the limit
-  only (a summary costs a search per leaf).
+- The float *figure* is measured for the task whose details are open, inside
+  the limit only (a summary costs a search per leaf); the panel words it in
+  its criticality note.
 
 ## When the simulation stalls
 

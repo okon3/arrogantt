@@ -22,7 +22,7 @@ Assign two tasks to the same person, and it happily shows them both full speed,
 in parallel, finishing on time. Reality disagrees.
 
 ARROGANTT flips the model: **effort and start date are inputs; the end date is
-always computed.** A discrete-event scheduler simulates your team. When two tasks
+computed.** A discrete-event scheduler simulates your team. When two tasks
 overlap on the same person, each runs at 50% and stretches accordingly — three
 tasks, 33% each. Move one task and everything sharing its people re-flows. You
 cannot draw a plan that your team can't actually execute.
@@ -44,6 +44,18 @@ the person that causes the contention named on the tooltip.
 **People, part-time, and holidays** — per-person availability (50%, 80%, anything),
 availability periods, absences, and company shutdowns. The time axis is working
 minutes: nights and weekends simply don't exist, so durations never lie.
+
+**Dates that are facts, and a pace you set** — a workshop, or work already
+done, keeps the dates you give it: switch off *Auto end* and nothing in the
+plan moves that bar. *Pace* holds a task to an exact share of its person, for
+all of it or for periods (0% pauses it), and leaves the rest of their day to
+the other tasks.
+
+**Details beside the chart** — select a task and a panel docked on the right
+shows all of it: effort, dates, pace, cost, what it waits for and what it
+blocks. Every edit applies at once, as one undo step. Rows and bars carry
+their own actions where you point, and the whole app comes in light or dark,
+or follows your system.
 
 **What the plan costs, not only when it ends** — give a person a daily rate,
 with periods that layer over time by the same rules as their availability, and
@@ -109,6 +121,9 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
+To look around a ready-made plan, open [`docs/demo.gantt`](docs/demo.gantt)
+(*File → Open…*): a fictional five-person team, the one the screenshots show.
+
 `npm run build:single` produces a **single self-contained HTML file** — the whole
 app in one artifact you can email, drop on a share, or open from disk.
 
@@ -128,8 +143,7 @@ scheduling semantics.
 
 ## Not implemented (yet)
 
-CSV/Excel import, several resources on one task, per-task fixed or capped
-allocation. The name is a promise: nothing lands before it earns its place.
+CSV/Excel import, several resources on one task. The name is a promise: nothing lands before it earns its place.
 
 ## License
 

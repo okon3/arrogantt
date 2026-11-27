@@ -185,17 +185,23 @@ export function HelpDialog({ onClose }: { onClose(): void }) {
     >
       <p className="dialog__hint dialog__hint--wide">
         A task declares two things: how much work it costs and from when it may start. Everything
-        else — duration, end date, who is holding up whom — is computed by the engine, and cannot be
-        typed by hand.
+        else — duration, end date, who is holding up whom — is computed by the engine. The one
+        exception is a task on fixed dates, below.
       </p>
 
       <section className="help__section">
         <h3>Effort and start are inputs, the end is a result</h3>
         <p>
           <strong>Effort</strong> is the work the task costs, in person-days. <strong>Start</strong>{' '}
-          is the day before which it cannot begin. <strong>End</strong> does not exist as a stored
-          value: it depends on how much capacity the assigned person can actually give it, day by
-          day.
+          is the day before which it cannot begin. <strong>End</strong> is not typed: it depends on
+          how much capacity the assigned person can actually give it, day by day.
+        </p>
+        <p>
+          The exception is work whose dates are already a fact — a workshop, something finished last
+          week. Switch off <strong>Auto end</strong> in the task's details and its bar stays on the
+          dates you give it: no dependency or contention moves it. <strong>Pace</strong>, in the
+          same panel, holds a task to an exact share of its person, for all of it or for periods; at
+          0% it is paused.
         </p>
       </section>
 
@@ -261,14 +267,14 @@ export function HelpDialog({ onClose }: { onClose(): void }) {
         <h3>The red outline is the critical chain</h3>
         <p>
           Tasks outlined in <strong>red</strong> are the ones the end date depends on: starting them
-          later, or giving them one more day of work, moves it. In the row's detail the{' '}
-          <strong>float</strong> says how many days a task can slip before it moves the end.
+          later, or giving them one more day of work, moves it. A critical task's details say what moves
+          the end: any delay, or only more work.
         </p>
         <p>
           This is not the textbook critical path, which only looks at dependencies. Here a person
           split between two tasks stretches both of them, so a task can be critical without
           depending on anything, purely because it shares a resource with the chain — and the
-          detail says which of the two cases it is. A <strong>contention</strong> is resolved by
+          details say which of the two cases it is. A <strong>contention</strong> is resolved by
           moving or reassigning another task of that person's; a sequence criticality is resolved
           by shortening the chain.
         </p>

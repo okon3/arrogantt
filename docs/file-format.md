@@ -160,15 +160,15 @@ reason: the task's own free text verbatim, empty when it has none.
 
 ## PNG and print
 
-- `PNG` **draws** the plan (outline, people, calendar axis, every bar) rather
+- *Export PNG* **draws** the plan (outline, people, calendar axis, every bar) rather
   than capturing the chart: only in-view rows are in the DOM and the data area
   is a viewport. The figure grows with the plan, shades weekends/shutdowns,
   marks today, keeps summary shading and milestone diamonds.
-- `Stampa` / Ctrl+P prints that figure: A4 landscape, 24 rows per page, title
+- *Print…* / Ctrl+P prints that figure: A4 landscape, 24 rows per page, title
   and axis repeated, one shared time scale (browsers won't break an image across
   pages — unpaged = cropped). *Save as PDF* in the print dialog **is** the PDF
   export.
-- Both buttons open the **export dialog** first, and the figure is drawn from
+- Both menu entries open the **export dialog** first, and the figure is drawn from
   what it confirms: the row scope (the whole plan, or the tree as the grid
   currently shows it — a closed branch exports its summary and not its
   children) and the column list. Ctrl+P interposes nothing and prints with the

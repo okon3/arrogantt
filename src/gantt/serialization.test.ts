@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import demoText from '../../docs/demo.gantt?raw';
 import { DEFAULT_CALENDAR } from '../scheduler';
 import { validateCurrency, type RateOverride } from './cost';
 import { buildPlan } from './plan';
@@ -272,6 +273,12 @@ describe('the file the app writes, the app can reopen', () => {
     const text = serializeProject(poisoned());
     expect(text).toContain('"ghost"');
     expect(text).not.toContain('"solved"');
+  });
+
+  it('opens docs/demo.gantt, the plan the docs and screenshots are made from', () => {
+    const demo = deserializeProject(demoText);
+    expect(demo.tasks.length).toBeGreaterThan(20);
+    expect(solve(demo).schedule.projectEnd).toBeInstanceOf(Date);
   });
 });
 

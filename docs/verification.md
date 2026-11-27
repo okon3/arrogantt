@@ -334,6 +334,16 @@ script, not the tool), a selector covered by the sticky header, and `open` /
 `wait --load networkidle` timing out on a cold server. The last is why the cold
 restart happens *before* the measurement, not during it.
 
+## Screenshots
+
+- **`docs/demo.gantt` is the plan for screenshots**, kept opening by a test
+  in `serialization.test.ts`. Rebuilt through the agent API and `toText()`.
+- Load it with `fetch('/docs/demo.gantt')` + `arrogantt.loadText(text,
+  'demo.gantt')`: the page stays clean.
+- `docs/assets/` is taken in Dark, default columns, pointer parked:
+  `set viewport 1800 612 2` for `hero.png`, `1800 705 2` with *Resource load*
+  on for `resource-load.png`.
+
 ## Rules of thumb
 
 - **Verify visuals with `getComputedStyle`** — not the attribute, not the data
