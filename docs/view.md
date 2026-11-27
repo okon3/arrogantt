@@ -114,11 +114,11 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
 - **Columns are a registry (`columns.ts`), the grid a filter over it.**
   `PLAN_COLUMNS` holds metadata; `gridColumns.ts`'s `GRID_CELLS` decides each
   cell (`template`/`editor`/`align`), keyed exhaustively so a registry entry
-  with no renderer is a compile error. `text` is structural and never
+  with no renderer is a compile error. `text`, `actions` are structural and never
   hideable. Resource has no header: the avatar says what the column holds.
-- **A row's actions are a pill over its right end on hover** (`.gantt-rowactions`,
-  in the name cell, positioned against the row): details, disable, subtask, delete.
-  No column; GanttChart's `rowAction` claims the press on capture.
+- **A row's actions are the bar toolbar's pill, always shown** (`actions`
+  column, `.gantt-rowactions`): details, disable, subtask, delete.
+  GanttChart's `rowAction` claims the press on capture.
 - **Every numeric column is `align: 'right'`; dates and the avatar stay
   `center`.** Headers remain centred: `align` does not reach the head cell in
   this build ([dhtmlx.md](dhtmlx.md)), and a rule of our own would buy no

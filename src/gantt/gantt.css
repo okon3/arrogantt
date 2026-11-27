@@ -924,20 +924,17 @@ html[data-scheme='dark'] .gantt_resizing {
   vertical-align: middle;
 }
 
-/* The row's actions, the bar toolbar's pill over the row's right end. The row
-   is their containing block, so the name cell's clipping does not reach them. */
-.gantt_grid_data .gantt_row {
-  position: relative;
-}
-
+/* The row's actions: the bar toolbar's pill, in a cell of its own. */
 .gantt-rowactions {
-  display: none;
-  top: 50%;
-  right: 6px;
+  position: static;
+  display: inline-flex;
+  vertical-align: middle;
+  translate: none;
+  box-shadow: none;
 }
 
-.gantt_grid_data .gantt_row:hover .gantt-rowactions {
-  display: flex;
+.gantt-rowactions .bar-actions__btn {
+  padding: 2px;
 }
 
 /* A group is a heading for the rows under it, so its name carries the weight. */

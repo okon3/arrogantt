@@ -49,7 +49,9 @@ export function sizedIcon(svg: string, size: number): string {
 
 const rowAction = (action: string, title: string, icon: string, modifier = '') =>
   `<button type="button" class="bar-actions__btn${modifier}" data-row-action="${action}"` +
-  ` title="${title}">${sizedIcon(icon, 14)}</button>`;
+  ` title="${title}">${sizedIcon(icon, 13)}</button>`;
+/** Four 13px buttons in the pill, plus the cell's padding. */
+const ROW_ACTIONS_WIDTH = 84;
 const ARROW_ICON = sizedIcon(ArrowRight, 11);
 const PIN_ICON = sizedIcon(Pin, 11);
 
@@ -284,23 +286,11 @@ export function buildColumns(ctx: RowContext, shown: ReadonlySet<PlanColumnName>
       // short name is the cheaper noise.
       template: (task) => {
         const name = escapeHtml(String(task.text ?? ''));
-        // The row's own flag, not `task.disabled`, which a disabled parent sets too.
-        const own =
-          ctx.project().tasks.find((candidate) => candidate.id === String(task.id))?.disabled === true;
         return (
           `<span class="gantt-dot${task.type === MILESTONE_TYPE ? ' gantt-dot--milestone' : ''}"` +
           ` style="background:${String(task.bar_color || DEFAULT_BAR_COLOR)}"></span>` +
           `<span class="${task.is_summary ? 'gantt-name gantt-name--summary' : 'gantt-name'}"` +
-          ` title="${name}">${name}</span>` +
-          // Shown over the row's right end while it is hovered, so the actions
-          // cost the grid no column. Positioned against the row, out of the
-          // cell's clipping; GanttChart claims their clicks before dhtmlx does.
-          `<span class="bar-actions gantt-rowactions">` +
-          rowAction('info', 'Details', Info) +
-          rowAction('disable', own ? 'Enable' : 'Disable', Ban, own ? ' bar-actions__btn--on' : '') +
-          rowAction('child', 'Add a subtask', Plus) +
-          rowAction('remove', 'Delete', Trash2, ' bar-actions__btn--danger') +
-          `</span>`
+          ` title="${name}">${name}</span>`
         );
       },
       editor: { type: 'text', map_to: 'text' },
@@ -313,6 +303,27 @@ export function buildColumns(ctx: RowContext, shown: ReadonlySet<PlanColumnName>
       resize: true,
       ...GRID_CELLS[entry.name](ctx),
     })),
+    {
+      name: 'actions',
+      label: '',
+      width: ROW_ACTIONS_WIDTH,
+      align: 'center',
+      // The bar toolbar's pill, one per row. GanttChart claims its clicks
+      // before dhtmlx does, so a press neither selects nor drags the row.
+      template: (task) => {
+        // The row's own flag, not `task.disabled`, which a disabled parent sets too.
+        const own =
+          ctx.project().tasks.find((candidate) => candidate.id === String(task.id))?.disabled === true;
+        return (
+          `<span class="bar-actions gantt-rowactions">` +
+          rowAction('info', 'Details', Info) +
+          rowAction('disable', own ? 'Enable' : 'Disable', Ban, own ? ' bar-actions__btn--on' : '') +
+          rowAction('child', 'Add a subtask', Plus) +
+          rowAction('remove', 'Delete', Trash2, ' bar-actions__btn--danger') +
+          `</span>`
+        );
+      },
+    },
   ];
 }
 
