@@ -117,7 +117,7 @@ the HelpDialog diagram. The `→` between a period row's two dates is the word
   with no renderer is a compile error. `text`, `actions` are structural and never
   hideable. Resource has no header: the avatar says what the column holds.
 - **A row's actions are the bar toolbar's pill, always shown** (`actions`
-  column, `.gantt-rowactions`): details, disable, subtask, delete.
+  column, fixed width, faint until the row is hovered): details, disable, subtask, delete.
   GanttChart's `rowAction` claims the press on capture.
 - **Every numeric column is `align: 'right'`; dates and the avatar stay
   `center`.** Headers remain centred: `align` does not reach the head cell in

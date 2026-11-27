@@ -21,11 +21,11 @@ export const DERIVED_ON_SUMMARY = new Set(['nominal_days', 'resource_id', 'start
 /**
  * Faces a summary's resource cell fits, the "+n" counted as one of them.
  *
- * The cell is 64px inside its padding and a face is 22px overlapping by 8, so
- * four is what the column holds — chosen against the width rather than picked,
+ * The cell is 48px inside its padding and a face is 22px overlapping by 9, so
+ * three is what the column holds — chosen against the width rather than picked,
  * since a fifth is clipped in silence.
  */
-const AVATAR_STACK_LIMIT = 4;
+const AVATAR_STACK_LIMIT = 3;
 
 /** A person as an avatar names them: part-time is why a row is as long as it is. */
 function personLabel(resource: Resource): string {
@@ -307,6 +307,9 @@ export function buildColumns(ctx: RowContext, shown: ReadonlySet<PlanColumnName>
       name: 'actions',
       label: '',
       width: ROW_ACTIONS_WIDTH,
+      // Narrowing the grid squeezes the columns; the pill would be cut.
+      min_width: ROW_ACTIONS_WIDTH,
+      max_width: ROW_ACTIONS_WIDTH,
       align: 'center',
       // The bar toolbar's pill, one per row. GanttChart claims its clicks
       // before dhtmlx does, so a press neither selects nor drags the row.

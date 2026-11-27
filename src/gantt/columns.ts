@@ -35,7 +35,7 @@ export const PLAN_COLUMNS: readonly PlanColumn[] = [
   {
     name: 'resource_id',
     label: () => 'Resource',
-    gridWidth: 76,
+    gridWidth: 60,
     figureWidth: 110,
     defaultShown: true,
   },

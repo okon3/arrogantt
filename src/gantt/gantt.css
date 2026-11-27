@@ -902,7 +902,7 @@ html[data-scheme='dark'] .gantt_resizing {
 }
 
 .gantt-avatar-stack .gantt-avatar + .gantt-avatar {
-  margin-left: -8px;
+  margin-left: -9px;
 }
 
 /* The people the column ran out of room for. Neutral on purpose: a colour of
@@ -917,20 +917,34 @@ html[data-scheme='dark'] .gantt_resizing {
 /* Part-time changes every duration on the row, so it stays on the face of the
    grid rather than only in the tooltip. */
 .gantt-avatar__pct {
-  margin-left: 5px;
+  margin-left: 4px;
   font-size: 11px;
   color: var(--warn);
   font-variant-numeric: tabular-nums;
   vertical-align: middle;
 }
 
-/* The row's actions: the bar toolbar's pill, in a cell of its own. */
+/* The row's actions: the bar toolbar's pill, in a cell of its own. At rest it
+   takes the row's background and faint icons; the row's hover darkens it. */
 .gantt-rowactions {
   position: static;
   display: inline-flex;
   vertical-align: middle;
   translate: none;
   box-shadow: none;
+  background: transparent;
+}
+
+.gantt-rowactions .bar-actions__btn:not(.bar-actions__btn--on) {
+  color: var(--ink-faint);
+}
+
+.gantt_row:hover .gantt-rowactions {
+  background: var(--inverse-surface);
+}
+
+.gantt_row:hover .gantt-rowactions .bar-actions__btn:not(.bar-actions__btn--on) {
+  color: var(--inverse-ink);
 }
 
 .gantt-rowactions .bar-actions__btn {
