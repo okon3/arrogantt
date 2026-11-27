@@ -28,6 +28,22 @@ export function pickTextFile(accept = PROJECT_EXTENSION): Promise<{ name: string
   });
 }
 
+/** A name without the project extension, whatever its case. */
+export function projectStem(filename: string): string {
+  return filename.toLowerCase().endsWith(PROJECT_EXTENSION)
+    ? filename.slice(0, -PROJECT_EXTENSION.length)
+    : filename;
+}
+
+/**
+ * The file name a rename stores: trimmed, with the extension exactly once.
+ * Null for a blank name, which renames nothing.
+ */
+export function projectFilename(name: string): string | null {
+  const stem = projectStem(name.trim()).trim();
+  return stem ? `${stem}${PROJECT_EXTENSION}` : null;
+}
+
 /**
  * `project.gantt` → `project.csv`, and a name carrying no extension gains one.
  *
@@ -35,10 +51,7 @@ export function pickTextFile(accept = PROJECT_EXTENSION): Promise<{ name: string
  * in the download folder next to each other.
  */
 export function exportFilename(projectFilename: string, extension: string): string {
-  const stem = projectFilename.toLowerCase().endsWith(PROJECT_EXTENSION)
-    ? projectFilename.slice(0, -PROJECT_EXTENSION.length)
-    : projectFilename;
-  return `${stem}.${extension}`;
+  return `${projectStem(projectFilename)}.${extension}`;
 }
 
 /**

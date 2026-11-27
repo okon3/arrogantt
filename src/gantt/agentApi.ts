@@ -23,6 +23,7 @@ import {
   type ResourcePatch,
 } from './resources';
 import { DESCRIPTION_LIMIT, HEX_COLOR, serializeForFile } from './serialization';
+import { projectFilename } from './files';
 import { parseTaskShare } from './taskShare';
 import type { AvailabilityOverride, CalendarSpec, ShareOverride } from '../scheduler';
 
@@ -549,7 +550,12 @@ export function createAgentApi(host: AgentHost): AgentApi {
     },
     newProject: host.newProject,
     loadText: (text, filename) => host.adopt(text, filename ?? host.filename()),
-    setFilename: host.setFilename,
+    // The header's rename rule, so a script's name saves as a .gantt too.
+    setFilename: (name) => {
+      const filename = typeof name === 'string' ? projectFilename(name) : null;
+      if (!filename) throw new Error(`setFilename: expected a non-empty name, received ${JSON.stringify(name)}`);
+      host.setFilename(filename);
+    },
 
     select: (id) => {
       details(id);

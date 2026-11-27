@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { Resource } from '../scheduler';
 import { avatarColorOf, initialsOf } from './colors';
+import { projectFilename, projectStem } from './files';
 
 export interface ToolbarProps {
   filename: string;
@@ -330,20 +331,18 @@ function ToolbarMenu({
   );
 }
 
-const PROJECT_SUFFIX = /\.gantt$/i;
-
 /** The project's name is its file's: a double click renames what Save writes. */
 function FileName({ filename, dirty, onRename }: { filename: string; dirty: boolean; onRename(name: string): void }) {
   const [draft, setDraft] = useState<string | null>(null);
   const commit = () => {
-    const stem = draft?.trim().replace(PROJECT_SUFFIX, '');
+    const name = draft === null ? null : projectFilename(draft);
     setDraft(null);
-    if (stem) onRename(`${stem}.gantt`);
+    if (name) onRename(name);
   };
   return (
     <span
       className="toolbar__file"
-      onDoubleClick={() => setDraft(filename.replace(PROJECT_SUFFIX, ''))}
+      onDoubleClick={() => setDraft(projectStem(filename))}
     >
       {draft === null ? (
         <span className="toolbar__filename" title={`${filename} (double-click to rename)`}>

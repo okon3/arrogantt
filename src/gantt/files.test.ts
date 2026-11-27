@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { exportFilename } from './files';
+import { exportFilename, projectFilename } from './files';
 
 describe('exportFilename', () => {
   it('swaps the project extension', () => {
@@ -13,5 +13,17 @@ describe('exportFilename', () => {
 
   it('leaves a foreign extension alone rather than guessing at it', () => {
     expect(exportFilename('piano.v2', 'csv')).toBe('piano.v2.csv');
+  });
+});
+
+describe('projectFilename', () => {
+  it('stores the extension exactly once, whatever was typed', () => {
+    expect(projectFilename('plan')).toBe('plan.gantt');
+    expect(projectFilename('  plan.GANTT ')).toBe('plan.gantt');
+  });
+
+  it('renames nothing for a blank name', () => {
+    expect(projectFilename('   ')).toBeNull();
+    expect(projectFilename('.gantt')).toBeNull();
   });
 });

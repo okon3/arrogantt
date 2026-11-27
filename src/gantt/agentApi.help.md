@@ -360,7 +360,7 @@ between "we do not know" and "it is free".
 | `setCurrency(label \| null)` | A free label, at most 8 characters (`EUR`, `k€`, ...). `null` clears it. Blank, padded (`" EUR "`) and over-8-character labels are refused, and nothing is written when they are. Nothing converts and nothing formats by locale — it is printed exactly as given. |
 | `newProject()` | No discard question. Clears the undo history, as the button does. The new project declares `€` as its currency — `setCurrency(null)` clears it. A file opened with `loadText` never gains the field. |
 | `loadText(text, filename?)` | Parses first: a malformed file leaves the open project untouched and throws `ProjectFileError`. Replaces the document, so the undo history goes with it. |
-| `setFilename(name)` | |
+| `setFilename(name)` | The name Save downloads as, with `.gantt` added when missing (the header's rename does the same). A blank name throws. |
 
 Parsing refuses rather than repairs — unknown resources, duplicate ids, dangling
 predecessors, circular hierarchy, availability outside `0..1`, a malformed
