@@ -16,7 +16,8 @@ npx vitest run src/scheduler/availability.test.ts   # one file
 npx vitest run -t "compounds a reduced period"      # one case
 ```
 
-No vitest config file: it runs off `vite.config.ts` with defaults.
+No vitest config file: it runs off `vite.config.ts`, which only keeps
+`.claude/` (agent worktrees) out of the run.
 
 On Windows run npm through the PowerShell tool (backgrounded with the tool's
 own flag), never via `Start-Process npm`: `npm.ps1` opens in an editor instead
@@ -144,8 +145,8 @@ prove). What a verification may claim:
 
 - It reports what it saw, never what does not exist. The library is an actor:
   dhtmlx paints bars in `.gantt_bars_area`, not in the row, and a stylesheet is
-  not the DOM. `scripts/probe-rows.js` reads the grid row, the timeline row
-  and the bar back out of the page for you.
+  not the DOM. `node scripts/ab.mjs` drives the page (the `verify-ui` skill);
+  its `probe` reads the grid row, the timeline row and the bar back for you.
 - Measure; don't derive. A number computed at the desk is a guess.
 - An inherited premise is not a verified one: verify it on the path that uses
   it, not on the line that states it.

@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
-import { defineConfig, type Plugin } from 'vite'
+import type { Plugin } from 'vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
+import { configDefaults, defineConfig } from 'vitest/config'
 
 const HELP = fileURLToPath(new URL('./src/gantt/agentApi.help.md', import.meta.url))
 
@@ -42,4 +43,7 @@ export default defineConfig(({ mode }) => ({
   // is the cheaper end of that trade; `npm run dev:fresh` clears the port.
   server: { port: 5173, strictPort: true },
   plugins: [react(), llmsTxt(), ...(mode === 'single' ? [viteSingleFile()] : [])],
+  // An agent's worktree lives under .claude/ and holds a second copy of every
+  // test — mutated on purpose while a critic checks that the tests bite.
+  test: { exclude: [...configDefaults.exclude, '.claude/**'] },
 }))

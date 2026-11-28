@@ -29,6 +29,7 @@ dist-ssr
 .claude/*
 !.claude/orchestrate.md
 !.claude/skills/
+!.claude/agents/
 
 # Reference screenshots of other products: local material, never published.
 inspiration_ui/

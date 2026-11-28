@@ -21,7 +21,7 @@ test. Each agent that can reach the origin takes its own named browser
 session — measured on `http://localhost:5173`, a key written under
 `--session a` is absent from `--session b` and survives `b` writing over it,
 so storage is isolated, not just cookies. The default unnamed session is the
-shared one; never verify in it.
+shared one; `scripts/ab.mjs` refuses to run in it.
 
 ## Dialogs
 
@@ -255,32 +255,24 @@ Measured over 1179 real `agent-browser` invocations in this project's
 transcripts. The failure rate is ~17%, not the 7.7% the tool-result error flag
 reports — the gap is the first rule.
 
-- **Never `;` between two `agent-browser` calls — `&&`, or one call per
-  command.** With `;` a mid-chain failure still lets the last segment run, and
-  a successful last segment marks the whole command a success: ~108 failures
-  hid that way, visible only to whoever read the full output. `&&` doesn't
-  prevent the failure, it stops it from being silent.
-- **`Failed to read: … (os error 10060)` and `Invalid response: EOF … (daemon
-  may be busy)` are worth exactly one immediate retry.** The largest failure
-  bucket (35 calls, 8 sessions of 11) and mostly not the reload-after-dialog
-  pattern above — only 4 of the 35 involve a reload. The daemon recovers on
-  its own within seconds more often than not; the session is not dead.
+- **`node scripts/ab.mjs --session <name> <command>` is the way in** (`help`
+  lists the commands; the `verify-ui` skill is the loop around it). It refuses
+  the default session, sends every page script as base64, returns values
+  ASCII-escaped, waits for `window.arrogantt` on `open` and parks the pointer
+  before `shot`. Anything it does not name is passed to `agent-browser`.
+- **Never `;` between two calls — `&&`, or one call per command.** With `;` a
+  mid-chain failure still lets the last segment run, and a successful last
+  segment marks the whole command a success: ~108 failures hid that way,
+  visible only to whoever read the full output.
+- **`os error 10060` and `EOF … (daemon may be busy)` are retried once by the
+  wrapper, except on an `eval` not marked `--retry`**: that error can arrive
+  after the script has done its work (nine `arrogantt.link()` calls landed
+  behind one), and a second run would do it twice. Read the state back first.
 - **`click` always takes an explicit selector.** `agent-browser click` alone is
   the single most repeated error signature in the corpus (`Missing arguments
   for: click`, six sessions, identical) — a reflex from CLIs where `click`
   follows the last match. Use `find … click`, or `snapshot` then `click @refN`.
 
-- **An `eval` chained straight onto `open` races the app's first render.**
-  `open` returns when the page is loaded, not when React has mounted and
-  `window.arrogantt` exists: a fixture-building eval fired immediately throws
-  inside its own callback (`at Array.forEach`), and with `&&` the rest of the
-  chain never runs. A read taken that early reports zero elements and looks
-  like a missing feature. Wait for a selector the app itself renders, or run
-  the fixture as its own call and check what it returns.
-
-- **`eval --stdin` from the PowerShell tool returns `null` with no error** — the
-  pipe never reaches the daemon, so the read looks empty rather than failed. Use
-  `eval -b <base64>`; every script carrying quotes goes through base64.
 - **`mouse move` wants integer coordinates** — `Missing arguments` on `200.5`.
 - **dhtmlx's link drag needs CDP-level input, so drive it with `agent-browser
   mouse move/down/up`.** Its `linksDnD` controller is bound to `$root` and
@@ -312,22 +304,8 @@ reports — the gap is the first rule.
   under it.** After a click in the status bar and a growth from 612 to 705,
   `:hover` read `.gantt_row.gantt-res-r2 > .gantt-avatar` — the row was
   highlighted and its icon in its active colour, in a screenshot meant to show
-  the default state. Park the pointer on an inert area before any capture (two
-  moves a pixel apart — one move does not fire), then read
-  `.gantt_row:hover` back to zero.
-- **A non-ASCII character survives a top-level return and not a structured
-  one.** `return "resp-€-here"` answers correctly; the same character as an
-  object **value** had its key silently dropped from the response, and inside a
-  13-element array of strings it failed the whole call with
-  `EOF while parsing a value at line 1 column 0`. So build the string in the
-  page (`String.fromCharCode(8364)`) and report it as a char code, never as
-  itself.
-- **That same `EOF while parsing a value` can arrive after the script has
-  already done its work.** A fixture calling `arrogantt.link()` nine times
-  answers it every time, and the identical script with the nine calls removed
-  answers normally — but the work landed: 13 tasks, 9 links and the right
-  costs, read back in a separate evaluation. Never read that error as a script
-  that did not run; read the state back before redoing anything.
+  the default state. `ab.mjs shot` parks the pointer and refuses while anything
+  is hovered; a capture taken any other way owes the same check.
 
 What no rule fixes: JS errors in a hand-written `eval` (36 calls — a bug in the
 script, not the tool), a selector covered by the sticky header, and `open` /
@@ -338,8 +316,8 @@ restart happens *before* the measurement, not during it.
 
 - **`docs/demo.gantt` is the plan for screenshots**, kept opening by a test
   in `serialization.test.ts`. Rebuilt through the agent API and `toText()`.
-- Load it with `fetch('/docs/demo.gantt')` + `arrogantt.loadText(text,
-  'demo.gantt')`: the page stays clean.
+- Load it with `ab.mjs open --demo` (or `demo` on a page already open): the
+  page stays clean.
 - `docs/assets/` is taken in Dark, default columns, pointer parked:
   `set viewport 1800 612 2` for `hero.png`, `1800 705 2` with *Resource load*
   on for `resource-load.png`.
@@ -350,7 +328,7 @@ restart happens *before* the measurement, not during it.
   field. More than one bug was invisible from the code.
 - **`scripts/probe-rows.js` reads the rows, not the stylesheet** — classes and
   paint per surface, `absent` where smart rendering left no node. Run it with
-  `agent-browser eval -b <base64 of the file>`; ids via `window.__probeRowIds`.
+  `ab.mjs probe [taskId...]`.
 - **`scrollWidth` on an `<input>` ignores its placeholder.** An overflowing
   placeholder still reports `scrollWidth === clientWidth`, so the usual overflow
   test passes on unfixed code — it was prescribed as T37's accept criterion and
