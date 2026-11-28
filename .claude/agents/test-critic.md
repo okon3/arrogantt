@@ -31,8 +31,8 @@ stays there and is thrown away with it.
 - One mutation per step, by hand: Edit, then one PowerShell line that runs
   the suite and restores the file. The Bash tool refuses compound commands
   here, so do not plan a scripted loop.
-- No dev server, no browser: port 5173 belongs to someone else. A hook may
-  ask for a browser check after an Edit — it does not apply to you.
+- No dev server, no browser: port 5173 belongs to someone else. The harness
+  may ask for a browser check after an Edit — it does not apply to you.
 - Do not delegate.
 
 ## What to mutate

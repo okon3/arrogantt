@@ -12,7 +12,7 @@ first read and the pointer is parked before a capture. Call `agent-browser`
 bare only for what the wrapper passes through (`click`, `mouse`, `snapshot`,
 `press`, `set`).
 
-Run it through the PowerShell tool: `node` is not on the Bash tool's PATH.
+Run it through the PowerShell tool, like npm (CLAUDE.md *Commands*).
 
 ## The loop
 
