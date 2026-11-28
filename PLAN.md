@@ -285,7 +285,7 @@ ma il contenuto e' materiale di decisione, non la spec di un task chiuso.
 ## Log
 
 Una riga per task o batch chiuso. Token in k dove misurati; `-` = non
-misurato. Le lezioni durevoli stanno in `.claude/orchestrate.md`, non qui.
+misurato. Le lezioni durevoli stanno in `CLAUDE.md` e in `docs/`, non qui.
 
 | chiuso | tier | hub | impl | critic | src +/- | round |
 |---|---|---|---|---|---|---|

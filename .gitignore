@@ -23,11 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 
-# Agent workspace: ignored by default, because tools write here. The binding is
-# the exception, and PLAN.md is tracked outright — they are the only record of
-# how this project is run, so pruning them has to be recoverable.
+# Agent workspace: ignored by default, because tools write here. Skills and
+# agents are the exception, and PLAN.md is tracked outright — they are the
+# record of how this project is run, so pruning them has to be recoverable.
 .claude/*
-!.claude/orchestrate.md
 !.claude/skills/
 !.claude/agents/
 

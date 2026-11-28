@@ -221,8 +221,8 @@ no pixel contract to anyone. **On anything visual, ~80% of the achievable
 precision is the target**; the last 20% needs a reason of its own, and "the
 threshold exists" is not one. A change that costs a new mechanism, a modifier
 class or a docs pass to move a perceptual metric by a fraction is overkill —
-fix the defect a user actually sees, then stop. The *polish* tier in
-`.claude/orchestrate.md` is the same rule applied to verification itself.
+fix the defect a user actually sees, then stop. The *polish* tier of
+the `verify-ui` skill is the same rule applied to verification itself.
 
 **A measured floor is evidence, not a goal.** When a number and the visible
 defect disagree, fix the defect; when a number and a stated preference collide,

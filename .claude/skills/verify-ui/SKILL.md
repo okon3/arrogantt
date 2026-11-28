@@ -36,12 +36,19 @@ Run it through the PowerShell tool, like npm (CLAUDE.md *Commands*).
 
 ## How much, by tier
 
-The tier comes from what the diff touches (`.claude/orchestrate.md`).
+The tier comes from what the diff touches, never from what the task was
+called. A polish batch that crosses into behaviour (a handler, a model field,
+a new op) is a feature from there on.
 
-- *Polish*: `style` on the changed cell before and after, one `shot` pair in
-  light; dark only when a token that differs by scheme moved. Stop there.
-- *Feature*: every accept cell of the brief driven, plus the not-driven list.
-- *Engine*: the tests are the proof; the browser adds one read of
+- *Polish* — CSS, copy, layout, icon or token changes with no new behaviour:
+  `style` on the changed cell before and after, one `shot` pair in light; dark
+  only when a token that differs by scheme moved. Stop there: a polish commit
+  is undone by one `git revert`, and the check is sized to that.
+- *Feature* — new user-visible behaviour in `src/gantt/`: every behaviour the
+  change promises driven, plus the not-driven list.
+- *Engine* — `src/scheduler/`, the file format, anything under CLAUDE.md
+  *Invariants* or *Day-boundary rule*: the tests are the proof, and they must
+  bite (the `test-critic` agent); the browser adds one read of
   `arrogantt.getSolved()` on a fixture that exercises the change.
 
 ## What the wrapper cannot do for you
