@@ -2,6 +2,64 @@
 
 Guidance for Claude Code working in this repository.
 
+## Project
+
+ARROGANTT is a single-user Gantt planner that runs entirely in the browser: no
+backend, no accounts, no database. Effort and start are inputs; the engine
+derives every end by simulating people's capacity. It began as its author's own
+tool and is now published: anyone may be using the live build and keeping
+`.gantt` files written by it. Stack: TypeScript, React, Vite, vitest, oxlint;
+dhtmlx-gantt (Community) only renders. The commands are under *Commands*. A
+push to `master` publishes the live build (`.github/workflows/deploy.yml`,
+GitHub Pages).
+
+Public contracts — what users, their files and their scripts depend on:
+
+- the `.gantt` format: v2 written, v1 still loads (`docs/file-format.md`);
+- `window.arrogantt`, with `agentApi.help.md` (`help()`, `/llms.txt`) as its text;
+- the CSV export's columns (`planCsv.ts`);
+- the `arrogantt.*` localStorage values — the draft above all: it can hold the
+  only copy of unsaved work;
+- the scheduling semantics under *Invariants* and *Day-boundary rule*.
+
+## What you can do without asking
+
+Read any file; run builds, tests and the linter; create branches and worktrees,
+commit to them locally and push them; refactor internal code; add or update
+tests and documentation. Work on a branch, not on `master`: branches are what
+lets several pieces of work run in parallel and be integrated one at a time.
+
+## Ask for approval before
+
+- changing the observable behaviour of an existing feature or of a contract
+  listed under *Project*
+- changing what the `.gantt` parser accepts or writes, or the shape of a stored
+  `arrogantt.*` value — this project's schema and data migrations
+- adding a new dependency or upgrading one across a major version
+- touching `.github/workflows/`, the build modes in `vite.config.ts`, or
+  anything else that decides what gets deployed
+- deleting files outside the area you are working on
+
+Do not push to `master` or merge into it: a push there deploys, and the human
+owner of the repository reviews and integrates branches. `.githooks/pre-push`
+refuses it from an agent's shell (`git config core.hooksPath .githooks`, once
+per clone).
+
+## Finishing work
+
+Keep working until the task is done. Treat ordinary obstacles (failing tests,
+errors, timeouts, empty results) as problems to diagnose and work through, not
+as reasons to stop. While you wait for an answer on an open decision, carry on
+with the parts that don't depend on it. Stop only when the next step truly
+needs input, or when you meet a boundary that someone set on purpose — here
+that includes the 80% rule under *How good is good enough*.
+
+## Delegated work
+
+If you are working on a brief delegated by another agent, stay within the goal
+and the files of that brief. If you find duplicated code or related problems
+outside it, describe them in your result instead of changing them.
+
 ## Commands
 
 ```bash
