@@ -78,7 +78,7 @@ describe('agent API help', () => {
   });
 
   it('documents a whole-plan example the parser takes as written', () => {
-    const example = /## Loading a whole plan[\s\S]*?```json\n([\s\S]*?)```/.exec(helpText)?.[1];
+    const example = /## Loading a whole plan[\s\S]*?```json\r?\n([\s\S]*?)```/.exec(helpText)?.[1];
     expect(example).toBeDefined();
     const project = deserializeProject(example!);
     const { schedule } = solve(project);
