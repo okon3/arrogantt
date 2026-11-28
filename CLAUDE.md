@@ -216,8 +216,9 @@ prove). What a verification may claim:
 
 ## How good is good enough
 
-This is an internal, local-use Gantt tool. It owes no accessibility audit and
-no pixel contract to anyone. **On anything visual, ~80% of the achievable
+This is a small tool published as it is: its author uses it, and so may anyone
+who finds the live build. It promises no accessibility audit and no pixel
+contract. **On anything visual, ~80% of the achievable
 precision is the target**; the last 20% needs a reason of its own, and "the
 threshold exists" is not one. A change that costs a new mechanism, a modifier
 class or a docs pass to move a perceptual metric by a fraction is overkill —
